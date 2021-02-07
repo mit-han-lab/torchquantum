@@ -15,10 +15,10 @@ A PyTorch-centric hybrid classical-quantum dynamic neural networks framework.
 - [ ] Support other measurements other than analytic method
 
 ## Dependencies
-Python >= 3.7
-PyTorch >= 1.8 (**WARNING** Pytorch supports complex value matmul starting v1.8 so we have to use unstable v1.8 nightly.)
-configargparse >= 0.14
-GPU model training requires NVIDIA GPUs and NCCL
+- Python >= 3.7
+- PyTorch >= 1.8 (**WARNING** Pytorch supports complex value matmul starting v1.8 so we have to use unstable v1.8 nightly.)
+- configargparse >= 0.14
+- GPU model training requires NVIDIA GPUs and NCCL
 
 ## Run
 MNIST training with a hybrid classical and quantum network.
