@@ -23,5 +23,5 @@ GPU model training requires NVIDIA GPUs and NCCL
 ## Run
 MNIST training with a hybrid classical and quantum network.
 ```python
-python example/mnist/test0.py
+python examples/mnist/test0.py
 ```
