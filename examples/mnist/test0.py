@@ -21,7 +21,7 @@ class TrainableRxAll(tq.QuantumModule):
     def __init__(self, n_gate: int):
         super().__init__()
         self.n_gate = n_gate
-        self.gate_all = []
+        self.gate_all = nn.ModuleList()
         for k in range(self.n_gate):
             self.gate_all.append(tq.rx(trainable=True))
 
@@ -43,7 +43,7 @@ class RxAll(tq.QuantumModule):
     def __init__(self, n_gate: int):
         super().__init__()
         self.n_gate = n_gate
-        self.gate_all = []
+        self.gate_all = nn.ModuleList()
         for k in range(self.n_gate):
             self.gate_all.append(tq.rx())
 

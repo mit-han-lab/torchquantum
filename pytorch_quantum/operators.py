@@ -256,8 +256,11 @@ class RX(Operation, metaclass=ABCMeta):
                             torch.cat([js, c], dim=-1)], dim=-1).squeeze(0)
 
     def init_params(self):
-        return torch.nn.Parameter(2 * np.pi * torch.randn(
+        parameter = nn.Parameter(2 * np.pi * torch.randn(
             [1, self.num_params]))
+        self.register_parameter('rx_theta', parameter)
+
+        return parameter
 
 
 h = Hadamard
