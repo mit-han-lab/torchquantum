@@ -193,7 +193,7 @@ class PauliY(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1])
-    matrix = torch.tensor([[0, 1], [1, 0]])
+    matrix = torch.tensor([[0., -1j], [1j, 0.]])
 
     @classmethod
     def _matrix(cls, params):
@@ -212,7 +212,7 @@ class PauliZ(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1])
-    matrix = torch.tensor([[0, 1], [1, 0]])
+    matrix = torch.tensor([[1., 0.], [0., -1.]])
 
     @classmethod
     def _matrix(cls, params):
