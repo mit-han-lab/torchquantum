@@ -293,6 +293,31 @@ class RY(Operation, metaclass=ABCMeta):
     def reset_params(self):
         torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
+class RZ(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 1
+    def __init__(self, trainable: bool = False):
+        super().__init__(trainable=trainable)
+
+    @classmethod
+
+    def _matrix(cls, params):
+        theta = params.type(C_DTYPE)
+
+        c = torch.cos(theta)
+        js = 1j * torch.sin(theta)
+
+        return torch.stack([torch.cat([1, 0], dim=-1),
+                            torch.cat([0, c + js], dim=-1)], dim=-1).squeeze(0)
+
+    def build_params(self):
+        parameters = nn.Parameter(torch.empty([1, self.num_params],
+                                              dtype=F_DTYPE))
+        self.register_parameter('rz_theta', parameters)
+        return parameters
+
+    def reset_params(self):
+        torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
 h = Hadamard
 x = PauliX
@@ -300,3 +325,4 @@ y = PauliY
 z = PauliZ
 rx = RX
 ry = RY
+rz = RZ
