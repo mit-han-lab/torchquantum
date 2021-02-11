@@ -13,6 +13,7 @@ A PyTorch-centric hybrid classical-quantum dynamic neural networks framework.
 - [ ] Support more gates
 - [ ] Support compile a unitary with descriptions to speedup training
 - [ ] Support other measurements other than analytic method
+- [ ] In einsum support multiple qubit sharing one letter. So that more than 26 qubit can be simulated.
 
 ## Dependencies
 - Python >= 3.7
