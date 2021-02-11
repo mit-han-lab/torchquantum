@@ -304,11 +304,11 @@ class RZ(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         theta = params.type(C_DTYPE)
 
-        c = torch.cos(theta)
-        js = 1j * torch.sin(theta)
+        c = torch.cos(theta / 2)
+        js = 1j * torch.sin(theta / 2)
 
-        return torch.stack([torch.cat([1, 0], dim=-1),
-                            torch.cat([0, c + js], dim=-1)], dim=-1).squeeze(0)
+        return torch.stack([torch.cat([c + js, 0], dim=-1),
+                            torch.cat([0, c - js], dim=-1)], dim=-1).squeeze(0)
 
     def build_params(self):
         parameters = nn.Parameter(torch.empty([1, self.num_params],
