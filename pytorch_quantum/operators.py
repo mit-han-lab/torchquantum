@@ -12,6 +12,7 @@ from abc import ABCMeta
 ABC_ARRAY = np.array(list(ABC))
 INV_SQRT2 = 1 / math.sqrt(2)
 C_DTYPE = torch.complex64
+F_DTYPE = torch.float32
 
 
 class Operator(nn.Module):
@@ -134,7 +135,8 @@ class Operation(Operator, metaclass=ABCMeta):
         super().__init__()
         self.trainable = trainable
         if self.trainable:
-            self.params = self.init_params()
+            self.params = self.build_params()
+            self.reset_params()
 
     @property
     def matrix(self):
@@ -250,17 +252,46 @@ class RX(Operation, metaclass=ABCMeta):
         """
 
         c = torch.cos(theta / 2)
-        js = 1j * torch.sin(theta / 2)
+        js = 1j * torch.sin(-theta / 2)
 
         return torch.stack([torch.cat([c, js], dim=-1),
                             torch.cat([js, c], dim=-1)], dim=-1).squeeze(0)
 
-    def init_params(self):
-        parameter = nn.Parameter(2 * np.pi * torch.randn(
-            [1, self.num_params]))
-        self.register_parameter('rx_theta', parameter)
+    def build_params(self):
+        parameters = nn.Parameter(torch.empty([1, self.num_params], dtype=
+                                              F_DTYPE))
+        self.register_parameter('rx_theta', parameters)
+        return parameters
 
-        return parameter
+    def reset_params(self):
+        torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+
+
+class RY(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 1
+
+    def __init__(self, trainable: bool = False):
+        super().__init__(trainable=trainable)
+
+    @classmethod
+    def _matrix(cls, params):
+        theta = params.type(C_DTYPE)
+
+        c = torch.cos(theta / 2)
+        s = torch.sin(theta / 2)
+
+        return torch.stack([torch.cat([c, -s], dim=-1),
+                            torch.cat([s, c], dim=-1)], dim=-1).squeeze(0)
+
+    def build_params(self):
+        parameters = nn.Parameter(torch.empty([1, self.num_params],
+                                              dtype=F_DTYPE))
+        self.register_parameter('ry_theta', parameters)
+        return parameters
+
+    def reset_params(self):
+        torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
 
 h = Hadamard
@@ -268,3 +299,4 @@ x = PauliX
 y = PauliY
 z = PauliZ
 rx = RX
+ry = RY
