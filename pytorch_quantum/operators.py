@@ -3,11 +3,11 @@ import math
 import torch
 import torch.nn as nn
 import pytorch_quantum as tq
+import pytorch_quantum.functional as tqf
 import numpy as np
 
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
-from .functional import rx, rx_matrix
 
 
 class Operator(nn.Module):
@@ -112,6 +112,7 @@ class PauliX(Observable, metaclass=ABCMeta):
     num_wires = 1
     eigvals = torch.tensor([1, -1])
     matrix = torch.tensor([[0., 1.], [1., 0.]])
+    func = staticmethod(tqf.paulix)
 
     @classmethod
     def _matrix(cls, params):
@@ -130,6 +131,7 @@ class PauliY(Observable, metaclass=ABCMeta):
     num_wires = 1
     eigvals = torch.tensor([1, -1])
     matrix = torch.tensor([[0., -1j], [1j, 0.]])
+    func = staticmethod(tqf.pauliy)
 
     @classmethod
     def _matrix(cls, params):
@@ -149,6 +151,7 @@ class PauliZ(Observable, metaclass=ABCMeta):
     num_wires = 1
     eigvals = torch.tensor([1, -1])
     matrix = torch.tensor([[1., 0.], [0., -1.]])
+    func = staticmethod(tqf.pauliz)
 
     @classmethod
     def _matrix(cls, params):
@@ -165,14 +168,14 @@ class PauliZ(Observable, metaclass=ABCMeta):
 class RX(Operation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 1
-    func = staticmethod(rx)
+    func = staticmethod(tqf.rx)
 
     def __init__(self, trainable: bool = False):
         super().__init__(trainable=trainable)
 
     @classmethod
     def _matrix(cls, params):
-        return rx_matrix(params)
+        return tqf.rx_matrix(params)
 
     def build_params(self):
         parameters = nn.Parameter(torch.empty([1, self.num_params], dtype=
@@ -187,19 +190,14 @@ class RX(Operation, metaclass=ABCMeta):
 class RY(Operation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 1
+    func = staticmethod(tqf.ry)
 
     def __init__(self, trainable: bool = False):
         super().__init__(trainable=trainable)
 
     @classmethod
     def _matrix(cls, params):
-        theta = params.type(C_DTYPE)
-
-        c = torch.cos(theta / 2)
-        s = torch.sin(theta / 2)
-
-        return torch.stack([torch.cat([c, -s], dim=-1),
-                            torch.cat([s, c], dim=-1)], dim=-1).squeeze(0)
+        return tqf.ry_matrix(params)
 
     def build_params(self):
         parameters = nn.Parameter(torch.empty([1, self.num_params],
@@ -214,19 +212,14 @@ class RY(Operation, metaclass=ABCMeta):
 class RZ(Operation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 1
+    func = staticmethod(tqf.rz)
 
     def __init__(self, trainable: bool = False):
         super().__init__(trainable=trainable)
 
     @classmethod
     def _matrix(cls, params):
-        theta = params.type(C_DTYPE)
-
-        c = torch.cos(theta / 2)
-        js = 1j * torch.sin(theta / 2)
-
-        return torch.stack([torch.cat([c + js, 0], dim=-1),
-                            torch.cat([0, c - js], dim=-1)], dim=-1).squeeze(0)
+        return tqf.rz_matrix(params)
 
     def build_params(self):
         parameters = nn.Parameter(torch.empty([1, self.num_params],

@@ -2,7 +2,7 @@ import functools
 import torch
 import pytorch_quantum as tq
 
-from .macro import C_DTYPE, ABC, ABC_ARRAY
+from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
 
 def apply_unitary_einsum(state, mat, wires):
@@ -61,6 +61,33 @@ def apply_unitary_einsum(state, mat, wires):
     return new_state
 
 
+def gate_wrapper(q_device: tq.QuantumDevice, matrix, wires):
+    state = q_device.states
+    wires = [wires] if isinstance(wires, int) else wires
+
+    q_device.states = apply_unitary_einsum(state, matrix, wires)
+
+
+def hadamard(q_device: tq.QuantumDevice, wires, params=None):
+    matrix = torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]])
+    gate_wrapper(q_device, matrix, wires)
+
+
+def paulix(q_device: tq.QuantumDevice, wires, params=None):
+    matrix = torch.tensor([[0., 1.], [1., 0.]])
+    gate_wrapper(q_device, matrix, wires)
+
+
+def pauliy(q_device: tq.QuantumDevice, wires, params=None):
+    matrix = torch.tensor([[0., -1j], [1j, 0.]])
+    gate_wrapper(q_device, matrix, wires)
+
+
+def pauliz(q_device: tq.QuantumDevice, wires, params=None):
+    matrix = torch.tensor([[1., 0.], [0., -1.]])
+    gate_wrapper(q_device, matrix, wires)
+
+
 def rx_matrix(params):
     theta = params.type(C_DTYPE)
     """
@@ -82,9 +109,38 @@ def rx_matrix(params):
 
 
 def rx(q_device: tq.QuantumDevice, wires, params=None):
-    state = q_device.states
     params = params.unsqueeze(-1) if params.dim() == 1 else params
     matrix = rx_matrix(params)
-    wires = [wires] if isinstance(wires, int) else wires
+    gate_wrapper(q_device, matrix, wires)
 
-    q_device.states = apply_unitary_einsum(state, matrix, wires)
+
+def ry_matrix(params):
+    theta = params.type(C_DTYPE)
+
+    c = torch.cos(theta / 2)
+    s = torch.sin(theta / 2)
+
+    return torch.stack([torch.cat([c, -s], dim=-1),
+                        torch.cat([s, c], dim=-1)], dim=-1).squeeze(0)
+
+
+def ry(q_device: tq.QuantumDevice, wires, params=None):
+    params = params.unsqueeze(-1) if params.dim() == 1 else params
+    matrix = ry_matrix(params)
+    gate_wrapper(q_device, matrix, wires)
+
+
+def rz_matrix(params):
+    theta = params.type(C_DTYPE)
+
+    c = torch.cos(theta / 2)
+    js = 1j * torch.sin(theta / 2)
+
+    return torch.stack([torch.cat([c + js, 0], dim=-1),
+                        torch.cat([0, c - js], dim=-1)], dim=-1).squeeze(0)
+
+
+def rz(q_device: tq.QuantumDevice, wires, params=None):
+    params = params.unsqueeze(-1) if params.dim() == 1 else params
+    matrix = rz_matrix(params)
+    gate_wrapper(q_device, matrix, wires)

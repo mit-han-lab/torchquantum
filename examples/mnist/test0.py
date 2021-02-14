@@ -1,4 +1,5 @@
 import pytorch_quantum as tq
+import pytorch_quantum.functional as tqf
 
 import argparse
 import torch
@@ -89,7 +90,7 @@ class Net(nn.Module):
         self.q_device0.reset_states(x.shape[0])
         self.q_layer0(self.q_device0)
         self.q_layer1(x, self.q_device0)
-        tq.rx(self.q_device0, 1, x[:, 1])
+        tqf.rx(self.q_device0, 1, x[:, 1])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)
 
