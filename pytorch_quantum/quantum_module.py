@@ -45,6 +45,14 @@ class QuantumDevice(nn.Module):
     def get_state_1d(self):
         return torch.reshape(self.state, [2 ** self.n_wire])
 
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+    def __repr__(self):
+        return f"{self.name} {self.n_wire} wires"
+
+
 
 class QuantumModule(nn.Module):
     r"""Quantum Module

@@ -11,18 +11,31 @@ from .macro import C_DTYPE, F_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
 
 class Operator(nn.Module):
-    # fixed_ops = [
-    #     tq.Hadamard,
-    #     tq.PauliX,
-    #     tq.PauliY,
-    #     tq.PauliZ
-    # ]
-    # parameterized_ops = [
-    #     tq.RX
-    # ]
+    fixed_ops = [
+        'Hadamard',
+        'PauliX',
+        'PauliY',
+        'PauliZ'
+    ]
+    parameterized_ops = [
+        'RX',
+        'RY',
+        'RZ',
+    ]
+
+    @property
+    def name(self):
+        """String for the name of the operator."""
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
     def __init__(self):
         super().__init__()
         self.params = None
+        self._name = self.__class__.__name__
 
     @classmethod
     def _matrix(cls, params):
@@ -44,10 +57,10 @@ class Operator(nn.Module):
         return self.matrix
 
     def forward(self, q_device: tq.QuantumDevice, wires, params=None):
-        # assert type(self) in self.fixed_ops or \
-        #        self.trainable ^ (params is not None), \
-        #        f"Parameterized gate either has its own parameters or " \
-        #        f"has input as parameters"
+        assert self.name in self.fixed_ops or \
+               self.trainable ^ (params is not None), \
+               f"Parameterized gate either has its own parameters or " \
+               f"has input as parameters"
 
         if params is not None:
             self.params = params
