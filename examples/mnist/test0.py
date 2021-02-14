@@ -23,7 +23,7 @@ class TrainableRxAll(tq.QuantumModule):
         self.n_gate = n_gate
         self.gate_all = nn.ModuleList()
         for k in range(self.n_gate):
-            self.gate_all.append(tq.rx(trainable=True))
+            self.gate_all.append(tq.RX(trainable=True))
 
     def forward(self, q_device: tq.QuantumDevice):
         # rx on all wires, assert the number of gate is the same as the number
@@ -45,7 +45,7 @@ class RxAll(tq.QuantumModule):
         self.n_gate = n_gate
         self.gate_all = nn.ModuleList()
         for k in range(self.n_gate):
-            self.gate_all.append(tq.rx())
+            self.gate_all.append(tq.RX())
 
     def forward(self, x, q_device: tq.QuantumDevice):
         # rx on all wires, assert the number of gate is the same as the number
@@ -89,6 +89,8 @@ class Net(nn.Module):
         self.q_device0.reset_states(x.shape[0])
         self.q_layer0(self.q_device0)
         self.q_layer1(x, self.q_device0)
+        tq.rx(self.q_device0, 1, x[:, 1])
+
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)
 
         output = F.log_softmax(x, dim=1)
