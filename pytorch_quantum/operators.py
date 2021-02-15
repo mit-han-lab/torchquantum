@@ -226,6 +226,23 @@ class S(DiagonalOperation, metaclass=ABCMeta):
         return cls.eigvals
 
 
+class T(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 1
+    eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
+    matrix = torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]],
+                          dtype=C_DTYPE)
+    func = staticmethod(tqf.s)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+
+
 class RX(Operation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 1

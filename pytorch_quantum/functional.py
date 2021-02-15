@@ -2,6 +2,7 @@ import functools
 import torch
 import logging
 import pytorch_quantum as tq
+import numpy as np
 
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
@@ -107,6 +108,12 @@ def s(q_device: tq.QuantumDevice, wires, params=None):
     gate_wrapper(q_device, matrix, wires)
 
 
+def t(q_device: tq.QuantumDevice, wires, params=None):
+    matrix = torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]],
+                          dtype=C_DTYPE)
+    gate_wrapper(q_device, matrix, wires)
+
+
 def rx_matrix(params):
     theta = params.type(C_DTYPE)
     """
@@ -120,11 +127,11 @@ def rx_matrix(params):
     If so, please report an enhancement request to PyTorch.)
         
     """
-    c = torch.cos(theta / 2)
-    js = 1j * torch.sin(-theta / 2)
+    co = torch.cos(theta / 2)
+    jsi = 1j * torch.sin(-theta / 2)
 
-    return torch.stack([torch.cat([c, js], dim=-1),
-                        torch.cat([js, c], dim=-1)], dim=-1).squeeze(0)
+    return torch.stack([torch.cat([co, jsi], dim=-1),
+                        torch.cat([jsi, co], dim=-1)], dim=-1).squeeze(0)
 
 
 def rx(q_device: tq.QuantumDevice, wires, params=None):
@@ -136,11 +143,11 @@ def rx(q_device: tq.QuantumDevice, wires, params=None):
 def ry_matrix(params):
     theta = params.type(C_DTYPE)
 
-    c = torch.cos(theta / 2)
-    s = torch.sin(theta / 2)
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
 
-    return torch.stack([torch.cat([c, -s], dim=-1),
-                        torch.cat([s, c], dim=-1)], dim=-1).squeeze(0)
+    return torch.stack([torch.cat([co, -si], dim=-1),
+                        torch.cat([si, co], dim=-1)], dim=-1).squeeze(0)
 
 
 def ry(q_device: tq.QuantumDevice, wires, params=None):
@@ -153,8 +160,10 @@ def rz_matrix(params):
     theta = params.type(C_DTYPE)
     p = torch.exp(-0.5j * theta)
 
-    return torch.stack([torch.cat([p, 0], dim=-1),
-                        torch.cat([0, torch.conj(p)], dim=-1)],
+    return torch.stack([torch.cat([p, torch.zeros(p.shape, device=p.device)],
+                                  dim=-1),
+                        torch.cat([torch.zeros(p.shape, device=p.device),
+                                   torch.conj(p)], dim=-1)],
                        dim=-1).squeeze(0)
 
 

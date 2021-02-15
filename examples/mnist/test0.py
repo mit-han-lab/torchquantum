@@ -82,6 +82,9 @@ class Net(nn.Module):
                               trainable=False,
                               init_params=-np.pi / 4)
 
+        self.q_layer3 = tq.RZ(has_params=True,
+                              trainable=True)
+
     def forward(self, x):
         x = self.conv1(x)
         x = F.relu(x)
@@ -101,6 +104,11 @@ class Net(nn.Module):
         self.q_layer1(x, self.q_device0)
         tqf.rx(self.q_device0, 1, x[:, 1])
         self.q_layer2(self.q_device0, wires=5)
+        tqf.ry(self.q_device0, 2, x[:, 2])
+        tqf.rz(self.q_device0, 3, x[:, 3])
+        tqf.s(self.q_device0, 4)
+        tqf.t(self.q_device0, 5)
+        self.q_layer3(self.q_device0, wires=6)
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)
 
