@@ -24,7 +24,8 @@ class Operator(nn.Module):
         'CNOT',
         'CZ',
         'CY',
-        'SWAP'
+        'SWAP',
+        'CSWAP'
     ]
     parameterized_ops = [
         'RX',
@@ -312,6 +313,17 @@ class SWAP(Operation, metaclass=ABCMeta):
     num_wires = 2
     matrix = mat_dict['swap']
     func = staticmethod(tqf.swap)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
+class CSWAP(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 3
+    matrix = mat_dict['cswap']
+    func = staticmethod(tqf.cswap)
 
     @classmethod
     def _matrix(cls, params):
