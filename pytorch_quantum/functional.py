@@ -114,6 +114,14 @@ def t(q_device: tq.QuantumDevice, wires):
     gate_wrapper(q_device, matrix, wires)
 
 
+def sx(q_device: tq.QuantumDevice, wires):
+    matrix = 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
+                                dtype=C_DTYPE)
+    gate_wrapper(q_device, matrix, wires)
+
+
+
+
 def rx_matrix(params):
     theta = params.type(C_DTYPE)
     """

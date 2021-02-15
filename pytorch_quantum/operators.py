@@ -236,7 +236,24 @@ class T(DiagonalOperation, metaclass=ABCMeta):
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
     matrix = torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]],
                           dtype=C_DTYPE)
-    func = staticmethod(tqf.s)
+    func = staticmethod(tqf.t)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+
+
+class SX(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 1
+    eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
+    matrix = 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
+                                dtype=C_DTYPE)
+    func = staticmethod(tqf.sx)
 
     @classmethod
     def _matrix(cls, params):

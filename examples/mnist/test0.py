@@ -109,6 +109,8 @@ class Net(nn.Module):
         tqf.s(self.q_device0, 4)
         tqf.t(self.q_device0, 5)
         self.q_layer3(self.q_device0, wires=6)
+        tqf.sx(self.q_device0, 7)
+
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)
 
