@@ -120,6 +120,12 @@ def sx(q_device: tq.QuantumDevice, wires):
     gate_wrapper(q_device, matrix, wires)
 
 
+def cnot(q_device: tq.QuantumDevice, wires):
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 0, 1],
+                           [0, 0, 1, 0]], dtype=C_DTYPE)
+    gate_wrapper(q_device, matrix, wires)
 
 
 def rx_matrix(params):
@@ -179,3 +185,8 @@ def rz(q_device: tq.QuantumDevice, wires, params=None):
     params = params.unsqueeze(-1) if params.dim() == 1 else params
     matrix = rz_matrix(params)
     gate_wrapper(q_device, matrix, wires)
+
+
+x = paulix
+y = pauliy
+z = pauliz

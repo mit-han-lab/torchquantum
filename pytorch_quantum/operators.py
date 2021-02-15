@@ -264,6 +264,20 @@ class SX(Operation, metaclass=ABCMeta):
         return cls.eigvals
 
 
+class CNOT(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 2
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 0, 1],
+                           [0, 0, 1, 0]], dtype=C_DTYPE)
+    func = staticmethod(tqf.cnot)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
 class RX(Operation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 1

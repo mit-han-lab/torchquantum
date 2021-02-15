@@ -84,6 +84,7 @@ class Net(nn.Module):
 
         self.q_layer3 = tq.RZ(has_params=True,
                               trainable=True)
+        self.q_device1 = tq.QuantumDevice(n_wire=3)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -100,6 +101,7 @@ class Net(nn.Module):
         x = self.sigmoid(x) * 2 * np.pi
 
         self.q_device0.reset_states(x.shape[0])
+        self.q_device1.reset_states(x.shape[0])
         self.q_layer0(self.q_device0)
         self.q_layer1(x, self.q_device0)
         tqf.rx(self.q_device0, 1, x[:, 1])
@@ -110,6 +112,10 @@ class Net(nn.Module):
         tqf.t(self.q_device0, 5)
         self.q_layer3(self.q_device0, wires=6)
         tqf.sx(self.q_device0, 7)
+        tqf.x(self.q_device1, wires=0)
+        tqf.cnot(self.q_device1, wires=[0, 2])
+        tqf.cnot(self.q_device1, wires=[0, 1])
+        tqf.cnot(self.q_device1, wires=[2, 0])
 
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)
