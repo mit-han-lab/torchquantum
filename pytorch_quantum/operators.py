@@ -130,6 +130,19 @@ class Operation(Operator, metaclass=ABCMeta):
     def init_params(self):
         raise NotImplementedError
 
+    def build_params(self, trainable):
+        parameters = nn.Parameter(torch.empty([1, self.num_params],
+                                              dtype=F_DTYPE))
+        parameters.requires_grad = True if trainable else False
+        self.register_parameter(f"{self.name}_params", parameters)
+        return parameters
+
+    def reset_params(self, init_params=None):
+        if init_params is not None:
+            torch.nn.init.constant_(self.params, init_params)
+        else:
+            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+
 
 class DiagonalOperation(Operation, metaclass=ABCMeta):
     @classmethod
@@ -347,32 +360,9 @@ class RX(Operation, metaclass=ABCMeta):
     num_wires = 1
     func = staticmethod(tqf.rx)
 
-    def __init__(self,
-                 has_params: bool = False,
-                 trainable: bool = False,
-                 init_params=None):
-        super().__init__(
-            has_params=has_params,
-            trainable=trainable,
-            init_params=init_params
-        )
-
     @classmethod
     def _matrix(cls, params):
         return tqf.rx_matrix(params)
-
-    def build_params(self, trainable):
-        parameters = nn.Parameter(torch.empty([1, self.num_params],
-                                              dtype=F_DTYPE))
-        parameters.requires_grad = True if trainable else False
-        self.register_parameter('rx_theta', parameters)
-        return parameters
-
-    def reset_params(self, init_params=None):
-        if init_params is not None:
-            torch.nn.init.constant_(self.params, init_params)
-        else:
-            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
 
 class RY(Operation, metaclass=ABCMeta):
@@ -380,32 +370,9 @@ class RY(Operation, metaclass=ABCMeta):
     num_wires = 1
     func = staticmethod(tqf.ry)
 
-    def __init__(self,
-                 has_params: bool = False,
-                 trainable: bool = False,
-                 init_params=None):
-        super().__init__(
-            has_params=has_params,
-            trainable=trainable,
-            init_params=init_params
-        )
-
     @classmethod
     def _matrix(cls, params):
         return tqf.ry_matrix(params)
-
-    def build_params(self, trainable):
-        parameters = nn.Parameter(torch.empty([1, self.num_params],
-                                              dtype=F_DTYPE))
-        parameters.requires_grad = True if trainable else False
-        self.register_parameter('ry_theta', parameters)
-        return parameters
-
-    def reset_params(self, init_params=None):
-        if init_params is not None:
-            torch.nn.init.constant_(self.params, init_params)
-        else:
-            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
 
 class RZ(DiagonalOperation, metaclass=ABCMeta):
@@ -413,30 +380,17 @@ class RZ(DiagonalOperation, metaclass=ABCMeta):
     num_wires = 1
     func = staticmethod(tqf.rz)
 
-    def __init__(self,
-                 has_params: bool = False,
-                 trainable: bool = False,
-                 init_params=None):
-        super().__init__(
-            has_params=has_params,
-            trainable=trainable,
-            init_params=init_params
-        )
-
     @classmethod
     def _matrix(cls, params):
         return tqf.rz_matrix(params)
 
-    def build_params(self, trainable):
-        parameters = nn.Parameter(torch.empty([1, self.num_params],
-                                              dtype=F_DTYPE))
-        parameters.requires_grad = True if trainable else False
-        self.register_parameter('rz_theta', parameters)
-        return parameters
 
-    def reset_params(self, init_params=None):
-        if init_params is not None:
-            torch.nn.init.constant_(self.params, init_params)
-        else:
-            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+# class PhaseShift(DiagonalOperation):
+#     num_params = 1
+#     num_wires = 1
+#     func = staticmethod(tqf.phaseshift)
+#
+#     @classmethod
+#     def _matrix(cls, params):
+#         return tqf.phaseshift_matrix(params)
 
