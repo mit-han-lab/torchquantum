@@ -166,6 +166,14 @@ mat_dict = {
                            [0, 0, 0, 0, 0, 0, 1, 0],
                            [0, 0, 0, 0, 0, 1, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 1]], dtype=C_DTYPE),
+    'toffoli': torch.tensor([[1, 0, 0, 0, 0, 0, 0, 0],
+                             [0, 1, 0, 0, 0, 0, 0, 0],
+                             [0, 0, 1, 0, 0, 0, 0, 0],
+                             [0, 0, 0, 1, 0, 0, 0, 0],
+                             [0, 0, 0, 0, 1, 0, 0, 0],
+                             [0, 0, 0, 0, 0, 1, 0, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 1],
+                             [0, 0, 0, 0, 0, 0, 1, 0]], dtype=C_DTYPE),
     'rx': rx_matrix,
     'ry': ry_matrix,
     'rz': rz_matrix
@@ -186,7 +194,7 @@ ry = partial(gate_wrapper, mat_dict['ry'])
 rz = partial(gate_wrapper, mat_dict['rz'])
 swap = partial(gate_wrapper, mat_dict['swap'])
 cswap = partial(gate_wrapper, mat_dict['cswap'])
-
+toffoli = partial(gate_wrapper, mat_dict['toffoli'])
 
 x = paulix
 y = pauliy

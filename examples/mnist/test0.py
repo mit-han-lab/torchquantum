@@ -86,6 +86,7 @@ class Net(nn.Module):
                               trainable=True)
         self.q_device1 = tq.QuantumDevice(n_wire=3)
         self.q_layer4 = tq.CY()
+        self.q_layer5 = tq.Toffoli()
 
     def forward(self, x):
         x = self.conv1(x)
@@ -123,6 +124,7 @@ class Net(nn.Module):
         self.q_layer4(self.q_device0, wires=[3, 8])
         tqf.swap(self.q_device0, wires=[2, 3])
         tqf.cswap(self.q_device0, wires=[4, 5, 6])
+        self.q_layer5(self.q_device0,wires=[8, 5, 0])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 
