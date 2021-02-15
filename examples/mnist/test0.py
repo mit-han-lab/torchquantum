@@ -116,6 +116,9 @@ class Net(nn.Module):
         tqf.cnot(self.q_device1, wires=[0, 2])
         tqf.cnot(self.q_device1, wires=[0, 1])
         tqf.cnot(self.q_device1, wires=[2, 0])
+        tqf.cz(self.q_device0, wires=[0, 5])
+        tqf.cnot(self.q_device0, wires=[0, 5])
+
 
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)

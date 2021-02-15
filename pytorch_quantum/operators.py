@@ -272,6 +272,22 @@ class CNOT(Operation, metaclass=ABCMeta):
         return cls.matrix
 
 
+class CZ(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 2
+    eigvals = np.array([1, 1, 1, -1])
+    matrix = mat_dict['cz']
+    func = staticmethod(tqf.cz)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+
+
 class RX(Operation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 1
