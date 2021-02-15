@@ -408,7 +408,7 @@ class RY(Operation, metaclass=ABCMeta):
             torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
 
-class RZ(Operation, metaclass=ABCMeta):
+class RZ(DiagonalOperation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.rz)
@@ -439,3 +439,4 @@ class RZ(Operation, metaclass=ABCMeta):
             torch.nn.init.constant_(self.params, init_params)
         else:
             torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+
