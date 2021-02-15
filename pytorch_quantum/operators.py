@@ -5,8 +5,9 @@ import pytorch_quantum.functional as tqf
 import numpy as np
 import logging
 
+from pytorch_quantum.functional import mat_dict
 from abc import ABCMeta
-from .macro import C_DTYPE, F_DTYPE, INV_SQRT2
+from .macro import C_DTYPE, F_DTYPE
 
 logger = logging.getLogger()
 
@@ -121,7 +122,7 @@ class Operation(Operator, metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class DiagonalOperation(Operation):
+class DiagonalOperation(Operation, metaclass=ABCMeta):
     @classmethod
     def _eigvals(cls, params):
         raise NotImplementedError
@@ -135,13 +136,11 @@ class DiagonalOperation(Operation):
         return torch.diag(cls._eigvals(params))
 
 
-
 class Hadamard(Observable, Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
-                          dtype=C_DTYPE)
+    matrix = mat_dict['hadamard']
 
     @classmethod
     def _matrix(cls, params):
@@ -161,7 +160,7 @@ class PauliX(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE)
+    matrix = mat_dict['paulix']
     func = staticmethod(tqf.paulix)
 
     @classmethod
@@ -180,7 +179,7 @@ class PauliY(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE)
+    matrix = mat_dict['pauliy']
     func = staticmethod(tqf.pauliy)
 
     @classmethod
@@ -199,7 +198,7 @@ class PauliZ(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE)
+    matrix = mat_dict['pauliz']
     func = staticmethod(tqf.pauliz)
 
     @classmethod
@@ -218,7 +217,7 @@ class S(DiagonalOperation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE)
+    matrix = mat_dict['s']
     func = staticmethod(tqf.s)
 
     @classmethod
@@ -234,8 +233,7 @@ class T(DiagonalOperation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]],
-                          dtype=C_DTYPE)
+    matrix = mat_dict['t']
     func = staticmethod(tqf.t)
 
     @classmethod
@@ -251,8 +249,7 @@ class SX(Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
-                                dtype=C_DTYPE)
+    matrix = mat_dict['sx']
     func = staticmethod(tqf.sx)
 
     @classmethod
@@ -267,10 +264,7 @@ class SX(Operation, metaclass=ABCMeta):
 class CNOT(Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 2
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 0, 1],
-                           [0, 0, 1, 0]], dtype=C_DTYPE)
+    matrix = mat_dict['cnot']
     func = staticmethod(tqf.cnot)
 
     @classmethod
