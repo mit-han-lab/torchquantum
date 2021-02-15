@@ -151,12 +151,11 @@ def ry(q_device: tq.QuantumDevice, wires, params=None):
 
 def rz_matrix(params):
     theta = params.type(C_DTYPE)
+    p = torch.exp(-0.5j * theta)
 
-    c = torch.cos(theta / 2)
-    js = 1j * torch.sin(theta / 2)
-
-    return torch.stack([torch.cat([c + js, 0], dim=-1),
-                        torch.cat([0, c - js], dim=-1)], dim=-1).squeeze(0)
+    return torch.stack([torch.cat([p, 0], dim=-1),
+                        torch.cat([0, torch.conj(p)], dim=-1)],
+                       dim=-1).squeeze(0)
 
 
 def rz(q_device: tq.QuantumDevice, wires, params=None):
