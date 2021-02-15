@@ -4,6 +4,8 @@ import logging
 import pytorch_quantum as tq
 import numpy as np
 
+from functools import partial
+from typing import Callable
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
 logger = logging.getLogger()
@@ -75,57 +77,18 @@ def apply_unitary_einsum(state, mat, wires):
     return new_state
 
 
-def gate_wrapper(q_device: tq.QuantumDevice, matrix, wires):
+def gate_wrapper(mat, q_device: tq.QuantumDevice, wires, params=None):
+
+    if isinstance(mat, Callable):
+        params = params.unsqueeze(-1) if params.dim() == 1 else params
+        matrix = mat(params)
+    else:
+        matrix = mat
+
     state = q_device.states
     wires = [wires] if isinstance(wires, int) else wires
 
     q_device.states = apply_unitary_einsum(state, matrix, wires)
-
-
-def hadamard(q_device: tq.QuantumDevice, wires):
-    matrix = torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
-                          dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
-
-
-def paulix(q_device: tq.QuantumDevice, wires):
-    matrix = torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
-
-
-def pauliy(q_device: tq.QuantumDevice, wires):
-    matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
-
-
-def pauliz(q_device: tq.QuantumDevice, wires):
-    matrix = torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
-
-
-def s(q_device: tq.QuantumDevice, wires):
-    matrix = torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
-
-
-def t(q_device: tq.QuantumDevice, wires):
-    matrix = torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]],
-                          dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
-
-
-def sx(q_device: tq.QuantumDevice, wires):
-    matrix = 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
-                                dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
-
-
-def cnot(q_device: tq.QuantumDevice, wires):
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 0, 1],
-                           [0, 0, 1, 0]], dtype=C_DTYPE)
-    gate_wrapper(q_device, matrix, wires)
 
 
 def rx_matrix(params):
@@ -148,12 +111,6 @@ def rx_matrix(params):
                         torch.cat([jsi, co], dim=-1)], dim=-1).squeeze(0)
 
 
-def rx(q_device: tq.QuantumDevice, wires, params=None):
-    params = params.unsqueeze(-1) if params.dim() == 1 else params
-    matrix = rx_matrix(params)
-    gate_wrapper(q_device, matrix, wires)
-
-
 def ry_matrix(params):
     theta = params.type(C_DTYPE)
 
@@ -162,12 +119,6 @@ def ry_matrix(params):
 
     return torch.stack([torch.cat([co, -si], dim=-1),
                         torch.cat([si, co], dim=-1)], dim=-1).squeeze(0)
-
-
-def ry(q_device: tq.QuantumDevice, wires, params=None):
-    params = params.unsqueeze(-1) if params.dim() == 1 else params
-    matrix = ry_matrix(params)
-    gate_wrapper(q_device, matrix, wires)
 
 
 def rz_matrix(params):
@@ -181,11 +132,36 @@ def rz_matrix(params):
                        dim=-1).squeeze(0)
 
 
-def rz(q_device: tq.QuantumDevice, wires, params=None):
-    params = params.unsqueeze(-1) if params.dim() == 1 else params
-    matrix = rz_matrix(params)
-    gate_wrapper(q_device, matrix, wires)
+mat_dict = {
+    'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
+                             dtype=C_DTYPE),
+    'paulix': torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
+    'pauliy': torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE),
+    'pauliz': torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE),
+    's': torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE),
+    't': torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=C_DTYPE),
+    'sx': 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
+                             dtype=C_DTYPE),
+    'cnot': torch.tensor([[1, 0, 0, 0],
+                          [0, 1, 0, 0],
+                          [0, 0, 0, 1],
+                          [0, 0, 1, 0]], dtype=C_DTYPE),
+    'rx': rx_matrix,
+    'ry': ry_matrix,
+    'rz': rz_matrix
+}
 
+hadamard = partial(gate_wrapper, mat_dict['hadamard'])
+paulix = partial(gate_wrapper, mat_dict['paulix'])
+pauliy = partial(gate_wrapper, mat_dict['pauliy'])
+pauliz = partial(gate_wrapper, mat_dict['pauliz'])
+s = partial(gate_wrapper, mat_dict['s'])
+t = partial(gate_wrapper, mat_dict['t'])
+sx = partial(gate_wrapper, mat_dict['sx'])
+cnot = partial(gate_wrapper, mat_dict['cnot'])
+rx = partial(gate_wrapper, mat_dict['rx'])
+ry = partial(gate_wrapper, mat_dict['ry'])
+rz = partial(gate_wrapper, mat_dict['rz'])
 
 x = paulix
 y = pauliy
