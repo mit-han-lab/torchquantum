@@ -146,6 +146,24 @@ def phaseshift_matrix(params):
         dim=-1).squeeze(0)
 
 
+def rot_matrix(params):
+    phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    theta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+    omega = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    return torch.stack([
+        torch.cat([
+            torch.exp(-0.5j * (phi + omega)) * co,
+            -torch.exp(0.5j * (phi - omega)) * si], dim=-1),
+        torch.cat([
+            torch.exp(-0.5j * (phi - omega)) * si,
+            torch.exp(0.5j * (phi + omega)) * co], dim=-1)],
+        dim=-1).squeeze(0)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -191,8 +209,10 @@ mat_dict = {
     'rx': rx_matrix,
     'ry': ry_matrix,
     'rz': rz_matrix,
-    'phaseshift': phaseshift_matrix
+    'phaseshift': phaseshift_matrix,
+    'rot': rot_matrix
 }
+
 
 hadamard = partial(gate_wrapper, mat_dict['hadamard'])
 paulix = partial(gate_wrapper, mat_dict['paulix'])
@@ -211,7 +231,7 @@ swap = partial(gate_wrapper, mat_dict['swap'])
 cswap = partial(gate_wrapper, mat_dict['cswap'])
 toffoli = partial(gate_wrapper, mat_dict['toffoli'])
 phaseshift = partial(gate_wrapper, mat_dict['phaseshift'])
-
+rot = partial(gate_wrapper, mat_dict['rot'])
 
 x = paulix
 y = pauliy

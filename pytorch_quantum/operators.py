@@ -32,7 +32,8 @@ class Operator(nn.Module):
         'RX',
         'RY',
         'RZ',
-        'PhaseShift'
+        'PhaseShift',
+        'Rot'
     ]
 
     @property
@@ -395,3 +396,12 @@ class PhaseShift(DiagonalOperation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return tqf.phaseshift_matrix(params)
 
+
+class Rot(Operation, metaclass=ABCMeta):
+    num_params = 3
+    num_wires = 1
+    func = staticmethod(tqf.rot)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.rot_matrix(params)

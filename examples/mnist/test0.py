@@ -89,6 +89,8 @@ class Net(nn.Module):
         self.q_layer5 = tq.Toffoli()
         self.q_layer6 = tq.PhaseShift(has_params=True,
                                       trainable=True)
+        self.q_layer7 = tq.Rot(has_params=True,
+                               trainable=True)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -129,6 +131,8 @@ class Net(nn.Module):
         self.q_layer5(self.q_device0, wires=[8, 5, 0])
         self.q_layer6(self.q_device0, wires=8)
         tqf.phaseshift(self.q_device0, 7, x[:, 7])
+        self.q_layer7(self.q_device0, wires=4)
+        tqf.rot(self.q_device0, 5, x[:, 6:9])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 
