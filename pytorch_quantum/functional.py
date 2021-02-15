@@ -132,6 +132,20 @@ def rz_matrix(params):
                        dim=-1).squeeze(0)
 
 
+def phaseshift_matrix(params):
+    phi = params.type(C_DTYPE)
+    p = torch.exp(1j * phi)
+
+    return torch.stack([
+        torch.cat([
+            torch.ones(p.shape, device=p.device),
+            torch.zeros(p.shape, device=p.device)], dim=-1),
+        torch.cat([
+            torch.zeros(p.shape, device=p.device),
+            p], dim=-1)],
+        dim=-1).squeeze(0)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -176,7 +190,8 @@ mat_dict = {
                              [0, 0, 0, 0, 0, 0, 1, 0]], dtype=C_DTYPE),
     'rx': rx_matrix,
     'ry': ry_matrix,
-    'rz': rz_matrix
+    'rz': rz_matrix,
+    'phaseshift': phaseshift_matrix
 }
 
 hadamard = partial(gate_wrapper, mat_dict['hadamard'])
@@ -195,6 +210,8 @@ rz = partial(gate_wrapper, mat_dict['rz'])
 swap = partial(gate_wrapper, mat_dict['swap'])
 cswap = partial(gate_wrapper, mat_dict['cswap'])
 toffoli = partial(gate_wrapper, mat_dict['toffoli'])
+phaseshift = partial(gate_wrapper, mat_dict['phaseshift'])
+
 
 x = paulix
 y = pauliy

@@ -87,6 +87,8 @@ class Net(nn.Module):
         self.q_device1 = tq.QuantumDevice(n_wire=3)
         self.q_layer4 = tq.CY()
         self.q_layer5 = tq.Toffoli()
+        self.q_layer6 = tq.PhaseShift(has_params=True,
+                                      trainable=True)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -124,7 +126,9 @@ class Net(nn.Module):
         self.q_layer4(self.q_device0, wires=[3, 8])
         tqf.swap(self.q_device0, wires=[2, 3])
         tqf.cswap(self.q_device0, wires=[4, 5, 6])
-        self.q_layer5(self.q_device0,wires=[8, 5, 0])
+        self.q_layer5(self.q_device0, wires=[8, 5, 0])
+        self.q_layer6(self.q_device0, wires=8)
+        tqf.phaseshift(self.q_device0, 7, x[:, 7])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 
