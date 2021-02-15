@@ -188,8 +188,7 @@ class PauliY(Observable, metaclass=ABCMeta):
         return cls.eigvals
 
     def diagonalizing_gates(self):
-        # FIXME
-        return []
+        return [tq.PauliZ(), tq.S(), tq.Hadamard()]
 
 
 class PauliZ(Observable, metaclass=ABCMeta):
