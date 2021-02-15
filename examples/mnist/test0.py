@@ -121,7 +121,7 @@ class Net(nn.Module):
         tqf.cnot(self.q_device0, wires=[0, 5])
         tqf.cy(self.q_device0, wires=[0, 5])
         self.q_layer4(self.q_device0, wires=[3, 8])
-
+        tqf.swap(self.q_device0, wires=[2, 3])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 
