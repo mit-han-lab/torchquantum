@@ -85,6 +85,7 @@ class Net(nn.Module):
         self.q_layer3 = tq.RZ(has_params=True,
                               trainable=True)
         self.q_device1 = tq.QuantumDevice(n_wire=3)
+        self.q_layer4 = tq.CY()
 
     def forward(self, x):
         x = self.conv1(x)
@@ -118,10 +119,11 @@ class Net(nn.Module):
         tqf.cnot(self.q_device1, wires=[2, 0])
         tqf.cz(self.q_device0, wires=[0, 5])
         tqf.cnot(self.q_device0, wires=[0, 5])
+        tqf.cy(self.q_device0, wires=[0, 5])
+        self.q_layer4(self.q_device0, wires=[3, 8])
 
 
-
-        x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)
+        x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 
         output = F.log_softmax(x, dim=1)
 

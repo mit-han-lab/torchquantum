@@ -17,7 +17,13 @@ class Operator(nn.Module):
         'Hadamard',
         'PauliX',
         'PauliY',
-        'PauliZ'
+        'PauliZ',
+        'S',
+        'T',
+        'SX',
+        'CNOT',
+        'CZ',
+        'CY'
     ]
     parameterized_ops = [
         'RX',
@@ -141,6 +147,7 @@ class Hadamard(Observable, Operation, metaclass=ABCMeta):
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
     matrix = mat_dict['hadamard']
+    func = staticmethod(tqf.hadamard)
 
     @classmethod
     def _matrix(cls, params):
@@ -286,6 +293,17 @@ class CZ(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
+
+
+class CY(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict['cy']
+    func = staticmethod(tqf.cy)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 
 class RX(Operation, metaclass=ABCMeta):

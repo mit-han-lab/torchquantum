@@ -150,6 +150,10 @@ mat_dict = {
                         [0, 1, 0, 0],
                         [0, 0, 1, 0],
                         [0, 0, 0, -1]], dtype=C_DTYPE),
+    'cy': torch.tensor([[1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 0, -1j],
+                        [0, 0, -1j, 0]], dtype=C_DTYPE),
     'rx': rx_matrix,
     'ry': ry_matrix,
     'rz': rz_matrix
@@ -163,10 +167,12 @@ s = partial(gate_wrapper, mat_dict['s'])
 t = partial(gate_wrapper, mat_dict['t'])
 sx = partial(gate_wrapper, mat_dict['sx'])
 cnot = partial(gate_wrapper, mat_dict['cnot'])
+cz = partial(gate_wrapper, mat_dict['cz'])
+cy = partial(gate_wrapper, mat_dict['cy'])
 rx = partial(gate_wrapper, mat_dict['rx'])
 ry = partial(gate_wrapper, mat_dict['ry'])
 rz = partial(gate_wrapper, mat_dict['rz'])
-cz = partial(gate_wrapper, mat_dict['cz'])
+
 
 x = paulix
 y = pauliy
