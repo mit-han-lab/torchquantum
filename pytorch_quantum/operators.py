@@ -6,7 +6,7 @@ import numpy as np
 import logging
 
 from abc import ABCMeta
-from .macro import F_DTYPE, INV_SQRT2
+from .macro import C_DTYPE, F_DTYPE, INV_SQRT2
 
 logger = logging.getLogger()
 
@@ -117,11 +117,27 @@ class Operation(Operator, metaclass=ABCMeta):
         raise NotImplementedError
 
 
+class DiagonalOperation(Operation):
+    @classmethod
+    def _eigvals(cls, params):
+        raise NotImplementedError
+
+    @property
+    def eigvals(self):
+        return super().eigvals
+
+    @classmethod
+    def _matrix(cls, params):
+        return torch.diag(cls._eigvals(params))
+
+
+
 class Hadamard(Observable, Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
-    eigvals = torch.tensor([1, -1])
-    matrix = torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]])
+    eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
+    matrix = torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
+                          dtype=C_DTYPE)
 
     @classmethod
     def _matrix(cls, params):
@@ -132,15 +148,16 @@ class Hadamard(Observable, Operation, metaclass=ABCMeta):
         return cls.eigvals
 
     def diagonalizing_gates(self):
-        # FIXME
-        return []
+        return [tq.RY(has_params=True,
+                      trainable=False,
+                      init_params=-np.pi / 4)]
 
 
 class PauliX(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
-    eigvals = torch.tensor([1, -1])
-    matrix = torch.tensor([[0., 1.], [1., 0.]])
+    eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
+    matrix = torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE)
     func = staticmethod(tqf.paulix)
 
     @classmethod
@@ -158,8 +175,8 @@ class PauliX(Observable, metaclass=ABCMeta):
 class PauliY(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
-    eigvals = torch.tensor([1, -1])
-    matrix = torch.tensor([[0., -1j], [1j, 0.]])
+    eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
+    matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE)
     func = staticmethod(tqf.pauliy)
 
     @classmethod
@@ -178,8 +195,8 @@ class PauliY(Observable, metaclass=ABCMeta):
 class PauliZ(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
-    eigvals = torch.tensor([1, -1])
-    matrix = torch.tensor([[1., 0.], [0., -1.]])
+    eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
+    matrix = torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE)
     func = staticmethod(tqf.pauliz)
 
     @classmethod
@@ -192,6 +209,22 @@ class PauliZ(Observable, metaclass=ABCMeta):
 
     def diagonalizing_gates(self):
         return []
+
+
+class S(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 1
+    eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
+    matrix = torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE)
+    func = staticmethod(tqf.s)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
 
 
 class RX(Operation, metaclass=ABCMeta):
