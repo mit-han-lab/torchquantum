@@ -69,7 +69,11 @@ class Operator(nn.Module):
         if params is not None:
             self.params = params
 
-        self.func(q_device, wires, self.params)
+        # non-parameterized gate
+        if self.params is None:
+            self.func(q_device, wires)
+        else:
+            self.func(q_device, wires, self.params)
 
 
 class Observable(Operator, metaclass=ABCMeta):

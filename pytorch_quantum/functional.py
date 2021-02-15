@@ -82,33 +82,33 @@ def gate_wrapper(q_device: tq.QuantumDevice, matrix, wires):
     q_device.states = apply_unitary_einsum(state, matrix, wires)
 
 
-def hadamard(q_device: tq.QuantumDevice, wires, params=None):
+def hadamard(q_device: tq.QuantumDevice, wires):
     matrix = torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                           dtype=C_DTYPE)
     gate_wrapper(q_device, matrix, wires)
 
 
-def paulix(q_device: tq.QuantumDevice, wires, params=None):
+def paulix(q_device: tq.QuantumDevice, wires):
     matrix = torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE)
     gate_wrapper(q_device, matrix, wires)
 
 
-def pauliy(q_device: tq.QuantumDevice, wires, params=None):
+def pauliy(q_device: tq.QuantumDevice, wires):
     matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE)
     gate_wrapper(q_device, matrix, wires)
 
 
-def pauliz(q_device: tq.QuantumDevice, wires, params=None):
+def pauliz(q_device: tq.QuantumDevice, wires):
     matrix = torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE)
     gate_wrapper(q_device, matrix, wires)
 
 
-def s(q_device: tq.QuantumDevice, wires, params=None):
+def s(q_device: tq.QuantumDevice, wires):
     matrix = torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE)
     gate_wrapper(q_device, matrix, wires)
 
 
-def t(q_device: tq.QuantumDevice, wires, params=None):
+def t(q_device: tq.QuantumDevice, wires):
     matrix = torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]],
                           dtype=C_DTYPE)
     gate_wrapper(q_device, matrix, wires)
