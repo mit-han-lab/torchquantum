@@ -1,13 +1,14 @@
-import functools
-import math
 import torch
 import torch.nn as nn
 import pytorch_quantum as tq
 import pytorch_quantum.functional as tqf
 import numpy as np
+import logging
 
 from abc import ABCMeta
-from .macro import C_DTYPE, F_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+from .macro import F_DTYPE, INV_SQRT2
+
+logger = logging.getLogger()
 
 
 class Operator(nn.Module):
@@ -57,10 +58,13 @@ class Operator(nn.Module):
         return self.matrix
 
     def forward(self, q_device: tq.QuantumDevice, wires, params=None):
-        assert self.name in self.fixed_ops or \
-               self.trainable ^ (params is not None), \
-               f"Parameterized gate either has its own parameters or " \
-               f"has input as parameters"
+        try:
+            assert self.name in self.fixed_ops or \
+                   self.has_params ^ (params is not None)
+        except AssertionError as err:
+            logger.exception(f"Parameterized gate either has its "
+                             f"own parameters or has input as parameters")
+            raise err
 
         if params is not None:
             self.params = params
@@ -78,12 +82,24 @@ class Observable(Operator, metaclass=ABCMeta):
 
 
 class Operation(Operator, metaclass=ABCMeta):
-    def __init__(self, trainable: bool = False):
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None):
         super().__init__()
+
+        try:
+            assert not (trainable and not has_params)
+        except AssertionError:
+            has_params = True
+            logger.warning(f"Module must have parameters to be trainable; "
+                           f"Switched 'has_params' to True.")
+
+        self.has_params = has_params
         self.trainable = trainable
-        if self.trainable:
-            self.params = self.build_params()
-            self.reset_params()
+        if self.has_params:
+            self.params = self.build_params(trainable=self.trainable)
+            self.reset_params(init_params)
 
     @property
     def matrix(self):
@@ -183,21 +199,32 @@ class RX(Operation, metaclass=ABCMeta):
     num_wires = 1
     func = staticmethod(tqf.rx)
 
-    def __init__(self, trainable: bool = False):
-        super().__init__(trainable=trainable)
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None):
+        super().__init__(
+            has_params=has_params,
+            trainable=trainable,
+            init_params=init_params
+        )
 
     @classmethod
     def _matrix(cls, params):
         return tqf.rx_matrix(params)
 
-    def build_params(self):
-        parameters = nn.Parameter(torch.empty([1, self.num_params], dtype=
-                                              F_DTYPE))
+    def build_params(self, trainable):
+        parameters = nn.Parameter(torch.empty([1, self.num_params],
+                                              dtype=F_DTYPE))
+        parameters.requires_grad = True if trainable else False
         self.register_parameter('rx_theta', parameters)
         return parameters
 
-    def reset_params(self):
-        torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+    def reset_params(self, init_params=None):
+        if init_params is not None:
+            torch.nn.init.constant_(self.params, init_params)
+        else:
+            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
 
 class RY(Operation, metaclass=ABCMeta):
@@ -205,21 +232,32 @@ class RY(Operation, metaclass=ABCMeta):
     num_wires = 1
     func = staticmethod(tqf.ry)
 
-    def __init__(self, trainable: bool = False):
-        super().__init__(trainable=trainable)
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None):
+        super().__init__(
+            has_params=has_params,
+            trainable=trainable,
+            init_params=init_params
+        )
 
     @classmethod
     def _matrix(cls, params):
         return tqf.ry_matrix(params)
 
-    def build_params(self):
+    def build_params(self, trainable):
         parameters = nn.Parameter(torch.empty([1, self.num_params],
                                               dtype=F_DTYPE))
+        parameters.requires_grad = True if trainable else False
         self.register_parameter('ry_theta', parameters)
         return parameters
 
-    def reset_params(self):
-        torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+    def reset_params(self, init_params=None):
+        if init_params is not None:
+            torch.nn.init.constant_(self.params, init_params)
+        else:
+            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
 
 class RZ(Operation, metaclass=ABCMeta):
@@ -227,19 +265,29 @@ class RZ(Operation, metaclass=ABCMeta):
     num_wires = 1
     func = staticmethod(tqf.rz)
 
-    def __init__(self, trainable: bool = False):
-        super().__init__(trainable=trainable)
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None):
+        super().__init__(
+            has_params=has_params,
+            trainable=trainable,
+            init_params=init_params
+        )
 
     @classmethod
     def _matrix(cls, params):
         return tqf.rz_matrix(params)
 
-    def build_params(self):
+    def build_params(self, trainable):
         parameters = nn.Parameter(torch.empty([1, self.num_params],
                                               dtype=F_DTYPE))
+        parameters.requires_grad = True if trainable else False
         self.register_parameter('rz_theta', parameters)
         return parameters
 
-    def reset_params(self):
-        torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
-
+    def reset_params(self, init_params=None):
+        if init_params is not None:
+            torch.nn.init.constant_(self.params, init_params)
+        else:
+            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)

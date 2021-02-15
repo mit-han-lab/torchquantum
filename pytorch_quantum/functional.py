@@ -1,8 +1,11 @@
 import functools
 import torch
+import logging
 import pytorch_quantum as tq
 
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+
+logger = logging.getLogger()
 
 
 def apply_unitary_einsum(state, mat, wires):
@@ -14,7 +17,13 @@ def apply_unitary_einsum(state, mat, wires):
         is_batch_unitary = True
         bsz = mat.shape[0]
         shape_extension = [bsz]
-        assert state.shape[0] == bsz
+        try:
+            assert state.shape[0] == bsz
+        except AssertionError as err:
+            logger.exception(f"Batch size of Quantum Device must be the same "
+                             f"with that of gate unitary matrix")
+            raise err
+
     else:
         is_batch_unitary = False
         shape_extension = []
@@ -42,9 +51,13 @@ def apply_unitary_einsum(state, mat, wires):
         state_indices,
     )
 
-    # cannot support too many qubits...
-    assert ABC[-1] not in state_indices + new_state_indices + new_indices \
+    try:
+        # cannot support too many qubits...
+        assert ABC[-1] not in state_indices + new_state_indices + new_indices \
            + affected_indices
+    except AssertionError as err:
+        logger.exception(f"Cannot support too many qubit.")
+        raise err
 
     state_indices = ABC[-1] + state_indices
     new_state_indices = ABC[-1] + new_state_indices

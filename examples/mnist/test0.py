@@ -1,6 +1,7 @@
 import pytorch_quantum as tq
 import pytorch_quantum.functional as tqf
 
+import logging
 import argparse
 import torch
 import torch.nn as nn
@@ -11,6 +12,11 @@ from torch.optim.lr_scheduler import StepLR
 import numpy as np
 from tqdm import tqdm
 import pdb
+
+logging.basicConfig(
+    format='%(asctime)s - %(process)d - %(levelname)s - %(message)s',
+    datefmt='%d-%b-%y %H:%M:%S',
+    level=logging.DEBUG)
 
 
 class TrainableRxAll(tq.QuantumModule):
@@ -72,6 +78,9 @@ class Net(nn.Module):
         self.q_device0 = tq.QuantumDevice(n_wire=10)
         self.q_layer0 = TrainableRxAll(n_gate=10)
         self.q_layer1 = RxAll(n_gate=10)
+        self.q_layer2 = tq.RX(has_params=True,
+                              trainable=False,
+                              init_params=-np.pi / 4)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -91,6 +100,7 @@ class Net(nn.Module):
         self.q_layer0(self.q_device0)
         self.q_layer1(x, self.q_device0)
         tqf.rx(self.q_device0, 1, x[:, 1])
+        self.q_layer2(self.q_device0, wires=5)
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliZ()] * 10)
 
@@ -171,6 +181,7 @@ def main():
     # use_cuda = False
 
     torch.manual_seed(args.seed)
+    logging.info(f"setting device!")
 
     device = torch.device("cuda" if use_cuda else "cpu")
 
