@@ -105,6 +105,9 @@ class Net(nn.Module):
                                  init_params=[-np.pi / 4,
                                               np.pi / 4,
                                               np.pi / 2])
+        self.q_layer13 = tq.U1(has_params=True,
+                               trainable=False,
+                               init_params=np.pi/7)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -158,6 +161,8 @@ class Net(nn.Module):
         self.q_layer11(self.q_device0, wires=[4, 5])
         self.q_layer12(self.q_device0, wires=[5, 6])
         tqf.crot(self.q_device0, wires=[7, 8], params=x[:, 5:8])
+        self.q_layer13(self.q_device0, wires=1)
+        tqf.u1(self.q_device0, wires=2, params=x[:, 9])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 

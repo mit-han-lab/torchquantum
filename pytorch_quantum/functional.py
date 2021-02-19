@@ -258,6 +258,20 @@ def crot_matrix(params):
     return matrix.squeeze(0)
 
 
+def u1_matrix(params):
+    phi = params.type(C_DTYPE)
+    p = torch.exp(1j * phi)
+
+    return torch.stack([
+        torch.cat([
+            torch.ones(p.shape, device=params.device),
+            torch.zeros(p.shape, device=params.device)], dim=-1),
+        torch.cat([
+            torch.zeros(p.shape, device=params.device),
+            p], dim=-1)],
+        dim=-1).squeeze(0)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -310,6 +324,7 @@ mat_dict = {
     'cry': cry_matrix,
     'crz': crz_matrix,
     'crot': crot_matrix,
+    'u1': u1_matrix
 }
 
 
@@ -336,6 +351,7 @@ crx = partial(gate_wrapper, mat_dict['crx'])
 cry = partial(gate_wrapper, mat_dict['cry'])
 crz = partial(gate_wrapper, mat_dict['crz'])
 crot = partial(gate_wrapper, mat_dict['crot'])
+u1 = partial(gate_wrapper, mat_dict['u1'])
 
 
 x = paulix

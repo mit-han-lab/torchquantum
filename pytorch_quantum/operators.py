@@ -58,7 +58,8 @@ class Operator(nn.Module):
         'CRX',
         'CRY',
         'CRZ',
-        'CRot'
+        'CRot',
+        'U1'
     ]
 
     @property
@@ -496,3 +497,14 @@ class CRot(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.crot_matrix(params)
+
+
+class U1(DiagonalOperation, metaclass=ABCMeta):
+    # U1 is the same as phaseshift
+    num_params = 1
+    num_wires = 1
+    func = staticmethod(tqf.u1)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.u1_matrix(params)
