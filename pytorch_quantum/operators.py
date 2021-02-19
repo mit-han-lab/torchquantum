@@ -5,11 +5,30 @@ import pytorch_quantum.functional as tqf
 import numpy as np
 import logging
 
+from enum import IntEnum
 from pytorch_quantum.functional import mat_dict
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE
 
 logger = logging.getLogger()
+
+
+class WiresEnum(IntEnum):
+    """Integer enumeration class
+    to represent the number of wires
+    an operation acts on"""
+
+    AnyWires = -1
+    AllWires = 0
+
+
+AllWires = WiresEnum.AllWires
+"""IntEnum: An enumeration which represents all wires in the
+subsystem. It is equivalent to an integer with value 0."""
+
+AnyWires = WiresEnum.AnyWires
+"""IntEnum: An enumeration which represents any wires in the
+subsystem. It is equivalent to an integer with value -1."""
 
 
 class Operator(nn.Module):
@@ -33,7 +52,8 @@ class Operator(nn.Module):
         'RY',
         'RZ',
         'PhaseShift',
-        'Rot'
+        'Rot',
+        'MultiRZ'
     ]
 
     @property
@@ -48,6 +68,7 @@ class Operator(nn.Module):
     def __init__(self):
         super().__init__()
         self.params = None
+        self.n_wires = None
         self._name = self.__class__.__name__
 
     @classmethod
@@ -83,9 +104,16 @@ class Operator(nn.Module):
 
         # non-parameterized gate
         if self.params is None:
-            self.func(q_device, wires)
+            if self.n_wires is None:
+                self.func(q_device, wires)
+            else:
+                self.func(q_device, wires, n_wires=self.n_wires)
         else:
-            self.func(q_device, wires, self.params)
+            if self.n_wires is None:
+                self.func(q_device, wires, params=self.params)
+            else:
+                self.func(q_device, wires, params=self.params,
+                          n_wires=self.n_wires)
 
 
 class Observable(Operator, metaclass=ABCMeta):
@@ -101,7 +129,10 @@ class Operation(Operator, metaclass=ABCMeta):
     def __init__(self,
                  has_params: bool = False,
                  trainable: bool = False,
-                 init_params=None):
+                 init_params=None,
+                 n_wires=None):
+        # n_wires is used in gates that can be applied to arbitrary number
+        # of qubits such as MultiRZ
         super().__init__()
 
         try:
@@ -116,6 +147,7 @@ class Operation(Operator, metaclass=ABCMeta):
         if self.has_params:
             self.params = self.build_params(trainable=self.trainable)
             self.reset_params(init_params)
+        self.n_wires = n_wires
 
     @property
     def matrix(self):
@@ -405,3 +437,13 @@ class Rot(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.rot_matrix(params)
+
+
+class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = AnyWires
+    func = staticmethod(tqf.multirz)
+
+    @classmethod
+    def _matrix(cls, params, n_wires):
+        return tqf.multirz_matrix(params, n_wires)

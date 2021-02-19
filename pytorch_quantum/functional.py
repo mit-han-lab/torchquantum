@@ -7,6 +7,7 @@ import numpy as np
 from functools import partial
 from typing import Callable
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+from .utils import pauli_eigs, diag
 
 logger = logging.getLogger()
 
@@ -77,11 +78,17 @@ def apply_unitary_einsum(state, mat, wires):
     return new_state
 
 
-def gate_wrapper(mat, q_device: tq.QuantumDevice, wires, params=None):
+def gate_wrapper(mat, q_device: tq.QuantumDevice, wires, params=None,
+                 n_wires=None):
 
     if isinstance(mat, Callable):
         params = params.unsqueeze(-1) if params.dim() == 1 else params
-        matrix = mat(params)
+        if n_wires is None:
+            matrix = mat(params)
+        else:
+            # this is for gates that can be applied to arbitrary numbers of
+            # qubits such as multirz
+            matrix = mat(params, n_wires)
     else:
         matrix = mat
 
@@ -164,6 +171,19 @@ def rot_matrix(params):
         dim=-1).squeeze(0)
 
 
+def multirz_eigvals(params, n_wires):
+    theta = params.type(C_DTYPE)
+    return torch.exp(-1j * theta / 2 * torch.tensor(pauli_eigs(n_wires)).to(
+        params))
+
+
+def multirz_matrix(params, n_wires):
+    # torch diagonal not available for complex number
+    eigvals = multirz_eigvals(params, n_wires)
+    dia = diag(eigvals)
+    return dia.squeeze(0)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -210,7 +230,8 @@ mat_dict = {
     'ry': ry_matrix,
     'rz': rz_matrix,
     'phaseshift': phaseshift_matrix,
-    'rot': rot_matrix
+    'rot': rot_matrix,
+    'multirz': multirz_matrix
 }
 
 
@@ -232,6 +253,8 @@ cswap = partial(gate_wrapper, mat_dict['cswap'])
 toffoli = partial(gate_wrapper, mat_dict['toffoli'])
 phaseshift = partial(gate_wrapper, mat_dict['phaseshift'])
 rot = partial(gate_wrapper, mat_dict['rot'])
+multirz = partial(gate_wrapper, mat_dict['multirz'])
+
 
 x = paulix
 y = pauliy
