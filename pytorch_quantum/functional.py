@@ -236,6 +236,28 @@ def crz_matrix(params):
     return matrix.squeeze(0)
 
 
+def crot_matrix(params):
+    phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    theta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+    omega = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+
+    matrix[:, 2, 2] = (torch.exp(-0.5j * (phi + omega)) * co)[:, 0]
+    matrix[:, 2, 3] = (-torch.exp(0.5j * (phi - omega)) * si)[:, 0]
+    matrix[:, 3, 2] = (torch.exp(-0.5j * (phi - omega)) * si)[:, 0]
+    matrix[:, 3, 3] = (torch.exp(0.5j * (phi + omega)) * co)[:, 0]
+
+    return matrix.squeeze(0)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -286,7 +308,8 @@ mat_dict = {
     'multirz': multirz_matrix,
     'crx': crx_matrix,
     'cry': cry_matrix,
-    'crz': crz_matrix
+    'crz': crz_matrix,
+    'crot': crot_matrix,
 }
 
 
@@ -312,6 +335,8 @@ multirz = partial(gate_wrapper, mat_dict['multirz'])
 crx = partial(gate_wrapper, mat_dict['crx'])
 cry = partial(gate_wrapper, mat_dict['cry'])
 crz = partial(gate_wrapper, mat_dict['crz'])
+crot = partial(gate_wrapper, mat_dict['crot'])
+
 
 x = paulix
 y = pauliy

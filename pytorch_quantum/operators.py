@@ -47,13 +47,18 @@ class Operator(nn.Module):
         'CSWAP',
         'Toffoli'
     ]
+
     parameterized_ops = [
         'RX',
         'RY',
         'RZ',
         'PhaseShift',
         'Rot',
-        'MultiRZ'
+        'MultiRZ',
+        'CRX',
+        'CRY',
+        'CRZ',
+        'CRot'
     ]
 
     @property
@@ -173,7 +178,11 @@ class Operation(Operator, metaclass=ABCMeta):
 
     def reset_params(self, init_params=None):
         if init_params is not None:
-            torch.nn.init.constant_(self.params, init_params)
+            if isinstance(init_params, list):
+                for k, init_param in enumerate(init_params):
+                    torch.nn.init.constant_(self.params[:, k], init_param)
+            else:
+                torch.nn.init.constant_(self.params, init_params)
         else:
             torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
 
@@ -478,3 +487,12 @@ class CRZ(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return tqf.crz_matrix(params)
 
+
+class CRot(Operation, metaclass=ABCMeta):
+    num_params = 3
+    num_wires = 2
+    func = staticmethod(tqf.crot)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.crot_matrix(params)
