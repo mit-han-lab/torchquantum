@@ -530,3 +530,21 @@ class U3(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.u3_matrix(params)
+
+
+class QubitUnitary(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = AnyWires
+    func = staticmethod(tqf.qubitunitary)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.qubitunitary(params)
+
+    def build_params(self, trainable):
+        return None
+
+    def reset_params(self, init_params=None):
+        self.params = torch.tensor(init_params, dtype=C_DTYPE)
+        self.register_buffer(f"{self.name}_unitary", self.params)
+

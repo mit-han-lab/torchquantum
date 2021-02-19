@@ -113,6 +113,9 @@ class Net(nn.Module):
                                init_params=[np.pi/7, np.pi/8.8])
         self.q_layer15 = tq.U3(has_params=True,
                                trainable=True)
+        self.q_layer16 = tq.QubitUnitary(has_params=True,
+                                         trainable=False,
+                                         init_params=[[1, 0], [0, 1]])
 
     def forward(self, x):
         x = self.conv1(x)
@@ -172,6 +175,12 @@ class Net(nn.Module):
         tqf.u2(self.q_device0, wires=4, params=x[:, 0:2])
         self.q_layer15(self.q_device0, wires=5)
         tqf.u3(self.q_device0, wires=5, params=x[: 4:7])
+        self.q_layer16(self.q_device0, wires=3)
+        tqf.qubitunitary(self.q_device0, wires=[1, 2], params=[[1, 0, 0, 0],
+                                                               [0, 1, 0, 0],
+                                                               [0, 0, 0, 1],
+                                                               [0, 0, 1, 0]])
+
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 

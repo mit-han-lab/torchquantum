@@ -82,6 +82,9 @@ def gate_wrapper(mat, q_device: tq.QuantumDevice, wires, params=None,
                  n_wires=None):
 
     if isinstance(mat, Callable):
+        if not isinstance(params, torch.Tensor):
+            # this is for qubitunitary gate
+            params = torch.tensor(params, dtype=C_DTYPE)
         params = params.unsqueeze(-1) if params.dim() == 1 else params
         if n_wires is None:
             matrix = mat(params)
@@ -304,6 +307,24 @@ def u3_matrix(params):
         dim=-1).squeeze(0)
 
 
+def qubitunitary_matrix(params):
+    matrix = params
+    try:
+        assert matrix.shape[0] == matrix.shape[1]
+    except AssertionError as err:
+        logger.exception(f"Operator must be a square matrix.")
+        raise err
+
+    try:
+        U = params.cpu().detach().numpy()
+        assert np.allclose(U @ U.conj().T, np.identity(U.shape[0]))
+    except AssertionError as err:
+        logger.exception(f"Operator must be unitary.")
+        raise err
+
+    return matrix
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -359,6 +380,7 @@ mat_dict = {
     'u1': u1_matrix,
     'u2': u2_matrix,
     'u3': u3_matrix,
+    'qubitunitary': qubitunitary_matrix
 }
 
 
@@ -388,6 +410,7 @@ crot = partial(gate_wrapper, mat_dict['crot'])
 u1 = partial(gate_wrapper, mat_dict['u1'])
 u2 = partial(gate_wrapper, mat_dict['u2'])
 u3 = partial(gate_wrapper, mat_dict['u3'])
+qubitunitary = partial(gate_wrapper, mat_dict['qubitunitary'])
 
 
 x = paulix
