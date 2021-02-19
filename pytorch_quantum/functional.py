@@ -184,6 +184,24 @@ def multirz_matrix(params, n_wires):
     return dia.squeeze(0)
 
 
+def crx_matrix(params):
+    theta = params.type(C_DTYPE)
+    co = torch.cos(theta / 2)
+    jsi = 1j * torch.sin(-theta / 2)
+
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE
+                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+    matrix[:, 2, 2] = co[:, 0]
+    matrix[:, 2, 3] = jsi[:, 0]
+    matrix[:, 3, 2] = jsi[:, 0]
+    matrix[:, 3, 3] = co[:, 0]
+
+    return matrix.squeeze(0)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -231,7 +249,8 @@ mat_dict = {
     'rz': rz_matrix,
     'phaseshift': phaseshift_matrix,
     'rot': rot_matrix,
-    'multirz': multirz_matrix
+    'multirz': multirz_matrix,
+    'crx': crx_matrix
 }
 
 
@@ -254,7 +273,7 @@ toffoli = partial(gate_wrapper, mat_dict['toffoli'])
 phaseshift = partial(gate_wrapper, mat_dict['phaseshift'])
 rot = partial(gate_wrapper, mat_dict['rot'])
 multirz = partial(gate_wrapper, mat_dict['multirz'])
-
+crx = partial(gate_wrapper, mat_dict['crx'])
 
 x = paulix
 y = pauliy

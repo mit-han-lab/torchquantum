@@ -447,3 +447,13 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params, n_wires):
         return tqf.multirz_matrix(params, n_wires)
+
+
+class CRX(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.crx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.crx_matrix(params)
