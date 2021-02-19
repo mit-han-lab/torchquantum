@@ -96,6 +96,10 @@ class Net(nn.Module):
                                    n_wires=5)
         self.q_layer9 = tq.CRX(has_params=True,
                                trainable=True)
+        self.q_layer10 = tq.CRY(has_params=True,
+                                trainable=True)
+        self.q_layer11 = tq.CRZ(has_params=True,
+                                trainable=True)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -143,6 +147,10 @@ class Net(nn.Module):
                     n_wires=5)
         tqf.crx(self.q_device0, wires=[0, 1], params=x[:, 6])
         self.q_layer9(self.q_device0, wires=[4, 5])
+        tqf.cry(self.q_device0, wires=[0, 1], params=x[:, 6])
+        self.q_layer10(self.q_device0, wires=[4, 5])
+        tqf.crz(self.q_device0, wires=[0, 1], params=x[:, 6])
+        self.q_layer11(self.q_device0, wires=[4, 5])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 

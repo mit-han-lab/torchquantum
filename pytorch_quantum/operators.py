@@ -457,3 +457,24 @@ class CRX(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.crx_matrix(params)
+
+
+class CRY(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.cry)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.cry_matrix(params)
+
+
+class CRZ(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.crz)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.crz_matrix(params)
+

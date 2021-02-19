@@ -132,9 +132,10 @@ def rz_matrix(params):
     theta = params.type(C_DTYPE)
     p = torch.exp(-0.5j * theta)
 
-    return torch.stack([torch.cat([p, torch.zeros(p.shape, device=p.device)],
+    return torch.stack([torch.cat([p, torch.zeros(p.shape,
+                                                  device=params.device)],
                                   dim=-1),
-                        torch.cat([torch.zeros(p.shape, device=p.device),
+                        torch.cat([torch.zeros(p.shape, device=params.device),
                                    torch.conj(p)], dim=-1)],
                        dim=-1).squeeze(0)
 
@@ -145,10 +146,10 @@ def phaseshift_matrix(params):
 
     return torch.stack([
         torch.cat([
-            torch.ones(p.shape, device=p.device),
-            torch.zeros(p.shape, device=p.device)], dim=-1),
+            torch.ones(p.shape, device=params.device),
+            torch.zeros(p.shape, device=params.device)], dim=-1),
         torch.cat([
-            torch.zeros(p.shape, device=p.device),
+            torch.zeros(p.shape, device=params.device),
             p], dim=-1)],
         dim=-1).squeeze(0)
 
@@ -192,12 +193,45 @@ def crx_matrix(params):
     matrix = torch.tensor([[1, 0, 0, 0],
                            [0, 1, 0, 0],
                            [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
                           ).unsqueeze(0).repeat(co.shape[0], 1, 1)
     matrix[:, 2, 2] = co[:, 0]
     matrix[:, 2, 3] = jsi[:, 0]
     matrix[:, 3, 2] = jsi[:, 0]
     matrix[:, 3, 3] = co[:, 0]
+
+    return matrix.squeeze(0)
+
+
+def cry_matrix(params):
+    theta = params.type(C_DTYPE)
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+    matrix[:, 2, 2] = co[:, 0]
+    matrix[:, 2, 3] = -si[:, 0]
+    matrix[:, 3, 2] = si[:, 0]
+    matrix[:, 3, 3] = co[:, 0]
+
+    return matrix.squeeze(0)
+
+
+def crz_matrix(params):
+    theta = params.type(C_DTYPE)
+    p = torch.exp(-0.5j * theta)
+
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(p.shape[0], 1, 1)
+    matrix[:, 2, 2] = p[:, 0]
+    matrix[:, 3, 3] = torch.conj(p[:, 0])
 
     return matrix.squeeze(0)
 
@@ -250,7 +284,9 @@ mat_dict = {
     'phaseshift': phaseshift_matrix,
     'rot': rot_matrix,
     'multirz': multirz_matrix,
-    'crx': crx_matrix
+    'crx': crx_matrix,
+    'cry': cry_matrix,
+    'crz': crz_matrix
 }
 
 
@@ -274,6 +310,8 @@ phaseshift = partial(gate_wrapper, mat_dict['phaseshift'])
 rot = partial(gate_wrapper, mat_dict['rot'])
 multirz = partial(gate_wrapper, mat_dict['multirz'])
 crx = partial(gate_wrapper, mat_dict['crx'])
+cry = partial(gate_wrapper, mat_dict['cry'])
+crz = partial(gate_wrapper, mat_dict['crz'])
 
 x = paulix
 y = pauliy
