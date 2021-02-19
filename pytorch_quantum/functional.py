@@ -286,6 +286,24 @@ def u2_matrix(params):
         dim=-1).squeeze(0)
 
 
+def u3_matrix(params):
+    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+    lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    return INV_SQRT2 * torch.stack([
+        torch.cat([
+            co,
+            -si * torch.exp(1j * lam)], dim=-1),
+        torch.cat([
+            si * torch.exp(1j * phi),
+            co * torch.exp(1j * (phi + lam))], dim=-1)],
+        dim=-1).squeeze(0)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -339,7 +357,8 @@ mat_dict = {
     'crz': crz_matrix,
     'crot': crot_matrix,
     'u1': u1_matrix,
-    'u2': u2_matrix
+    'u2': u2_matrix,
+    'u3': u3_matrix,
 }
 
 
@@ -368,6 +387,7 @@ crz = partial(gate_wrapper, mat_dict['crz'])
 crot = partial(gate_wrapper, mat_dict['crot'])
 u1 = partial(gate_wrapper, mat_dict['u1'])
 u2 = partial(gate_wrapper, mat_dict['u2'])
+u3 = partial(gate_wrapper, mat_dict['u3'])
 
 
 x = paulix

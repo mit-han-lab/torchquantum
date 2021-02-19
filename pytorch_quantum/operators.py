@@ -45,7 +45,7 @@ class Operator(nn.Module):
         'CY',
         'SWAP',
         'CSWAP',
-        'Toffoli'
+        'Toffoli',
     ]
 
     parameterized_ops = [
@@ -59,7 +59,9 @@ class Operator(nn.Module):
         'CRY',
         'CRZ',
         'CRot',
-        'U1'
+        'U1',
+        'U2',
+        'U3',
     ]
 
     @property
@@ -518,3 +520,13 @@ class U2(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.u2_matrix(params)
+
+
+class U3(Operation, metaclass=ABCMeta):
+    num_params = 3
+    num_wires = 1
+    func = staticmethod(tqf.u3)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.u3_matrix(params)
