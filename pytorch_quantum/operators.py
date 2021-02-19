@@ -508,3 +508,13 @@ class U1(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.u1_matrix(params)
+
+
+class U2(Operation, metaclass=ABCMeta):
+    num_params = 2
+    num_wires = 1
+    func = staticmethod(tqf.u2)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.u2_matrix(params)
