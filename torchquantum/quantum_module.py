@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import pytorch_quantum as tq
+import torchquantum as tq
 
 # class QuantumCircuit(object):
 #     """Quantum circuit description

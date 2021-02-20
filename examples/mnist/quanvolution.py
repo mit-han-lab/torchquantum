@@ -1,5 +1,5 @@
-import pytorch_quantum as tq
-import pytorch_quantum.functional as tqf
+import torchquantum as tq
+import torchquantum.functional as tqf
 
 import logging
 import argparse

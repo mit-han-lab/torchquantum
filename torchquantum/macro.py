@@ -2,7 +2,7 @@ import functools
 import math
 import torch
 import torch.nn as nn
-import pytorch_quantum as tq
+import torchquantum as tq
 import numpy as np
 
 from string import ascii_lowercase

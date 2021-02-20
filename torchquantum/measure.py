@@ -1,7 +1,7 @@
 import functools
 import torch
 import torch.nn as nn
-import pytorch_quantum as tq
+import torchquantum as tq
 import numpy as np
 from typing import Union, List
 

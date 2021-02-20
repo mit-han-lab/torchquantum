@@ -1,7 +1,7 @@
 import functools
 import torch
 import logging
-import pytorch_quantum as tq
+import torchquantum as tq
 import numpy as np
 
 from functools import partial

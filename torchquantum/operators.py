@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
-import pytorch_quantum as tq
-import pytorch_quantum.functional as tqf
+import torchquantum as tq
+import torchquantum.functional as tqf
 import numpy as np
 import logging
 
 from enum import IntEnum
-from pytorch_quantum.functional import mat_dict
+from torchquantum.functional import mat_dict
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE
 
