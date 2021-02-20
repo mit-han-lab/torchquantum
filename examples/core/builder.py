@@ -72,7 +72,7 @@ def make_scheduler(optimizer: Optimizer) -> Scheduler:
             optimizer, lr_lambda=lambda epoch: 1)
     elif configs.scheduler.name == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=configs.n_epochs)
+            optimizer, T_max=configs.run.n_epochs)
     else:
         raise NotImplementedError(configs.scheduler.name)
 

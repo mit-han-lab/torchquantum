@@ -1,7 +1,7 @@
 import argparse
 import sys
 import pdb
-
+import numpy as np
 import torch
 import torch.backends.cudnn
 import torch.cuda
@@ -31,13 +31,19 @@ def main() -> None:
     configs.load(args.config, recursive=True)
     configs.update(opts)
 
-    if configs.pdb:
+    if configs.debug.pdb:
         pdb.set_trace()
 
-    if configs.device == 'gpu':
+    if configs.debug.set_seed:
+        torch.manual_seed(configs.debug.seed)
+        np.random.seed(configs.debug.seed)
+
+    if configs.run.device == 'gpu':
         device = torch.device('cuda')
-    elif configs.device == 'cpu':
+    elif configs.run.device == 'cpu':
         device = torch.device('cpu')
+    else:
+        raise ValueError(configs.run.device)
 
     if isinstance(configs.optimizer.lr, str):
         configs.optimizer.lr = eval(configs.optimizer.lr)
@@ -56,9 +62,9 @@ def main() -> None:
         sampler = torch.utils.data.RandomSampler(dataset[split])
         dataflow[split] = torch.utils.data.DataLoader(
             dataset[split],
-            batch_size=configs.bsz,
+            batch_size=configs.run.bsz,
             sampler=sampler,
-            num_workers=configs.workers_per_gpu,
+            num_workers=configs.run.workers_per_gpu,
             pin_memory=True)
     model = builder.make_model()
     model.to(device)
@@ -78,7 +84,7 @@ def main() -> None:
                        scheduler=scheduler)
     trainer.train_with_defaults(
         dataflow['train'],
-        num_epochs=configs.n_epochs,
+        num_epochs=configs.run.n_epochs,
         callbacks=[
             # SaverRestore(),
             InferenceRunner(

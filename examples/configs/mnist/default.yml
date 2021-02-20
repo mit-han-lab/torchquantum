@@ -17,9 +17,13 @@ optimizer:
 scheduler:
   name: constant
 
-n_epochs: 100
-bsz: 64
-workers_per_gpu: 8
+run:
+  n_epochs: 100
+  bsz: 64
+  workers_per_gpu: 8
+  device: gpu
 
-pdb: False
-device: gpu
+debug:
+  pdb: False
+  set_seed: False
+  seed: 42
