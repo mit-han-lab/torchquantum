@@ -12,6 +12,42 @@ from .utils import pauli_eigs, diag
 logger = logging.getLogger()
 
 
+__all__ = [
+    'apply_unitary_einsum',
+    'mat_dict',
+    'hadamard',
+    'paulix',
+    'pauliy',
+    'pauliz',
+    's',
+    't',
+    'sx',
+    'cnot',
+    'cz',
+    'cy',
+    'rx',
+    'ry',
+    'rz',
+    'swap',
+    'cswap',
+    'toffoli',
+    'phaseshift',
+    'rot',
+    'multirz',
+    'crx',
+    'cry',
+    'crz',
+    'crot',
+    'u1',
+    'u2',
+    'u3',
+    'qubitunitary',
+    'x',
+    'y',
+    'z',
+]
+
+
 def apply_unitary_einsum(state, mat, wires):
     device_wires = wires
 

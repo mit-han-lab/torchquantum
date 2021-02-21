@@ -13,6 +13,41 @@ from .macro import C_DTYPE, F_DTYPE
 logger = logging.getLogger()
 
 
+__all__ = [
+    'Operator',
+    'Operation',
+    'DiagonalOperation',
+    'Observable',
+    'Hadamard',
+    'PauliX',
+    'PauliY',
+    'PauliZ',
+    'S',
+    'T',
+    'SX',
+    'CNOT',
+    'CZ',
+    'CY',
+    'RX',
+    'RY',
+    'RZ',
+    'SWAP',
+    'CSWAP',
+    'Toffoli',
+    'PhaseShift',
+    'Rot',
+    'MultiRZ',
+    'CRX',
+    'CRY',
+    'CRZ',
+    'CRot',
+    'U1',
+    'U2',
+    'U3',
+    'QubitUnitary'
+]
+
+
 class WiresEnum(IntEnum):
     """Integer enumeration class
     to represent the number of wires
@@ -547,4 +582,3 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
     def reset_params(self, init_params=None):
         self.params = torch.tensor(init_params, dtype=C_DTYPE)
         self.register_buffer(f"{self.name}_unitary", self.params)
-
