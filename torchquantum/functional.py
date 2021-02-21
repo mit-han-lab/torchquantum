@@ -47,7 +47,6 @@ __all__ = [
 
 
 def apply_unitary_einsum(state, mat, wires):
-    logger.info('apply unitary')
     device_wires = wires
 
     total_wires = len(state.shape) - 1

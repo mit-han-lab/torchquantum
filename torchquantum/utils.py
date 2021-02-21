@@ -1,9 +1,9 @@
-import functools
 import numpy as np
 import torch
 
+
 def pauli_eigs(n):
-    r"""Eigenvalues for :math:`A^{\otimes n}`, where :math:`A` is
+    r"""Eigenvalues for :math:`A^{\o times n}`, where :math:`A` is
     Pauli operator, or shares its eigenvalues.
 
     As an example if n==2, then the eigenvalues of a tensor product consisting
