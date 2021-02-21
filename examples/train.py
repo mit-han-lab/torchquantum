@@ -26,12 +26,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
     parser.add_argument('--run-dir', metavar='DIR', help='run directory')
+    parser.add_argument('--pdb', action='store_true', help='pdb')
     args, opts = parser.parse_known_args()
 
     configs.load(args.config, recursive=True)
     configs.update(opts)
 
-    if configs.debug.pdb:
+    if configs.debug.pdb or args.pdb:
         pdb.set_trace()
 
     if configs.debug.set_seed:
