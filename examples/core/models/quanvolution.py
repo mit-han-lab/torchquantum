@@ -1,98 +1,9 @@
 import torchquantum as tq
-import torchquantum.functional as tqf
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
-from torchpack.utils.config import configs
-
-__all__ = ['QModel']
-
-
-class TrainableOpAll(tq.QuantumModule):
-    """Rotation rx on all qubits
-    The rotation angle is a parameter of each rotation gate
-    One potential optimization is to compute the unitary of all gates
-    together.
-    """
-    def __init__(self, n_gate: int, op: tq.Operation):
-        super().__init__()
-        self.n_gate = n_gate
-        self.gate_all = nn.ModuleList()
-        for k in range(self.n_gate):
-            self.gate_all.append(op(
-                has_params=True,
-                trainable=True))
-
-    def forward(self, q_device: tq.QuantumDevice):
-        # rx on all wires, assert the number of gate is the same as the number
-        # of wires in the device.
-        assert self.n_gate == q_device.n_wire, \
-            f"Number of rx gates ({self.n_gate}) is different from number " \
-            f"of wires ({q_device.n_wire})!"
-
-        for k in range(self.n_gate):
-            self.gate_all[k](q_device, wires=k)
-
-
-class OpAll(tq.QuantumModule):
-    """Rotation rx on all qubits
-    The rotation angle is from input activation
-    """
-    def __init__(self, n_gate: int, op: tq.Operator):
-        super().__init__()
-        self.n_gate = n_gate
-        self.gate_all = nn.ModuleList()
-        for k in range(self.n_gate):
-            self.gate_all.append(op())
-
-    def forward(self, q_device: tq.QuantumDevice, x):
-        # rx on all wires, assert the number of gate is the same as the number
-        # of wires in the device.
-        assert self.n_gate == q_device.n_wire, \
-            f"Number of rx gates ({self.n_gate}) is different from number " \
-            f"of wires ({q_device.n_wire})!"
-
-        for k in range(self.n_gate):
-            self.gate_all[k](q_device, wires=k, params=x[:, k])
-
-
-class FixedOpAll(tq.QuantumModule):
-    """Rotation rx on all qubits
-    The rotation angle is from input activation
-    """
-    def __init__(self, n_gate: int, op: tq.Operator):
-        super().__init__()
-        self.n_gate = n_gate
-        self.gate_all = nn.ModuleList()
-        for k in range(self.n_gate):
-            self.gate_all.append(op())
-
-    def forward(self, q_device: tq.QuantumDevice):
-        # rx on all wires, assert the number of gate is the same as the number
-        # of wires in the device.
-        assert self.n_gate == q_device.n_wire, \
-            f"Number of rx gates ({self.n_gate}) is different from number " \
-            f"of wires ({q_device.n_wire})!"
-
-        for k in range(self.n_gate):
-            self.gate_all[k](q_device, wires=k)
-
-
-class TwoQAll(tq.QuantumModule):
-    def __init__(self, n_gate: int, op: tq.Operator):
-        super().__init__()
-        self.n_gate = n_gate
-        self.op = op()
-
-    def forward(self, q_device: tq.QuantumDevice):
-        for k in range(self.n_gate-1):
-            self.op(q_device, wires=[k, k + 1])
-        self.op(q_device, wires=[self.n_gate-1, 0])
-
-
+__all__ = ['Quanvolution']
 
 
 class QLayer0(tq.QuantumModule):
@@ -100,25 +11,25 @@ class QLayer0(tq.QuantumModule):
         super().__init__()
         self.n_gate = 9
 
-        self.h_all0 = FixedOpAll(n_gate=9, op=tq.Hadamard)
-        self.s_all0 = FixedOpAll(n_gate=9, op=tq.S)
-        self.t_all0 = FixedOpAll(n_gate=9, op=tq.T)
+        self.h_all0 = tq.FixedOpAll(n_gate=9, op=tq.Hadamard)
+        self.s_all0 = tq.FixedOpAll(n_gate=9, op=tq.S)
+        self.t_all0 = tq.FixedOpAll(n_gate=9, op=tq.T)
 
-        self.rx_all0 = OpAll(n_gate=9, op=tq.RX)
-        self.ry_all0 = OpAll(n_gate=9, op=tq.RY)
-        self.rz_all0 = OpAll(n_gate=9, op=tq.RY)
+        self.rx_all0 = tq.ClassicalInOpAll(n_gate=9, op=tq.RX)
+        self.ry_all0 = tq.ClassicalInOpAll(n_gate=9, op=tq.RY)
+        self.rz_all0 = tq.ClassicalInOpAll(n_gate=9, op=tq.RY)
 
-        self.trainable_rx_all0 = TrainableOpAll(n_gate=9, op=tq.RX)
-        self.trainable_ry_all0 = TrainableOpAll(n_gate=9, op=tq.RY)
-        self.trainable_rz_all0 = TrainableOpAll(n_gate=9, op=tq.RZ)
-        self.trainable_rx_all1 = TrainableOpAll(n_gate=9, op=tq.RX)
-        self.trainable_ry_all1 = TrainableOpAll(n_gate=9, op=tq.RY)
-        self.trainable_rz_all1 = TrainableOpAll(n_gate=9, op=tq.RZ)
+        self.trainable_rx_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RX)
+        self.trainable_ry_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RY)
+        self.trainable_rz_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RZ)
+        self.trainable_rx_all1 = tq.TrainableOpAll(n_gate=9, op=tq.RX)
+        self.trainable_ry_all1 = tq.TrainableOpAll(n_gate=9, op=tq.RY)
+        self.trainable_rz_all1 = tq.TrainableOpAll(n_gate=9, op=tq.RZ)
 
         self.q_device0 = tq.QuantumDevice(n_wire=9)
-        self.cnot_all = TwoQAll(n_gate=9, op=tq.CNOT)
-        self.cz_all = TwoQAll(n_gate=9, op=tq.CZ)
-        self.cy_all = TwoQAll(n_gate=9, op=tq.CY)
+        self.cnot_all = tq.TwoQAll(n_gate=9, op=tq.CNOT)
+        self.cz_all = tq.TwoQAll(n_gate=9, op=tq.CZ)
+        self.cy_all = tq.TwoQAll(n_gate=9, op=tq.CY)
 
     def forward(self, x):
         self.q_device0.reset_states(x.shape[0])
@@ -157,15 +68,15 @@ class QLayer1(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.n_gate = 9
-        self.h_all0 = FixedOpAll(n_gate=9, op=tq.Hadamard)
-        self.rx_all0 = OpAll(n_gate=9, op=tq.RX)
-        self.trainable_rx_all0 = TrainableOpAll(n_gate=9, op=tq.RX)
-        self.ry_all0 = OpAll(n_gate=9, op=tq.RY)
-        self.trainable_ry_all0 = TrainableOpAll(n_gate=9, op=tq.RY)
-        self.rz_all0 = OpAll(n_gate=9, op=tq.RZ)
-        self.trainable_rz_all0 = TrainableOpAll(n_gate=9, op=tq.RZ)
+        self.h_all0 = tq.FixedOpAll(n_gate=9, op=tq.Hadamard)
+        self.rx_all0 = tq.ClassicalInOpAll(n_gate=9, op=tq.RX)
+        self.trainable_rx_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RX)
+        self.ry_all0 = tq.ClassicalInOpAll(n_gate=9, op=tq.RY)
+        self.trainable_ry_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RY)
+        self.rz_all0 = tq.ClassicalInOpAll(n_gate=9, op=tq.RZ)
+        self.trainable_rz_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RZ)
         self.q_device0 = tq.QuantumDevice(n_wire=9)
-        self.cnot_all = TwoQAll(n_gate=9, op=tq.CNOT)
+        self.cnot_all = tq.TwoQAll(n_gate=9, op=tq.CNOT)
 
     def forward(self, x):
         self.q_device0.reset_states(x.shape[0])
@@ -188,7 +99,7 @@ class QLayer1(tq.QuantumModule):
         return x
 
 
-class QModel(tq.QuantumModule):
+class Quanvolution(tq.QuantumModule):
     """
     Convolution with quantum filter
     """
@@ -206,7 +117,6 @@ class QModel(tq.QuantumModule):
     def forward(self, x):
         bsz = x.shape[0]
         x = F.max_pool2d(x, 3)
-
 
         # out0 = torch.empty([x.shape[0], 9, 26, 26]).to(x)
 
@@ -264,4 +174,3 @@ class QModel(tq.QuantumModule):
         output = F.log_softmax(x, dim=1)
 
         return output
-

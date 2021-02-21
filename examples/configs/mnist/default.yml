@@ -3,9 +3,6 @@ dataset:
   root: 'examples/data'
   train_valid_split_ratio: [0.9, 0.1]
 
-model:
-  name: q
-
 criterion:
   name: nll
 

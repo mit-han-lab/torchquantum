@@ -1,1 +1,2 @@
-from .qmodel import *
+from .quanvolution import *
+from .hybrid import *

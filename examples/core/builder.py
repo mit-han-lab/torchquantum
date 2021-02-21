@@ -24,9 +24,12 @@ def make_dataset() -> Dataset:
 
 
 def make_model() -> nn.Module:
-    if configs.model.name == 'q':
-        from .models import QModel
-        model = QModel()
+    if configs.model.name == 'quanvolution':
+        from .models import Quanvolution
+        model = Quanvolution()
+    elif configs.model.name == 'hybrid':
+        from .models import Hybrid
+        model = Hybrid()
     else:
         raise NotImplementedError(configs.model.name)
 
