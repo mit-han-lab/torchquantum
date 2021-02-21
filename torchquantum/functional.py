@@ -446,7 +446,10 @@ u2 = partial(gate_wrapper, mat_dict['u2'])
 u3 = partial(gate_wrapper, mat_dict['u3'])
 qubitunitary = partial(gate_wrapper, mat_dict['qubitunitary'])
 
-
+h = hadamard
 x = paulix
 y = pauliy
 z = pauliz
+cx = cnot
+ccnot = toffoli
+ccx = toffoli
