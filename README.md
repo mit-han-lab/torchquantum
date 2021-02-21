@@ -2,7 +2,7 @@
 A PyTorch-centric hybrid classical-quantum dynamic neural networks framework.
 
 ## News
-- v0.0.1 coming soon...
+- v0.1 coming soon.
 
 ## Features
 - Support batch mode inference and training on CPU/GPU.
@@ -23,6 +23,7 @@ A PyTorch-centric hybrid classical-quantum dynamic neural networks framework.
 
 ## Run
 MNIST training with a hybrid classical and quantum network.
+
 ```python
-python examples/mnist/test0.py
+python examples/train.py examples/configs/mnist/train/hybrid.yml
 ```
