@@ -10,11 +10,7 @@ import pdb
 import argparse
 import logging
 
-from functools import partial
-from typing import Callable
-from torchquantum.macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
-from torchquantum.utils import pauli_eigs, diag
-from torchpack.utils.logging import logger
+from torchquantum.macro import ABC, ABC_ARRAY
 from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
@@ -77,15 +73,12 @@ def apply_unitary_einsum(state, mat, wires):
     return new_state
 
 
-def apply_unitary_bmm(state, mat, wires):
+def apply_unitary_bmm(state, mat, wires, contiguous=True):
     device_wires = wires
-
-    total_wires = len(state.shape) - 1
 
     if len(mat.shape) > 2:
         is_batch_unitary = True
         bsz = mat.shape[0]
-        shape_extension = [bsz]
         try:
             assert state.shape[0] == bsz
         except AssertionError as err:
@@ -95,7 +88,6 @@ def apply_unitary_bmm(state, mat, wires):
 
     else:
         is_batch_unitary = False
-        shape_extension = []
 
     devices_dims = [x + 1 for x in device_wires]
     permute_to = list(range(state.dim()))
@@ -104,17 +96,26 @@ def apply_unitary_bmm(state, mat, wires):
     permute_to += devices_dims
     permute_back = list(np.argsort(permute_to))
     original_shape = state.shape
+    permuted = state.permute(permute_to)
 
-    permuted = state.permute(permute_to).contiguous().view(
-        [original_shape[0], -1, mat.shape[-1]])
+    if contiguous:
+        permuted = permuted.contiguous().view(
+            [original_shape[0], -1, mat.shape[-1]])
+    else:
+        permuted = permuted.reshape(
+            [original_shape[0], -1, mat.shape[-1]])
 
     if is_batch_unitary:
-        mat = mat.permute(0, 2, 1).contiguous()
+        mat = mat.permute(0, 2, 1)
     else:
-        mat = mat.transpose().contiguous()
+        mat = mat.permute(1, 0)
+
+    mat = mat.contiguous() if contiguous else mat
 
     new_state = permuted.matmul(mat).view(original_shape).permute(
         permute_back)
+
+    new_state = new_state.contiguous() if contiguous else new_state
 
     return new_state
 
@@ -128,36 +129,41 @@ if __name__ == '__main__':
     if args.pdb:
         pdb.set_trace()
 
-    bsz = 64
+    batch_size = 64
     n_wires = 12
-    dims = [bsz] + [2] * n_wires
+    dims = [batch_size] + [2] * n_wires
     device = torch.device('cuda') if args.device == 'gpu' else torch.device(
         'cpu')
-    state = torch.randn(*dims, dtype=tq.C_DTYPE, device=device)
+    state_in = torch.randn(*dims, dtype=tq.C_DTYPE, device=device)
 
-    run_times = 10000
+    run_times = 100
 
-    for n_gate_wires in tqdm(range(8, 12)):
-        mat = torch.randn(bsz, 2 ** n_gate_wires, 2 ** n_gate_wires,
-                          dtype=tq.C_DTYPE, device=device)
+    is_batch_matrix = False
 
-        wires = list(np.random.choice(n_wires, n_gate_wires, replace=False))
+    for n_gate_wires in tqdm(range(5, 12)):
+        if is_batch_matrix:
+            matrix = torch.randn(batch_size, 2 ** n_gate_wires,
+                                 2 ** n_gate_wires,
+                                 dtype=tq.C_DTYPE, device=device)
+        else:
+            matrix = torch.randn(2 ** n_gate_wires, 2 ** n_gate_wires,
+                                 dtype=tq.C_DTYPE, device=device)
 
-        res0 = apply_unitary_bmm(state, mat, wires)
-        res1 = apply_unitary_einsum(state, mat, wires)
-        diff = torch.abs(res1-res0).max()
-        assert diff < 1e-3
+        wires_in = list(np.random.choice(n_wires, n_gate_wires, replace=False))
 
-        # diff = torch.abs(res1-res0).max()
+        res0 = apply_unitary_bmm(state_in, matrix, wires_in, contiguous=True)
+        res1 = apply_unitary_einsum(state_in, matrix, wires_in)
+        diff = torch.abs(res1-res0).mean()
+        logger.warning(f"Difference: {diff}")
 
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
         # dry run:
         for _ in range(5):
-            res = apply_unitary_einsum(state, mat, wires)
+            res = apply_unitary_einsum(state_in, matrix, wires_in)
         start.record()
         for _ in range(run_times):
-            res = apply_unitary_einsum(state, mat, wires)
+            res = apply_unitary_einsum(state_in, matrix, wires_in)
         end.record()
 
         # Waits for everything to finish running
@@ -167,13 +173,30 @@ if __name__ == '__main__':
 
         # dry run:
         for _ in range(5):
-            res = apply_unitary_bmm(state, mat, wires)
+            res = apply_unitary_bmm(state_in, matrix, wires_in,
+                                    contiguous=True)
         start.record()
         for _ in range(run_times):
-            res = apply_unitary_bmm(state, mat, wires)
+            res = apply_unitary_bmm(state_in, matrix, wires_in,
+                                    contiguous=True)
         end.record()
 
         # Waits for everything to finish running
         torch.cuda.synchronize()
-        logger.info(f"bmm: {n_gate_wires}:"
+        logger.info(f"bmm contiguous: {n_gate_wires}:"
+                    f" {start.elapsed_time(end) / run_times}")
+
+        # dry run:
+        for _ in range(5):
+            res = apply_unitary_bmm(state_in, matrix, wires_in,
+                                    contiguous=False)
+        start.record()
+        for _ in range(run_times):
+            res = apply_unitary_bmm(state_in, matrix, wires_in,
+                                    contiguous=False)
+        end.record()
+
+        # Waits for everything to finish running
+        torch.cuda.synchronize()
+        logger.info(f"bmm no contiguous: {n_gate_wires}:"
                     f" {start.elapsed_time(end) / run_times}")
