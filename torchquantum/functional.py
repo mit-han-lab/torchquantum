@@ -66,7 +66,7 @@ def apply_unitary_einsum(state, mat, wires):
         is_batch_unitary = False
         shape_extension = []
 
-    mat = torch.reshape(mat, shape_extension + [2] * len(device_wires) * 2)
+    mat = mat.view(shape_extension + [2] * len(device_wires) * 2)
 
     mat = mat.type(C_DTYPE).to(state)
 
@@ -108,6 +108,35 @@ def apply_unitary_einsum(state, mat, wires):
                      f"{state_indices}->{new_state_indices}"
 
     new_state = torch.einsum(einsum_indices, mat, state)
+
+    return new_state
+
+
+def apply_unitary_bmm(state, mat, wires):
+    device_wires = wires
+
+    if len(mat.shape) > 2:
+        bsz = mat.shape[0]
+        try:
+            assert state.shape[0] == bsz
+        except AssertionError as err:
+            logger.exception(f"Batch size of Quantum Device must be the same "
+                             f"with that of gate unitary matrix")
+            raise err
+    mat = mat.type(C_DTYPE).to(state)
+
+    devices_dims = [w + 1 for w in device_wires]
+    permute_to = list(range(state.dim()))
+    for d in sorted(devices_dims, reverse=True):
+        del permute_to[d]
+    permute_to = permute_to[:1] + devices_dims + permute_to[1:]
+    permute_back = list(np.argsort(permute_to))
+    original_shape = state.shape
+    permuted = state.permute(permute_to).reshape(
+        [original_shape[0], mat.shape[-1], -1])
+
+    new_state = mat.matmul(permuted).view(original_shape).permute(
+        permute_back)
 
     return new_state
 
