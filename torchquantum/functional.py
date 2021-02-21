@@ -12,6 +12,7 @@ from torchpack.utils.logging import logger
 
 __all__ = [
     'apply_unitary_einsum',
+    'apply_unitary_bmm',
     'mat_dict',
     'hadamard',
     'paulix',
