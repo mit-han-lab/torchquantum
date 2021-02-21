@@ -3,14 +3,12 @@ import torch.nn as nn
 import torchquantum as tq
 import torchquantum.functional as tqf
 import numpy as np
-import logging
 
 from enum import IntEnum
 from torchquantum.functional import mat_dict
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE
-
-logger = logging.getLogger()
+from torchpack.utils.logging import logger
 
 
 __all__ = [

@@ -1,6 +1,5 @@
 import functools
 import torch
-import logging
 import torchquantum as tq
 import numpy as np
 
@@ -8,8 +7,7 @@ from functools import partial
 from typing import Callable
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from .utils import pauli_eigs, diag
-
-logger = logging.getLogger()
+from torchpack.utils.logging import logger
 
 
 __all__ = [
@@ -49,6 +47,7 @@ __all__ = [
 
 
 def apply_unitary_einsum(state, mat, wires):
+    logger.info('apply unitary')
     device_wires = wires
 
     total_wires = len(state.shape) - 1
