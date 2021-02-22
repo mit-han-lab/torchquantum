@@ -30,6 +30,9 @@ def make_model() -> nn.Module:
     elif configs.model.name == 'hybrid':
         from .models import Hybrid
         model = Hybrid()
+    elif configs.model.name == 'static':
+        from .models import Static
+        model = Static()
     else:
         raise NotImplementedError(configs.model.name)
 

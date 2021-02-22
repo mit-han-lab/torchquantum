@@ -42,7 +42,8 @@ __all__ = [
     'U1',
     'U2',
     'U3',
-    'QubitUnitary'
+    'QubitUnitary',
+    'op_name_dict',
 ]
 
 
@@ -109,7 +110,10 @@ class Operator(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.params = None
+        # number of wires of the operator
         self.n_wires = None
+        # wires that the operator applies to
+        self.wires = None
         self._name = self.__class__.__name__
 
     @classmethod
@@ -142,6 +146,17 @@ class Operator(tq.QuantumModule):
 
         if params is not None:
             self.params = params
+
+        if self.params is not None:
+            self.params = self.params.unsqueeze(-1) if self.params.dim() == 1 \
+                else self.params
+
+        wires = [wires] if isinstance(wires, int) else wires
+        self.wires = wires
+
+        if self.static_mode:
+            self.parent_graph.add_op(self)
+            return
 
         # non-parameterized gate
         if self.params is None:
@@ -580,3 +595,34 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
     def reset_params(self, init_params=None):
         self.params = torch.tensor(init_params, dtype=C_DTYPE)
         self.register_buffer(f"{self.name}_unitary", self.params)
+
+
+op_name_dict = {
+    'hadamard': Hadamard,
+    'paulix': PauliX,
+    'pauliy': PauliY,
+    'pauliz': PauliZ,
+    's': S,
+    't': T,
+    'sx': SX,
+    'cnot': CNOT,
+    'cz': CZ,
+    'cy': CY,
+    'rx': RX,
+    'ry': RY,
+    'rz': RZ,
+    'swap': SWAP,
+    'cswap': CSWAP,
+    'toffoli': Toffoli,
+    'phaseshift': PhaseShift,
+    'rot': Rot,
+    'multirz': MultiRZ,
+    'crx': CRX,
+    'cry': CRY,
+    'crz': CRZ,
+    'crot': CRot,
+    'u1': U1,
+    'u2': U2,
+    'u3': U3,
+    'qubitunitary': QubitUnitary,
+}

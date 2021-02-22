@@ -1,9 +1,11 @@
 import torch.nn as nn
 import torchquantum as tq
-import torchquantum.functional as tqf
+from abc import ABCMeta
 
 __all__ = [
     'QuantumModule',
+    'QuantumModuleList',
+    'QuantumModuleDict'
 ]
 
 
@@ -11,27 +13,39 @@ class QuantumModule(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.static_mode = False
-        self.submodules = nn.ModuleList()
-        self.tqf = None
         self.graph = None
+        self.parent_graph = None
 
-    def static_on(self, top=True, graph=None):
+    def static_on(self):
+        # register graph of itself and parent
         self.static_mode = True
-
-        if top:
+        if self.graph is None:
             self.graph = tq.QuantumGraph()
-            self.tqf = self.graph
-        else:
-            self.tqf = graph
 
-        for submodule in self.submodules:
-            submodule.static_on(top=False, graph=self.graph)
+        for module in self.children():
+            if isinstance(module, nn.ModuleList) or isinstance(module,
+                                                               nn.ModuleDict):
+                # if QuantumModuleList or QuantumModuleDict, its graph will
+                # be the same as the parent graph because ModuleList and
+                # ModuleDict do not call the forward function
+                module.graph = self.graph
+            module.parent_graph = self.graph
+            module.static_on()
 
     def static_off(self):
-        self.static_mode = False
-        self.tqf = tqf
-        for submodule in self.submodules:
-            submodule.static_off()
+        for module in self.modules():
+            if isinstance(module, tq.QuantumModule):
+                module.static_mode = False
+
+
+class QuantumModuleList(nn.ModuleList, QuantumModule, metaclass=ABCMeta):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class QuantumModuleDict(nn.ModuleDict, QuantumModule, metaclass=ABCMeta):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 def test():
