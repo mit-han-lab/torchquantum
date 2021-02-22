@@ -64,7 +64,7 @@ AnyWires = WiresEnum.AnyWires
 subsystem. It is equivalent to an integer with value -1."""
 
 
-class Operator(nn.Module):
+class Operator(tq.QuantumModule):
     fixed_ops = [
         'Hadamard',
         'PauliX',

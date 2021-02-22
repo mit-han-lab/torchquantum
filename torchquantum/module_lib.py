@@ -1,9 +1,7 @@
 import torch.nn as nn
 import torchquantum as tq
 
-
 __all__ = [
-    'QuantumModule',
     'TrainableOpAll',
     'ClassicalInOpAll',
     'FixedOpAll',
@@ -11,12 +9,7 @@ __all__ = [
 ]
 
 
-class QuantumModule(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-
-
-class TrainableOpAll(QuantumModule):
+class TrainableOpAll(tq.QuantumModule):
     """Rotation rx on all qubits
     The rotation angle is a parameter of each rotation gate
     One potential optimization is to compute the unitary of all gates
@@ -42,7 +35,7 @@ class TrainableOpAll(QuantumModule):
             self.gate_all[k](q_device, wires=k)
 
 
-class ClassicalInOpAll(QuantumModule):
+class ClassicalInOpAll(tq.QuantumModule):
     """Rotation rx on all qubits
     The rotation angle is from input activation
     """
@@ -64,7 +57,7 @@ class ClassicalInOpAll(QuantumModule):
             self.gate_all[k](q_device, wires=k, params=x[:, k])
 
 
-class FixedOpAll(QuantumModule):
+class FixedOpAll(tq.QuantumModule):
     """Rotation rx on all qubits
     The rotation angle is from input activation
     """
@@ -86,7 +79,7 @@ class FixedOpAll(QuantumModule):
             self.gate_all[k](q_device, wires=k)
 
 
-class TwoQAll(QuantumModule):
+class TwoQAll(tq.QuantumModule):
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
         self.n_gate = n_gate
@@ -96,11 +89,3 @@ class TwoQAll(QuantumModule):
         for k in range(self.n_gate-1):
             self.op(q_device, wires=[k, k + 1])
         self.op(q_device, wires=[self.n_gate-1, 0])
-
-
-def test():
-    pass
-
-
-if __name__ == '__main__':
-    test()
