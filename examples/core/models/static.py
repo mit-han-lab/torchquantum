@@ -6,17 +6,20 @@ import torchquantum.functional as tqf
 import numpy as np
 import functools
 
-from abc import ABCMeta
-
 __all__ = ['Static']
 
 
-def register_graph(f):
+def static_support(f):
     @functools.wraps(f)
     def forward_register_graph(*args, **kwargs):
         if args[0].static_mode and args[0].parent_graph is not None:
             args[0].parent_graph.add_op(args[0])
         res = f(*args, **kwargs)
+        if args[0].static_mode and args[0].is_graph_top:
+            # finish build graph, set flag
+            # args[0].set_graph_build_finish()
+            args[0].static_forward(args[0].q_device)
+
         return res
     return forward_register_graph
 
@@ -24,14 +27,17 @@ def register_graph(f):
 class TQAll(tq.QuantumModule):
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
+        self.submodules = tq.QuantumModuleList()
         self.n_gate = n_gate
-        self.op = op()
+        for k in range(self.n_gate):
+            self.submodules.append(op())
 
-    @register_graph
+    @static_support
     def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
         for k in range(self.n_gate-1):
-            self.op(q_device, wires=[k, k + 1])
-        self.op(q_device, wires=[self.n_gate-1, 0])
+            self.submodules[k](q_device, wires=[k, k + 1])
+        self.submodules[-1](q_device, wires=[self.n_gate-1, 0])
 
 
 class OpAll(tq.QuantumModule):
@@ -43,12 +49,15 @@ class OpAll(tq.QuantumModule):
         for k in range(self.n_gate):
             self.submodules.append(op())
 
-    @register_graph
+    @static_support
     def forward(self, q_device: tq.QuantumDevice, x):
+        self.q_device = q_device
+        # tqf.rx(q_device, wires=6, params=x[:, 0],
+        #        static=self.static_mode, parent_graph=self.graph)
         for k in range(self.n_gate):
             self.submodules[k](q_device, wires=k, params=x[:, k])
             tqf.rx(q_device, wires=0, params=x[:, 0],
-                   static=self.static_mode, graph=self.graph)
+                   static=self.static_mode, parent_graph=self.graph)
         self.q_layer0(q_device)
 
 

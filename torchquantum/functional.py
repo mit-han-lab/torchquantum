@@ -143,18 +143,25 @@ def apply_unitary_bmm(state, mat, wires):
 
 
 def gate_wrapper(name, mat, q_device: tq.QuantumDevice, wires, params=None,
-                 n_wires=None, static=False, graph=None):
+                 n_wires=None, static=False, parent_graph=None):
+    if params is not None:
+        if not isinstance(params, torch.Tensor):
+            # this is for qubitunitary gate
+            params = torch.tensor(params, dtype=C_DTYPE)
+        params = params.unsqueeze(-1) if params.dim() == 1 else params
+    wires = [wires] if isinstance(wires, int) else wires
+
     if static:
         # in static mode, the function is not computed immediately, instead,
         # the unitary of a module will be computed and then applied
-        graph.add_func(name=name, wires=wires, params=params, n_wires=n_wires)
+        parent_graph.add_func(name=name,
+                              wires=wires,
+                              parent_graph=parent_graph,
+                              params=params,
+                              n_wires=n_wires)
     else:
         # in dynamic mode, the function is computed instantly
         if isinstance(mat, Callable):
-            if not isinstance(params, torch.Tensor):
-                # this is for qubitunitary gate
-                params = torch.tensor(params, dtype=C_DTYPE)
-            params = params.unsqueeze(-1) if params.dim() == 1 else params
             if n_wires is None:
                 matrix = mat(params)
             else:
@@ -165,7 +172,6 @@ def gate_wrapper(name, mat, q_device: tq.QuantumDevice, wires, params=None,
             matrix = mat
 
         state = q_device.states
-        wires = [wires] if isinstance(wires, int) else wires
 
         q_device.states = apply_unitary_einsum(state, matrix, wires)
 
