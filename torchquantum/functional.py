@@ -385,14 +385,22 @@ def u3_matrix(params):
 def qubitunitary_matrix(params):
     matrix = params
     try:
-        assert matrix.shape[0] == matrix.shape[1]
+        assert matrix.shape[-1] == matrix.shape[-2]
     except AssertionError as err:
         logger.exception(f"Operator must be a square matrix.")
         raise err
 
     try:
         U = params.cpu().detach().numpy()
-        assert np.allclose(U @ U.conj().T, np.identity(U.shape[0]))
+        if matrix.dim() > 2:
+            # batched unitary
+            bsz = matrix.shape[0]
+            assert np.allclose(np.matmul(U, np.transpose(U.conj(), [0, 2, 1])),
+                               np.stack([np.identity(U.shape[-1])] * bsz),
+                               atol=1e-5)
+        else:
+            assert np.allclose(np.matmul(U, np.transpose(U.conj(), [1, 0])),
+                               np.identity(U.shape[0]), atol=1e-5)
     except AssertionError as err:
         logger.exception(f"Operator must be unitary.")
         raise err
