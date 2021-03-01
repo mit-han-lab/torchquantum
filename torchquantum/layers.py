@@ -89,3 +89,16 @@ class TwoQAll(tq.QuantumModule):
         for k in range(self.n_gate-1):
             self.op(q_device, wires=[k, k + 1])
         self.op(q_device, wires=[self.n_gate-1, 0])
+
+
+class RandomLayer(tq.QuantumModule):
+    def __init__(self,
+                 weights,
+                 wires,
+                 ratio_imprim,
+                 imprimitive,
+                 rotations,
+                 seed,
+                 ):
+        super().__init__()
+        pass

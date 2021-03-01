@@ -10,19 +10,7 @@ from torchquantum.utils import Timer
 __all__ = ['Static']
 
 
-def static_support(f):
-    @functools.wraps(f)
-    def forward_register_graph(*args, **kwargs):
-        if args[0].static_mode and args[0].parent_graph is not None:
-            args[0].parent_graph.add_op(args[0])
-        res = f(*args, **kwargs)
-        if args[0].static_mode and args[0].is_graph_top:
-            # finish build graph, set flag
-            args[0].set_graph_build_finish()
-            args[0].static_forward(args[0].q_device)
 
-        return res
-    return forward_register_graph
 
 
 class TQAll(tq.QuantumModule):
@@ -33,7 +21,7 @@ class TQAll(tq.QuantumModule):
         for k in range(self.n_gate):
             self.submodules.append(op())
 
-    @static_support
+    @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
         for k in range(self.n_gate - 1):
@@ -50,7 +38,7 @@ class OpAll(tq.QuantumModule):
         for k in range(self.n_gate):
             self.submodules.append(op())
 
-    @static_support
+    @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
         self.q_device = q_device
         # tqf.rx(q_device, wires=6, params=x[:, 0],
@@ -85,7 +73,7 @@ class TestModule(tq.QuantumModule):
         self.gate5 = tq.RZ(has_params=True, trainable=True)
         self.gate6 = tq.RY(has_params=True, trainable=True)
 
-    @static_support
+    @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
         self.q_device = q_device
         self.gate1(q_device, wires=3)

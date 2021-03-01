@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+import functools
 
 def pauli_eigs(n):
     r"""Eigenvalues for :math:`A^{\o times n}`, where :math:`A` is
@@ -51,3 +51,18 @@ class Timer(object):
             torch.cuda.synchronize()
             print(f"Task: {self.name}: "
                   f"{self.start.elapsed_time(self.end) / self.times}")
+
+
+def static_support(f):
+    @functools.wraps(f)
+    def forward_register_graph(*args, **kwargs):
+        if args[0].static_mode and args[0].parent_graph is not None:
+            args[0].parent_graph.add_op(args[0])
+        res = f(*args, **kwargs)
+        if args[0].static_mode and args[0].is_graph_top:
+            # finish build graph, set flag
+            args[0].set_graph_build_finish()
+            args[0].static_forward(args[0].q_device)
+
+        return res
+    return forward_register_graph
