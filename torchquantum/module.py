@@ -24,8 +24,14 @@ class QuantumModule(nn.Module):
         self.q_device = None
         # this is for gpu or cpu, not q device
         self.device = None
+        # for the static tensor network simulation optimizations
+        self.wires_per_block = None
 
-    def static_on(self, is_graph_top=True):
+    def set_wires_per_block(self, wires_per_block):
+        self.wires_per_block = wires_per_block
+
+    def static_on(self, is_graph_top=True, wires_per_block=3):
+        self.wires_per_block = wires_per_block
         # register graph of itself and parent
         self.static_mode = True
         self.is_graph_top = is_graph_top
@@ -53,7 +59,8 @@ class QuantumModule(nn.Module):
     def set_graph_build_finish(self):
         self.graph.is_list_finish = True
         for module in self.graph.module_list:
-            module.set_graph_build_finish()
+            if not isinstance(module, tq.QuantumDevice):
+                module.set_graph_build_finish()
 
     def static_forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
@@ -61,7 +68,7 @@ class QuantumModule(nn.Module):
         self.graph.q_device = q_device
         self.graph.device = q_device.states.device
         # self.unitary, self.wires, self.n_wires = \
-        self.graph.build_matrix()
+        self.graph.forward(wires_per_block=self.wires_per_block)
         # tqf.qubitunitary(
         #     q_device=self.q_device,
         #     wires=self.wires,

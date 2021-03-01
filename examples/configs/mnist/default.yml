@@ -22,5 +22,5 @@ run:
 
 debug:
   pdb: False
-  set_seed: False
+  set_seed: True
   seed: 42
