@@ -148,7 +148,7 @@ class QuantumGraph(object):
             max_ptrs = None
             max_schedule = None
             for comb in itertools.combinations(list(range(n_wires)),
-                                               wires_per_block):
+                                               min(wires_per_block, n_wires)):
                 comb_module_per_block = 0
                 comb_ptrs = module_ptrs.copy()
                 comb_schedule = []

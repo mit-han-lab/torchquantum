@@ -89,36 +89,36 @@ class TestModule(tq.QuantumModule):
     def forward(self, q_device: tq.QuantumDevice, x):
         self.q_device = q_device
         self.gate1(q_device, wires=3)
-        self.gate2(q_device, wires=3)
+        self.gate2(q_device, wires=4)
         self.gate3(q_device, wires=3)
         self.gate4(q_device, wires=3)
         self.gate5(q_device, wires=3)
         self.gate6(q_device, wires=3)
 
-        for k in range(self.n_gate):
-            self.submodules[k](q_device, wires=k, params=x[:, k%10])
-            tqf.rx(q_device, wires=k, params=x[:, 0],
-                   static=self.static_mode, parent_graph=self.graph)
-            tqf.cnot(q_device, wires=[k, (k + 1) % self.n_gate],
-                     static=self.static_mode, parent_graph=self.graph)
-            tqf.rx(q_device, wires=k, params=x[:, 0],
-                   static=self.static_mode, parent_graph=self.graph)
-            tqf.cnot(q_device, wires=[(k + 1) % self.n_gate, k],
-                     static=self.static_mode, parent_graph=self.graph)
-            tqf.rx(q_device, wires=k, params=x[:, 0],
-                   static=self.static_mode, parent_graph=self.graph)
-            tqf.cnot(q_device, wires=[k, (k + 1) % self.n_gate],
-                     static=self.static_mode, parent_graph=self.graph)
-            tqf.cnot(q_device, wires=[(k + 1) % self.n_gate, k],
-                     static=self.static_mode, parent_graph=self.graph)
-            tqf.rx(q_device, wires=k, params=x[:, 0],
-                   static=self.static_mode, parent_graph=self.graph)
-            tqf.cnot(q_device, wires=[k, (k + 1) % self.n_gate],
-                     static=self.static_mode, parent_graph=self.graph)
-            tqf.cnot(q_device, wires=[(k + 1) % self.n_gate, k],
-                     static=self.static_mode, parent_graph=self.graph)
-
-        self.q_layer0(q_device)
+        # for k in range(self.n_gate):
+        #     self.submodules[k](q_device, wires=k, params=x[:, k%10])
+        #     tqf.rx(q_device, wires=k, params=x[:, 0],
+        #            static=self.static_mode, parent_graph=self.graph)
+        #     tqf.cnot(q_device, wires=[k, (k + 1) % self.n_gate],
+        #              static=self.static_mode, parent_graph=self.graph)
+        #     tqf.rx(q_device, wires=k, params=x[:, 0],
+        #            static=self.static_mode, parent_graph=self.graph)
+        #     tqf.cnot(q_device, wires=[(k + 1) % self.n_gate, k],
+        #              static=self.static_mode, parent_graph=self.graph)
+        #     tqf.rx(q_device, wires=k, params=x[:, 0],
+        #            static=self.static_mode, parent_graph=self.graph)
+        #     tqf.cnot(q_device, wires=[k, (k + 1) % self.n_gate],
+        #              static=self.static_mode, parent_graph=self.graph)
+        #     tqf.cnot(q_device, wires=[(k + 1) % self.n_gate, k],
+        #              static=self.static_mode, parent_graph=self.graph)
+        #     tqf.rx(q_device, wires=k, params=x[:, 0],
+        #            static=self.static_mode, parent_graph=self.graph)
+        #     tqf.cnot(q_device, wires=[k, (k + 1) % self.n_gate],
+        #              static=self.static_mode, parent_graph=self.graph)
+        #     tqf.cnot(q_device, wires=[(k + 1) % self.n_gate, k],
+        #              static=self.static_mode, parent_graph=self.graph)
+        #
+        # self.q_layer0(q_device)
 
         # self.gate0(q_device, wires=[7, 4])
         # self.gate1(q_device, wires=[3, 9])
@@ -212,7 +212,7 @@ class Static(nn.Module):
 
         # with Timer('gpu', 'static', 50):
         #     for _ in range(500):
-        # self.q_test_layer.static_on(wires_per_block=1)
+        # self.q_test_layer.static_on(wires_per_block=4)
         self.q_test_layer(self.q_device0, x)
         # self.q_test_layer.static_off()
 
