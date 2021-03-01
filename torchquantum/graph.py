@@ -109,22 +109,38 @@ class QuantumGraph(object):
             return all([module_ptrs[k] == wire_module_len[k] for k in
                         range(len(module_ptrs))])
 
-        def check_front_multi_qubit_gate():
-            return None
-
-        def comb_finish(combination, ptrs):
-            return all(ptrs[w] == wire_module_len[w] for w in combination)
-
         def is_front(wires, ptrs):
             return len(set([id(self.wire_module_list[w][ptrs[w]]) for w in
                        wires])) == 1
+
+        def add_front_large_qubit_gate(ptrs, sches):
+            # deal with the case when the number of wires in a block is
+            # smaller than the number of wires in a gate
+            for w in range(n_wires):
+                module = self.wire_module_list[w][ptrs[w]]
+                if len(module.wires) <= wires_per_block:
+                    # number of wires in gate is smaller than or equal to
+                    # that in a block
+                    pass
+                else:
+                    # check whether the large gate are in the front
+                    local_ws = [self.global2local_wire_mapping[wi]
+                                for wi in module.wires]
+                    if is_front(local_ws, ptrs):
+                        sches.append({'wires': local_ws, 'modules': [module]})
+                        for local_w in local_ws:
+                            ptrs[local_w] += 1
+
+        def comb_finish(combination, ptrs):
+            return all(ptrs[w] == wire_module_len[w] for w in combination)
 
         def wires_in_comb(wires, combination):
             return all([w in combination for w in wires])
 
         schedules = []
         while not schedule_finish():
-            check_front_multi_qubit_gate()
+            add_front_large_qubit_gate(module_ptrs, schedules)
+
             # loop to get blocks
             # find the wire comb with max num of operations
             max_comb = None
@@ -302,18 +318,19 @@ class QuantumGraph(object):
 
         for schedule in self.schedules:
             comb = schedule['wires']
-            unitary = torch.eye(2 ** wires_per_block, dtype=C_DTYPE,
+            # here some front large gates will need a larger unitary
+            unitary = torch.eye(2 ** len(comb), dtype=C_DTYPE,
                                 device=self.device).view([2] *
-                                                         wires_per_block * 2)
+                                                         len(comb) * 2)
             for m in schedule['modules']:
                 unitary = acc_m_unitary(unitary, comb, m)
             if unitary.dim() % 2 == 1:
                 unitary = unitary.reshape(
                     unitary.shape[0],
-                    2 ** wires_per_block,
-                    2 ** wires_per_block)
+                    2 ** len(comb),
+                    2 ** len(comb))
             else:
-                unitary = unitary.reshape(2 ** wires_per_block,
-                                          2 ** wires_per_block)
+                unitary = unitary.reshape(2 ** len(comb),
+                                          2 ** len(comb))
             global_wires = [self.local2global_wire_mapping[w] for w in comb]
             tqf.qubitunitary(self.q_device, wires=global_wires, params=unitary)

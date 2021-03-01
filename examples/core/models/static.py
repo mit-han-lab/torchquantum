@@ -36,9 +36,9 @@ class TQAll(tq.QuantumModule):
     @static_support
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
-        for k in range(self.n_gate-1):
+        for k in range(self.n_gate - 1):
             self.submodules[k](q_device, wires=[k, k + 1])
-        self.submodules[-1](q_device, wires=[self.n_gate-1, 0])
+        self.submodules[-1](q_device, wires=[self.n_gate - 1, 0])
 
 
 class OpAll(tq.QuantumModule):
@@ -210,10 +210,9 @@ class Static(nn.Module):
         self.q_layer0(self.q_device0)
         # self.q_layer0(self.q_device0_1)
 
-
         # with Timer('gpu', 'static', 50):
         #     for _ in range(500):
-        # self.q_test_layer.static_on(wires_per_block=3)
+        # self.q_test_layer.static_on(wires_per_block=1)
         self.q_test_layer(self.q_device0, x)
         # self.q_test_layer.static_off()
 
