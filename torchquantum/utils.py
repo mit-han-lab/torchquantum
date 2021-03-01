@@ -30,3 +30,24 @@ def diag(x):
     x = x.view(dims[:-2] + [diag_len * (diag_len + 1)])[..., :-diag_len]
     x = x.view(dims[:-2]+[diag_len, diag_len])
     return x
+
+
+class Timer(object):
+    def __init__(self, device='gpu', name='', times=100):
+        self.device = device
+        self.name = name
+        self.times = times
+        if device == 'gpu':
+            self.start = torch.cuda.Event(enable_timing=True)
+            self.end = torch.cuda.Event(enable_timing=True)
+
+    def __enter__(self):
+        if self.device == 'gpu':
+            self.start.record()
+
+    def __exit__(self):
+        if self.device == 'gpu':
+            self.end.record()
+            torch.cuda.synchronize()
+            print(f"Task: {self.name}: "
+                  f"{self.start.elapsed_time(self.end) / self.times}")
