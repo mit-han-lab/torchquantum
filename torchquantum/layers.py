@@ -1,11 +1,13 @@
 import torch.nn as nn
 import torchquantum as tq
+import numpy as np
 
 __all__ = [
     'TrainableOpAll',
     'ClassicalInOpAll',
     'FixedOpAll',
     'TwoQAll',
+    'RandomLayer'
 ]
 
 
@@ -93,12 +95,40 @@ class TwoQAll(tq.QuantumModule):
 
 class RandomLayer(tq.QuantumModule):
     def __init__(self,
-                 weights,
+                 n_ops,
                  wires,
-                 ratio_imprim,
-                 imprimitive,
-                 rotations,
-                 seed,
+                 op_ratios=(1, 1, 1, 1),
+                 op_types=(tq.RX, tq.RY, tq.RZ, tq.CNOT),
+                 seed=None,
                  ):
         super().__init__()
-        pass
+        self.n_ops = n_ops
+        self.wires = wires
+        self.n_wires = len(wires)
+        self.op_ratios = np.array(op_ratios) / sum(op_ratios)
+        self.op_types = op_types
+        self.seed = seed
+        self.op_list = []
+        if seed is None:
+            np.random.seed(42)
+        else:
+            np.random.seed(seed)
+        self.build_random_layer()
+
+    def build_random_layer(self):
+        for _ in range(self.n_ops):
+            op = np.random.choice(self.op_types, p=self.op_ratios)
+            n_op_wires = op.num_wires
+            op_wires = list(np.random.choice(self.wires, size=n_op_wires,
+                                             replace=False))
+            if op().name in tq.Operator.parameterized_ops:
+                operation = op(has_params=True, trainable=True)
+            else:
+                operation = op()
+            self.op_list.append({'wires': op_wires, 'op': operation})
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        for pair in self.op_list:
+            pair['op'](q_device, wires=pair['wires'])

@@ -10,9 +10,6 @@ from torchquantum.utils import Timer
 __all__ = ['Static']
 
 
-
-
-
 class TQAll(tq.QuantumModule):
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
@@ -174,6 +171,9 @@ class Static(nn.Module):
                                          trainable=False,
                                          init_params=[[1, 0], [0, 1]])
         self.q_test_layer = TestModule()
+        self.random_layer = tq.RandomLayer(30, wires=[0, 3, 5, 7])
+        # self.random_layer.static_on(wires_per_block=3)
+
         # self.q_test_layer.static_on(wires_per_block=4)
 
     def forward(self, x):
@@ -196,6 +196,7 @@ class Static(nn.Module):
         # self.q_device1.reset_states(x.shape[0])
         # self.q_device0_1.reset_states(x.shape[0])
         self.q_layer0(self.q_device0)
+        self.random_layer(self.q_device0)
         # self.q_layer0(self.q_device0_1)
 
         # with Timer('gpu', 'static', 50):
