@@ -2,6 +2,7 @@ import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
 import itertools
+import functools
 import numpy as np
 
 from torchquantum.macro import C_DTYPE
@@ -13,6 +14,21 @@ def encode_w(wires):
 
 def decode_w(w):
     return list(map(eval, w.split('.')))
+
+
+def static_support(f):
+    @functools.wraps(f)
+    def forward_register_graph(*args, **kwargs):
+        if args[0].static_mode and args[0].parent_graph is not None:
+            args[0].parent_graph.add_op(args[0])
+        res = f(*args, **kwargs)
+        if args[0].static_mode and args[0].is_graph_top:
+            # finish build graph, set flag
+            args[0].set_graph_build_finish()
+            args[0].static_forward(args[0].q_device)
+
+        return res
+    return forward_register_graph
 
 
 class QuantumGraph(object):
@@ -74,7 +90,7 @@ class QuantumGraph(object):
         if not self.build_finish:
             self.build(wires_per_block)
 
-        self.apply_unitary(wires_per_block)
+        self.apply_unitary()
 
     def build_wire_module_dict(self, module_list):
         for module in module_list:
@@ -243,7 +259,7 @@ class QuantumGraph(object):
             schedules.append(schedule)
         return schedules
 
-    def apply_unitary(self, wires_per_block):
+    def apply_unitary(self):
         # compute the unitary of each block and apply to the device
         def acc_m_unitary(u, wires, module):
             u2w_mapping = {}

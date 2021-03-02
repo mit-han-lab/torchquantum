@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torchquantum as tq
-import torchquantum.functional as tqf
 from abc import ABCMeta
 
 
