@@ -108,7 +108,7 @@ class RandomLayer(tq.QuantumModule):
         self.op_ratios = np.array(op_ratios) / sum(op_ratios)
         self.op_types = op_types
         self.seed = seed
-        self.op_list = []
+        self.op_list = tq.QuantumModuleList()
         if seed is None:
             np.random.seed(42)
         else:
@@ -122,13 +122,13 @@ class RandomLayer(tq.QuantumModule):
             op_wires = list(np.random.choice(self.wires, size=n_op_wires,
                                              replace=False))
             if op().name in tq.Operator.parameterized_ops:
-                operation = op(has_params=True, trainable=True)
+                operation = op(has_params=True, trainable=True, wires=op_wires)
             else:
-                operation = op()
-            self.op_list.append({'wires': op_wires, 'op': operation})
+                operation = op(wires=op_wires)
+            self.op_list.append(operation)
 
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
-        for pair in self.op_list:
-            pair['op'](q_device, wires=pair['wires'])
+        for op in self.op_list:
+            op(q_device)
