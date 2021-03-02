@@ -33,6 +33,9 @@ def make_model() -> nn.Module:
     elif configs.model.name == 'static':
         from .models import Static
         model = Static()
+    elif configs.model.name == 'quanv_model0':
+        from .models import QuanvModel0
+        model = QuanvModel0()
     else:
         raise NotImplementedError(configs.model.name)
 
