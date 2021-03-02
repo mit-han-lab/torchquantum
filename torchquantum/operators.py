@@ -107,13 +107,13 @@ class Operator(tq.QuantumModule):
     def name(self, value):
         self._name = value
 
-    def __init__(self):
+    def __init__(self, wires=None):
         super().__init__()
         self.params = None
         # number of wires of the operator
         self.n_wires = None
         # wires that the operator applies to
-        self.wires = None
+        self.wires = wires
         self._name = self.__class__.__name__
 
     @classmethod
@@ -135,13 +135,23 @@ class Operator(tq.QuantumModule):
     def _get_unitary_matrix(self):
         return self.matrix
 
-    def forward(self, q_device: tq.QuantumDevice, wires, params=None):
+    def set_wires(self, wires):
+        self.wires = [wires] if isinstance(wires, int) else wires
+
+    def forward(self, q_device: tq.QuantumDevice, wires=None, params=None):
         try:
             assert self.name in self.fixed_ops or \
                    self.has_params ^ (params is not None)
         except AssertionError as err:
             logger.exception(f"Parameterized gate either has its "
                              f"own parameters or has input as parameters")
+            raise err
+
+        try:
+            assert not (self.wires is None and wires is None)
+        except AssertionError as err:
+            logger.exception(f"Need to specify the wires either when "
+                             f"initialize or when forward")
             raise err
 
         if params is not None:
@@ -151,8 +161,10 @@ class Operator(tq.QuantumModule):
             self.params = self.params.unsqueeze(-1) if self.params.dim() == 1 \
                 else self.params
 
-        wires = [wires] if isinstance(wires, int) else wires
-        self.wires = wires
+        if wires is not None:
+            # update the wires
+            wires = [wires] if isinstance(wires, int) else wires
+            self.wires = wires
 
         if self.static_mode:
             self.parent_graph.add_op(self)
@@ -161,14 +173,14 @@ class Operator(tq.QuantumModule):
         # non-parameterized gate
         if self.params is None:
             if self.n_wires is None:
-                self.func(q_device, wires)
+                self.func(q_device, self.wires)
             else:
-                self.func(q_device, wires, n_wires=self.n_wires)
+                self.func(q_device, self.wires, n_wires=self.n_wires)
         else:
             if self.n_wires is None:
-                self.func(q_device, wires, params=self.params)
+                self.func(q_device, self.wires, params=self.params)
             else:
-                self.func(q_device, wires, params=self.params,
+                self.func(q_device, self.wires, params=self.params,
                           n_wires=self.n_wires)
 
 
@@ -186,10 +198,11 @@ class Operation(Operator, metaclass=ABCMeta):
                  has_params: bool = False,
                  trainable: bool = False,
                  init_params=None,
-                 n_wires=None):
+                 n_wires=None,
+                 wires=None):
         # n_wires is used in gates that can be applied to arbitrary number
         # of qubits such as MultiRZ
-        super().__init__()
+        super().__init__(wires=wires)
 
         try:
             assert not (trainable and not has_params)
@@ -204,6 +217,7 @@ class Operation(Operator, metaclass=ABCMeta):
             self.params = self.build_params(trainable=self.trainable)
             self.reset_params(init_params)
         self.n_wires = n_wires
+        self.wires = wires
 
     @property
     def matrix(self):
