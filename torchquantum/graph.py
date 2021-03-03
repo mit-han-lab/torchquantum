@@ -133,6 +133,9 @@ class QuantumGraph(object):
             # deal with the case when the number of wires in a block is
             # smaller than the number of wires in a gate
             for w in range(n_wires):
+                if ptrs[w] == wire_module_len[w]:
+                    continue
+
                 module = self.wire_module_list[w][ptrs[w]]
                 if len(module.wires) <= wires_per_block:
                     # number of wires in gate is smaller than or equal to
