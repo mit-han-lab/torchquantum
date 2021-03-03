@@ -109,9 +109,7 @@ class RandomLayer(tq.QuantumModule):
         self.op_types = op_types
         self.seed = seed
         self.op_list = tq.QuantumModuleList()
-        if seed is None:
-            np.random.seed(42)
-        else:
+        if seed is not None:
             np.random.seed(seed)
         self.build_random_layer()
 
