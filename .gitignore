@@ -286,3 +286,4 @@ crashlytics-build.properties
 fabric.properties
 /examples/data/
 runs/
+/profilings/
