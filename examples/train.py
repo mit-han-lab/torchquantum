@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 import pdb
 import numpy as np
@@ -27,6 +28,7 @@ def main() -> None:
     parser.add_argument('config', metavar='FILE', help='config file')
     parser.add_argument('--run-dir', metavar='DIR', help='run directory')
     parser.add_argument('--pdb', action='store_true', help='pdb')
+    parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
     args, opts = parser.parse_known_args()
 
     configs.load(args.config, recursive=True)
@@ -34,6 +36,9 @@ def main() -> None:
 
     if configs.debug.pdb or args.pdb:
         pdb.set_trace()
+
+    if args.gpu is not None:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if configs.debug.set_seed:
         torch.manual_seed(configs.debug.seed)
