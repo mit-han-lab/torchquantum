@@ -10,7 +10,7 @@ class Quanv0(tq.QuantumModule):
     def __init__(self, n_gates):
         super().__init__()
         self.n_gates = n_gates
-        self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
+        self.random_layer = tq.RandomLayer(n_ops=20, wires=list(range(
             self.n_gates)))
 
     @tq.static_support
@@ -35,7 +35,8 @@ class RxEncoder(tq.QuantumModule):
         super().__init__()
         self.n_gates = n_gates
         # self.h_gates = [tq.Hadamard() for _ in range(self.n_gates)]
-        self.rx_gates = [tq.RX() for _ in range(self.n_gates)]
+        self.rx_gates = tq.QuantumModuleList([tq.RX() for _ in range(
+            self.n_gates)])
 
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
