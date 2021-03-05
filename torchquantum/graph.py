@@ -354,5 +354,6 @@ class QuantumGraph(object):
             else:
                 unitary = unitary.reshape(2 ** len(comb),
                                           2 ** len(comb))
-            global_wires = [self.local2global_wire_mapping[w] for w in comb]
-            tqf.qubitunitary(self.q_device, wires=global_wires, params=unitary)
+
+            tqf.qubitunitary_fast(self.q_device, wires=global_wires,
+                                  params=unitary)

@@ -41,6 +41,7 @@ __all__ = [
     'u2',
     'u3',
     'qubitunitary',
+    'qubitunitary_fast',
     'x',
     'y',
     'z',
@@ -50,6 +51,7 @@ __all__ = [
 def apply_unitary_einsum(state, mat, wires):
     device_wires = wires
 
+    # minus one because of batch
     total_wires = len(state.shape) - 1
 
     if len(mat.shape) > 2:
@@ -142,8 +144,8 @@ def apply_unitary_bmm(state, mat, wires):
     return new_state
 
 
-def gate_wrapper(name, mat, q_device: tq.QuantumDevice, wires, params=None,
-                 n_wires=None, static=False, parent_graph=None):
+def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
+                 params=None, n_wires=None, static=False, parent_graph=None):
     if params is not None:
         if not isinstance(params, torch.Tensor):
             # this is for qubitunitary gate
@@ -172,8 +174,10 @@ def gate_wrapper(name, mat, q_device: tq.QuantumDevice, wires, params=None,
             matrix = mat
 
         state = q_device.states
-
-        q_device.states = apply_unitary_einsum(state, matrix, wires)
+        if method == 'einsum':
+            q_device.states = apply_unitary_einsum(state, matrix, wires)
+        elif method == 'bmm':
+            q_device.states = apply_unitary_bmm(state, matrix, wires)
 
 
 def rx_matrix(params):
@@ -408,6 +412,10 @@ def qubitunitary_matrix(params):
     return matrix
 
 
+def qubitunitary_matrix_fast(params):
+    return params
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -463,37 +471,42 @@ mat_dict = {
     'u1': u1_matrix,
     'u2': u2_matrix,
     'u3': u3_matrix,
-    'qubitunitary': qubitunitary_matrix
+    'qubitunitary': qubitunitary_matrix,
+    'qubitunitary_fast': qubitunitary_matrix_fast
 }
 
 
-hadamard = partial(gate_wrapper, 'hadamard', mat_dict['hadamard'])
-paulix = partial(gate_wrapper, 'paulix', mat_dict['paulix'])
-pauliy = partial(gate_wrapper, 'pauliy', mat_dict['pauliy'])
-pauliz = partial(gate_wrapper, 'pauliz', mat_dict['pauliz'])
-s = partial(gate_wrapper, 's', mat_dict['s'])
-t = partial(gate_wrapper, 't', mat_dict['t'])
-sx = partial(gate_wrapper, 'sx', mat_dict['sx'])
-cnot = partial(gate_wrapper, 'cnot', mat_dict['cnot'])
-cz = partial(gate_wrapper, 'cz', mat_dict['cz'])
-cy = partial(gate_wrapper, 'cy', mat_dict['cy'])
-rx = partial(gate_wrapper, 'rx', mat_dict['rx'])
-ry = partial(gate_wrapper, 'ry', mat_dict['ry'])
-rz = partial(gate_wrapper, 'rz', mat_dict['rz'])
-swap = partial(gate_wrapper, 'swap', mat_dict['swap'])
-cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'])
-toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'])
-phaseshift = partial(gate_wrapper, 'phaseshift', mat_dict['phaseshift'])
-rot = partial(gate_wrapper, 'rot', mat_dict['rot'])
-multirz = partial(gate_wrapper, 'multirz', mat_dict['multirz'])
-crx = partial(gate_wrapper, 'crx', mat_dict['crx'])
-cry = partial(gate_wrapper, 'cry', mat_dict['cry'])
-crz = partial(gate_wrapper, 'crz', mat_dict['crz'])
-crot = partial(gate_wrapper, 'crot', mat_dict['crot'])
-u1 = partial(gate_wrapper, 'u1', mat_dict['u1'])
-u2 = partial(gate_wrapper, 'u2', mat_dict['u2'])
-u3 = partial(gate_wrapper, 'u3', mat_dict['u3'])
-qubitunitary = partial(gate_wrapper, 'qubitunitary', mat_dict['qubitunitary'])
+hadamard = partial(gate_wrapper, 'hadamard', mat_dict['hadamard'], 'einsum')
+paulix = partial(gate_wrapper, 'paulix', mat_dict['paulix'], 'einsum')
+pauliy = partial(gate_wrapper, 'pauliy', mat_dict['pauliy'], 'einsum')
+pauliz = partial(gate_wrapper, 'pauliz', mat_dict['pauliz'], 'einsum')
+s = partial(gate_wrapper, 's', mat_dict['s'], 'einsum')
+t = partial(gate_wrapper, 't', mat_dict['t'], 'einsum')
+sx = partial(gate_wrapper, 'sx', mat_dict['sx'], 'einsum')
+cnot = partial(gate_wrapper, 'cnot', mat_dict['cnot'], 'einsum')
+cz = partial(gate_wrapper, 'cz', mat_dict['cz'], 'einsum')
+cy = partial(gate_wrapper, 'cy', mat_dict['cy'], 'einsum')
+rx = partial(gate_wrapper, 'rx', mat_dict['rx'], 'einsum')
+ry = partial(gate_wrapper, 'ry', mat_dict['ry'], 'einsum')
+rz = partial(gate_wrapper, 'rz', mat_dict['rz'], 'einsum')
+swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'einsum')
+cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'], 'einsum')
+toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'], 'einsum')
+phaseshift = partial(gate_wrapper, 'phaseshift', mat_dict['phaseshift'],
+                     'einsum')
+rot = partial(gate_wrapper, 'rot', mat_dict['rot'], 'einsum')
+multirz = partial(gate_wrapper, 'multirz', mat_dict['multirz'], 'einsum')
+crx = partial(gate_wrapper, 'crx', mat_dict['crx'], 'einsum')
+cry = partial(gate_wrapper, 'cry', mat_dict['cry'], 'einsum')
+crz = partial(gate_wrapper, 'crz', mat_dict['crz'], 'einsum')
+crot = partial(gate_wrapper, 'crot', mat_dict['crot'], 'einsum')
+u1 = partial(gate_wrapper, 'u1', mat_dict['u1'], 'einsum')
+u2 = partial(gate_wrapper, 'u2', mat_dict['u2'], 'einsum')
+u3 = partial(gate_wrapper, 'u3', mat_dict['u3'], 'einsum')
+qubitunitary = partial(gate_wrapper, 'qubitunitary', mat_dict[
+    'qubitunitary'], 'einsum')
+qubitunitary_fast = partial(gate_wrapper, 'qubitunitary_fast', mat_dict[
+    'qubitunitary_fast'], 'einsum')
 
 h = hadamard
 x = paulix
