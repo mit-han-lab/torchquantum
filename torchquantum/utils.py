@@ -45,9 +45,9 @@ class Timer(object):
         if self.device == 'gpu':
             self.start.record()
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, tb):
         if self.device == 'gpu':
             self.end.record()
             torch.cuda.synchronize()
             print(f"Task: {self.name}: "
-                  f"{self.start.elapsed_time(self.end) / self.times}")
+                  f"{self.start.elapsed_time(self.end) / self.times} ms")
