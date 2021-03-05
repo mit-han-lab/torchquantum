@@ -47,6 +47,7 @@ class QuantumGraph(object):
         self.func_ptr = 0
         self.num_func = 0
         self.build_finish = False
+        self.static_matrix_dict = {}
 
     def add_op(self, op: tq.Operator):
         if not self.is_list_finish:
@@ -90,7 +91,53 @@ class QuantumGraph(object):
         if not self.build_finish:
             self.build(wires_per_block)
 
+        self.build_static_matrix()
         self.apply_unitary()
+
+    def build_static_matrix(self):
+        # the optimization to speedup the static mode
+        # 1. fixed unitary operators will share one matrix
+        # 2. parameterized operators, the matrices for the same type are
+        # computed together in one kernel call to speedup training
+        matrix_params = {}
+        for wire_modules in self.wire_module_list:
+            for module in wire_modules:
+                name = module.name
+                if name in tq.Operator.fixed_ops:
+                    if name not in self.static_matrix_dict.keys():
+                        # fixed operator, all share one static matrix
+                        self.static_matrix_dict[module.name] = \
+                            module.matrix.to(self.device)
+                elif name in tq.Operator.parameterized_ops:
+                    # parameterized operators
+                    if name in matrix_params:
+                        matrix_params[name].append(module.params)
+                    else:
+                        matrix_params[name] = [module.params]
+                else:
+                    raise NotImplementedError(f"Module {name} not in list")
+
+        ptrs = {}
+        for name, param in matrix_params.items():
+            param_cat = torch.cat(param, dim=0)
+            self.static_matrix_dict[name] = tq.mat_dict[name.lower()](
+                param_cat).to(self.device)
+            ptrs[name] = 0
+
+        for wire_modules in self.wire_module_list:
+            for module in wire_modules:
+                name = module.name
+                if name in tq.Operator.fixed_ops:
+                    module.static_matrix = self.static_matrix_dict[name]
+                elif name in tq.Operator.parameterized_ops:
+                    shape0 = module.params.shape[0]
+                    module.static_matrix = self.static_matrix_dict[
+                        name][ptrs[name]: ptrs[name] + shape0]
+                    ptrs[name] += shape0
+                    if shape0 == 1:
+                        module.static_matrix = module.static_matrix.squeeze(0)
+                else:
+                    raise NotImplementedError(f"Module {name} not in list")
 
     def build_wire_module_dict(self, module_list):
         for module in module_list:
@@ -333,7 +380,8 @@ class QuantumGraph(object):
         else:
             is_u_batch = False
 
-        module_matrix = module.matrix.to(self.device)
+        # module_matrix = module.matrix.to(self.device)
+        module_matrix = module.static_matrix
         if module_matrix.dim() > 2:
             is_module_matrix_batch = True
         else:

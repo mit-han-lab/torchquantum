@@ -115,6 +115,8 @@ class Operator(tq.QuantumModule):
         # wires that the operator applies to
         self.wires = wires
         self._name = self.__class__.__name__
+        # for static mode
+        self.static_matrix = None
 
     @classmethod
     def _matrix(cls, params):
