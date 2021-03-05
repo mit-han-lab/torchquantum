@@ -1,5 +1,6 @@
 import argparse
 import os
+import time
 import pdb
 import sys
 import numpy as np
@@ -46,10 +47,16 @@ def main() -> None:
                           device=device)
 
     model = builder.make_model()
+    model.to(device)
 
     with profiler.profile(record_shapes=True) as prof:
         with profiler.record_function("model_inference"):
-            model(inputs)
+            for _ in range(3):
+                time.sleep(0.5)
+                model(inputs)
+
+    # for _ in range(3):
+    #     model(inputs)
 
     prof.export_chrome_trace("part1_static.json")
 
