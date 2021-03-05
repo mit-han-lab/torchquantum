@@ -2,6 +2,8 @@ import torch.nn as nn
 import torchquantum as tq
 import numpy as np
 
+from typing import Iterable
+
 __all__ = [
     'TrainableOpAll',
     'ClassicalInOpAll',
@@ -106,7 +108,8 @@ class RandomLayer(tq.QuantumModule):
         self.wires = wires
         self.n_wires = len(wires)
         self.op_ratios = np.array(op_ratios) / sum(op_ratios)
-        self.op_types = op_types
+        self.op_types = op_types if isinstance(op_types, Iterable) else \
+            [op_types]
         self.seed = seed
         self.op_list = tq.QuantumModuleList()
         if seed is not None:
