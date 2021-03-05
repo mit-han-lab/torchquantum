@@ -61,8 +61,8 @@ def apply_unitary_einsum(state, mat, wires):
         # try:
         #     assert state.shape[0] == bsz
         # except AssertionError as err:
-        #     logger.exception(f"Batch size of Quantum Device must be the same "
-        #                      f"with that of gate unitary matrix")
+        #     logger.exception(f"Batch size of Quantum Device must be the same"
+        #                      f" with that of gate unitary matrix")
         #     raise err
 
     else:
@@ -93,9 +93,9 @@ def apply_unitary_einsum(state, mat, wires):
     )
 
     # try:
-        # cannot support too many qubits...
-        # assert ABC[-1] not in state_indices + new_state_indices  \
-        #  + new_indices + affected_indices
+    #     cannot support too many qubits...
+    #     assert ABC[-1] not in state_indices + new_state_indices  \
+    #      + new_indices + affected_indices
     # except AssertionError as err:
     #     logger.exception(f"Cannot support too many qubit.")
     #     raise err
@@ -118,14 +118,14 @@ def apply_unitary_einsum(state, mat, wires):
 def apply_unitary_bmm(state, mat, wires):
     device_wires = wires
 
-    if len(mat.shape) > 2:
-        bsz = mat.shape[0]
-        # try:
-        #     assert state.shape[0] == bsz
-        # except AssertionError as err:
-        #     logger.exception(f"Batch size of Quantum Device must be the same"
-        #                      f" with that of gate unitary matrix")
-        #     raise err
+    # if len(mat.shape) > 2:
+    #         bsz = mat.shape[0]
+    #     try:
+    #         assert state.shape[0] == bsz
+    #     except AssertionError as err:
+    #         logger.exception(f"Batch size of Quantum Device must be the same"
+    #                          f" with that of gate unitary matrix")
+    #         raise err
     mat = mat.type(C_DTYPE).to(state)
 
     devices_dims = [w + 1 for w in device_wires]
