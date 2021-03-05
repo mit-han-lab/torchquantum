@@ -5,7 +5,7 @@ import itertools
 import functools
 import numpy as np
 
-from torchquantum.macro import C_DTYPE
+from torchquantum.macro import C_DTYPE, ABC, ABC_ARRAY
 
 
 def encode_w(wires):
@@ -262,90 +262,147 @@ class QuantumGraph(object):
             schedules.append(schedule)
         return schedules
 
-    def apply_unitary(self):
+    def acc_m_unitary_einsum(self, u, wires, module):
+        if u.dim() % 2 == 1:
+            is_u_batch = True
+        else:
+            is_u_batch = False
+
+        device_wires = module.wires
+        n_device_wires = len(device_wires)
+        n_block_wires = len(wires)
+
+        module_matrix = module.matrix.to(self.device)
+        if module_matrix.dim() > 2:
+            bsz = module_matrix.shape[0]
+            is_module_matrix_batch = True
+            shape_extension = [bsz]
+        else:
+            is_module_matrix_batch = False
+            shape_extension = []
+        if n_device_wires > 1:
+            module_matrix = module_matrix.view(shape_extension +
+                                               [2] * n_device_wires * 2)
+
+        # tensor indices for the quantum unitary
+        n_block_letters = n_block_wires * 2
+        unitary_indices = ABC[: n_block_letters]
+
+        # indices of the quantum unitary affected by this operation
+        locations_dim0 = [wires.index(wi) for wi in module.wires]
+        affected_indices = "".join(ABC_ARRAY[locations_dim0].tolist())
+
+        new_indices = ABC[n_block_letters: n_block_letters +
+                          n_device_wires]
+
+        new_unitary_indices = functools.reduce(
+            lambda old_string, idx_pair: old_string.replace(idx_pair[0],
+                                                            idx_pair[1]),
+            zip(affected_indices, new_indices),
+            unitary_indices,
+        )
+
+        if is_u_batch:
+            unitary_indices = ABC[-1] + unitary_indices
+
+        if is_module_matrix_batch:
+            new_indices = ABC[-1] + new_indices
+
+        if is_u_batch or is_module_matrix_batch:
+            new_unitary_indices = ABC[-1] + new_unitary_indices
+
+        einsum_indices = f"{new_indices}{affected_indices}," \
+                         f"{unitary_indices}->{new_unitary_indices}"
+
+        new_unitary = torch.einsum(einsum_indices, module_matrix, u)
+
+        return new_unitary
+
+    def acc_m_unitary_bmm(self, u, wires, module):
         # compute the unitary of each block and apply to the device
-        def acc_m_unitary(u, wires, module):
-            u2w_mapping = {}
-            w2u_mapping = {}
-            for k, w in enumerate(wires):
-                # mapping between the block unitary wire (u) and gate local
-                # wire (w)
-                w2u_mapping[w] = k
-                u2w_mapping[k] = w
+        u2w_mapping = {}
+        w2u_mapping = {}
+        for k, w in enumerate(wires):
+            # mapping between the block unitary wire (u) and gate local
+            # wire (w)
+            w2u_mapping[w] = k
+            u2w_mapping[k] = w
 
-            if u.dim() % 2 == 1:
-                is_u_batch = True
-            else:
-                is_u_batch = False
+        if u.dim() % 2 == 1:
+            is_u_batch = True
+        else:
+            is_u_batch = False
 
-            module_matrix = module.matrix.to(self.device)
-            if module_matrix.dim() > 2:
-                is_module_matrix_batch = True
-            else:
-                is_module_matrix_batch = False
+        module_matrix = module.matrix.to(self.device)
+        if module_matrix.dim() > 2:
+            is_module_matrix_batch = True
+        else:
+            is_module_matrix_batch = False
 
-            m_wires = [self.global2local_wire_mapping[w] for w in module.wires]
-            m_first_dim = []
-            m_second_dim = []
-            remain_first_dim = []
-            remain_second_dim = []
+        m_wires = [self.global2local_wire_mapping[w] for w in module.wires]
+        m_first_dim = []
+        m_second_dim = []
+        remain_first_dim = []
+        remain_second_dim = []
 
-            for k in m_wires:
-                m_first_dim.append(w2u_mapping[k])
-                m_second_dim.append(w2u_mapping[k] + len(wires))
+        for k in m_wires:
+            m_first_dim.append(w2u_mapping[k])
+            m_second_dim.append(w2u_mapping[k] + len(wires))
 
-            for k in range(len(wires)):
-                if u2w_mapping[k] not in m_wires:
-                    remain_first_dim.append(k)
-                    remain_second_dim.append(k + len(wires))
+        for k in range(len(wires)):
+            if u2w_mapping[k] not in m_wires:
+                remain_first_dim.append(k)
+                remain_second_dim.append(k + len(wires))
 
-            permute_to = remain_first_dim + remain_second_dim + m_first_dim \
-                + m_second_dim
-            if is_u_batch:
-                permute_to = [0] + [p + 1 for p in permute_to]
-            permute_back = list(np.argsort(permute_to))
+        permute_to = remain_first_dim + remain_second_dim + m_first_dim + \
+            m_second_dim
+        if is_u_batch:
+            permute_to = [0] + [p + 1 for p in permute_to]
+        permute_back = list(np.argsort(permute_to))
 
-            original_shape = u.shape
+        original_shape = u.shape
 
-            if is_u_batch:
-                u = u.permute(permute_to).reshape([u.shape[0], -1, 2 ** len(
-                    m_wires), 2 ** len(m_wires)])
-            else:
-                u = u.permute(permute_to).reshape([-1, 2 ** len(m_wires),
-                                                   2 ** len(m_wires)])
+        if is_u_batch:
+            u = u.permute(permute_to).reshape([u.shape[0], -1, 2 ** len(
+                m_wires), 2 ** len(m_wires)])
+        else:
+            u = u.permute(permute_to).reshape([-1, 2 ** len(m_wires),
+                                               2 ** len(m_wires)])
+            if u.dim() == 2:
+                u = u.unsqueeze(0)
 
-                if u.dim() == 2:
-                    u = u.unsqueeze(0)
+        if is_u_batch and is_module_matrix_batch:
+            module_matrix = module_matrix.unsqueeze(-3)
+        elif not is_u_batch and is_module_matrix_batch:
+            bsz = module_matrix.shape[0]
+            module_matrix = module_matrix.unsqueeze(-3)
+            original_shape = [bsz] + list(original_shape)
+            permute_back = [0] + [p + 1 for p in permute_back]
+        elif is_u_batch and not is_module_matrix_batch:
+            pass
+        else:
+            # not is_u_batch and not is_module_matrix_batch:
+            pass
 
-            if is_u_batch and is_module_matrix_batch:
-                module_matrix = module_matrix.unsqueeze(-3)
-            elif not is_u_batch and is_module_matrix_batch:
-                bsz = module_matrix.shape[0]
-                module_matrix = module_matrix.unsqueeze(-3)
-                original_shape = [bsz] + list(original_shape)
-                permute_back = [0] + [p + 1 for p in permute_back]
-            elif is_u_batch and not is_module_matrix_batch:
-                pass
-            else:
-                # not is_u_batch and not is_module_matrix_batch:
-                pass
+        if not is_u_batch and not is_module_matrix_batch:
+            new_u = module_matrix.expand(u.shape).bmm(u)
+        else:
+            new_u = module_matrix.matmul(u)
+        new_u = new_u.view(original_shape).permute(permute_back)
 
-            if not is_u_batch and not is_module_matrix_batch:
-                new_u = module_matrix.expand(u.shape).bmm(u)
-            else:
-                new_u = module_matrix.matmul(u)
-            new_u = new_u.view(original_shape).permute(permute_back)
+        return new_u
 
-            return new_u
-
+    def apply_unitary(self):
         for schedule in self.schedules:
             comb = schedule['wires']
             # here some front large gates will need a larger unitary
             unitary = torch.eye(2 ** len(comb), dtype=C_DTYPE,
                                 device=self.device).view([2] *
                                                          len(comb) * 2)
+
+            global_wires = [self.local2global_wire_mapping[w] for w in comb]
             for m in schedule['modules']:
-                unitary = acc_m_unitary(unitary, comb, m)
+                unitary = self.acc_m_unitary_bmm(unitary, comb, m)
             if unitary.dim() % 2 == 1:
                 unitary = unitary.reshape(
                     unitary.shape[0],
