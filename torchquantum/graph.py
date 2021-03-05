@@ -319,7 +319,8 @@ class QuantumGraph(object):
         n_device_wires = len(device_wires)
         n_block_wires = len(wires)
 
-        module_matrix = module.matrix.to(self.device)
+        # module_matrix = module.matrix.to(self.device)
+        module_matrix = module.static_matrix
         if module_matrix.dim() > 2:
             bsz = module_matrix.shape[0]
             is_module_matrix_batch = True
