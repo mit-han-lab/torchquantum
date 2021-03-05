@@ -309,7 +309,8 @@ class QuantumGraph(object):
             schedules.append(schedule)
         return schedules
 
-    def acc_m_unitary_einsum(self, u, wires, module):
+    @staticmethod
+    def acc_m_unitary_einsum(u, wires, module):
         if u.dim() % 2 == 1:
             is_u_batch = True
         else:
@@ -366,16 +367,9 @@ class QuantumGraph(object):
 
         return new_unitary
 
-    def acc_m_unitary_bmm(self, u, wires, module):
+    @staticmethod
+    def acc_m_unitary_bmm(u, global_wires, module):
         # compute the unitary of each block and apply to the device
-        u2w_mapping = {}
-        w2u_mapping = {}
-        for k, w in enumerate(wires):
-            # mapping between the block unitary wire (u) and gate local
-            # wire (w)
-            w2u_mapping[w] = k
-            u2w_mapping[k] = w
-
         if u.dim() % 2 == 1:
             is_u_batch = True
         else:
@@ -388,23 +382,17 @@ class QuantumGraph(object):
         else:
             is_module_matrix_batch = False
 
-        m_wires = [self.global2local_wire_mapping[w] for w in module.wires]
-        m_first_dim = []
-        m_second_dim = []
-        remain_first_dim = []
-        remain_second_dim = []
+        n_global_wires = len(global_wires)
+        m_global_wires = module.wires
 
-        for k in m_wires:
-            m_first_dim.append(w2u_mapping[k])
-            m_second_dim.append(w2u_mapping[k] + len(wires))
+        loc_all = list(range(n_global_wires * 2))
+        loc_dim0 = [global_wires.index(wi) for wi in m_global_wires]
+        loc_dim1 = [loc + n_global_wires for loc in loc_dim0]
+        location = loc_dim0 + loc_dim1
+        for loc in location:
+            loc_all.remove(loc)
+        permute_to = loc_all + location
 
-        for k in range(len(wires)):
-            if u2w_mapping[k] not in m_wires:
-                remain_first_dim.append(k)
-                remain_second_dim.append(k + len(wires))
-
-        permute_to = remain_first_dim + remain_second_dim + m_first_dim + \
-            m_second_dim
         if is_u_batch:
             permute_to = [0] + [p + 1 for p in permute_to]
         permute_back = list(np.argsort(permute_to))
@@ -413,10 +401,10 @@ class QuantumGraph(object):
 
         if is_u_batch:
             u = u.permute(permute_to).reshape([u.shape[0], -1, 2 ** len(
-                m_wires), 2 ** len(m_wires)])
+                m_global_wires), 2 ** len(m_global_wires)])
         else:
-            u = u.permute(permute_to).reshape([-1, 2 ** len(m_wires),
-                                               2 ** len(m_wires)])
+            u = u.permute(permute_to).reshape([-1, 2 ** len(m_global_wires),
+                                               2 ** len(m_global_wires)])
             if u.dim() == 2:
                 u = u.unsqueeze(0)
 
@@ -451,7 +439,7 @@ class QuantumGraph(object):
 
             global_wires = [self.local2global_wire_mapping[w] for w in comb]
             for m in schedule['modules']:
-                unitary = self.acc_m_unitary_bmm(unitary, comb, m)
+                unitary = self.acc_m_unitary_bmm(unitary, global_wires, m)
             if unitary.dim() % 2 == 1:
                 unitary = unitary.reshape(
                     unitary.shape[0],
