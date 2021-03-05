@@ -1,6 +1,5 @@
 import torchquantum as tq
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 __all__ = ['QuanvModel0']
@@ -10,7 +9,7 @@ class Quanv0(tq.QuantumModule):
     def __init__(self, n_gates):
         super().__init__()
         self.n_gates = n_gates
-        self.random_layer = tq.RandomLayer(n_ops=20, wires=list(range(
+        self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
             self.n_gates)))
 
     @tq.static_support
@@ -57,20 +56,21 @@ class QuanvModel0(tq.QuantumModule):
         self.q_device = tq.QuantumDevice(n_wire=9)
         self.q_device1 = tq.QuantumDevice(n_wire=12)
         self.measure = Measure()
+        self.wires_per_block = 3
 
         self.encoder0 = RxEncoder(n_gates=9)
-        self.encoder0.static_on(wires_per_block=4)
+        self.encoder0.static_on(wires_per_block=self.wires_per_block)
         self.quanv0 = tq.QuantumModuleList()
         for k in range(3):
             self.quanv0.append(Quanv0(n_gates=9))
-            self.quanv0[k].static_on(wires_per_block=4)
+            self.quanv0[k].static_on(wires_per_block=self.wires_per_block)
 
         self.quanv1 = tq.QuantumModuleList()
         self.encoder1 = RxEncoder(n_gates=12)
-        self.encoder1.static_on(wires_per_block=4)
+        self.encoder1.static_on(wires_per_block=self.wires_per_block)
         for k in range(10):
             self.quanv1.append(Quanv0(n_gates=12))
-            self.quanv1[k].static_on(wires_per_block=4)
+            self.quanv1[k].static_on(wires_per_block=self.wires_per_block)
 
     def forward(self, x):
         bsz = x.shape[0]
