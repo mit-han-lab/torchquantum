@@ -141,20 +141,20 @@ class Operator(tq.QuantumModule):
         self.wires = [wires] if isinstance(wires, int) else wires
 
     def forward(self, q_device: tq.QuantumDevice, wires=None, params=None):
-        try:
-            assert self.name in self.fixed_ops or \
-                   self.has_params ^ (params is not None)
-        except AssertionError as err:
-            logger.exception(f"Parameterized gate either has its "
-                             f"own parameters or has input as parameters")
-            raise err
+        # try:
+        #     assert self.name in self.fixed_ops or \
+        #            self.has_params ^ (params is not None)
+        # except AssertionError as err:
+        #     logger.exception(f"Parameterized gate either has its "
+        #                      f"own parameters or has input as parameters")
+        #     raise err
 
-        try:
-            assert not (self.wires is None and wires is None)
-        except AssertionError as err:
-            logger.exception(f"Need to specify the wires either when "
-                             f"initialize or when forward")
-            raise err
+        # try:
+        #     assert not (self.wires is None and wires is None)
+        # except AssertionError as err:
+        #     logger.exception(f"Need to specify the wires either when "
+        #                      f"initialize or when forward")
+        #     raise err
 
         if params is not None:
             self.params = params

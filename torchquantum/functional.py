@@ -58,12 +58,12 @@ def apply_unitary_einsum(state, mat, wires):
         is_batch_unitary = True
         bsz = mat.shape[0]
         shape_extension = [bsz]
-        try:
-            assert state.shape[0] == bsz
-        except AssertionError as err:
-            logger.exception(f"Batch size of Quantum Device must be the same "
-                             f"with that of gate unitary matrix")
-            raise err
+        # try:
+        #     assert state.shape[0] == bsz
+        # except AssertionError as err:
+        #     logger.exception(f"Batch size of Quantum Device must be the same "
+        #                      f"with that of gate unitary matrix")
+        #     raise err
 
     else:
         is_batch_unitary = False
@@ -92,13 +92,13 @@ def apply_unitary_einsum(state, mat, wires):
         state_indices,
     )
 
-    try:
+    # try:
         # cannot support too many qubits...
-        assert ABC[-1] not in state_indices + new_state_indices + new_indices \
-           + affected_indices
-    except AssertionError as err:
-        logger.exception(f"Cannot support too many qubit.")
-        raise err
+        # assert ABC[-1] not in state_indices + new_state_indices  \
+        #  + new_indices + affected_indices
+    # except AssertionError as err:
+    #     logger.exception(f"Cannot support too many qubit.")
+    #     raise err
 
     state_indices = ABC[-1] + state_indices
     new_state_indices = ABC[-1] + new_state_indices
@@ -120,12 +120,12 @@ def apply_unitary_bmm(state, mat, wires):
 
     if len(mat.shape) > 2:
         bsz = mat.shape[0]
-        try:
-            assert state.shape[0] == bsz
-        except AssertionError as err:
-            logger.exception(f"Batch size of Quantum Device must be the same "
-                             f"with that of gate unitary matrix")
-            raise err
+        # try:
+        #     assert state.shape[0] == bsz
+        # except AssertionError as err:
+        #     logger.exception(f"Batch size of Quantum Device must be the same"
+        #                      f" with that of gate unitary matrix")
+        #     raise err
     mat = mat.type(C_DTYPE).to(state)
 
     devices_dims = [w + 1 for w in device_wires]
