@@ -29,7 +29,7 @@ def expval(q_device: tq.QuantumDevice,
         # compute marginal magnitude
         reduction_dims = np.delete(all_dims, [0, wire + 1])
         probs = state_mag.sum(list(reduction_dims))
-        res = probs.matmul(observable.eigvals.to(probs))
+        res = probs.mv(observable.eigvals.to(probs))
         expectations.append(res)
 
     return torch.stack(expectations, dim=-1)

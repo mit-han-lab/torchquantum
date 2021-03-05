@@ -415,11 +415,11 @@ class QuantumGraph(object):
             module_matrix = module_matrix.unsqueeze(-3)
             original_shape = [bsz] + list(original_shape)
             permute_back = [0] + [p + 1 for p in permute_back]
-        elif is_u_batch and not is_module_matrix_batch:
-            pass
-        else:
-            # not is_u_batch and not is_module_matrix_batch:
-            pass
+        # elif is_u_batch and not is_module_matrix_batch:
+        #     pass
+        # else:
+        #     not is_u_batch and not is_module_matrix_batch:
+        #     pass
 
         if not is_u_batch and not is_module_matrix_batch:
             new_u = module_matrix.expand(u.shape).bmm(u)
