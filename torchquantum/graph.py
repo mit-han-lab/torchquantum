@@ -330,8 +330,11 @@ class QuantumGraph(object):
                 # not is_u_batch and not is_module_matrix_batch:
                 pass
 
-            new_u = module_matrix.matmul(u).view(original_shape).permute(
-                permute_back)
+            if not is_u_batch and not is_module_matrix_batch:
+                new_u = module_matrix.expand(u.shape).bmm(u)
+            else:
+                new_u = module_matrix.matmul(u)
+            new_u = new_u.view(original_shape).permute(permute_back)
 
             return new_u
 
