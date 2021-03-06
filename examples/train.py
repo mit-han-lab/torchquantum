@@ -9,7 +9,7 @@ import torch.cuda
 import torch.nn
 import torch.utils.data
 from torchpack import distributed as dist
-from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MinSaver,
+from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
 from torchpack.environ import auto_set_run_dir, set_run_dir
 from torchpack.utils.config import configs
@@ -64,6 +64,20 @@ def main() -> None:
 
     dataset = builder.make_dataset()
     dataflow = dict()
+
+    # for split in dataset:
+    #     sampler = torch.utils.data.distributed.DistributedSampler(
+    #         dataset[split],
+    #         num_replicas=dist.size(),
+    #         rank=dist.rank(),
+    #         shuffle=(split == 'train'))
+    #     dataflow[split] = torch.utils.data.DataLoader(
+    #         dataset[split],
+    #         batch_size=configs.run.bsz // dist.size(),
+    #         sampler=sampler,
+    #         num_workers=configs.run.workers_per_gpu,
+    #         pin_memory=True)
+
     for split in dataset:
         sampler = torch.utils.data.RandomSampler(dataset[split])
         dataflow[split] = torch.utils.data.DataLoader(
@@ -72,8 +86,13 @@ def main() -> None:
             sampler=sampler,
             num_workers=configs.run.workers_per_gpu,
             pin_memory=True)
+
     model = builder.make_model()
     model.to(device)
+    # model = torch.nn.parallel.DistributedDataParallel(
+    #     model.cuda(),
+    #     device_ids=[dist.local_rank()],
+    #     find_unused_parameters=True)
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
@@ -95,11 +114,11 @@ def main() -> None:
             # SaverRestore(),
             InferenceRunner(
                 dataflow=dataflow['valid'],
-                callbacks=[CategoricalAccuracy(name='error/valid')]),
+                callbacks=[CategoricalAccuracy(name='acc/valid')]),
             InferenceRunner(
                 dataflow=dataflow['test'],
-                callbacks=[CategoricalAccuracy(name='error/test')]),
-            MinSaver('error/valid'),
+                callbacks=[CategoricalAccuracy(name='acc/test')]),
+            MaxSaver('acc/valid'),
             # Saver(),
         ])
 
