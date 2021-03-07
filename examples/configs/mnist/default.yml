@@ -8,11 +8,11 @@ criterion:
 
 optimizer:
   name: adam
-  lr: 5.0e-4
+  lr: 1e-3
   weight_decay: 1.0e-4
 
 scheduler:
-  name: constant
+  name: cosine
 
 run:
   n_epochs: 100

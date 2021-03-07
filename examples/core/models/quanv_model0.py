@@ -56,7 +56,7 @@ class QuanvModel0(tq.QuantumModule):
         self.q_device = tq.QuantumDevice(n_wire=9)
         self.q_device1 = tq.QuantumDevice(n_wire=12)
         self.measure = Measure()
-        self.wires_per_block = 3
+        self.wires_per_block = 5
 
         self.encoder0 = RxEncoder(n_gates=9)
         self.encoder0.static_on(wires_per_block=self.wires_per_block)
