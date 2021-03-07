@@ -17,6 +17,9 @@ def make_dataset() -> Dataset:
             root=configs.dataset.root,
             train_valid_split_ratio=configs.dataset.train_valid_split_ratio
         )
+    if configs.dataset.name == 'layer_regression':
+        from .datasets import LayerRegression
+        dataset = LayerRegression()
     else:
         raise NotImplementedError(configs.dataset.name)
 
@@ -36,6 +39,22 @@ def make_model() -> nn.Module:
     elif configs.model.name == 'quanv_model0':
         from .models import QuanvModel0
         model = QuanvModel0()
+    elif configs.model.name == 'classical_conv0':
+        from .models import ClassicalConv0
+        model = ClassicalConv0()
+    elif configs.model.name == 'classical_conv1':
+        from .models import ClassicalConv1
+        model = ClassicalConv1()
+    elif configs.model.name == 'classical_conv2':
+        from .models import ClassicalConv2
+        model = ClassicalConv2()
+    elif configs.model.name == 'quanv_model1':
+        from .models import QuanvModel1
+        model = QuanvModel1()
+    elif configs.model.name == 'layer_regression':
+        from .models import LayerRegression
+        model = LayerRegression()
+
     else:
         raise NotImplementedError(configs.model.name)
 
@@ -45,6 +64,14 @@ def make_model() -> nn.Module:
 def make_criterion() -> nn.Module:
     if configs.criterion.name == 'nll':
         criterion = nn.NLLLoss()
+    elif configs.criterion.name == 'mse':
+        criterion = nn.MSELoss()
+    elif configs.criterion.name == 'complex_mse':
+        from .criterions import complex_mse
+        criterion = complex_mse
+    elif configs.criterion.name == 'complex_mae':
+        from .criterions import complex_mae
+        criterion = complex_mae
     else:
         raise NotImplementedError(configs.criterion.name)
 

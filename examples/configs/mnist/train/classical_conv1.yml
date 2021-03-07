@@ -1,0 +1,4 @@
+model:
+  name: classical_conv1
+run:
+  bsz: 64

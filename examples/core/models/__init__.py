@@ -2,3 +2,8 @@ from .quanvolution import *
 from .hybrid import *
 from .static import *
 from .quanv_model0 import *
+from .classical_conv0 import *
+from .classical_conv1 import *
+from .quanv_model1 import *
+from .classical_conv2 import *
+from .layer_regression import *
