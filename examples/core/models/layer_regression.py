@@ -10,8 +10,8 @@ class Measure(tq.QuantumModule):
 
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
-        x = tq.expval(q_device, list(range(q_device.n_wire)), [tq.PauliY()]
-                      * q_device.n_wire)
+        x = tq.expval(q_device, list(range(q_device.n_wires)), [tq.PauliY()]
+                      * q_device.n_wires)
         return x
 
 
@@ -33,7 +33,7 @@ class RxEncoder(tq.QuantumModule):
 class LayerRegressionV(nn.Module):
     def __init__(self):
         super().__init__()
-        self.q_device = tq.QuantumDevice(n_wire=5)
+        self.q_device = tq.QuantumDevice(n_wires=5)
         self.encoder = RxEncoder(n_wires=5)
         self.encoder.static_on(wires_per_block=5)
         self.measure = Measure()
@@ -52,8 +52,8 @@ class LayerRegressionV(nn.Module):
 class LayerRegression(nn.Module):
     def __init__(self):
         super().__init__()
-        self.n_wire = 5
-        self.q_device = tq.QuantumDevice(n_wire=5)
+        self.n_wires = 5
+        self.q_device = tq.QuantumDevice(n_wires=5)
         self.encoder = RxEncoder(n_wires=5)
         self.encoder.static_on(wires_per_block=5)
         self.measure = Measure()
@@ -66,8 +66,8 @@ class LayerRegression(nn.Module):
     def forward(self, x):
         self.cnt += 1
         self.q_device.states = torch.eye(
-            2 ** self.n_wire).to(self.q_device.state).view([32] + [2] *
-                                                          self.n_wire)
+            2 ** self.n_wires).to(self.q_device.state.device).view([32] + [2] *
+                                                          self.n_wires)
         self.q_layer(self.q_device)
         # self.qop(self.q_device, wires=1)
 

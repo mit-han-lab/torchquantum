@@ -26,7 +26,7 @@ class QLayer0(tq.QuantumModule):
         self.trainable_ry_all1 = tq.TrainableOpAll(n_gate=9, op=tq.RY)
         self.trainable_rz_all1 = tq.TrainableOpAll(n_gate=9, op=tq.RZ)
 
-        self.q_device0 = tq.QuantumDevice(n_wire=9)
+        self.q_device0 = tq.QuantumDevice(n_wires=9)
         self.cnot_all = tq.TwoQAll(n_gate=9, op=tq.CNOT)
         self.cz_all = tq.TwoQAll(n_gate=9, op=tq.CZ)
         self.cy_all = tq.TwoQAll(n_gate=9, op=tq.CY)
@@ -75,7 +75,7 @@ class QLayer1(tq.QuantumModule):
         self.trainable_ry_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RY)
         self.rz_all0 = tq.ClassicalInOpAll(n_gate=9, op=tq.RZ)
         self.trainable_rz_all0 = tq.TrainableOpAll(n_gate=9, op=tq.RZ)
-        self.q_device0 = tq.QuantumDevice(n_wire=9)
+        self.q_device0 = tq.QuantumDevice(n_wires=9)
         self.cnot_all = tq.TwoQAll(n_gate=9, op=tq.CNOT)
 
     def forward(self, x):

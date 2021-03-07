@@ -62,13 +62,18 @@ def make_model() -> nn.Module:
     elif configs.model.name == 'classical_conv2':
         from .models import ClassicalConv2
         model = ClassicalConv2()
+    elif configs.model.name == 'classical_conv3':
+        from .models import ClassicalConv3
+        model = ClassicalConv3()
     elif configs.model.name == 'quanv_model1':
         from .models import QuanvModel1
         model = QuanvModel1()
+    elif configs.model.name == 'quanv_model2':
+        from .models import QuanvModel2
+        model = QuanvModel2()
     elif configs.model.name == 'layer_regression':
         from .models import LayerRegression
         model = LayerRegression()
-
     else:
         raise NotImplementedError(configs.model.name)
 

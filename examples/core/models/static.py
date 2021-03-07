@@ -128,8 +128,8 @@ class Static(nn.Module):
         self.fc1 = nn.Linear(9216, 128)
         self.fc2 = nn.Linear(128, 10)
         self.sigmoid = nn.Sigmoid()
-        self.q_device0 = tq.QuantumDevice(n_wire=12)
-        self.q_device0_1 = tq.QuantumDevice(n_wire=10)
+        self.q_device0 = tq.QuantumDevice(n_wires=12)
+        self.q_device0_1 = tq.QuantumDevice(n_wires=10)
         self.q_layer0 = tq.TrainableOpAll(n_gate=12, op=tq.RX)
         # self.q_layer1 = OpAll(n_gate=10, op=tq.RY)
         self.q_layer2 = tq.RX(has_params=True,
@@ -138,7 +138,7 @@ class Static(nn.Module):
 
         self.q_layer3 = tq.RZ(has_params=True,
                               trainable=True)
-        self.q_device1 = tq.QuantumDevice(n_wire=3)
+        self.q_device1 = tq.QuantumDevice(n_wires=3)
         self.q_layer4 = tq.CY()
         self.q_layer5 = tq.Toffoli()
         self.q_layer6 = tq.PhaseShift(has_params=True,

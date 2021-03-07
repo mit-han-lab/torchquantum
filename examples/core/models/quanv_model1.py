@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-__all__ = ['QuanvModel1']
+__all__ = ['QuanvModel1', 'QuanvModel2']
 
 
 class Quanv0(tq.QuantumModule):
@@ -25,8 +25,8 @@ class Measure(tq.QuantumModule):
 
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
-        x = tq.expval(q_device, list(range(q_device.n_wire)), [tq.PauliZ()]
-                      * q_device.n_wire)
+        x = tq.expval(q_device, list(range(q_device.n_wires)), [tq.PauliZ()]
+                      * q_device.n_wires)
         return x
 
 
@@ -54,7 +54,7 @@ class QuanvModel1(tq.QuantumModule):
     """
     def __init__(self):
         super().__init__()
-        self.q_device = tq.QuantumDevice(n_wire=4)
+        self.q_device = tq.QuantumDevice(n_wires=4)
         self.measure = Measure()
         self.wires_per_block = 4
         self.n_quanv = 3
@@ -111,5 +111,31 @@ class QuanvModel1(tq.QuantumModule):
         x = F.avg_pool2d(x, kernel_size=3)
         x = F.log_softmax(x, dim=1)
         x = x.squeeze()
+
+        return x
+
+
+class QuanvModel2(tq.QuantumModule):
+    """
+    Convolution with quantum filter
+    """
+    def __init__(self):
+        super().__init__()
+        self.q_device = tq.QuantumDevice(n_wires=4)
+        self.encoder = tq.StateEncoder()
+        self.trainable_u = tq.TrainableUnitary(has_params=True,
+                                               trainable=True,
+                                               n_wires=4)
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        self.encoder(self.q_device, x)
+        self.trainable_u(self.q_device, wires=[0, 1, 2, 3])
+
+        x = self.q_device.states.view(bsz, 16)[:, :10].abs()
+
+        x = F.log_softmax(x, dim=1)
 
         return x

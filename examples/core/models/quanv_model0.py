@@ -24,8 +24,8 @@ class Measure(tq.QuantumModule):
 
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
-        x = tq.expval(q_device, list(range(q_device.n_wire)), [tq.PauliZ()]
-                      * q_device.n_wire)
+        x = tq.expval(q_device, list(range(q_device.n_wires)), [tq.PauliZ()]
+                      * q_device.n_wires)
         return x
 
 
@@ -53,8 +53,8 @@ class QuanvModel0(tq.QuantumModule):
     """
     def __init__(self):
         super().__init__()
-        self.q_device = tq.QuantumDevice(n_wire=9)
-        self.q_device1 = tq.QuantumDevice(n_wire=12)
+        self.q_device = tq.QuantumDevice(n_wires=9)
+        self.q_device1 = tq.QuantumDevice(n_wires=12)
         self.measure = Measure()
         self.wires_per_block = 5
 

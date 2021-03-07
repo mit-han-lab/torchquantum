@@ -27,3 +27,19 @@ class ClassicalConv0(nn.Module):
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
         return output
+
+
+class ClassicalConv3(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(16, 16)
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+        x = self.fc1(x)[:, :10]
+        x = x * x
+
+        output = F.log_softmax(x, dim=1)
+
+        return output.squeeze()

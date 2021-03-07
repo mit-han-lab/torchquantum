@@ -27,3 +27,5 @@ class ClassicalConv2(nn.Module):
         output = F.log_softmax(x, dim=1)
 
         return output.squeeze()
+
+
