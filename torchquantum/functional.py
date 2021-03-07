@@ -71,7 +71,7 @@ def apply_unitary_einsum(state, mat, wires):
 
     mat = mat.view(shape_extension + [2] * len(device_wires) * 2)
 
-    mat = mat.type(C_DTYPE).to(state)
+    mat = mat.type(C_DTYPE).to(state.device)
 
     # Tensor indices of the quantum state
     state_indices = ABC[: total_wires]
@@ -126,7 +126,7 @@ def apply_unitary_bmm(state, mat, wires):
     #         logger.exception(f"Batch size of Quantum Device must be the same"
     #                          f" with that of gate unitary matrix")
     #         raise err
-    mat = mat.type(C_DTYPE).to(state)
+    mat = mat.type(C_DTYPE).to(state.device)
 
     devices_dims = [w + 1 for w in device_wires]
     permute_to = list(range(state.dim()))
@@ -172,7 +172,7 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
     else:
         # in dynamic mode, the function is computed instantly
         if isinstance(mat, Callable):
-            if n_wires is None:
+            if n_wires is None or name == 'qubitunitary_fast':
                 matrix = mat(params)
             else:
                 # this is for gates that can be applied to arbitrary numbers of
@@ -265,7 +265,7 @@ def rot_matrix(params):
 def multirz_eigvals(params, n_wires):
     theta = params.type(C_DTYPE)
     return torch.exp(-1j * theta / 2 * torch.tensor(pauli_eigs(n_wires)).to(
-        params))
+        params.device))
 
 
 def multirz_matrix(params, n_wires):

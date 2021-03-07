@@ -26,7 +26,8 @@ def diag(x):
     diag_len = x.shape[-1]
     x = x.unsqueeze(-1)
     dims = list(x.shape)
-    x = torch.cat([x, torch.zeros(dims[:-1] + [diag_len]).to(x)], dim=-1)
+    x = torch.cat([x, torch.zeros(dims[:-1] + [diag_len]).to(x.device)],
+                  dim=-1)
     x = x.view(dims[:-2] + [diag_len * (diag_len + 1)])[..., :-diag_len]
     x = x.view(dims[:-2]+[diag_len, diag_len])
     return x

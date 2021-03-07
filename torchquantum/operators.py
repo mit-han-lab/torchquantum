@@ -43,6 +43,7 @@ __all__ = [
     'U2',
     'U3',
     'QubitUnitary',
+    'TrainableUnitary',
     'op_name_dict',
 ]
 
@@ -96,6 +97,7 @@ class Operator(tq.QuantumModule):
         'U1',
         'U2',
         'U3',
+        'TrainableUnitary',
     ]
 
     @property
@@ -215,11 +217,11 @@ class Operation(Operator, metaclass=ABCMeta):
 
         self.has_params = has_params
         self.trainable = trainable
+        self.n_wires = n_wires
+        self.wires = wires
         if self.has_params:
             self.params = self.build_params(trainable=self.trainable)
             self.reset_params(init_params)
-        self.n_wires = n_wires
-        self.wires = wires
 
     @property
     def matrix(self):
@@ -525,6 +527,24 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
         return tqf.multirz_matrix(params, n_wires)
 
 
+class TrainableUnitary(Operation, metaclass=ABCMeta):
+    num_wires = AnyWires
+    func = staticmethod(tqf.qubitunitary_fast)
+
+    def build_params(self, trainable):
+        parameters = nn.Parameter(torch.empty(
+            2 ** self.n_wires, 2 ** self.n_wires, dtype=C_DTYPE))
+        parameters.requires_grad = True if trainable else False
+        self.register_parameter(f"{self.name}_params", parameters)
+        return parameters
+
+    def reset_params(self, init_params=None):
+        mat = torch.randn((2 ** self.n_wires, 2 ** self.n_wires),
+                          dtype=C_DTYPE)
+        U, Sigma, V = torch.svd(mat)
+        self.params = nn.Parameter(U.matmul(V))
+
+
 class CRX(Operation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 2
@@ -641,4 +661,5 @@ op_name_dict = {
     'u2': U2,
     'u3': U3,
     'qubitunitary': QubitUnitary,
+    'trainableunitary': TrainableUnitary
 }

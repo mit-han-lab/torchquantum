@@ -31,9 +31,9 @@ class TrainableOpAll(tq.QuantumModule):
     def forward(self, q_device: tq.QuantumDevice):
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
-        assert self.n_gate == q_device.n_wire, \
+        assert self.n_gate == q_device.n_wires, \
             f"Number of rx gates ({self.n_gate}) is different from number " \
-            f"of wires ({q_device.n_wire})!"
+            f"of wires ({q_device.n_wires})!"
 
         for k in range(self.n_gate):
             self.gate_all[k](q_device, wires=k)
@@ -53,9 +53,9 @@ class ClassicalInOpAll(tq.QuantumModule):
     def forward(self, q_device: tq.QuantumDevice, x):
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
-        assert self.n_gate == q_device.n_wire, \
+        assert self.n_gate == q_device.n_wires, \
             f"Number of rx gates ({self.n_gate}) is different from number " \
-            f"of wires ({q_device.n_wire})!"
+            f"of wires ({q_device.n_wires})!"
 
         for k in range(self.n_gate):
             self.gate_all[k](q_device, wires=k, params=x[:, k])
@@ -75,9 +75,9 @@ class FixedOpAll(tq.QuantumModule):
     def forward(self, q_device: tq.QuantumDevice):
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
-        assert self.n_gate == q_device.n_wire, \
+        assert self.n_gate == q_device.n_wires, \
             f"Number of rx gates ({self.n_gate}) is different from number " \
-            f"of wires ({q_device.n_wire})!"
+            f"of wires ({q_device.n_wires})!"
 
         for k in range(self.n_gate):
             self.gate_all[k](q_device, wires=k)

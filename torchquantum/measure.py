@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torchquantum as tq
 import numpy as np
+
+from torchquantum.macro import F_DTYPE
 from typing import Union, List
 
 
@@ -29,7 +31,7 @@ def expval(q_device: tq.QuantumDevice,
         # compute marginal magnitude
         reduction_dims = np.delete(all_dims, [0, wire + 1])
         probs = state_mag.sum(list(reduction_dims))
-        res = probs.mv(observable.eigvals.to(probs))
+        res = probs.mv(observable.eigvals.to(probs.device)).type(F_DTYPE)
         expectations.append(res)
 
     return torch.stack(expectations, dim=-1)
