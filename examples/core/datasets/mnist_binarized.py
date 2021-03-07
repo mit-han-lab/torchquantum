@@ -4,22 +4,20 @@ from torchpack.datasets.dataset import Dataset
 from torchvision import datasets, transforms
 from typing import List
 
-__all__ = ['MNIST']
+__all__ = ['MNISTBinarized']
 
 
-class MNISTDataset:
+class MNISTBinarizedDataset:
     def __init__(self,
                  root: str,
                  split: str,
                  train_valid_split_ratio: List[float],
-                 center_crop,
-                 resize):
+                 threshold: float):
         self.root = root
         self.split = split
         self.train_valid_split_ratio = train_valid_split_ratio
         self.data = None
-        self.center_crop = center_crop
-        self.resize = resize
+        self.threshold = threshold
 
         self.load()
         self.n_instance = len(self.data)
@@ -27,9 +25,9 @@ class MNISTDataset:
     def load(self):
         transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.CenterCrop(self.center_crop),
+            transforms.CenterCrop(20),
             transforms.Normalize((0.1307,), (0.3081,)),
-            transforms.Resize(self.resize)
+            transforms.Resize(4)
         ])
 
         if self.split == 'train' or self.split == 'valid':
@@ -50,29 +48,30 @@ class MNISTDataset:
             self.data = test
 
     def __getitem__(self, index: int):
-        instance = {'image': self.data[index][0], 'digit': self.data[index][1]}
+        img = self.data[index][0]
+        img = 1. * (img > self.threshold) + -1. * (img <= self.threshold)
+
+        instance = {'image': img, 'digit': self.data[index][1]}
         return instance
 
     def __len__(self) -> int:
         return self.n_instance
 
 
-class MNIST(Dataset):
+class MNISTBinarized(Dataset):
     def __init__(self,
                  root: str,
                  train_valid_split_ratio: List[float],
-                 center_crop=28,
-                 resize=28
+                 threshold: float = 0.1307
                  ):
         self.root = root
 
         super().__init__({
-            split: MNISTDataset(
+            split: MNISTBinarizedDataset(
                 root=root,
                 split=split,
                 train_valid_split_ratio=train_valid_split_ratio,
-                center_crop=center_crop,
-                resize=resize
+                threshold=threshold
             )
             for split in ['train', 'valid', 'test']
         })
@@ -81,10 +80,10 @@ class MNIST(Dataset):
 if __name__ == '__main__':
     import pdb
     pdb.set_trace()
-    mnist = MNISTDataset(root='../data',
-                         split='train',
-                         train_valid_split_ratio=[0.9, 0.1],
-                         center_crop=28,
-                         resize=28
-                         )
+    mnist = MNISTBinarizedDataset(root='../data',
+                                  split='train',
+                                  train_valid_split_ratio=[0.9, 0.1],
+                                  threshold=0.1307
+                                  )
+    mnist.__getitem__(1)
     print('finish')

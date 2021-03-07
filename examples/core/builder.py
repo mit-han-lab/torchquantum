@@ -17,9 +17,23 @@ def make_dataset() -> Dataset:
             root=configs.dataset.root,
             train_valid_split_ratio=configs.dataset.train_valid_split_ratio
         )
-    if configs.dataset.name == 'layer_regression':
+    elif configs.dataset.name == 'mnist_small':
+        from .datasets import MNIST
+        dataset = MNIST(
+            root=configs.dataset.root,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
+            center_crop=configs.dataset.center_crop,
+            resize=configs.dataset.resize
+        )
+    elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
         dataset = LayerRegression()
+    elif configs.dataset.name == 'mnist_binarized':
+        from .datasets import MNISTBinarized
+        dataset = MNISTBinarized(
+            root=configs.dataset.root,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio
+        )
     else:
         raise NotImplementedError(configs.dataset.name)
 
