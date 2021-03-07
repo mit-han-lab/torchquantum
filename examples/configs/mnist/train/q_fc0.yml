@@ -1,4 +1,4 @@
 model:
-  name: q_quanv2
+  name: q_fc0
 run:
   bsz: 64

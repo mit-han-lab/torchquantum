@@ -172,7 +172,9 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
     else:
         # in dynamic mode, the function is computed instantly
         if isinstance(mat, Callable):
-            if n_wires is None or name == 'qubitunitary_fast':
+            if n_wires is None or \
+                    name == 'qubitunitary_fast' or \
+                    name == 'qubitunitary_strict':
                 matrix = mat(params)
             else:
                 # this is for gates that can be applied to arbitrary numbers of
@@ -424,6 +426,12 @@ def qubitunitary_matrix_fast(params):
     return params
 
 
+def qubitunitary_matrix_strict(params):
+    mat = params
+    U, Sigma, V = torch.svd(mat)
+    return U.matmul(V)
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -480,7 +488,8 @@ mat_dict = {
     'u2': u2_matrix,
     'u3': u3_matrix,
     'qubitunitary': qubitunitary_matrix,
-    'qubitunitary_fast': qubitunitary_matrix_fast
+    'qubitunitary_fast': qubitunitary_matrix_fast,
+    'qubitunitary_strict': qubitunitary_matrix_strict,
 }
 
 
@@ -500,8 +509,7 @@ rz = partial(gate_wrapper, 'rz', mat_dict['rz'], 'bmm')
 swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'bmm')
 cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'], 'bmm')
 toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'], 'bmm')
-phaseshift = partial(gate_wrapper, 'phaseshift', mat_dict['phaseshift'],
-                     'bmm')
+phaseshift = partial(gate_wrapper, 'phaseshift', mat_dict['phaseshift'], 'bmm')
 rot = partial(gate_wrapper, 'rot', mat_dict['rot'], 'bmm')
 multirz = partial(gate_wrapper, 'multirz', mat_dict['multirz'], 'bmm')
 crx = partial(gate_wrapper, 'crx', mat_dict['crx'], 'bmm')
@@ -515,6 +523,9 @@ qubitunitary = partial(gate_wrapper, 'qubitunitary', mat_dict[
     'qubitunitary'], 'bmm')
 qubitunitary_fast = partial(gate_wrapper, 'qubitunitary_fast', mat_dict[
     'qubitunitary_fast'], 'bmm')
+qubitunitary_strict = partial(gate_wrapper, 'qubitunitary_strict', mat_dict[
+    'qubitunitary_strict'], 'bmm')
+
 
 h = hadamard
 x = paulix

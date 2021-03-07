@@ -198,5 +198,6 @@ class QFCModel1(tq.QuantumModule):
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
-    'q_qfc0': QFCModel0,
+    'q_fc0': QFCModel0,
+    'q_fc1': QFCModel1,
 }

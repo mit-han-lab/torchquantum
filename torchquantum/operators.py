@@ -44,6 +44,7 @@ __all__ = [
     'U3',
     'QubitUnitary',
     'TrainableUnitary',
+    'TrainableUnitaryStrict',
     'op_name_dict',
 ]
 
@@ -543,6 +544,11 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
                           dtype=C_DTYPE)
         U, Sigma, V = torch.svd(mat)
         self.params = nn.Parameter(U.matmul(V))
+
+
+class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
+    num_wires = AnyWires
+    func = staticmethod(tqf.qubitunitary_strict)
 
 
 class CRX(Operation, metaclass=ABCMeta):
