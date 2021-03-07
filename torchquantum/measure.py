@@ -31,8 +31,19 @@ def expval(q_device: tq.QuantumDevice,
         # compute marginal magnitude
         reduction_dims = np.delete(all_dims, [0, wire + 1])
         probs = state_mag.sum(list(reduction_dims))
-        res = probs.mv(observable.eigvals.to(probs.device)).type(F_DTYPE)
+        res = probs.mv(observable.eigvals.real.to(probs.device))
         expectations.append(res)
 
     return torch.stack(expectations, dim=-1)
 
+
+class MeasureAll(tq.QuantumModule):
+    def __init__(self, obs):
+        super().__init__()
+        self.obs = obs
+
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        x = expval(q_device, list(range(q_device.n_wires)), [self.obs()] *
+                   q_device.n_wires)
+        return x

@@ -24,3 +24,7 @@ debug:
   pdb: False
   set_seed: True
   seed: 42
+
+regularization:
+  unitary_loss: False
+  unitary_loss_lambda: 0

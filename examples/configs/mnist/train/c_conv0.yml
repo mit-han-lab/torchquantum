@@ -1,4 +1,4 @@
 model:
-  name: quanv_model0
+  name: c_conv0
 run:
   bsz: 64

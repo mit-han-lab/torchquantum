@@ -1,4 +1,4 @@
 model:
-  name: quanv_model1
+  name: q_quanv2
 run:
   bsz: 64

@@ -4,7 +4,7 @@ dataset:
   train_valid_split_ratio: [0.9, 0.1]
 
 model:
-  name: classical_conv1
+  name: c_conv1
 
 run:
   bsz: 64

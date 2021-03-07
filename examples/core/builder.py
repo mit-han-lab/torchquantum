@@ -41,36 +41,15 @@ def make_dataset() -> Dataset:
 
 
 def make_model() -> nn.Module:
-    if configs.model.name == 'quanvolution':
-        from .models import Quanvolution
-        model = Quanvolution()
-    elif configs.model.name == 'hybrid':
-        from .models import Hybrid
-        model = Hybrid()
-    elif configs.model.name == 'static':
-        from .models import Static
-        model = Static()
-    elif configs.model.name == 'quanv_model0':
-        from .models import QuanvModel0
-        model = QuanvModel0()
-    elif configs.model.name == 'classical_conv0':
-        from .models import ClassicalConv0
-        model = ClassicalConv0()
-    elif configs.model.name == 'classical_conv1':
-        from .models import ClassicalConv1
-        model = ClassicalConv1()
-    elif configs.model.name == 'classical_conv2':
-        from .models import ClassicalConv2
-        model = ClassicalConv2()
-    elif configs.model.name == 'classical_conv3':
-        from .models import ClassicalConv3
-        model = ClassicalConv3()
-    elif configs.model.name == 'quanv_model1':
-        from .models import QuanvModel1
-        model = QuanvModel1()
-    elif configs.model.name == 'quanv_model2':
-        from .models import QuanvModel2
-        model = QuanvModel2()
+    if configs.model.name.startswith('t_'):
+        from .models.t_models import model_dict
+        model = model_dict[configs.model.name]()
+    elif configs.model.name.startswith('c_'):
+        from .models.c_models import model_dict
+        model = model_dict[configs.model.name]()
+    elif configs.model.name.startswith('q_'):
+        from .models.q_models import model_dict
+        model = model_dict[configs.model.name]()
     elif configs.model.name == 'layer_regression':
         from .models import LayerRegression
         model = LayerRegression()
