@@ -543,7 +543,7 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
         mat = torch.randn((2 ** self.n_wires, 2 ** self.n_wires),
                           dtype=C_DTYPE)
         U, Sigma, V = torch.svd(mat)
-        self.params = nn.Parameter(U.matmul(V))
+        self.params.data.copy_(U.matmul(V.permute(1, 0)))
 
 
 class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
@@ -667,5 +667,6 @@ op_name_dict = {
     'u2': U2,
     'u3': U3,
     'qubitunitary': QubitUnitary,
-    'trainableunitary': TrainableUnitary
+    'trainableunitary': TrainableUnitary,
+    'trainableunitarystrict': TrainableUnitaryStrict,
 }
