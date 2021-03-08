@@ -15,25 +15,16 @@ def make_dataset() -> Dataset:
         from .datasets import MNIST
         dataset = MNIST(
             root=configs.dataset.root,
-            train_valid_split_ratio=configs.dataset.train_valid_split_ratio
-        )
-    elif configs.dataset.name == 'mnist_small':
-        from .datasets import MNIST
-        dataset = MNIST(
-            root=configs.dataset.root,
             train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
             center_crop=configs.dataset.center_crop,
-            resize=configs.dataset.resize
+            resize=configs.dataset.resize,
+            binarize=configs.dataset.binarize,
+            binarize_threshold=configs.dataset.binarize_threshold,
+            digits_of_interest=configs.dataset.digits_of_interest
         )
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
         dataset = LayerRegression()
-    elif configs.dataset.name == 'mnist_binarized':
-        from .datasets import MNISTBinarized
-        dataset = MNISTBinarized(
-            root=configs.dataset.root,
-            train_valid_split_ratio=configs.dataset.train_valid_split_ratio
-        )
     else:
         raise NotImplementedError(configs.dataset.name)
 
