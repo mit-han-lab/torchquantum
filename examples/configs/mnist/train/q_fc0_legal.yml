@@ -1,0 +1,20 @@
+model:
+  name: q_fc0
+
+run:
+  n_epochs: 200
+  bsz: 256
+  workers_per_gpu: 8
+  device: gpu
+
+regularization:
+  unitary_loss: True
+  unitary_loss_lambda: 0.01
+
+legalization:
+  legalize: True
+  epoch_interval: 20
+  step_interval: 9999999999
+
+scheduler:
+  name: constant

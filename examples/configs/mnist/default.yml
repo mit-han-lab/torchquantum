@@ -27,4 +27,10 @@ debug:
 
 regularization:
   unitary_loss: False
+  unitary_loss_lambda_trainable: False
   unitary_loss_lambda: 0
+
+legalization:
+  legalize: False
+  epoch_interval: 9999999999
+  step_interval: 9999999999

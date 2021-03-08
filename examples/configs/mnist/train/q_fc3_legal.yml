@@ -1,0 +1,27 @@
+model:
+  name: q_fc3
+
+run:
+  n_epochs: 100
+  bsz: 256
+  workers_per_gpu: 8
+  device: gpu
+
+regularization:
+  unitary_loss: False
+  unitary_loss_lambda_trainable: True
+  unitary_loss_lambda: 1
+
+optimizer:
+  name: adam
+  lr: 1.e-3
+  weight_decay: 0.0
+  lambda_lr: 1.e-2
+
+legalization:
+  legalize: True
+  epoch_interval: 1000000000
+  step_interval: 100000000
+
+scheduler:
+  name: cosine
