@@ -89,6 +89,17 @@ def make_optimizer(model: nn.Module) -> Optimizer:
             model.parameters(),
             lr=configs.optimizer.lr,
             weight_decay=configs.optimizer.weight_decay)
+    elif configs.optimizer.name == 'adam_group':
+        optimizer = torch.optim.Adam(
+            [param for name, param in model.named_parameters() if
+                'lambda' not in name],
+            lr=configs.optimizer.lr,
+            weight_decay=configs.optimizer.weight_decay)
+        optimizer.add_param_group({
+            'params': [param for name, param in model.named_parameters() if
+                       'lambda' in name],
+            'lr': -configs.optimizer.lambda_lr,
+        })
     elif configs.optimizer.name == 'adamw':
         optimizer = torch.optim.AdamW(
             model.parameters(),

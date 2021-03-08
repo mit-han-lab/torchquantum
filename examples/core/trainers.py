@@ -3,6 +3,8 @@ import torch.nn as nn
 from typing import Any, Callable, Dict
 from torchpack.train import Trainer
 from torchpack.utils.typing import Optimizer, Scheduler
+from torchpack.utils.config import configs
+from torchquantum.utils import get_unitary_loss, legalize_unitary
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer']
 
@@ -55,6 +57,7 @@ class QTrainer(Trainer):
     def __init__(self, *, model: nn.Module, criterion: Callable,
                  optimizer: Optimizer, scheduler: Scheduler) -> None:
         self.model = model
+        self.legalized_model = None
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -62,15 +65,45 @@ class QTrainer(Trainer):
     def _before_epoch(self) -> None:
         self.model.train()
 
-    def _run_step(self, feed_dict: Dict[str, Any]) -> Dict[str, Any]:
+    def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
+            str, Any]:
+        output_dict = self._run_step(feed_dict, legalize=legalize)
+        return output_dict
+
+    def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
+            str, Any]:
         inputs = feed_dict['image'].cuda(non_blocking=True)
         targets = feed_dict['digit'].cuda(non_blocking=True)
-
-        outputs = self.model(inputs)
+        if legalize:
+            outputs = self.legalized_model(inputs)
+        else:
+            outputs = self.model(inputs)
         loss = self.criterion(outputs, targets)
+        nll_loss = loss.item()
+        unitary_loss = 0
+
+        if configs.regularization.unitary_loss:
+            unitary_loss = get_unitary_loss(self.model)
+            if configs.regularization.unitary_loss_lambda_trainable:
+                loss += self.model.unitary_loss_lambda[0] * unitary_loss
+            else:
+                loss += configs.regularization.unitary_loss_lambda * \
+                        unitary_loss
 
         if loss.requires_grad:
             self.summary.add_scalar('loss', loss.item())
+            self.summary.add_scalar('nll_loss', nll_loss)
+
+            if configs.regularization.unitary_loss:
+                if configs.regularization.unitary_loss_lambda_trainable:
+                    self.summary.add_scalar(
+                        'u_loss_lambda',
+                        self.model.unitary_loss_lambda.item())
+                else:
+                    self.summary.add_scalar(
+                        'u_loss_lambda',
+                        configs.regularization.unitary_loss_lambda)
+                self.summary.add_scalar('u_loss', unitary_loss.item())
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -81,6 +114,14 @@ class QTrainer(Trainer):
     def _after_epoch(self) -> None:
         self.model.eval()
         self.scheduler.step()
+        if configs.legalization.legalize:
+            if self.epoch_num % configs.legalization.epoch_interval == 0:
+                legalize_unitary(self.model)
+
+    def _after_step(self, output_dict) -> None:
+        if configs.legalization.legalize:
+            if self.global_step % configs.legalization.step_interval == 0:
+                legalize_unitary(self.model)
 
     def _state_dict(self) -> Dict[str, Any]:
         state_dict = dict()

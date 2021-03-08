@@ -14,9 +14,9 @@ from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
 from torchpack.environ import auto_set_run_dir, set_run_dir
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
-
 from core import builder
 from core.trainers import QTrainer
+from core.callbacks import LegalInferenceRunner
 
 
 def main() -> None:
@@ -118,7 +118,13 @@ def main() -> None:
             InferenceRunner(
                 dataflow=dataflow['test'],
                 callbacks=[CategoricalAccuracy(name='acc/test')]),
-            MaxSaver('acc/valid'),
+            LegalInferenceRunner(
+                dataflow=dataflow['valid'],
+                callbacks=[CategoricalAccuracy(name='acc_legal/valid')]),
+            LegalInferenceRunner(
+                dataflow=dataflow['test'],
+                callbacks=[CategoricalAccuracy(name='acc_legal/test')]),
+            MaxSaver('acc_legal/valid'),
             # Saver(),
         ])
 
