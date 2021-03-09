@@ -1,22 +1,28 @@
 dataset:
   name: mnist
   root: 'examples/data'
-  train_valid_split_ratio: [0.9, 0.1]
+  train_valid_split_ratio: [0.95, 0.05]
+  center_crop: 28
+  resize: 28
+  binarize: False
+  binarize_threshold: 0.1307
+  digits_of_interest: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 criterion:
   name: nll
 
 optimizer:
   name: adam
-  lr: 1e-3
+  lr: 5e-3
   weight_decay: 0.0
+  lambda_lr: 1.e-2
 
 scheduler:
   name: cosine
 
 run:
-  n_epochs: 100
-  bsz: 64
+  n_epochs: 200
+  bsz: 256
   workers_per_gpu: 8
   device: gpu
 

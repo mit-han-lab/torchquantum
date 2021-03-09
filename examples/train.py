@@ -54,10 +54,10 @@ def main() -> None:
     if isinstance(configs.optimizer.lr, str):
         configs.optimizer.lr = eval(configs.optimizer.lr)
 
-    if args.run_dir is None:
-        args.run_dir = auto_set_run_dir()
-    else:
-        set_run_dir(args.run_dir)
+    # set the run dir according to config file's name
+    args.run_dir = 'runs/' + args.config.replace('/', '.').replace(
+        'examples.', '').replace('.yml', '').replace('configs.', '')
+    set_run_dir(args.run_dir)
 
     logger.info(' '.join([sys.executable] + sys.argv))
     logger.info(f'Experiment started: "{args.run_dir}".' + '\n' + f'{configs}')

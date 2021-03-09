@@ -1,0 +1,6 @@
+regularization:
+  unitary_loss_lambda_trainable: True
+
+optimizer:
+  name: adam_group
+  lambda_lr: 1.e-2
