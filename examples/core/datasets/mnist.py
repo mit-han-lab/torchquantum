@@ -71,7 +71,9 @@ class MNISTDataset:
         if self.binarize:
             img = 1. * (img > self.binarize_threshold) + \
                   -1. * (img <= self.binarize_threshold)
-        instance = {'image': img, 'digit': self.data[index][1]}
+
+        digit = self.digits_of_interest.index(self.data[index][1])
+        instance = {'image': img, 'digit': digit}
         return instance
 
     def __len__(self) -> int:
@@ -117,4 +119,5 @@ if __name__ == '__main__':
                          binarize_threshold=0.1307,
                          digits_of_interest=(3, 6)
                          )
+    mnist.__getitem__(20)
     print('finish')
