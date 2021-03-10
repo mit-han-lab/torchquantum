@@ -124,6 +124,7 @@ class Operator(tq.QuantumModule):
         self._name = self.__class__.__name__
         # for static mode
         self.static_matrix = None
+        self.inverse = False
 
     @classmethod
     def _matrix(cls, params):
@@ -147,7 +148,8 @@ class Operator(tq.QuantumModule):
     def set_wires(self, wires):
         self.wires = [wires] if isinstance(wires, int) else wires
 
-    def forward(self, q_device: tq.QuantumDevice, wires=None, params=None):
+    def forward(self, q_device: tq.QuantumDevice, wires=None, params=None,
+                inverse=False):
         # try:
         #     assert self.name in self.fixed_ops or \
         #            self.has_params ^ (params is not None)
@@ -175,6 +177,8 @@ class Operator(tq.QuantumModule):
             wires = [wires] if isinstance(wires, int) else wires
             self.wires = wires
 
+        self.inverse = inverse
+
         if self.static_mode:
             self.parent_graph.add_op(self)
             return
@@ -182,15 +186,17 @@ class Operator(tq.QuantumModule):
         # non-parameterized gate
         if self.params is None:
             if self.n_wires is None:
-                self.func(q_device, self.wires)
+                self.func(q_device, self.wires, inverse=inverse)
             else:
-                self.func(q_device, self.wires, n_wires=self.n_wires)
+                self.func(q_device, self.wires, n_wires=self.n_wires,
+                          inverse=inverse)
         else:
             if self.n_wires is None:
-                self.func(q_device, self.wires, params=self.params)
+                self.func(q_device, self.wires, params=self.params,
+                          inverse=inverse)
             else:
                 self.func(q_device, self.wires, params=self.params,
-                          n_wires=self.n_wires)
+                          n_wires=self.n_wires, inverse=inverse)
 
 
 class Observable(Operator, metaclass=ABCMeta):

@@ -57,7 +57,8 @@ class QuantumGraph(object):
             # graph construction is finished, no need to do anything.
             pass
 
-    def add_func(self, name, wires, parent_graph, params=None, n_wires=None,):
+    def add_func(self, name, wires, parent_graph, params=None, n_wires=None,
+                 inverse=False):
         if not self.is_list_finish:
             # graph construction is not finished, build a new operation and
             # add the operation to the graph
@@ -68,6 +69,7 @@ class QuantumGraph(object):
             op.graph = tq.QuantumGraph()
             op.parent_graph = parent_graph
             op.static_mode = True
+            op.inverse = inverse
 
             self.module_list.append(op)
             self.func_list.append(op)
@@ -381,6 +383,13 @@ class QuantumGraph(object):
             is_module_matrix_batch = True
         else:
             is_module_matrix_batch = False
+
+        if module.inverse:
+            module_matrix = module_matrix.conj()
+            if is_module_matrix_batch:
+                module_matrix = module_matrix.permute(0, 2, 1)
+            else:
+                module_matrix = module_matrix.permute(1, 0)
 
         n_global_wires = len(global_wires)
         m_global_wires = module.wires

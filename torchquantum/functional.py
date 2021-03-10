@@ -156,7 +156,8 @@ def apply_unitary_bmm(state, mat, wires):
 
 
 def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
-                 params=None, n_wires=None, static=False, parent_graph=None):
+                 params=None, n_wires=None, static=False, parent_graph=None,
+                 inverse=False):
     if params is not None:
         if not isinstance(params, torch.Tensor):
             # this is for qubitunitary gate
@@ -171,7 +172,8 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
                               wires=wires,
                               parent_graph=parent_graph,
                               params=params,
-                              n_wires=n_wires)
+                              n_wires=n_wires,
+                              inverse=inverse)
     else:
         # in dynamic mode, the function is computed instantly
         if isinstance(mat, Callable):
@@ -190,6 +192,13 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
 
         else:
             matrix = mat
+
+        if inverse:
+            matrix = matrix.conj()
+            if matrix.dim() == 3:
+                matrix = matrix.permute(0, 2, 1)
+            else:
+                matrix = matrix.permute(1, 0)
 
         state = q_device.states
         if method == 'einsum':

@@ -78,7 +78,7 @@ class TestModule(tq.QuantumModule):
         self.gate3(q_device, wires=3)
         self.gate4(q_device, wires=3)
         self.gate5(q_device, wires=3)
-        self.gate6(q_device, wires=3)
+        self.gate6(q_device, wires=3, inverse=True)
 
         # for k in range(self.n_gate):
         #     self.submodules[k](q_device, wires=k, params=x[:, k%10])
@@ -174,7 +174,7 @@ class Static(nn.Module):
         self.random_layer = tq.RandomLayer(30, wires=[0, 3, 5, 7])
         # self.random_layer.static_on(wires_per_block=3)
 
-        # self.q_test_layer.static_on(wires_per_block=4)
+        self.q_test_layer.static_on(wires_per_block=4)
 
     def forward(self, x):
         # self.q_layer1.static_on(wires_per_block=3)
@@ -551,7 +551,7 @@ class Hybrid(nn.Module):
         self.q_layer13(self.q_device0, wires=1)
         tqf.u1(self.q_device0, wires=2, params=x[:, 9])
         self.q_layer14(self.q_device0, wires=8)
-        tqf.u2(self.q_device0, wires=4, params=x[:, 0:2])
+        tqf.u2(self.q_device0, wires=4, params=x[:, 0:2], inverse=True)
         self.q_layer15(self.q_device0, wires=5)
         tqf.u3(self.q_device0, wires=5, params=x[: 4:7])
         self.q_layer16(self.q_device0, wires=3)
@@ -561,7 +561,7 @@ class Hybrid(nn.Module):
                                                                [0, 0, 1, 0]])
         tqf.multicnot(self.q_device0, wires=[0, 1, 2, 3], n_wires=4)
         tqf.multixcnot(self.q_device0, wires=[0, 1, 2, 3], n_wires=4)
-        self.q_layer17(self.q_device0, wires=[8, 4, 3, 2, 9])
+        self.q_layer17(self.q_device0, wires=[8, 4, 3, 2, 9], inverse=True)
         self.q_layer18(self.q_device0, wires=[8, 4, 3, 2, 9])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
