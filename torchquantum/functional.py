@@ -47,6 +47,7 @@ __all__ = [
     'y',
     'z',
     'multicnot',
+    'multixcnot',
 ]
 
 
@@ -178,10 +179,15 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
                     name == 'qubitunitary_fast' or \
                     name == 'qubitunitary_strict':
                 matrix = mat(params)
+            elif name in ['multicnot', 'multixcnot']:
+                # this is for gates that can be applied to arbitrary numbers of
+                # qubits but no params, such as multicnot
+                matrix = mat(n_wires)
             else:
                 # this is for gates that can be applied to arbitrary numbers of
                 # qubits such as multirz
                 matrix = mat(params, n_wires)
+
         else:
             matrix = mat
 
@@ -434,12 +440,23 @@ def qubitunitary_matrix_strict(params):
     return U.matmul(V)
 
 
-def multicnot_matrix(params, n_wires):
+def multicnot_matrix(n_wires):
     mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
     mat[-1][-1] = 0
     mat[-2][-2] = 0
     mat[-1][-2] = 1
     mat[-2][-1] = 1
+
+    return mat
+
+
+def multixcnot_matrix(n_wires):
+    # when all control qubits are zero, then the target qubit will flip
+    mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
+    mat[0][0] = 0
+    mat[1][1] = 0
+    mat[0][1] = 1
+    mat[1][0] = 1
 
     return mat
 
@@ -503,6 +520,7 @@ mat_dict = {
     'qubitunitary_fast': qubitunitary_matrix_fast,
     'qubitunitary_strict': qubitunitary_matrix_strict,
     'multicnot': multicnot_matrix,
+    'multixcnot': multixcnot_matrix,
 }
 
 
@@ -539,6 +557,7 @@ qubitunitary_fast = partial(gate_wrapper, 'qubitunitary_fast', mat_dict[
 qubitunitary_strict = partial(gate_wrapper, 'qubitunitary_strict', mat_dict[
     'qubitunitary_strict'], 'bmm')
 multicnot = partial(gate_wrapper, 'multicnot', mat_dict['multicnot'], 'bmm')
+multixcnot = partial(gate_wrapper, 'multixcnot', mat_dict['multixcnot'], 'bmm')
 
 
 h = hadamard

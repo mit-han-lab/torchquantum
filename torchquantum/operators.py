@@ -47,6 +47,7 @@ __all__ = [
     'TrainableUnitary',
     'TrainableUnitaryStrict',
     'MultiCNOT',
+    'MultiXCNOT',
 ]
 
 
@@ -83,7 +84,8 @@ class Operator(tq.QuantumModule):
         'SWAP',
         'CSWAP',
         'Toffoli',
-        'MultiCNOT'
+        'MultiCNOT',
+        'MultiXCNOT',
     ]
 
     parameterized_ops = [
@@ -648,7 +650,17 @@ class MultiCNOT(Operation, metaclass=ABCMeta):
 
     @classmethod
     def _matrix(cls, params, n_wires):
-        return tqf.multicnot_matrix(params, n_wires)
+        return tqf.multicnot_matrix(n_wires)
+
+
+class MultiXCNOT(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = AnyWires
+    func = staticmethod(tqf.multixcnot)
+
+    @classmethod
+    def _matrix(cls, params, n_wires):
+        return tqf.multixcnot_matrix(n_wires)
 
 
 op_name_dict = {
@@ -682,4 +694,5 @@ op_name_dict = {
     'trainableunitary': TrainableUnitary,
     'trainableunitarystrict': TrainableUnitaryStrict,
     'multicnot': MultiCNOT,
+    'multixcnot': MultiXCNOT,
 }

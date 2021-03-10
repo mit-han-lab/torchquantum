@@ -494,6 +494,7 @@ class Hybrid(nn.Module):
                                          trainable=False,
                                          init_params=[[1, 0], [0, 1]])
         self.q_layer17 = tq.MultiCNOT(n_wires=5)
+        self.q_layer18 = tq.MultiXCNOT(n_wires=5)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -559,8 +560,9 @@ class Hybrid(nn.Module):
                                                                [0, 0, 0, 1],
                                                                [0, 0, 1, 0]])
         tqf.multicnot(self.q_device0, wires=[0, 1, 2, 3], n_wires=4)
-
+        tqf.multixcnot(self.q_device0, wires=[0, 1, 2, 3], n_wires=4)
         self.q_layer17(self.q_device0, wires=[8, 4, 3, 2, 9])
+        self.q_layer18(self.q_device0, wires=[8, 4, 3, 2, 9])
 
         x = tq.expval(self.q_device0, list(range(10)), [tq.PauliY()] * 10)
 
