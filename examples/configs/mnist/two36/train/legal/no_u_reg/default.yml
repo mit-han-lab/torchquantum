@@ -1,2 +1,2 @@
 regularization:
-  unitary_loss: Fasle
+  unitary_loss: False

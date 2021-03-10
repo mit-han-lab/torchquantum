@@ -1,0 +1,2 @@
+regularization:
+  unitary_loss_lambda_trainable: False

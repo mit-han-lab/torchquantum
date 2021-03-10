@@ -165,7 +165,8 @@ class QFCModel0(tq.QuantumModule):
         self.encoder(self.q_device, x)
         self.trainable_u(self.q_device, wires=[0, 1, 2, 3])
 
-        x = self.q_device.states.view(bsz, 16)[:, :10].abs()
+        x = self.q_device.states.view(bsz, 16)[:, :len(
+            configs.dataset.digits_of_interest)].abs()
 
         x = F.log_softmax(x, dim=1)
 
@@ -177,9 +178,10 @@ class QFCModel1(tq.QuantumModule):
         super().__init__()
         self.q_device = tq.QuantumDevice(n_wires=4)
         self.encoder = tq.StateEncoder()
-        self.trainable_u = tq.TrainableUnitaryStrict(has_params=True,
-                                                     trainable=True,
-                                                     n_wires=4)
+        self.trainable_u = tq.TrainableUnitary(has_params=True,
+                                               trainable=True,
+                                               n_wires=4)
+        self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
         bsz = x.shape[0]
@@ -188,7 +190,8 @@ class QFCModel1(tq.QuantumModule):
         self.encoder(self.q_device, x)
         self.trainable_u(self.q_device, wires=[0, 1, 2, 3])
 
-        x = self.q_device.states.view(bsz, 16)[:, :10].abs()
+        x = self.measure(self.q_device).view(bsz, 4)[:, :len(
+            configs.dataset.digits_of_interest)]
 
         x = F.log_softmax(x, dim=1)
 
@@ -198,32 +201,24 @@ class QFCModel1(tq.QuantumModule):
 class QFCModel2(tq.QuantumModule):
     def __init__(self):
         super().__init__()
-        self.q_device = tq.QuantumDevice(n_wires=4)
-        self.encoder = tq.StateEncoder()
+        self.n_wires = 16
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.encoder = tq.PhaseEncoder(tqf.rx)
         self.trainable_u = tq.TrainableUnitary(has_params=True,
                                                trainable=True,
-                                               n_wires=4)
-        self.trainable_u1 = tq.TrainableUnitary(has_params=True,
-                                                trainable=True,
-                                                n_wires=4)
-        self.trainable_u2 = tq.TrainableUnitary(has_params=True,
-                                                trainable=True,
-                                                n_wires=4)
-        self.trainable_u3 = tq.TrainableUnitary(has_params=True,
-                                                trainable=True,
-                                                n_wires=4)
+                                               n_wires=self.n_wires)
+        self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
         self.encoder(self.q_device, x)
-        self.trainable_u(self.q_device, wires=[0, 1, 2, 3])
-        self.trainable_u1(self.q_device, wires=[0, 1, 2, 3])
-        self.trainable_u2(self.q_device, wires=[0, 1, 2, 3])
-        self.trainable_u3(self.q_device, wires=[0, 1, 2, 3])
-
-        x = self.q_device.states.view(bsz, 16)[:, :10].abs()
+        self.trainable_u(self.q_device, wires=list(range(self.n_wires)))
+        x = self.q_device.states.view(bsz, 16)[:, :len(
+            configs.dataset.digits_of_interest)].abs()
+        # x = self.measure(self.q_device).view(bsz, self.n_wires)[:, :len(
+        #     configs.dataset.digits_of_interest)]
 
         x = F.log_softmax(x, dim=1)
 
@@ -261,9 +256,146 @@ class QFCModel3(tq.QuantumModule):
         return x
 
 
+class QuanvModel2(tq.QuantumModule):
+    """
+    Convolution with quantum filter
+    """
+    def __init__(self):
+        super().__init__()
+        self.q_device = tq.QuantumDevice(n_wires=4)
+        self.measure = tq.MeasureAll(obs=tq.PauliZ)
+        self.encoder = tq.PhaseEncoder(func=tqf.rx)
+
+        self.quanv0 = tq.TrainableUnitary(has_params=True,
+                                          trainable=True,
+                                          n_wires=4)
+
+        self.quanv1 = tq.TrainableUnitary(has_params=True,
+                                          trainable=True,
+                                          n_wires=4)
+
+        self.quanv2 = tq.QuantumModuleList()
+        for k in range(2):
+            self.quanv2.append(
+                tq.TrainableUnitary(has_params=True,
+                                    trainable=True,
+                                    n_wires=4)
+            )
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6)
+
+        x = F.unfold(x, kernel_size=2, stride=1)
+        x = x.permute(0, 2, 1)
+        x = x.reshape(-1, x.shape[-1])
+        x = F.tanh(x) * np.pi
+
+        self.encoder(self.q_device, x)
+        self.quanv0(self.q_device, wires=[0, 1, 2, 3])
+        x = self.measure(self.q_device)
+        x = x * np.pi
+
+        self.encoder(self.q_device, x)
+        self.quanv1(self.q_device, wires=[0, 1, 2, 3])
+        x = self.measure(self.q_device)
+        x = x * np.pi
+
+        x = x.view(bsz, 3, 3, 4)
+        x = x.permute(0, 3, 1, 2)
+
+        quanv2_results = []
+        for k in range(2):
+            tmp = x[:, k, :, :].unsqueeze(1)
+            tmp = F.unfold(tmp, kernel_size=2, stride=1)  # bsz, 4, 4
+            tmp = tmp.permute(0, 2, 1)
+            tmp = tmp.reshape(-1, tmp.shape[-1])
+            self.encoder(self.q_device, tmp)
+            self.quanv2[k](self.q_device, wires=[0, 1, 2, 3])
+            tmp = self.measure(self.q_device)
+            quanv2_results.append(tmp.sum(-1).view(bsz, 2, 2))
+        x = torch.stack(quanv2_results, dim=1)
+
+        x = F.avg_pool2d(x, kernel_size=2
+                         )[:, :len(configs.dataset.digits_of_interest)]
+        x = F.log_softmax(x, dim=1)
+        x = x.squeeze()
+
+        return x
+
+
+class QuanvModel3(tq.QuantumModule):
+    """
+    Convolution with quantum filter
+    """
+    def __init__(self):
+        super().__init__()
+        self.q_device = tq.QuantumDevice(n_wires=4)
+        self.n_wires = 4
+        self.measure = tq.MeasureAll(obs=tq.PauliZ)
+        self.encoder = tq.PhaseEncoder(func=tqf.rx)
+
+        self.quanv0 = tq.RandomLayer(n_ops=200, wires=list(range(
+            self.n_wires)))
+        self.quanv0.static_on(wires_per_block=2)
+
+        self.quanv1 = tq.RandomLayer(n_ops=200, wires=list(range(
+            self.n_wires)))
+
+        self.quanv2 = tq.QuantumModuleList()
+        for k in range(2):
+            self.quanv2.append(
+                tq.RandomLayer(n_ops=200, wires=list(range(
+                    self.n_wires)))
+            )
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6)
+
+        x = F.unfold(x, kernel_size=2, stride=1)
+        x = x.permute(0, 2, 1)
+        x = x.reshape(-1, x.shape[-1])
+        x = F.tanh(x) * np.pi
+
+        self.encoder(self.q_device, x)
+        self.quanv0(self.q_device)
+        x = self.measure(self.q_device)
+        x = x * np.pi
+
+        self.encoder(self.q_device, x)
+        self.quanv1(self.q_device)
+        x = self.measure(self.q_device)
+        x = x * np.pi
+
+        x = x.view(bsz, 3, 3, 4)
+        x = x.permute(0, 3, 1, 2)
+
+        quanv2_results = []
+        for k in range(2):
+            tmp = x[:, k, :, :].unsqueeze(1)
+            tmp = F.unfold(tmp, kernel_size=2, stride=1)  # bsz, 4, 4
+            tmp = tmp.permute(0, 2, 1)
+            tmp = tmp.reshape(-1, tmp.shape[-1])
+            self.encoder(self.q_device, tmp)
+            self.quanv2[k](self.q_device)
+            tmp = self.measure(self.q_device)
+            quanv2_results.append(tmp.sum(-1).view(bsz, 2, 2))
+        x = torch.stack(quanv2_results, dim=1)
+
+        x = F.avg_pool2d(x, kernel_size=2
+                         )[:, :len(configs.dataset.digits_of_interest)]
+        x = F.log_softmax(x, dim=1)
+        x = x.squeeze()
+
+        return x
+
+
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
+    'q_quanv2': QuanvModel2,
+    'q_quanv3': QuanvModel3,
     'q_fc0': QFCModel0,
     'q_fc1': QFCModel1,
     'q_fc2': QFCModel2,
