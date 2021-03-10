@@ -555,6 +555,10 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
         U, Sigma, V = torch.svd(mat)
         self.params.data.copy_(U.matmul(V.permute(1, 0)))
 
+    @staticmethod
+    def _matrix(self, params):
+        return tqf.qubitunitary_fast(params)
+
 
 class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
     num_wires = AnyWires
