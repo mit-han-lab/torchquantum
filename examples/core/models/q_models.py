@@ -391,6 +391,53 @@ class QuanvModel3(tq.QuantumModule):
         return x
 
 
+# Qubitization according to the Quantum Singular Value Transformation paper
+class QSVT0(tq.QuantumModule):
+    def __init__(self,
+                 n_wires=8,
+                 n_xcnot_wires=8,
+                 depth=16
+                 ):
+        super().__init__()
+        self.n_wires = n_wires
+        self.q_device = tq.QuantumDevice(n_wires=n_wires)
+        self.depth = depth
+        self.u = tq.TrainableUnitary(has_params=True,
+                                     trainable=True,
+                                     n_wires=self.n_wires - 1)
+
+        self.rzs = tq.QuantumModuleList()
+        for k in range(self.depth):
+            self.rzs.append(tq.RZ())
+        self.xcnot = tq.MultiXCNOT(n_wires=n_xcnot_wires)
+        self.xcnot_wires = list(range(1, n_xcnot_wires)) + [0]
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6)
+        x = x.view(bsz, self.depth)
+        x = F.tanh(x) * np.pi
+        self.q_device.reset_states(bsz=bsz)
+
+        # prepare for the |+> state
+        tqf.h(self.q_device, wires=0)
+
+        for k in range(self.depth):
+            self.xcnot(self.q_device, wires=self.xcnot_wires)
+            self.rzs[k](self.q_device, wires=0, params=x[:, k])
+            self.xcnot(self.q_device, wires=self.xcnot_wires)
+            self.u(self.q_device, wires=list(range(1, self.n_wires)),
+                   inverse=(k % 2 == 1))
+
+        x = self.measure(self.q_device)[:, :len(
+            configs.dataset.digits_of_interest)]
+        x = F.log_softmax(x, dim=1)
+        x = x.squeeze()
+
+        return x
+
+
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
@@ -399,5 +446,6 @@ model_dict = {
     'q_fc0': QFCModel0,
     'q_fc1': QFCModel1,
     'q_fc2': QFCModel2,
-    'q_fc3': QFCModel3
+    'q_fc3': QFCModel3,
+    'q_qsvt0': QSVT0,
 }
