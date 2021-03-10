@@ -12,6 +12,7 @@ from torchpack.utils.logging import logger
 
 
 __all__ = [
+    'op_name_dict',
     'Operator',
     'Operation',
     'DiagonalOperation',
@@ -45,7 +46,7 @@ __all__ = [
     'QubitUnitary',
     'TrainableUnitary',
     'TrainableUnitaryStrict',
-    'op_name_dict',
+    'MultiCNOT',
 ]
 
 
@@ -82,6 +83,7 @@ class Operator(tq.QuantumModule):
         'SWAP',
         'CSWAP',
         'Toffoli',
+        'MultiCNOT'
     ]
 
     parameterized_ops = [
@@ -639,6 +641,16 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
         self.register_buffer(f"{self.name}_unitary", self.params)
 
 
+class MultiCNOT(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = AnyWires
+    func = staticmethod(tqf.multicnot)
+
+    @classmethod
+    def _matrix(cls, params, n_wires):
+        return tqf.multicnot_matrix(params, n_wires)
+
+
 op_name_dict = {
     'hadamard': Hadamard,
     'paulix': PauliX,
@@ -669,4 +681,5 @@ op_name_dict = {
     'qubitunitary': QubitUnitary,
     'trainableunitary': TrainableUnitary,
     'trainableunitarystrict': TrainableUnitaryStrict,
+    'multicnot': MultiCNOT,
 }

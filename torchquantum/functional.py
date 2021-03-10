@@ -11,6 +11,7 @@ from torchpack.utils.logging import logger
 
 
 __all__ = [
+    'mat_dict',
     'apply_unitary_einsum',
     'apply_unitary_bmm',
     'mat_dict',
@@ -45,6 +46,7 @@ __all__ = [
     'x',
     'y',
     'z',
+    'multicnot',
 ]
 
 
@@ -432,6 +434,16 @@ def qubitunitary_matrix_strict(params):
     return U.matmul(V)
 
 
+def multicnot_matrix(params, n_wires):
+    mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
+    mat[-1][-1] = 0
+    mat[-2][-2] = 0
+    mat[-1][-2] = 1
+    mat[-2][-1] = 1
+
+    return mat
+
+
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
@@ -490,6 +502,7 @@ mat_dict = {
     'qubitunitary': qubitunitary_matrix,
     'qubitunitary_fast': qubitunitary_matrix_fast,
     'qubitunitary_strict': qubitunitary_matrix_strict,
+    'multicnot': multicnot_matrix,
 }
 
 
@@ -525,6 +538,7 @@ qubitunitary_fast = partial(gate_wrapper, 'qubitunitary_fast', mat_dict[
     'qubitunitary_fast'], 'bmm')
 qubitunitary_strict = partial(gate_wrapper, 'qubitunitary_strict', mat_dict[
     'qubitunitary_strict'], 'bmm')
+multicnot = partial(gate_wrapper, 'multicnot', mat_dict['multicnot'], 'bmm')
 
 
 h = hadamard
