@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torchquantum.macro import C_DTYPE
+from torchpack.utils.logging import logger
 
 
 def pauli_eigs(n):
@@ -33,7 +34,7 @@ def diag(x):
     x = torch.cat([x, torch.zeros(dims[:-1] + [diag_len]).to(x.device)],
                   dim=-1)
     x = x.view(dims[:-2] + [diag_len * (diag_len + 1)])[..., :-diag_len]
-    x = x.view(dims[:-2]+[diag_len, diag_len])
+    x = x.view(dims[:-2] + [diag_len, diag_len])
     return x
 
 
@@ -79,3 +80,34 @@ def legalize_unitary(model: nn.Module):
                 U = params
                 U, Sigma, V = torch.svd(U)
                 params.data.copy_(U.matmul(V.conj().permute(1, 0)))
+
+
+def switch_little_big_endian_matrix(mat):
+    if len(mat.shape) % 2 == 1:
+        is_batch_matrix = True
+        bsz = mat.shape[0]
+        reshape = [bsz] + [2] * int(np.log2(mat[0].size))
+    else:
+        is_batch_matrix = False
+        reshape = [2] * int(np.log2(mat.size))
+
+    original_shape = mat.shape
+    mat = mat.reshape(reshape)
+    axes = list(range(len(mat.shape) // 2))
+    axes.reverse()
+    axes += [axis + len(mat.shape) // 2 for axis in axes]
+
+    if is_batch_matrix:
+        axes = [0] + [axis + 1 for axis in axes]
+
+    mat = np.transpose(mat, axes=axes).reshape(original_shape)
+    return mat
+
+
+def switch_little_big_endian_matrix_test():
+    logger.info(switch_little_big_endian_matrix(np.ones((16, 16))))
+    logger.info(switch_little_big_endian_matrix(np.ones((5, 16, 16))))
+
+
+if __name__ == '__main__':
+    switch_little_big_endian_matrix_test()
