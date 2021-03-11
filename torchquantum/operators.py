@@ -662,6 +662,11 @@ class MultiCNOT(Operation, metaclass=ABCMeta):
     def _matrix(cls, params, n_wires):
         return tqf.multicnot_matrix(n_wires)
 
+    @property
+    def matrix(self):
+        op_matrix = self._matrix(self.params, self.n_wires)
+        return op_matrix
+
 
 class MultiXCNOT(Operation, metaclass=ABCMeta):
     num_params = 0
