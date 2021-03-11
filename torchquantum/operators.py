@@ -653,6 +653,23 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
         self.register_buffer(f"{self.name}_unitary", self.params)
 
 
+class QubitUnitaryFast(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = AnyWires
+    func = staticmethod(tqf.qubitunitary_fast)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.qubitunitary_fast(params)
+
+    def build_params(self, trainable):
+        return None
+
+    def reset_params(self, init_params=None):
+        self.params = torch.tensor(init_params, dtype=C_DTYPE)
+        self.register_buffer(f"{self.name}_unitary", self.params)
+
+
 class MultiCNOT(Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = AnyWires
