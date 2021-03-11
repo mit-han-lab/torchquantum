@@ -6,6 +6,7 @@ import functools
 import numpy as np
 
 from torchquantum.macro import C_DTYPE, ABC, ABC_ARRAY
+from torchpack.utils.logging import logger
 
 
 def encode_w(wires):
@@ -437,6 +438,38 @@ class QuantumGraph(object):
         new_u = new_u.view(original_shape).permute(permute_back)
 
         return new_u
+
+    def get_unitary(self):
+        """
+        To get the whole unitary of the module, need to make sure all
+        modules are in the same schedule
+        """
+        try:
+            assert len(self.schedules) == 1
+        except AssertionError:
+            logger.exception(f"More than one block schedule in on module")
+
+        return self.get_schedule_unitary(self.schedules[0])
+
+    def get_schedule_unitary(self, schedule):
+        # here some front large gates will need a larger unitary
+        unitary = torch.eye(2 ** self.q_device.n_wires, dtype=C_DTYPE,
+                            device=self.device).view(
+            [2] * self.q_device.n_wires * 2)
+
+        # global_wires = [self.local2global_wire_mapping[w] for w in comb]
+        for m in schedule['modules']:
+            unitary = self.acc_m_unitary_bmm(unitary, list(range(
+                self.q_device.n_wires)), m)
+        if unitary.dim() % 2 == 1:
+            unitary = unitary.reshape(
+                unitary.shape[0],
+                2 ** self.q_device.n_wires,
+                2 ** self.q_device.n_wires)
+        else:
+            unitary = unitary.reshape(2 ** self.q_device.n_wires,
+                                      2 ** self.q_device.n_wires)
+        return unitary
 
     def apply_unitary(self):
         for schedule in self.schedules:

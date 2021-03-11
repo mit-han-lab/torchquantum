@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torchquantum as tq
-from abc import ABCMeta
 
+from abc import ABCMeta
 
 __all__ = [
     'QuantumModule',
@@ -73,6 +73,33 @@ class QuantumModule(nn.Module):
         #     wires=self.wires,
         #     params=self.unitary
         # )
+
+    def get_unitary(self, q_device: tq.QuantumDevice, x=None):
+        original_wires_per_block = self.wires_per_block
+        self.static_off()
+        self.static_on(wires_per_block=q_device.n_wires)
+        self.q_device = q_device
+        self.device = q_device.states.device
+        self.graph.q_device = q_device
+        self.graph.device = q_device.states.device
+
+        self.is_graph_top = False
+        # forward to register all modules to the module list, but do not
+        # apply the unitary to the state vector
+        if x is None:
+            self.forward(q_device)
+        else:
+            self.forward(q_device, x)
+        self.is_graph_top = True
+
+        self.graph.build(wires_per_block=q_device.n_wires)
+        self.graph.build_static_matrix()
+        unitary = self.graph.get_unitary()
+
+        self.static_off()
+        self.static_on(original_wires_per_block)
+
+        return unitary
 
 
 class QuantumModuleList(nn.ModuleList, QuantumModule, metaclass=ABCMeta):

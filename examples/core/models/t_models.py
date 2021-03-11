@@ -4,8 +4,6 @@ import torch.nn.functional as F
 import torchquantum as tq
 import torchquantum.functional as tqf
 import numpy as np
-import functools
-from torchquantum.utils import Timer
 
 __all__ = ['Static', 'Quanvolution', 'Hybrid', 'model_dict']
 
@@ -112,10 +110,20 @@ class TestModule(tq.QuantumModule):
         # self.gate1(q_device, wires=5, params=x[:, 0])
         # self.gate2(q_device, wires=7, params=x[:, 6])
 
-
         # self.gate2(q_device, wires=5)
         # self.gate3(q_device, wires=[3, 5])
         # self.gate4(q_device, wires=5)
+
+
+class T00(tq.QuantumModule):
+    def __init__(self):
+        super().__init__()
+        self.gate = tq.Hadamard()
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        self.gate(q_device, wires=0)
 
 
 class Static(nn.Module):
@@ -175,6 +183,8 @@ class Static(nn.Module):
         # self.random_layer.static_on(wires_per_block=3)
 
         self.q_test_layer.static_on(wires_per_block=4)
+        self.q_device2 = tq.QuantumDevice(n_wires=3)
+        self.t00 = T00()
 
     def forward(self, x):
         # self.q_layer1.static_on(wires_per_block=3)
@@ -193,16 +203,20 @@ class Static(nn.Module):
         x = self.sigmoid(x) * 2 * np.pi
 
         self.q_device0.reset_states(x.shape[0])
+        self.q_device2.reset_states(1)
         # self.q_device1.reset_states(x.shape[0])
         # self.q_device0_1.reset_states(x.shape[0])
         self.q_layer0(self.q_device0)
         self.random_layer(self.q_device0)
+        un = self.t00.get_unitary(self.q_device2)
         # self.q_layer0(self.q_device0_1)
 
         # with Timer('gpu', 'static', 50):
         #     for _ in range(500):
         # self.q_test_layer.static_on(wires_per_block=4)
         self.q_test_layer(self.q_device0, x)
+        # un = self.q_test_layer.get_unitary(self.q_device0, x)
+
         # self.q_test_layer.static_off()
 
         # self.q_test_layer.static_off()
