@@ -5,3 +5,4 @@ setuptools>=52.0.0
 torch>=1.8.0.dev20210130
 torchquantum>=0.1
 torchpack>=0.3.0
+qiskit>=0.24.0
