@@ -403,7 +403,7 @@ def u3_matrix(params):
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    return INV_SQRT2 * torch.stack([
+    return torch.stack([
         torch.cat([
             co,
             -si * torch.exp(1j * lam)], dim=-1),
