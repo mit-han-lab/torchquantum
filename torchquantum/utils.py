@@ -104,10 +104,44 @@ def switch_little_big_endian_matrix(mat):
     return mat
 
 
+def switch_little_big_endian_state(state):
+    if len(state.shape) > 1:
+        is_batch_state = True
+        bsz = state.shape[0]
+        reshape = [bsz] + [2] * int(np.log2(state[0].size))
+    elif len(state.shape) == 1:
+        is_batch_state = False
+        reshape = [2] * int(np.log2(state.size))
+    else:
+        logger.exception(f"Dimension of statevector should be 1 or 2")
+        raise ValueError
+
+    original_shape = state.shape
+    state = state.reshape(reshape)
+
+    if is_batch_state:
+        axes = list(range(1, len(state.shape)))
+        axes.reverse()
+        axes = [0] + axes
+    else:
+        axes = list(range(len(state.shape)))
+        axes.reverse()
+
+    mat = np.transpose(state, axes=axes).reshape(original_shape)
+
+    return mat
+
+
 def switch_little_big_endian_matrix_test():
     logger.info(switch_little_big_endian_matrix(np.ones((16, 16))))
     logger.info(switch_little_big_endian_matrix(np.ones((5, 16, 16))))
 
 
+def switch_little_big_endian_state_test():
+    logger.info(switch_little_big_endian_state(np.ones((5, 16))))
+    logger.info(switch_little_big_endian_state(np.arange(8)))
+
+
 if __name__ == '__main__':
     switch_little_big_endian_matrix_test()
+    switch_little_big_endian_state_test()
