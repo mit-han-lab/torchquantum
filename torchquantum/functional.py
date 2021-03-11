@@ -224,7 +224,7 @@ def rx_matrix(params):
     jsi = 1j * torch.sin(-theta / 2)
 
     return torch.stack([torch.cat([co, jsi], dim=-1),
-                        torch.cat([jsi, co], dim=-1)], dim=-1).squeeze(0)
+                        torch.cat([jsi, co], dim=-1)], dim=-2).squeeze(0)
 
 
 def ry_matrix(params):
@@ -234,7 +234,7 @@ def ry_matrix(params):
     si = torch.sin(theta / 2)
 
     return torch.stack([torch.cat([co, -si], dim=-1),
-                        torch.cat([si, co], dim=-1)], dim=-1).squeeze(0)
+                        torch.cat([si, co], dim=-1)], dim=-2).squeeze(0)
 
 
 def rz_matrix(params):
@@ -246,7 +246,7 @@ def rz_matrix(params):
                                   dim=-1),
                         torch.cat([torch.zeros(p.shape, device=params.device),
                                    torch.conj(p)], dim=-1)],
-                       dim=-1).squeeze(0)
+                       dim=-2).squeeze(0)
 
 
 def phaseshift_matrix(params):
@@ -260,7 +260,7 @@ def phaseshift_matrix(params):
         torch.cat([
             torch.zeros(p.shape, device=params.device),
             p], dim=-1)],
-        dim=-1).squeeze(0)
+        dim=-2).squeeze(0)
 
 
 def rot_matrix(params):
@@ -278,7 +278,7 @@ def rot_matrix(params):
         torch.cat([
             torch.exp(-0.5j * (phi - omega)) * si,
             torch.exp(0.5j * (phi + omega)) * co], dim=-1)],
-        dim=-1).squeeze(0)
+        dim=-2).squeeze(0)
 
 
 def multirz_eigvals(params, n_wires):
@@ -378,7 +378,7 @@ def u1_matrix(params):
         torch.cat([
             torch.zeros(p.shape, device=params.device),
             p], dim=-1)],
-        dim=-1).squeeze(0)
+        dim=-2).squeeze(0)
 
 
 def u2_matrix(params):
@@ -392,7 +392,7 @@ def u2_matrix(params):
         torch.cat([
             torch.exp(1j * phi),
             torch.exp(1j * (phi + lam))], dim=-1)],
-        dim=-1).squeeze(0)
+        dim=-2).squeeze(0)
 
 
 def u3_matrix(params):
@@ -410,7 +410,7 @@ def u3_matrix(params):
         torch.cat([
             si * torch.exp(1j * phi),
             co * torch.exp(1j * (phi + lam))], dim=-1)],
-        dim=-1).squeeze(0)
+        dim=-2).squeeze(0)
 
 
 def qubitunitary_matrix(params):
