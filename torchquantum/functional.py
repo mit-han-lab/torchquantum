@@ -491,7 +491,7 @@ mat_dict = {
     'cy': torch.tensor([[1, 0, 0, 0],
                         [0, 1, 0, 0],
                         [0, 0, 0, -1j],
-                        [0, 0, -1j, 0]], dtype=C_DTYPE),
+                        [0, 0, 1j, 0]], dtype=C_DTYPE),
     'swap': torch.tensor([[1, 0, 0, 0],
                           [0, 0, 1, 0],
                           [0, 1, 0, 0],
