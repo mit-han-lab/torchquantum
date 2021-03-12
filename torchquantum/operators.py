@@ -44,6 +44,7 @@ __all__ = [
     'U2',
     'U3',
     'QubitUnitary',
+    'QubitUnitaryFast',
     'TrainableUnitary',
     'TrainableUnitaryStrict',
     'MultiCNOT',
@@ -55,7 +56,6 @@ class WiresEnum(IntEnum):
     """Integer enumeration class
     to represent the number of wires
     an operation acts on"""
-
     AnyWires = -1
     AllWires = 0
 
@@ -102,6 +102,8 @@ class Operator(tq.QuantumModule):
         'U1',
         'U2',
         'U3',
+        'QubitUnitary',
+        'QubitUnitaryFast',
         'TrainableUnitary',
     ]
 
@@ -723,6 +725,7 @@ op_name_dict = {
     'u2': U2,
     'u3': U3,
     'qubitunitary': QubitUnitary,
+    'qubitunitaryfast': QubitUnitaryFast,
     'trainableunitary': TrainableUnitary,
     'trainableunitarystrict': TrainableUnitaryStrict,
     'multicnot': MultiCNOT,
