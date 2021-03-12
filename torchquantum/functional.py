@@ -14,7 +14,6 @@ __all__ = [
     'mat_dict',
     'apply_unitary_einsum',
     'apply_unitary_bmm',
-    'mat_dict',
     'hadamard',
     'paulix',
     'pauliy',
