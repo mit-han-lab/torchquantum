@@ -76,6 +76,7 @@ class QuantumModule(nn.Module):
 
     def get_unitary(self, q_device: tq.QuantumDevice, x=None):
         original_wires_per_block = self.wires_per_block
+        original_static_mode = self.static_mode
         self.static_off()
         self.static_on(wires_per_block=q_device.n_wires)
         self.q_device = q_device
@@ -97,7 +98,8 @@ class QuantumModule(nn.Module):
         unitary = self.graph.get_unitary()
 
         self.static_off()
-        self.static_on(original_wires_per_block)
+        if original_static_mode:
+            self.static_on(original_wires_per_block)
 
         return unitary
 

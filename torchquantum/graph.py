@@ -36,6 +36,7 @@ class QuantumGraph(object):
     def __init__(self):
         self.is_list_finish = False
         self.module_list = []
+        self.flat_module_list = []
         self.wire_module_dict = {}
         self.wire_module_list = []
         self.local2global_wire_mapping = {}
@@ -153,6 +154,16 @@ class QuantumGraph(object):
                         self.wire_module_dict[wire].append(module)
             else:
                 self.build_wire_module_dict(module.graph.module_list)
+
+    def build_flat_module_list(self, module_list=None):
+        if module_list is None:
+            module_list = self.module_list
+        for module in module_list:
+            if len(module.graph.module_list) == 0:
+                # leaf node
+                self.flat_module_list.append(module)
+            else:
+                self.build_flat_module_list(module.graph.module_list)
 
     def build_local_wire_module_list(self):
         global_wires = sorted(list(self.wire_module_dict.keys()))
