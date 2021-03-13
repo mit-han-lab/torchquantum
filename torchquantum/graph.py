@@ -126,6 +126,10 @@ class QuantumGraph(object):
             param_cat = torch.cat(param, dim=0)
             self.static_matrix_dict[name] = tq.mat_dict[name.lower()](
                 param_cat).to(self.device)
+            if self.static_matrix_dict[name].dim() == 2:
+                # in case there is only one matrix in this type of op
+                self.static_matrix_dict[name] = self.static_matrix_dict[
+                    name].unsqueeze(0)
             ptrs[name] = 0
 
         for wire_modules in self.wire_module_list:
