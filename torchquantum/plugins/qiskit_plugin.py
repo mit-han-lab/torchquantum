@@ -3,7 +3,7 @@ import torchquantum as tq
 import torchquantum.functional as tqf
 from qiskit import QuantumCircuit
 import qiskit.circuit.library.standard_gates as qiskit_gate
-
+from qiskit import Aer, execute
 from torchpack.utils.logging import logger
 from torchquantum.utils import switch_little_big_endian_matrix
 
@@ -34,14 +34,7 @@ def tq2qiskit(m: tq.QuantumModule, x):
         try:
             # no params in module or batch size == 1, because we will
             # generate only one qiskit QuantumCircuit
-            assert (module.params is None or
-                    module.params.shape[0] == 1 or
-                    (module.name in [
-                        'QubitUnitary',
-                        'QubitUnitaryFast',
-                        'TrainableUnitary',
-                        'TrainableUnitaryStrict'] and module.params.dim() == 2
-                     ))
+            assert (module.params is None or module.params.shape[0] == 1)
         except AssertionError:
             logger.exception(f"Cannot convert batch model tq module")
 
@@ -97,7 +90,7 @@ def tq2qiskit(m: tq.QuantumModule, x):
                 module.name == 'TrainableUnitary' or \
                 module.name == 'TrainableUnitaryStrict':
             from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
-            mat = module.params.data.numpy()
+            mat = module.params[0].data.numpy()
             mat = switch_little_big_endian_matrix(mat)
             circ.append(UnitaryGate(mat), module.wires, [])
         elif module.name == 'MultiCNOT':
@@ -118,6 +111,8 @@ def tq2qiskit(m: tq.QuantumModule, x):
             data = list(circ.data[-1])
             del circ.data[-1]
             circ.data.append(tuple([data[0].inverse()] + data[1:]))
+
+    return circ
 
 
 class T00(tq.QuantumModule):
@@ -198,6 +193,11 @@ class TestModule(tq.QuantumModule):
                                                               [0, 0, 0, 1],
                                                               [0, 0, 1, 0]],
                          static=self.static_mode, parent_graph=self.graph)
+        tqf.qubitunitary(self.q_device, wires=[1, 2], params=[[0, 1, 0, 0],
+                                                              [1, 0, 0, 0],
+                                                              [0, 0, 1, 0],
+                                                              [0, 0, 0, 1]],
+                         static=self.static_mode, parent_graph=self.graph)
         self.gate10(q_device, wires=[4, 5, 6, 7, 1])
         self.gate11(q_device, wires=[2, 1, 9])
 
@@ -220,4 +220,14 @@ if __name__ == '__main__':
     q_dev = tq.QuantumDevice(n_wires=10)
     test_module = TestModule(q_dev)
 
-    tq2qiskit(test_module, inputs)
+    circ = tq2qiskit(test_module, inputs)
+
+    simulator = Aer.get_backend('unitary_simulator')
+    result = execute(circ, simulator).result()
+    unitary_qiskit = result.get_unitary(circ)
+
+    unitary_tq = test_module.get_unitary(q_dev, inputs)
+    unitary_tq = switch_little_big_endian_matrix(unitary_tq.data.numpy())
+
+    print(unitary_qiskit)
+    print(unitary_tq)
