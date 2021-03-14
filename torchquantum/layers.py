@@ -3,6 +3,8 @@ import torchquantum as tq
 import numpy as np
 
 from typing import Iterable
+from torchquantum.plugins.qiskit_macros import QISKIT_INCOMPATIBLE_OPS
+from torchpack.utils.logging import logger
 
 __all__ = [
     'TrainableOpAll',
@@ -103,14 +105,34 @@ class RandomLayer(tq.QuantumModule):
                  op_ratios=(1, 1, 1, 1),
                  op_types=(tq.RX, tq.RY, tq.RZ, tq.CNOT),
                  seed=None,
+                 qiskit_comparible=False,
                  ):
         super().__init__()
         self.n_ops = n_ops
-        self.wires = wires
+        self.wires = wires if isinstance(wires, Iterable) else [wires]
         self.n_wires = len(wires)
-        self.op_ratios = np.array(op_ratios) / sum(op_ratios)
-        self.op_types = op_types if isinstance(op_types, Iterable) else \
-            [op_types]
+
+        op_types = op_types if isinstance(op_types, Iterable) else [op_types]
+        op_ratios = op_ratios if isinstance(op_ratios, Iterable) else [
+            op_ratios]
+        op_types_valid = []
+        op_ratios_valid = []
+
+        if qiskit_comparible:
+            for op_type, op_ratio in zip(op_types, op_ratios):
+                if op_type in QISKIT_INCOMPATIBLE_OPS:
+                    logger.warning(f"Remove {op_type} from op_types to make "
+                                   f"the layer qiskit-compatible.")
+                else:
+                    op_types_valid.append(op_type)
+                    op_ratios_valid.append(op_ratio)
+        else:
+            op_types_valid = op_types
+            op_ratios_valid = op_ratios
+
+        self.op_types = op_types_valid
+        self.op_ratios = np.array(op_ratios_valid) / sum(op_ratios_valid)
+
         self.seed = seed
         self.op_list = tq.QuantumModuleList()
         if seed is not None:
@@ -187,6 +209,7 @@ class RandomLayerAllTypes(RandomLayer):
                            tq.MultiXCNOT,
                            ),
                  seed=None,
+                 qiskit_comparible=False,
                  ):
         if op_ratios is None:
             op_ratios = [1] * len(op_types)
@@ -195,5 +218,6 @@ class RandomLayerAllTypes(RandomLayer):
             wires,
             op_ratios,
             op_types,
-            seed
+            seed,
+            qiskit_comparible,
         )
