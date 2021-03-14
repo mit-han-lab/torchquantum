@@ -214,6 +214,63 @@ class QLayer(tq.QuantumModule):
         self.x_idx = 0
 
 
+def static_mode_dynamic_vs_static_gradients_test():
+    bsz = 7
+
+    for n_wires in range(2, 10):
+        x = torch.randn((1, 100000), dtype=F_DTYPE)
+        q_dev0 = tq.QuantumDevice(n_wires=n_wires)
+        q_dev1 = tq.QuantumDevice(n_wires=n_wires)
+        q_dev0.reset_all_eq_states(bsz)
+        q_layer = QLayer(
+            n_wires=n_wires,
+            wires=list(range(n_wires)),
+            n_ops_rd=500,
+            n_ops_cin=500,
+            n_funcs=500,
+        )
+        q_layer(q_dev0, x)
+        loss = q_dev0.states.abs().sum()
+        loss.backward()
+        q_layer_dynamic_grads = {}
+        for name, params in q_layer.named_parameters():
+            q_layer_dynamic_grads[name] = params.grad.data.clone()
+            params.grad = None
+
+        for wires_per_block in range(1, n_wires + 1):
+            q_dev1.reset_all_eq_states(bsz)
+            q_layer.static_off()
+            q_layer.static_on(wires_per_block=wires_per_block)
+            q_layer(q_dev1, x)
+            loss = q_dev1.states.abs().sum()
+            loss.backward()
+            q_layer_static_grads = {}
+            for name, params in q_layer.named_parameters():
+                q_layer_static_grads[name] = params.grad.data.clone()
+                params.grad = None
+
+            name = None
+            try:
+                for name, _ in q_layer.named_parameters():
+                    diff = q_layer_dynamic_grads[name] - \
+                           q_layer_static_grads[name]
+                    assert torch.allclose(q_layer_dynamic_grads[name],
+                                          q_layer_static_grads[name],
+                                          atol=1e-4)
+                    logger.info(f"Diff: {diff}")
+                    logger.info(f"PASS: [n_wires]={n_wires}, dynamic VS "
+                                f"static run with [wires_per_block]="
+                                f"{wires_per_block}. Params: {name}")
+            except AssertionError:
+                logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS "
+                                 f"static run with "
+                                 f"[wires_per_block]={wires_per_block}. "
+                                 f"Params: {name}")
+                raise AssertionError
+
+            q_layer.static_off()
+
+
 def static_mode_dynamic_vs_static_test():
     bsz = 7
 
@@ -232,7 +289,7 @@ def static_mode_dynamic_vs_static_test():
         q_layer(q_dev0, x)
         state_dyna = q_dev0.states.clone()
 
-        for wires_per_block in range(1, n_wires+1):
+        for wires_per_block in range(1, n_wires + 1):
             q_dev1.reset_all_eq_states(bsz)
             q_layer.static_off()
             q_layer.static_on(wires_per_block=wires_per_block)
@@ -248,6 +305,7 @@ def static_mode_dynamic_vs_static_test():
                 logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS "
                                  f"static run with "
                                  f"[wires_per_block]={wires_per_block}")
+                raise AssertionError
 
             q_layer.static_off()
 
@@ -272,6 +330,7 @@ def static_mode_dynamic_vs_static_vs_get_unitary_test():
         except AssertionError:
             logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS "
                              f"get_unitary()")
+            raise AssertionError
 
         for wires_per_block in range(1, n_wires+1):
             q_dev2.reset_identity_states()
@@ -302,6 +361,6 @@ if __name__ == '__main__':
     torch.manual_seed(42)
     np.random.seed(42)
 
-    # pdb.set_trace()
     static_mode_dynamic_vs_static_vs_get_unitary_test()
     static_mode_dynamic_vs_static_test()
+    static_mode_dynamic_vs_static_gradients_test()
