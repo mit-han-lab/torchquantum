@@ -59,11 +59,13 @@ class WiresEnum(IntEnum):
     AnyWires = -1
     AllWires = 0
 
+
 class NParamsEnum(IntEnum):
     """Integer enumeration class
     to represent the number of wires
     an operation acts on"""
     AnyNParams = -1
+
 
 AnyNParams = NParamsEnum.AnyNParams
 
