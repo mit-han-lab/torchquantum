@@ -1,15 +1,19 @@
 import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
-from qiskit import QuantumCircuit
 import qiskit.circuit.library.standard_gates as qiskit_gate
+
+from qiskit import QuantumCircuit
 from qiskit import Aer, execute
 from torchpack.utils.logging import logger
 from torchquantum.utils import switch_little_big_endian_matrix
 
 
+__all__ = ['tq2qiskit']
+
+
 # construct a QuantumCircuit object according to the tq module
-def tq2qiskit(m: tq.QuantumModule, x):
+def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
     # build the module list without changing the statevector of QuantumDevice
     original_wires_per_block = m.wires_per_block
     original_static_mode = m.static_mode
@@ -18,7 +22,11 @@ def tq2qiskit(m: tq.QuantumModule, x):
     m.is_graph_top = False
 
     # forward to register all modules and parameters
-    m.forward(m.q_device, x)
+    if x is None:
+        m.forward(m.q_device)
+    else:
+        m.forward(m.q_device, x)
+
     m.is_graph_top = True
     m.graph.build_flat_module_list()
 
@@ -111,7 +119,10 @@ def tq2qiskit(m: tq.QuantumModule, x):
             data = list(circ.data[-1])
             del circ.data[-1]
             circ.data.append(tuple([data[0].inverse()] + data[1:]))
-
+    if draw:
+        import matplotlib.pyplot as plt
+        circ.draw()
+        plt.show()
     return circ
 
 
@@ -220,11 +231,11 @@ if __name__ == '__main__':
     q_dev = tq.QuantumDevice(n_wires=10)
     test_module = TestModule(q_dev)
 
-    circ = tq2qiskit(test_module, inputs)
+    circuit = tq2qiskit(test_module, inputs)
 
     simulator = Aer.get_backend('unitary_simulator')
-    result = execute(circ, simulator).result()
-    unitary_qiskit = result.get_unitary(circ)
+    result = execute(circuit, simulator).result()
+    unitary_qiskit = result.get_unitary(circuit)
 
     unitary_tq = test_module.get_unitary(q_dev, inputs)
     unitary_tq = switch_little_big_endian_matrix(unitary_tq.data.numpy())
