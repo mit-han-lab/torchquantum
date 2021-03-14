@@ -7,7 +7,8 @@ import numpy as np
 from qiskit import Aer, execute
 from torchpack.utils.logging import logger
 from torchquantum.utils import (switch_little_big_endian_matrix,
-                                switch_little_big_endian_state)
+                                switch_little_big_endian_state,
+                                get_expectations_from_counts)
 from test.static_mode_test import QLayer as AllRandomLayer
 from torchquantum.plugins import tq2qiskit
 from torchquantum.macro import F_DTYPE
@@ -125,6 +126,57 @@ def state_tq_vs_qiskit_test():
     logger.info(f"PASS tq vs qiskit statevector test")
 
 
+def measurement_tq_vs_qiskit_test():
+    bsz = 1
+    for n_wires in range(2, 10):
+        q_dev = tq.QuantumDevice(n_wires=n_wires)
+        q_dev.reset_states(bsz=bsz)
+
+        x = torch.randn((1, 100000), dtype=F_DTYPE)
+        q_layer = AllRandomLayer(n_wires=n_wires,
+                                 wires=list(range(n_wires)),
+                                 n_ops_rd=500,
+                                 n_ops_cin=500,
+                                 n_funcs=500,
+                                 qiskit_compatible=True)
+
+        q_layer(q_dev, x)
+        measurer = tq.MeasureAll(obs=tq.PauliZ)
+        # flip because qiskit is from N to 0, tq is from 0 to N
+        measured_tq = np.flip(measurer(q_dev).data[0].numpy())
+
+        # qiskit
+        circ = tq2qiskit(q_layer, x)
+        circ.measure(list(range(n_wires)), list(range(n_wires)))
+
+        # Select the QasmSimulator from the Aer provider
+        simulator = Aer.get_backend('qasm_simulator')
+
+        # Execute and get counts
+        result = execute(circ, simulator, shots=1000000).result()
+        counts = result.get_counts(circ)
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=n_wires)
+
+        try:
+            # WARNING: the measurement has randomness, so tolerate larger
+            # differences (MAX 20%) between tq and qiskit
+            # typical mean difference is less than 1%
+            diff = np.abs(measured_tq - measured_qiskit).mean()
+            diff_ratio = (np.abs((measured_tq - measured_qiskit) /
+                          measured_qiskit)).mean()
+            logger.info(f"Diff: tq vs qiskit {diff} \t Diff Ratio: "
+                        f"{diff_ratio}")
+            assert np.allclose(measured_tq, measured_qiskit,
+                               atol=1e-4, rtol=2e-1)
+            logger.info(f"PASS tq vs qiskit [n_wires]={n_wires}")
+
+        except AssertionError:
+            logger.exception(f"FAIL tq vs qiskit [n_wires]={n_wires}")
+            raise AssertionError
+
+    logger.info(f"PASS tq vs qiskit measurement test")
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pdb', action='store_true', help='pdb')
@@ -139,3 +191,4 @@ if __name__ == '__main__':
 
     unitary_tq_vs_qiskit_test()
     state_tq_vs_qiskit_test()
+    measurement_tq_vs_qiskit_test()

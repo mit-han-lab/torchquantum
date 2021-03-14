@@ -221,3 +221,23 @@ class RandomLayerAllTypes(RandomLayer):
             seed,
             qiskit_comparible,
         )
+
+
+class SimpleQLayer(tq.QuantumModule):
+    def __init__(self, n_wires):
+        super().__init__()
+        self.n_wires = n_wires
+        self.gate1 = tq.RX(has_params=True, trainable=True)
+        self.gate2 = tq.RY(has_params=True, trainable=True)
+        self.gate3 = tq.RZ(has_params=True, trainable=True)
+
+    @tq.static_support
+    def forward(self, q_dev):
+        self.q_device = q_dev
+        tqf.x(q_dev, wires=0, static=self.static_mode,
+              parent_graph=self.graph)
+        self.gate1(q_dev, wires=1)
+        self.gate2(q_dev, wires=1)
+        self.gate3(q_dev, wires=1)
+        tqf.x(q_dev, wires=2, static=self.static_mode,
+              parent_graph=self.graph)

@@ -142,6 +142,19 @@ def switch_little_big_endian_state_test():
     logger.info(switch_little_big_endian_state(np.arange(8)))
 
 
+def get_expectations_from_counts(counts, n_wires):
+    ctr_one = [0] * n_wires
+    total_shots = 0
+    for k, v in counts.items():
+        for wire in range(n_wires):
+            if k[wire] == '1':
+                ctr_one[wire] += v
+        total_shots += v
+    prob_one = np.array(ctr_one) / total_shots
+
+    return -1 * prob_one + 1 * (1 - prob_one)
+
+
 if __name__ == '__main__':
     switch_little_big_endian_matrix_test()
     switch_little_big_endian_state_test()
