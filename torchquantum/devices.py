@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import numpy as np
+
 from torchquantum.macro import C_DTYPE
 
 __all__ = ['QuantumDevice']
@@ -20,9 +22,23 @@ class QuantumDevice(nn.Module):
 
     def reset_states(self, bsz: int):
         repeat_times = [bsz] + [1] * len(self.state.shape)
-        self.states = self.state.repeat(*repeat_times).to(
-            self.state.device
-        )
+        self.states = self.state.repeat(*repeat_times).to(self.state.device)
+
+    def reset_identity_states(self):
+        """Make the states as the identity matrix, one dim is the batch
+        dim. Useful for verification.
+        """
+        self.states = torch.eye(2 ** self.n_wires, device=self.state.device,
+                                dtype=C_DTYPE).reshape([2 ** self.n_wires] +
+                                                       [2] * self.n_wires)
+
+    def reset_all_eq_states(self, bsz: int):
+        energy = np.sqrt(1 / (2 ** self.n_wires) / 2)
+        all_eq_state = torch.ones(2 ** self.n_wires, dtype=C_DTYPE) * \
+            (energy + energy * 1j)
+        all_eq_state = all_eq_state.reshape([2] * self.n_wires)
+        repeat_times = [bsz] + [1] * len(self.state.shape)
+        self.states = all_eq_state.repeat(*repeat_times).to(self.state.device)
 
     def get_states_1d(self):
         bsz = self.states.shape[0]
