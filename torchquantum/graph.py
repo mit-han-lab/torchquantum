@@ -379,6 +379,14 @@ class QuantumGraph(object):
         else:
             is_module_matrix_batch = False
             shape_extension = []
+
+        if module.inverse:
+            module_matrix = module_matrix.conj()
+            if is_module_matrix_batch:
+                module_matrix = module_matrix.permute(0, 2, 1)
+            else:
+                module_matrix = module_matrix.permute(1, 0)
+
         if n_device_wires > 1:
             module_matrix = module_matrix.view(shape_extension +
                                                [2] * n_device_wires * 2)
