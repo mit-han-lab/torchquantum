@@ -9,7 +9,8 @@ __all__ = [
     'ClassicalInOpAll',
     'FixedOpAll',
     'TwoQAll',
-    'RandomLayer'
+    'RandomLayer',
+    'RandomLayerAllTypes',
 ]
 
 
@@ -117,19 +118,82 @@ class RandomLayer(tq.QuantumModule):
         self.build_random_layer()
 
     def build_random_layer(self):
-        for _ in range(self.n_ops):
+        cnt = 0
+        while cnt < self.n_ops:
             op = np.random.choice(self.op_types, p=self.op_ratios)
             n_op_wires = op.num_wires
+            if n_op_wires > self.n_wires:
+                continue
+            if n_op_wires == -1:
+                is_AnyWire = True
+                n_op_wires = self.n_wires
+            else:
+                is_AnyWire = False
+
             op_wires = list(np.random.choice(self.wires, size=n_op_wires,
                                              replace=False))
-            if op().name in tq.Operator.parameterized_ops:
+            if is_AnyWire:
+                if op().name in ['MultiRZ']:
+                    operation = op(has_params=True, trainable=True,
+                        n_wires=n_op_wires, wires=op_wires)
+                else:
+                    operation = op(n_wires=n_op_wires, wires=op_wires)
+            elif op().name in tq.Operator.parameterized_ops:
                 operation = op(has_params=True, trainable=True, wires=op_wires)
             else:
                 operation = op(wires=op_wires)
             self.op_list.append(operation)
+            cnt += 1
 
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
         for op in self.op_list:
             op(q_device)
+
+
+class RandomLayerAllTypes(RandomLayer):
+    def __init__(self,
+                 n_ops,
+                 wires,
+                 op_ratios=None,
+                 op_types=(tq.Hadamard,
+                           tq.PauliX,
+                           tq.PauliY,
+                           tq.PauliZ,
+                           tq.S,
+                           tq.T,
+                           tq.SX,
+                           tq.CNOT,
+                           tq.CZ,
+                           tq.CY,
+                           tq.RX,
+                           tq.RY,
+                           tq.RZ,
+                           tq.SWAP,
+                           tq.CSWAP,
+                           tq.Toffoli,
+                           tq.PhaseShift,
+                           tq.Rot,
+                           tq.MultiRZ,
+                           tq.CRX,
+                           tq.CRY,
+                           tq.CRZ,
+                           tq.CRot,
+                           tq.U1,
+                           tq.U2,
+                           tq.U3,
+                           tq.MultiCNOT,
+                           tq.MultiXCNOT,
+                           ),
+                 seed=None,
+                 ):
+        if op_ratios is None:
+            op_ratios = [1] * len(op_types)
+        super().__init__(
+            n_ops,
+            wires,
+            op_ratios,
+            op_types,
+            seed
+        )
