@@ -71,7 +71,7 @@ class TestModule(tq.QuantumModule):
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
         self.q_device = q_device
-        self.gate1(q_device, wires=3)
+        self.gate1(q_device, wires=3, inverse=True)
         self.gate2(q_device, wires=4)
         self.gate3(q_device, wires=3)
         self.gate4(q_device, wires=3)
@@ -180,9 +180,9 @@ class Static(nn.Module):
                                          init_params=[[1, 0], [0, 1]])
         self.q_test_layer = TestModule()
         self.random_layer = tq.RandomLayer(30, wires=[0, 3, 5, 7])
-        self.random_layer.static_on(wires_per_block=3)
+        # self.random_layer.static_on(wires_per_block=3)
 
-        self.q_test_layer.static_on(wires_per_block=4)
+        # self.q_test_layer.static_on(wires_per_block=4)
         self.q_device2 = tq.QuantumDevice(n_wires=3)
         self.t00 = T00()
 
@@ -213,9 +213,9 @@ class Static(nn.Module):
 
         # with Timer('gpu', 'static', 50):
         #     for _ in range(500):
-        self.q_test_layer.static_on(wires_per_block=4)
+        # self.q_test_layer.static_on(wires_per_block=4)
         self.q_test_layer(self.q_device0, x)
-        self.q_test_layer.graph.build_flat_module_list()
+        # self.q_test_layer.graph.build_flat_module_list()
         # un = self.q_test_layer.get_unitary(self.q_device0, x)
 
         # self.q_test_layer.static_off()
