@@ -87,6 +87,7 @@ class QuantumGraph(object):
     def build(self, wires_per_block):
         self.build_wire_module_dict(self.module_list)
         self.build_local_wire_module_list()
+        self.build_flat_module_list(self.module_list)
         self.schedules = self.build_schedule_blockwise(wires_per_block)
         # self.schedules = self.build_schedule_layerwise()
         self.build_finish = True
@@ -104,22 +105,37 @@ class QuantumGraph(object):
         # 2. parameterized operators, the matrices for the same type are
         # computed together in one kernel call to speedup training
         matrix_params = {}
-        for wire_modules in self.wire_module_list:
-            for module in wire_modules:
-                name = module.name
-                if name in tq.Operator.fixed_ops:
-                    if name not in self.static_matrix_dict.keys():
-                        # fixed operator, all share one static matrix
-                        self.static_matrix_dict[module.name] = \
-                            module.matrix.to(self.device)
-                elif name in tq.Operator.parameterized_ops:
-                    # parameterized operators
-                    if name in matrix_params:
-                        matrix_params[name].append(module.params)
-                    else:
-                        matrix_params[name] = [module.params]
+
+        # for wire_modules in self.wire_module_list:
+        for module in self.flat_module_list:
+            name = module.name
+            if name in tq.Operator.fixed_ops:
+                if name not in self.static_matrix_dict.keys():
+                    # fixed operator, all share one static matrix
+                    self.static_matrix_dict[module.name] = \
+                        module.matrix.to(self.device)
+            elif name in tq.Operator.parameterized_ops and name not in [
+                'QubitUnitary',
+                'QubitUnitaryFast',
+                'TrainableUnitary',
+                'TrainableUnitaryStrict',
+                'MultiRZ',
+            ]:
+                # parameterized operators
+                if name in matrix_params:
+                    matrix_params[name].append(module.params)
                 else:
-                    raise NotImplementedError(f"Module {name} not in list")
+                    matrix_params[name] = [module.params]
+            elif name in [
+                'QubitUnitary',
+                'QubitUnitaryFast',
+                'TrainableUnitary',
+                'TrainableUnitaryStrict',
+                'MultiRZ',
+            ]:
+                pass
+            else:
+                raise NotImplementedError(f"Module {name} not in list")
 
         ptrs = {}
         for name, param in matrix_params.items():
@@ -132,20 +148,36 @@ class QuantumGraph(object):
                     name].unsqueeze(0)
             ptrs[name] = 0
 
-        for wire_modules in self.wire_module_list:
-            for module in wire_modules:
-                name = module.name
-                if name in tq.Operator.fixed_ops:
-                    module.static_matrix = self.static_matrix_dict[name]
-                elif name in tq.Operator.parameterized_ops:
-                    shape0 = module.params.shape[0]
-                    module.static_matrix = self.static_matrix_dict[
-                        name][ptrs[name]: ptrs[name] + shape0]
-                    ptrs[name] += shape0
-                    if shape0 == 1:
-                        module.static_matrix = module.static_matrix.squeeze(0)
-                else:
-                    raise NotImplementedError(f"Module {name} not in list")
+        # for wire_modules in self.wire_module_list:
+        for module in self.flat_module_list:
+            name = module.name
+            if name in tq.Operator.fixed_ops:
+                module.static_matrix = self.static_matrix_dict[name]
+            elif name in tq.Operator.parameterized_ops and name not in [
+                'QubitUnitary',
+                'QubitUnitaryFast',
+                'TrainableUnitary',
+                'TrainableUnitaryStrict',
+                'MultiRZ'
+            ]:
+                shape0 = module.params.shape[0]
+                module.static_matrix = self.static_matrix_dict[name][
+                                       ptrs[name]: ptrs[name] + shape0]
+                ptrs[name] += shape0
+                if shape0 == 1:
+                    module.static_matrix = module.static_matrix.squeeze(0)
+            elif name in [
+                'QubitUnitary',
+                'QubitUnitaryFast',
+                'TrainableUnitary',
+                'TrainableUnitaryStrict',
+            ]:
+                module.static_matrix = module.params.squeeze(0)
+            elif name in ['MultiRZ']:
+                module.static_matrix = tq.mat_dict[name.lower()](
+                    module.params, module.n_wires)
+            else:
+                raise NotImplementedError(f"Module {name} not in list")
 
     def build_wire_module_dict(self, module_list):
         for module in module_list:
@@ -192,7 +224,7 @@ class QuantumGraph(object):
 
         def is_front(wires, ptrs):
             return len(set([id(self.wire_module_list[w][ptrs[w]]) for w in
-                       wires])) == 1
+                            wires])) == 1
 
         def add_front_large_qubit_gate(ptrs, sches):
             # deal with the case when the number of wires in a block is
@@ -506,5 +538,5 @@ class QuantumGraph(object):
                 unitary = unitary.reshape(2 ** len(comb),
                                           2 ** len(comb))
 
-            tqf.qubitunitary_fast(self.q_device, wires=global_wires,
-                                  params=unitary)
+            tqf.qubitunitaryfast(self.q_device, wires=global_wires,
+                                 params=unitary)
