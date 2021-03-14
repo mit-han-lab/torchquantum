@@ -393,6 +393,12 @@ class QuantumGraph(object):
 
         new_indices = ABC[n_block_letters: n_block_letters +
                           n_device_wires]
+        try:
+            assert n_block_letters + n_device_wires < 26
+        except AssertionError:
+            logger.exception(f"Einsum letters insufficient, please switch to "
+                             f"bmm implementation.")
+            raise AssertionError
 
         new_unitary_indices = functools.reduce(
             lambda old_string, idx_pair: old_string.replace(idx_pair[0],
