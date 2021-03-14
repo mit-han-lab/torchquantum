@@ -11,6 +11,7 @@ from torchpack.utils.logging import logger
 
 
 __all__ = [
+    'func_name_dict',
     'mat_dict',
     'apply_unitary_einsum',
     'apply_unitary_bmm',
@@ -41,12 +42,16 @@ __all__ = [
     'u2',
     'u3',
     'qubitunitary',
-    'qubitunitary_fast',
+    'qubitunitaryfast',
+    'qubitunitarystrict',
+    'multicnot',
+    'multixcnot',
     'x',
     'y',
     'z',
-    'multicnot',
-    'multixcnot',
+    'cx',
+    'ccnot',
+    'ccx',
 ]
 
 
@@ -161,7 +166,11 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
         if not isinstance(params, torch.Tensor):
             # this is for qubitunitary gate
             params = torch.tensor(params, dtype=C_DTYPE)
-        params = params.unsqueeze(-1) if params.dim() == 1 else params
+
+        if name in ['qubitunitary', 'qubitunitaryfast', 'qubitunitarystrict']:
+            params = params.unsqueeze(0) if params.dim() == 2 else params
+        else:
+            params = params.unsqueeze(-1) if params.dim() == 1 else params
     wires = [wires] if isinstance(wires, int) else wires
 
     if static:
@@ -177,8 +186,8 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
         # in dynamic mode, the function is computed instantly
         if isinstance(mat, Callable):
             if n_wires is None or \
-                    name == 'qubitunitary_fast' or \
-                    name == 'qubitunitary_strict':
+                    name in ['qubitunitary', 'qubitunitaryfast',
+                             'qubitunitarystrict']:
                 matrix = mat(params)
             elif name in ['multicnot', 'multixcnot']:
                 # this is for gates that can be applied to arbitrary numbers of
@@ -413,7 +422,7 @@ def u3_matrix(params):
 
 
 def qubitunitary_matrix(params):
-    matrix = params
+    matrix = params.squeeze(0)
     try:
         assert matrix.shape[-1] == matrix.shape[-2]
     except AssertionError as err:
@@ -421,7 +430,7 @@ def qubitunitary_matrix(params):
         raise err
 
     try:
-        U = params.cpu().detach().numpy()
+        U = matrix.cpu().detach().numpy()
         if matrix.dim() > 2:
             # batched unitary
             bsz = matrix.shape[0]
@@ -438,11 +447,12 @@ def qubitunitary_matrix(params):
     return matrix
 
 
-def qubitunitary_matrix_fast(params):
-    return params
+def qubitunitaryfast_matrix(params):
+    return params.squeeze(0)
 
 
-def qubitunitary_matrix_strict(params):
+def qubitunitarystrict_matrix(params):
+    params.squeeze(0)
     mat = params
     U, Sigma, V = torch.svd(mat)
     return U.matmul(V)
@@ -525,8 +535,8 @@ mat_dict = {
     'u2': u2_matrix,
     'u3': u3_matrix,
     'qubitunitary': qubitunitary_matrix,
-    'qubitunitary_fast': qubitunitary_matrix_fast,
-    'qubitunitary_strict': qubitunitary_matrix_strict,
+    'qubitunitaryfast': qubitunitaryfast_matrix,
+    'qubitunitarystrict': qubitunitarystrict_matrix,
     'multicnot': multicnot_matrix,
     'multixcnot': multixcnot_matrix,
 }
@@ -560,10 +570,10 @@ u2 = partial(gate_wrapper, 'u2', mat_dict['u2'], 'bmm')
 u3 = partial(gate_wrapper, 'u3', mat_dict['u3'], 'bmm')
 qubitunitary = partial(gate_wrapper, 'qubitunitary', mat_dict[
     'qubitunitary'], 'bmm')
-qubitunitary_fast = partial(gate_wrapper, 'qubitunitary_fast', mat_dict[
-    'qubitunitary_fast'], 'bmm')
-qubitunitary_strict = partial(gate_wrapper, 'qubitunitary_strict', mat_dict[
-    'qubitunitary_strict'], 'bmm')
+qubitunitaryfast = partial(gate_wrapper, 'qubitunitaryfast', mat_dict[
+    'qubitunitaryfast'], 'bmm')
+qubitunitarystrict = partial(gate_wrapper, 'qubitunitarystrict', mat_dict[
+    'qubitunitarystrict'], 'bmm')
 multicnot = partial(gate_wrapper, 'multicnot', mat_dict['multicnot'], 'bmm')
 multixcnot = partial(gate_wrapper, 'multixcnot', mat_dict['multixcnot'], 'bmm')
 
@@ -575,3 +585,44 @@ z = pauliz
 cx = cnot
 ccnot = toffoli
 ccx = toffoli
+
+
+func_name_dict = {
+    'hadamard': hadamard,
+    'paulix': paulix,
+    'pauliy': pauliy,
+    'pauliz': pauliz,
+    's': s,
+    't': t,
+    'sx': sx,
+    'cnot': cnot,
+    'cz': cz,
+    'cy': cy,
+    'rx': rx,
+    'ry': ry,
+    'rz': rz,
+    'swap': swap,
+    'cswap': cswap,
+    'toffoli': toffoli,
+    'phaseshift': phaseshift,
+    'rot': rot,
+    'multirz': multirz,
+    'crx': crx,
+    'cry': cry,
+    'crz': crz,
+    'crot': crot,
+    'u1': u1,
+    'u2': u2,
+    'u3': u3,
+    'qubitunitary': qubitunitary,
+    'qubitunitaryfast': qubitunitaryfast,
+    'qubitunitarystrict': qubitunitarystrict,
+    'multicnot': multicnot,
+    'multixcnot': multixcnot,
+    'x': x,
+    'y': y,
+    'z': z,
+    'cx': cx,
+    'ccnot': ccnot,
+    'ccx': ccx,
+}
