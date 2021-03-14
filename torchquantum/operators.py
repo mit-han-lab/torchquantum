@@ -59,6 +59,14 @@ class WiresEnum(IntEnum):
     AnyWires = -1
     AllWires = 0
 
+class NParamsEnum(IntEnum):
+    """Integer enumeration class
+    to represent the number of wires
+    an operation acts on"""
+    AnyNParams = -1
+
+AnyNParams = NParamsEnum.AnyNParams
+
 
 AllWires = WiresEnum.AllWires
 """IntEnum: An enumeration which represents all wires in the
@@ -105,6 +113,7 @@ class Operator(tq.QuantumModule):
         'QubitUnitary',
         'QubitUnitaryFast',
         'TrainableUnitary',
+        'TrainableUnitaryStrict',
     ]
 
     @property
@@ -202,8 +211,8 @@ class Operator(tq.QuantumModule):
 
 
 class Observable(Operator, metaclass=ABCMeta):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, wires=None):
+        super().__init__(wires=wires)
         self.return_type = None
 
     def diagonalizing_gates(self):
@@ -541,30 +550,32 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
 
 
 class TrainableUnitary(Operation, metaclass=ABCMeta):
+    num_params = AnyNParams
     num_wires = AnyWires
-    func = staticmethod(tqf.qubitunitary_fast)
+    func = staticmethod(tqf.qubitunitaryfast)
 
     def build_params(self, trainable):
         parameters = nn.Parameter(torch.empty(
-            2 ** self.n_wires, 2 ** self.n_wires, dtype=C_DTYPE))
+            1, 2 ** self.n_wires, 2 ** self.n_wires, dtype=C_DTYPE))
         parameters.requires_grad = True if trainable else False
         self.register_parameter(f"{self.name}_params", parameters)
         return parameters
 
     def reset_params(self, init_params=None):
-        mat = torch.randn((2 ** self.n_wires, 2 ** self.n_wires),
+        mat = torch.randn((1, 2 ** self.n_wires, 2 ** self.n_wires),
                           dtype=C_DTYPE)
         U, Sigma, V = torch.svd(mat)
-        self.params.data.copy_(U.matmul(V.permute(1, 0)))
+        self.params.data.copy_(U.matmul(V.permute(0, 2, 1)))
 
     @staticmethod
     def _matrix(self, params):
-        return tqf.qubitunitary_fast(params)
+        return tqf.qubitunitaryfast(params)
 
 
 class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
+    num_params = AnyNParams
     num_wires = AnyWires
-    func = staticmethod(tqf.qubitunitary_strict)
+    func = staticmethod(tqf.qubitunitarystrict)
 
 
 class CRX(Operation, metaclass=ABCMeta):
@@ -639,7 +650,7 @@ class U3(Operation, metaclass=ABCMeta):
 
 
 class QubitUnitary(Operation, metaclass=ABCMeta):
-    num_params = 1
+    num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitary)
 
@@ -656,13 +667,13 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
 
 
 class QubitUnitaryFast(Operation, metaclass=ABCMeta):
-    num_params = 1
+    num_params = AnyNParams
     num_wires = AnyWires
-    func = staticmethod(tqf.qubitunitary_fast)
+    func = staticmethod(tqf.qubitunitaryfast)
 
     @classmethod
     def _matrix(cls, params):
-        return tqf.qubitunitary_fast(params)
+        return tqf.qubitunitaryfast(params)
 
     def build_params(self, trainable):
         return None
@@ -696,6 +707,11 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
     def _matrix(cls, params, n_wires):
         return tqf.multixcnot_matrix(n_wires)
 
+    @property
+    def matrix(self):
+        op_matrix = self._matrix(self.params, self.n_wires)
+        return op_matrix
+
 
 op_name_dict = {
     'hadamard': Hadamard,
@@ -725,6 +741,7 @@ op_name_dict = {
     'u2': U2,
     'u3': U3,
     'qubitunitary': QubitUnitary,
+    'qubitunitarystrict': QubitUnitaryFast,
     'qubitunitaryfast': QubitUnitaryFast,
     'trainableunitary': TrainableUnitary,
     'trainableunitarystrict': TrainableUnitaryStrict,
