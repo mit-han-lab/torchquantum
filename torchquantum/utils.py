@@ -64,7 +64,7 @@ def get_unitary_loss(model: nn.Module):
     for name, params in model.named_parameters():
         if 'TrainableUnitary' in name:
             U = params
-            like_identity = U.matmul(U.conj().permute(1, 0))
+            like_identity = U.matmul(U.conj().permute(0, 2, 1))
             identity = torch.eye(U.shape[0], dtype=C_DTYPE,
                                  device=U.device)
             loss += F.mse_loss(torch.view_as_real(identity),
@@ -79,7 +79,7 @@ def legalize_unitary(model: nn.Module):
             if 'TrainableUnitary' in name:
                 U = params
                 U, Sigma, V = torch.svd(U)
-                params.data.copy_(U.matmul(V.conj().permute(1, 0)))
+                params.data.copy_(U.matmul(V.conj().permute(0, 2, 1)))
 
 
 def switch_little_big_endian_matrix(mat):
