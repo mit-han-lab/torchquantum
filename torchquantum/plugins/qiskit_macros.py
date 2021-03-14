@@ -5,3 +5,10 @@ QISKIT_INCOMPATIBLE_OPS = [
     tq.MultiRZ,
     tq.CRot,
 ]
+
+QISKIT_INCOMPATIBLE_FUNC_NAMES = [
+    'rot',
+    'multirz',
+    'crot',
+]
+

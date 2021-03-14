@@ -8,6 +8,8 @@ from torchpack.utils.logging import logger
 from torchquantum.operators import op_name_dict
 from torchquantum.functional import func_name_dict
 from torchquantum.macro import F_DTYPE
+from torchquantum.plugins.qiskit_macros import (QISKIT_INCOMPATIBLE_FUNC_NAMES,
+                                                QISKIT_INCOMPATIBLE_OPS)
 
 
 class QLayer(tq.QuantumModule):
@@ -16,7 +18,8 @@ class QLayer(tq.QuantumModule):
                  wires,
                  n_ops_rd,
                  n_ops_cin,
-                 n_funcs
+                 n_funcs,
+                 qiskit_compatible=False,
                  ):
         super().__init__()
         self.n_wires = n_wires
@@ -26,7 +29,10 @@ class QLayer(tq.QuantumModule):
         self.n_funcs = n_funcs
         self.rd_layer = None
         if self.n_ops_rd > 0:
-            self.rd_layer = tq.RandomLayerAllTypes(n_ops=n_ops_rd, wires=wires)
+            self.rd_layer = tq.RandomLayerAllTypes(
+                n_ops=n_ops_rd,
+                wires=wires,
+                qiskit_comparible=qiskit_compatible)
 
         self.cin_op_types = [
             tq.RX,
@@ -75,6 +81,13 @@ class QLayer(tq.QuantumModule):
             'multicnot',
             'multixcnot',
         ]
+
+        if qiskit_compatible:
+            for op in QISKIT_INCOMPATIBLE_OPS:
+                self.cin_op_types.remove(op)
+            for func in QISKIT_INCOMPATIBLE_FUNC_NAMES:
+                self.funcs.remove(func)
+
         self.x_idx = 0
         self.cin_op_list = tq.QuantumModuleList()
         self.rand_mat = np.random.randn(2 ** self.n_wires, 2 ** self.n_wires)
