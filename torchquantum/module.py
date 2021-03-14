@@ -80,9 +80,9 @@ class QuantumModule(nn.Module):
         self.static_off()
         self.static_on(wires_per_block=q_device.n_wires)
         self.q_device = q_device
-        self.device = q_device.states.device
+        self.device = q_device.state.device
         self.graph.q_device = q_device
-        self.graph.device = q_device.states.device
+        self.graph.device = q_device.state.device
 
         self.is_graph_top = False
         # forward to register all modules to the module list, but do not
