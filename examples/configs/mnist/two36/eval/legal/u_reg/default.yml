@@ -1,0 +1,4 @@
+regularization:
+  unitary_loss: True
+  unitary_loss_lambda: 1
+
