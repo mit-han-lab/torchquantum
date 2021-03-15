@@ -70,7 +70,10 @@ def main() -> None:
             inputs = feed_dict['image'].cuda(non_blocking=True)
             targets = feed_dict['digit'].cuda(non_blocking=True)
 
-            outputs = model(inputs)
+            if configs.use_qiskit:
+                outputs = model.forward_qiskit(inputs)
+            else:
+                outputs = model(inputs)
 
             if target_all is None:
                 target_all = targets
