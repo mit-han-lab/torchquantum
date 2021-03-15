@@ -1,9 +1,7 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torchquantum as tq
-import torchquantum.functional as tqf
 
+from typing import Iterable
 from torchquantum.macro import C_DTYPE
 from abc import ABCMeta
 
@@ -31,6 +29,21 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
                       static=self.static_mode, parent_graph=self.graph)
 
 
+class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
+    def __init__(self, func):
+        super().__init__()
+        self.func = func if isinstance(func, Iterable) else [func]
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice, x):
+        self.q_device = q_device
+        self.q_device.reset_states(x.shape[0])
+        for k, func in enumerate(self.func):
+            func(self.q_device, wires=k % self.q_device.n_wires,
+                 params=x[:, k], static=self.static_mode,
+                 parent_graph=self.graph)
+
+
 class StateEncoder(Encoder, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
@@ -38,7 +51,6 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
     def forward(self, q_device: tq.QuantumDevice, x):
         # encoder the x to the statevector of the quantum device
         self.q_device = q_device
-
 
         # normalize the input
         x = x / (torch.sqrt((x * x).sum(dim=-1))).unsqueeze(-1)
@@ -53,6 +65,3 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
 class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
-
-
-
