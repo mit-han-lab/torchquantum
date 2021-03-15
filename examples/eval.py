@@ -59,6 +59,8 @@ def main() -> None:
     model.to(device)
     model.eval()
     model.load_state_dict(state_dict['model'])
+    if configs.use_qiskit:
+        model.qiskit_init()
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
@@ -71,7 +73,9 @@ def main() -> None:
             targets = feed_dict['digit'].cuda(non_blocking=True)
 
             if configs.use_qiskit:
-                outputs = model.forward_qiskit(inputs)
+                outputs = model.forward_qiskit(inputs,
+                                               use_real_qc=configs.use_real_qc,
+                                               targets=targets)
             else:
                 outputs = model(inputs)
 

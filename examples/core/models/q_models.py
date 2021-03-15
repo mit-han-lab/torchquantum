@@ -10,6 +10,8 @@ from torchquantum.plugins import tq2qiskit
 from torchquantum.utils import get_expectations_from_counts
 from torchpack.utils.config import configs
 from tqdm import tqdm
+from torchpack.utils.logging import logger
+
 
 __all__ = ['QuanvModel0', 'QuanvModel1', 'QFCModel0',
            'model_dict']
@@ -506,6 +508,113 @@ class QFCModel4(tq.QuantumModule):
         return x
 
 
+class QFC5Sub(tq.QuantumModule):
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 4
+        self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
+                                            [tqf.rz] * 4 + [tqf.rx] * 4)
+        self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
+            self.n_wires)))
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice, x):
+        self.q_device = q_device
+        self.encoder(self.q_device, x)
+        self.random_layer(self.q_device)
+
+
+class QFCModel5(tq.QuantumModule):
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 4
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.q_sub_layer = QFC5Sub()
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+        self.qiskit_simulator = None
+        self.provider = None
+        self.backend = None
+        self.qiskit_init()
+        self.size = 0
+        self.corrects = 0
+
+    def qiskit_init(self):
+        self.size = 0
+        self.corrects = 0
+        self.qiskit_simulator = Aer.get_backend('qasm_simulator')
+
+        IBMQ.load_account()
+        self.provider = IBMQ.get_provider(hub='ibm-q')
+        self.backend = self.provider.get_backend('ibmq_belem')
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        self.q_sub_layer(self.q_device, x)
+
+        x = self.measure(self.q_device)[:, :len(
+            configs.dataset.digits_of_interest)]
+
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+    def forward_qiskit(self, x, targets, shots=8192, use_real_qc=False):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        measured_qiskit_all = []
+        for i, x_single in tqdm(enumerate(x)):
+            circ = tq2qiskit(self.q_sub_layer, x_single.unsqueeze(0))
+            circ.measure(list(range(self.n_wires)), list(range(self.n_wires)))
+
+            # Execute and get counts
+            if use_real_qc:
+                from qiskit.tools.monitor import job_monitor
+
+                job = execute(circ, backend=self.backend, shots=shots,
+                              optimization_level=3)
+                job_monitor(job, interval=2)
+
+                result = job.result()
+                counts = result.get_counts()
+            else:
+                result = execute(circ, self.qiskit_simulator,
+                                 shots=shots).result()
+                counts = result.get_counts(circ)
+
+            measured_qiskit = torch.tensor(np.flip(
+                get_expectations_from_counts(
+                    counts, n_wires=self.n_wires)).copy(), device=x.device)
+            measured_qiskit_all.append(measured_qiskit)
+
+            logger.info(f"{measured_qiskit.data.cpu().numpy()}")
+            _, idx = measured_qiskit[
+                     :len(configs.dataset.digits_of_interest)].topk(1)
+
+            self.size += 1
+            if idx[0] == targets[i]:
+                self.corrects += 1
+                logger.info(f"CORRECT {targets[i].item()}, size {self.size}, "
+                            f"corrects {self.corrects}, "
+                            f"current accuracy: "
+                            f"{self.corrects / self.size:.5f}")
+            else:
+                logger.warning(f"WRONG {targets[i].item()}, size {self.size},"
+                               f"corrects {self.corrects}, "
+                               f"current accuracy: "
+                               f"{self.corrects / self.size:.5f}")
+
+        x = torch.stack(measured_qiskit_all, dim=0)[:, :len(
+            configs.dataset.digits_of_interest)]
+
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
@@ -516,5 +625,6 @@ model_dict = {
     'q_fc2': QFCModel2,
     'q_fc3': QFCModel3,
     'q_fc4': QFCModel4,
+    'q_fc5': QFCModel5,
     'q_qsvt0': QSVT0,
 }

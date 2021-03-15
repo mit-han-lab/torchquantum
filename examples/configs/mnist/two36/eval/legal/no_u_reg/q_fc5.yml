@@ -1,0 +1,5 @@
+model:
+  name: q_fc5
+
+run:
+  bsz: 16

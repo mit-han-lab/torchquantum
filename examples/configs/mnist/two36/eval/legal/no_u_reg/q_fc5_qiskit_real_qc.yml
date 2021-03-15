@@ -1,0 +1,9 @@
+model:
+  name: q_fc5
+
+use_qiskit: True
+
+run:
+  bsz: 16
+
+use_real_qc: True
