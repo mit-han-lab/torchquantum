@@ -40,3 +40,5 @@ legalization:
   legalize: False
   epoch_interval: 9999999999
   step_interval: 9999999999
+
+use_qiskit: False

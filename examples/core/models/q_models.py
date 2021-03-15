@@ -5,7 +5,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+from qiskit import Aer, execute, IBMQ
+from torchquantum.plugins import tq2qiskit
+from torchquantum.utils import get_expectations_from_counts
 from torchpack.utils.config import configs
+from tqdm import tqdm
 
 __all__ = ['QuanvModel0', 'QuanvModel1', 'QFCModel0',
            'model_dict']
@@ -438,6 +442,70 @@ class QSVT0(tq.QuantumModule):
         return x
 
 
+class QFC4Sub(tq.QuantumModule):
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 8
+        self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 8 + [tqf.ry] * 8)
+        self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
+            self.n_wires)))
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice, x):
+        self.q_device = q_device
+        self.encoder(self.q_device, x)
+        self.random_layer(self.q_device)
+
+
+class QFCModel4(tq.QuantumModule):
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 8
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.q_sub_layer = QFC4Sub()
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+        self.qiskit_simulator = Aer.get_backend('qasm_simulator')
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        self.q_sub_layer(self.q_device, x)
+
+        x = self.measure(self.q_device)[:, :len(
+            configs.dataset.digits_of_interest)]
+
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+    def forward_qiskit(self, x, shots=1000000):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        measured_qiskit_all = []
+        for x_single in tqdm(x):
+            circ = tq2qiskit(self.q_sub_layer, x_single.unsqueeze(0))
+            circ.measure(list(range(self.n_wires)), list(range(self.n_wires)))
+
+            # Execute and get counts
+            result = execute(circ, self.qiskit_simulator,
+                             shots=shots).result()
+            counts = result.get_counts(circ)
+            measured_qiskit = np.flip(get_expectations_from_counts(
+                counts, n_wires=self.n_wires)).copy()
+            measured_qiskit_all.append(torch.tensor(measured_qiskit,
+                                                    device=x.device))
+
+        x = torch.stack(measured_qiskit_all, dim=0)[:, :len(
+            configs.dataset.digits_of_interest)]
+
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
@@ -447,5 +515,6 @@ model_dict = {
     'q_fc1': QFCModel1,
     'q_fc2': QFCModel2,
     'q_fc3': QFCModel3,
+    'q_fc4': QFCModel4,
     'q_qsvt0': QSVT0,
 }
