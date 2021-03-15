@@ -125,6 +125,8 @@ class QTrainer(Trainer):
 
     def _state_dict(self) -> Dict[str, Any]:
         state_dict = dict()
+        # need to store model arch because of randomness of random layers
+        state_dict['model_arch'] = self.model
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()

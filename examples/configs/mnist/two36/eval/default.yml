@@ -1,0 +1,3 @@
+model: q_fc0
+
+legalize_unitary: True

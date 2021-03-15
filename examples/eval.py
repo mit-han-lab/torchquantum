@@ -1,19 +1,15 @@
 import argparse
 import os
 import pdb
-
-import numpy as np
 import torch
 import torch.backends.cudnn
-import torch.cuda
-import torch.nn
-import torch.utils.data
 import tqdm
-from torchpack.utils import fs, io
+
+from torchpack.utils import io
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
-
 from core import builder
+from torchquantum.utils import legalize_unitary
 
 
 def main() -> None:
@@ -21,7 +17,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
-    parser.add_argument('--run-dir', metavar='DIR', help='run directory')
+    parser.add_argument('--run_dir', metavar='DIR', help='run directory')
     parser.add_argument('--pdb', action='store_true', help='pdb')
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
     args, opts = parser.parse_known_args()
@@ -53,43 +49,42 @@ def main() -> None:
         batch_size=configs.run.bsz,
         num_workers=configs.run.workers_per_gpu,
         pin_memory=True)
-    model = builder.make_model()
+
+    state_dict = io.load(
+        os.path.join(args.run_dir, 'checkpoints', 'max-acc_legal-valid.pt'))
+    model = state_dict['model_arch']
+
+    if configs.legalize_unitary:
+        legalize_unitary(model)
     model.to(device)
     model.eval()
+    model.load_state_dict(state_dict['model'])
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
-
-    # inputs = {'sizing': torch.randn(1, configs.model.in_ch).cuda(),
-    #           'fom': torch.randn(1).cuda()
-    #           }
-    # logger.info(f'Model MACs: {profile_macs(model, inputs)}')
-
-    state_dict = io.load(
-        os.path.join(args.run_dir, 'checkpoints', 'max-acc-valid.pt'))
-    model.load_state_dict(state_dict['model'])
 
     with torch.no_grad():
         target_all = None
         output_all = None
         for feed_dict in tqdm.tqdm(dataflow):
-            inputs = dict()
-            for key, value in feed_dict.items():
-                if key in ['sizing']:
-                    inputs[key] = value.cuda()
-            targets = feed_dict['fom'].cuda(non_blocking=True)
+            inputs = feed_dict['image'].cuda(non_blocking=True)
+            targets = feed_dict['digit'].cuda(non_blocking=True)
 
             outputs = model(inputs)
 
             if target_all is None:
-                target_all = targets.cpu().numpy()
-                output_all = outputs.cpu().numpy()
+                target_all = targets
+                output_all = outputs
             else:
-                target_all = np.concatenate([target_all,
-                                             targets.cpu().numpy()])
-                output_all = np.concatenate([output_all,
-                                             outputs.cpu().numpy()])
+                target_all = torch.cat([target_all, targets], dim=0)
+                output_all = torch.cat([output_all, outputs], dim=0)
 
+    k = 1
+    _, indices = output_all.topk(k, dim=1)
+    masks = indices.eq(target_all.view(-1, 1).expand_as(indices))
+    size = target_all.shape[0]
+    corrects = masks.sum().item()
+    logger.info(f"Accuracy: {corrects / size}")
 
 
 if __name__ == '__main__':
