@@ -21,8 +21,12 @@ class LayerRegressionTrainer(Trainer):
         self.model.train()
 
     def _run_step(self, feed_dict: Dict[str, Any]) -> Dict[str, Any]:
-        inputs = feed_dict['input'].cuda(non_blocking=True)
-        targets = feed_dict['output'].cuda(non_blocking=True)
+        if configs.run.device == 'gpu':
+            inputs = feed_dict['input'].cuda(non_blocking=True)
+            targets = feed_dict['output'].cuda(non_blocking=True)
+        else:
+            inputs = feed_dict['input']
+            targets = feed_dict['output']
 
         outputs = self.model(inputs)
         loss = self.criterion(outputs, targets)
@@ -72,8 +76,12 @@ class QTrainer(Trainer):
 
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
-        inputs = feed_dict['image'].cuda(non_blocking=True)
-        targets = feed_dict['digit'].cuda(non_blocking=True)
+        if configs.run.device == 'gpu':
+            inputs = feed_dict['image'].cuda(non_blocking=True)
+            targets = feed_dict['digit'].cuda(non_blocking=True)
+        else:
+            inputs = feed_dict['image']
+            targets = feed_dict['digit']
         if legalize:
             outputs = self.legalized_model(inputs)
         else:

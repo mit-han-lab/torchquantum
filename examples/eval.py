@@ -69,8 +69,12 @@ def main() -> None:
         target_all = None
         output_all = None
         for feed_dict in tqdm.tqdm(dataflow):
-            inputs = feed_dict['image'].cuda(non_blocking=True)
-            targets = feed_dict['digit'].cuda(non_blocking=True)
+            if configs.run.device == 'gpu':
+                inputs = feed_dict['image'].cuda(non_blocking=True)
+                targets = feed_dict['digit'].cuda(non_blocking=True)
+            else:
+                inputs = feed_dict['image']
+                targets = feed_dict['digit']
 
             if configs.use_qiskit:
                 outputs = model.forward_qiskit(inputs,
