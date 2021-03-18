@@ -19,6 +19,7 @@ __all__ = [
     'paulix',
     'pauliy',
     'pauliz',
+    'i',
     's',
     't',
     'sx',
@@ -485,6 +486,7 @@ mat_dict = {
     'paulix': torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
     'pauliy': torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE),
     'pauliz': torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE),
+    'i': torch.tensor([[1, 0], [0, 1]], dtype=C_DTYPE),
     's': torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE),
     't': torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=C_DTYPE),
     'sx': 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
@@ -546,6 +548,7 @@ hadamard = partial(gate_wrapper, 'hadamard', mat_dict['hadamard'], 'bmm')
 paulix = partial(gate_wrapper, 'paulix', mat_dict['paulix'], 'bmm')
 pauliy = partial(gate_wrapper, 'pauliy', mat_dict['pauliy'], 'bmm')
 pauliz = partial(gate_wrapper, 'pauliz', mat_dict['pauliz'], 'bmm')
+i = partial(gate_wrapper, 'i', mat_dict['i'], 'bmm')
 s = partial(gate_wrapper, 's', mat_dict['s'], 'bmm')
 t = partial(gate_wrapper, 't', mat_dict['t'], 'bmm')
 sx = partial(gate_wrapper, 'sx', mat_dict['sx'], 'bmm')
@@ -592,6 +595,7 @@ func_name_dict = {
     'paulix': paulix,
     'pauliy': pauliy,
     'pauliz': pauliz,
+    'i': i,
     's': s,
     't': t,
     'sx': sx,

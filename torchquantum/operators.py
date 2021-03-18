@@ -372,6 +372,17 @@ class PauliZ(Observable, metaclass=ABCMeta):
         return []
 
 
+class I(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict['i']
+    func = staticmethod(tqf.i)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
 class S(DiagonalOperation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
