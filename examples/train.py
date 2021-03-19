@@ -102,11 +102,13 @@ def main() -> None:
     criterion = builder.make_criterion()
     optimizer = builder.make_optimizer(model)
     scheduler = builder.make_scheduler(optimizer)
+    trainer = builder.make_trainer(
+        model=model,
+        criterion=criterion,
+        optimizer=optimizer,
+        scheduler=scheduler
+    )
 
-    trainer = QTrainer(model=model,
-                       criterion=criterion,
-                       optimizer=optimizer,
-                       scheduler=scheduler)
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.run.n_epochs,

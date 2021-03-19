@@ -113,3 +113,26 @@ def make_scheduler(optimizer: Optimizer) -> Scheduler:
         raise NotImplementedError(configs.scheduler.name)
 
     return scheduler
+
+
+def make_trainer(model: nn.Module,
+                 criterion: nn.Module,
+                 optimizer: Optimizer,
+                 scheduler: Scheduler
+                 ):
+    if configs.trainer.name == 'q_trainer':
+        from .trainers import QTrainer
+        trainer = QTrainer(model=model,
+                           criterion=criterion,
+                           optimizer=optimizer,
+                           scheduler=scheduler)
+    elif configs.trainer.name == 'super_q_trainer':
+        from .trainers import SuperQTrainer
+        trainer = SuperQTrainer(model=model,
+                                criterion=criterion,
+                                optimizer=optimizer,
+                                scheduler=scheduler)
+    else:
+        raise NotImplementedError(configs.trainer.name)
+
+    return trainer

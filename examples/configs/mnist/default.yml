@@ -20,6 +20,9 @@ optimizer:
 scheduler:
   name: cosine
 
+trainer:
+  name: q_trainer
+
 run:
   n_epochs: 200
   bsz: 256
