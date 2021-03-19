@@ -2,7 +2,11 @@ import torchquantum as tq
 import itertools
 
 
-__all__ = ['SuperQuantumModule', 'Super1QLayer', 'Super2QLayer']
+__all__ = ['SuperQuantumModule',
+           'Super1QLayer',
+           'Super2QLayer',
+           'Super1QShareFrontLayer',
+           ]
 
 
 class SuperQuantumModule(tq.QuantumModule):
@@ -71,3 +75,35 @@ class Super2QLayer(SuperQuantumModule):
     def config_space(self):
         return {'sample_wire_pairs': [list(map(set, itertools.combinations(
             list(range(4)), 2)))]}
+
+
+class Super1QShareFrontLayer(SuperQuantumModule):
+    """Share the front wires, the rest can be added"""
+    def __init__(self,
+                 op,
+                 n_wires: int,
+                 n_front_share_wires: int,
+                 has_params=False,
+                 trainable=False,):
+        super().__init__(n_wires=n_wires)
+        self.n_wires = n_wires
+        self.n_front_share_wires = n_front_share_wires
+        self.op = op
+        self.n_front_wires = None
+        self.ops_all = tq.QuantumModuleList()
+        for k in range(n_wires):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    def set_sample_config(self, sample_config):
+        self.n_front_wires = sample_config['n_front_wires'][0]
+
+    def forward(self, q_device):
+        for k in range(self.n_wires):
+            if k < self.n_front_wires:
+                self.ops_all[k](q_device, wires=k)
+
+    @property
+    def config_space(self):
+        return {'n_front_wires': [list(range(self.n_front_share_wires,
+                                             self.n_wires))]}

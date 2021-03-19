@@ -157,7 +157,8 @@ class SuperQTrainer(Trainer):
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.sample_config = None
-        self.config_sampler = ConfigSampler(model)
+        self.config_sampler = ConfigSampler(model,
+                                            n_comb=configs.model.n_comb)
 
     def _before_epoch(self) -> None:
         self.model.train()
