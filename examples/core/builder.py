@@ -44,6 +44,9 @@ def make_model() -> nn.Module:
     elif configs.model.name == 'layer_regression':
         from .models import LayerRegression
         model = LayerRegression()
+    elif configs.model.name.startswith('super_'):
+        from .models.super_models import model_dict
+        model = model_dict[configs.model.name]()
     else:
         raise NotImplementedError(configs.model.name)
 

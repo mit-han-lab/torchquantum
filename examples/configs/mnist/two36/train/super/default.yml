@@ -1,0 +1,5 @@
+model:
+  name: super_qfc0
+
+trainer:
+  name: super_q_trainer

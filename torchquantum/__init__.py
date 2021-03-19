@@ -11,3 +11,4 @@ from .functional import *
 from .graph import *
 from .layers import *
 from .encoding import *
+from .super_layers import *
