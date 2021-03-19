@@ -13,6 +13,8 @@ __all__ = [
     'TwoQAll',
     'RandomLayer',
     'RandomLayerAllTypes',
+    'Op1QAllLayer',
+    'Op2QAllLayer',
 ]
 
 
@@ -241,3 +243,39 @@ class SimpleQLayer(tq.QuantumModule):
         self.gate3(q_dev, wires=1)
         tqf.x(q_dev, wires=2, static=self.static_mode,
               parent_graph=self.graph)
+
+class Op1QAllLayer(tq.QuantumModule):
+    def __init__(self, op, n_wires: int, has_params=False, trainable=False):
+        super().__init__()
+        self.n_wires = n_wires
+        self.op = op
+        self.sample_wires = None
+        self.ops_all = tq.QuantumModuleList()
+        for k in range(n_wires):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    def forward(self, q_device):
+        for k in range(self.n_wires):
+            self.ops_all[k](q_device, wires=k)
+
+class Op2QAllLayer(tq.QuantumModule):
+    def __init__(self, op, n_wires: int, has_params=False, trainable=False,
+                 wire_reverse=False):
+        super().__init__()
+        self.n_wires = n_wires
+        self.op = op
+        self.sample_wire_pairs = []
+        self.ops_all = tq.QuantumModuleList()
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+        for k in range(n_wires):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    def forward(self, q_device):
+        for k in range(self.n_wires):
+            wires = sorted([k, (k + 1) % self.n_wires],
+                           reverse=self.wire_reverse)
+            self.ops_all[k](q_device, wires=wires)
