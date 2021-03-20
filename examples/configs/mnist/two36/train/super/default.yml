@@ -1,8 +1,2 @@
-model:
-  name: super_qfc0
-  n_comb: null
-
 trainer:
   name: super_q_trainer
-
-
