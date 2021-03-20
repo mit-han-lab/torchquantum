@@ -63,52 +63,40 @@ class SuperQFCModel1(tq.QuantumModule):
         self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
                                             [tqf.rz] * 4 + [tqf.rx] * 4)
 
-        self.super_all = tq.QuantumModuleDict()
-        self.super_rx_layers = tq.QuantumModuleList()
-        self.super_ry_layers = tq.QuantumModuleList()
-        self.super_rz_layers = tq.QuantumModuleList()
-        self.super_cnot_layers = tq.QuantumModuleList()
+        self.super_layers_all = tq.QuantumModuleList()
 
         for k in range(4):
-            self.super_rx_layers.append(
+            self.super_layers_all.append(
                 tq.Super1QShareFrontLayer(op=tq.RX, n_wires=self.n_wires,
-                                          n_front_share_wires=3,
+                                          n_front_share_wires=2,
                                           has_params=True, trainable=True))
-            self.super_ry_layers.append(
+            self.super_layers_all.append(
                 tq.Super1QShareFrontLayer(op=tq.RY, n_wires=self.n_wires,
-                                          n_front_share_wires=3,
+                                          n_front_share_wires=2,
                                           has_params=True, trainable=True))
-            self.super_rz_layers.append(
+            self.super_layers_all.append(
                 tq.Super1QShareFrontLayer(op=tq.RZ, n_wires=self.n_wires,
-                                          n_front_share_wires=3,
+                                          n_front_share_wires=2,
                                           has_params=True, trainable=True))
             # self.super_cnot_layers.append(
             #     tq.Super2QLayer(op=tq.CNOT, n_wires=self.n_wires))
 
-        self.super_all['rx'] = self.super_rx_layers
-        self.super_all['ry'] = self.super_ry_layers
-        self.super_all['rz'] = self.super_rz_layers
-        # self.super_all['cnot'] = self.super_cnot_layers
-
     def set_sample_config(self, sample_config):
-        for name, layer_configs in sample_config.items():
-            for k, layer_config in enumerate(layer_configs):
-                self.super_all[name][k].set_sample_config(layer_config)
+        for k, layer_config in enumerate(sample_config):
+            self.super_layers_all[k].set_sample_config(layer_config)
 
     def forward(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         self.encoder(self.q_device, x)
 
-        for k in range(4):
-            self.super_rx_layers[k](self.q_device)
-            self.super_ry_layers[k](self.q_device)
-            self.super_rz_layers[k](self.q_device)
-            tqf.cnot(self.q_device, wires=[0, 1])
-            tqf.cnot(self.q_device, wires=[2, 3])
-            tqf.cnot(self.q_device, wires=[k, (k + 1) % 4])
+        for k in range(len(self.super_layers_all)):
+            self.super_layers_all[k](self.q_device)
 
-            # self.super_cnot_layers[k](self.q_device)
+            if k % 3 == 1:
+                tqf.cnot(self.q_device, wires=[0, 1])
+                tqf.cnot(self.q_device, wires=[2, 3])
+                tqf.cnot(self.q_device, wires=[k % 4, (k + 1) % 4])
 
         x = self.measure(self.q_device).reshape(bsz, 2, 2)
         x = x.sum(-1).squeeze()
@@ -119,12 +107,9 @@ class SuperQFCModel1(tq.QuantumModule):
 
     @property
     def config_space(self):
-        space = {}
-        for name, layers in self.super_all.items():
-            space[name] = []
-            for layer in layers:
-                space[name].append(layer.config_space)
-
+        space = []
+        for layer in self.super_layers_all:
+            space.append(layer.config_space)
         return space
 
 
