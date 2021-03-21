@@ -162,6 +162,10 @@ class SuperQTrainer(Trainer):
     def _before_epoch(self) -> None:
         self.model.train()
 
+    def _before_step(self, feed_dict: Dict[str, Any]) -> None:
+        self.sample_config = self.config_sampler.get_uniform_sample_config()
+        self.model.set_sample_config(self.sample_config)
+
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
         output_dict = self._run_step(feed_dict, legalize=legalize)
@@ -169,9 +173,6 @@ class SuperQTrainer(Trainer):
 
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
-        self.sample_config = self.config_sampler.get_sample_config()
-        self.model.set_sample_config(self.sample_config)
-
         if configs.run.device == 'gpu':
             inputs = feed_dict['image'].cuda(non_blocking=True)
             targets = feed_dict['digit'].cuda(non_blocking=True)

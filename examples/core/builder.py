@@ -5,7 +5,7 @@ from torchpack.utils.config import configs
 from torchpack.utils.typing import Dataset, Optimizer, Scheduler
 from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
-from .callbacks import LegalInferenceRunner
+from .callbacks import LegalInferenceRunner, SubnetInferenceRunner
 
 __all__ = [
     'make_dataset', 'make_model', 'make_criterion', 'make_optimizer',
@@ -172,6 +172,12 @@ def make_callbacks(dataflow):
             callback = LegalInferenceRunner(
                 dataflow=dataflow[config['split']],
                 callbacks=get_subcallbacks(config['subcallbacks'])
+            )
+        elif config['callback'] == 'SubnetInferenceRunner':
+            callback = SubnetInferenceRunner(
+                dataflow=dataflow[config['split']],
+                callbacks=get_subcallbacks(config['subcallbacks']),
+                subnet=config['subnet']
             )
         elif config['callback'] == 'SaverRestore':
             callback = SaverRestore()
