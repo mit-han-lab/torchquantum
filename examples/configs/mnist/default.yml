@@ -14,7 +14,7 @@ criterion:
 optimizer:
   name: adam
   lr: 5e-3
-  weight_decay: 0.0
+  weight_decay: 1.0e-4
   lambda_lr: 1.e-2
 
 scheduler:
