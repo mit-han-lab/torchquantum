@@ -5,7 +5,7 @@ from torchpack.utils.config import configs
 from torchpack.utils.typing import Dataset, Optimizer, Scheduler
 from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
-from .callbacks import LegalInferenceRunner, SubnetInferenceRunner
+from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, NLLError
 
 __all__ = [
     'make_dataset', 'make_model', 'make_criterion', 'make_optimizer',
@@ -154,6 +154,10 @@ def get_subcallbacks(config):
         elif subcallback['metrics'] == 'MeanAbsoluteError':
             subcallbacks.append(
                 MeanAbsoluteError(name=subcallback['name'])
+            )
+        elif subcallback['metrics'] == 'NLLError':
+            subcallbacks.append(
+                NLLError(name=subcallback['name'])
             )
         else:
             raise NotImplementedError(subcallback['metrics'])

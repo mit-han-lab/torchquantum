@@ -1,8 +1,10 @@
 import copy
 import time
-from typing import List
+from typing import List, Any, Dict
+
 
 import torch
+import torch.nn.functional as F
 import tqdm
 from torch.utils.data import DataLoader
 
@@ -10,11 +12,12 @@ from torchpack.callbacks.callback import Callback, Callbacks
 from torchpack.utils import humanize
 from torchpack.utils.logging import logger
 from torchpack.utils.typing import Trainer
+from torchpack import distributed as dist
 
 from torchquantum.utils import legalize_unitary
 
 
-__all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner']
+__all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError']
 
 
 class LegalInferenceRunner(Callback):
@@ -84,3 +87,32 @@ class SubnetInferenceRunner(Callback):
         self.callbacks.after_epoch()
         logger.info('Inference finished in {}.'.format(
             humanize.naturaldelta(time.perf_counter() - start_time)))
+
+
+class NLLError(Callback):
+    def __init__(self,
+                 *,
+                 output_tensor: str = 'outputs',
+                 target_tensor: str = 'targets',
+                 name: str = 'error') -> None:
+        self.output_tensor = output_tensor
+        self.target_tensor = target_tensor
+        self.name = name
+
+    def _before_epoch(self):
+        self.size = 0
+        self.errors = 0
+
+    def _after_step(self, output_dict: Dict[str, Any]) -> None:
+        outputs = output_dict[self.output_tensor]
+        targets = output_dict[self.target_tensor]
+
+        error = F.nll_loss(outputs, targets)
+
+        self.size += targets.size(0)
+        self.errors += error.item() * targets.size(0)
+
+    def _after_epoch(self) -> None:
+        self.size = dist.allreduce(self.size, reduction='sum')
+        self.errors = dist.allreduce(self.errors, reduction='sum')
+        self.trainer.summary.add_scalar(self.name, self.errors / self.size)
