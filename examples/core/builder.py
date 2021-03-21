@@ -23,7 +23,8 @@ def make_dataset() -> Dataset:
             resize=configs.dataset.resize,
             binarize=configs.dataset.binarize,
             binarize_threshold=configs.dataset.binarize_threshold,
-            digits_of_interest=configs.dataset.digits_of_interest
+            digits_of_interest=configs.dataset.digits_of_interest,
+            n_test_samples=configs.dataset.n_test_samples,
         )
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression

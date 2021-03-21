@@ -3,6 +3,8 @@ import torch
 from torchpack.datasets.dataset import Dataset
 from torchvision import datasets, transforms
 from typing import List
+from torchpack.utils.logging import logger
+
 
 __all__ = ['MNIST']
 
@@ -16,7 +18,9 @@ class MNISTDataset:
                  resize,
                  binarize,
                  binarize_threshold,
-                 digits_of_interest):
+                 digits_of_interest,
+                 n_test_samples,
+                 ):
         self.root = root
         self.split = split
         self.train_valid_split_ratio = train_valid_split_ratio
@@ -26,6 +30,7 @@ class MNISTDataset:
         self.binarize = binarize
         self.binarize_threshold = binarize_threshold
         self.digits_of_interest = digits_of_interest
+        self.n_test_samples = n_test_samples
 
         self.load()
         self.n_instance = len(self.data)
@@ -63,8 +68,16 @@ class MNISTDataset:
                                   self.digits_of_interest]).max(dim=0)
             test.targets = test.targets[idx]
             test.data = test.data[idx]
-
-            self.data = test
+            if self.n_test_samples is None:
+                # use all samples as test set
+                self.data = test
+            else:
+                # use a subset as test set
+                test.targets = test.targets[:self.n_test_samples]
+                test.data = test.data[:self.n_test_samples]
+                self.data = test
+                logger.warning(f"Only use the front {self.n_test_samples} "
+                               f"images as test set.")
 
     def __getitem__(self, index: int):
         img = self.data[index][0]
@@ -89,6 +102,7 @@ class MNIST(Dataset):
                  binarize=False,
                  binarize_threshold=0.1307,
                  digits_of_interest=tuple(range(10)),
+                 n_test_samples=None
                  ):
         self.root = root
 
@@ -101,7 +115,8 @@ class MNIST(Dataset):
                 resize=resize,
                 binarize=binarize,
                 binarize_threshold=binarize_threshold,
-                digits_of_interest=digits_of_interest
+                digits_of_interest=digits_of_interest,
+                n_test_samples=n_test_samples,
             )
             for split in ['train', 'valid', 'test']
         })
@@ -117,7 +132,8 @@ if __name__ == '__main__':
                          resize=28,
                          binarize=False,
                          binarize_threshold=0.1307,
-                         digits_of_interest=(3, 6)
+                         digits_of_interest=(3, 6),
+                         n_test_samples=100,
                          )
     mnist.__getitem__(20)
     print('finish')
