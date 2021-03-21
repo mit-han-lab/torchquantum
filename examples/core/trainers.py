@@ -196,6 +196,9 @@ class SuperQTrainer(Trainer):
                         unitary_loss
 
         if loss.requires_grad:
+            # during training
+            for k, group in enumerate(self.optimizer.param_groups):
+                self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
 
