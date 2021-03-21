@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from qiskit import Aer, execute, IBMQ
+from qiskit.providers.aer.noise import NoiseModel
 from torchquantum.plugins import tq2qiskit
 from torchquantum.utils import get_expectations_from_counts
 from torchpack.utils.config import configs
@@ -535,6 +536,9 @@ class QFCModel5(tq.QuantumModule):
         self.qiskit_simulator = None
         self.provider = None
         self.backend = None
+        self.noise_model = None
+        self.coupling_map = None
+        self.basis_gates = None
         self.qiskit_init()
         self.size = 0
         self.corrects = 0
@@ -547,6 +551,13 @@ class QFCModel5(tq.QuantumModule):
         IBMQ.load_account()
         self.provider = IBMQ.get_provider(hub='ibm-q')
         self.backend = self.provider.get_backend('ibmq_belem')
+
+        # Build noise model from backend properties
+        self.noise_model = NoiseModel.from_backend(self.backend)
+        # Get coupling map from backend
+        self.coupling_map = self.backend.configuration().coupling_map
+        # Get basis gates from noise model
+        self.basis_gates = self.noise_model.basis_gates
 
     def forward(self, x):
         bsz = x.shape[0]
@@ -561,7 +572,8 @@ class QFCModel5(tq.QuantumModule):
 
         return x
 
-    def forward_qiskit(self, x, targets, shots=8192, use_real_qc=False):
+    def forward_qiskit(self, x, targets, shots=8192, use_real_qc=False,
+                       apply_noise_model=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
@@ -580,6 +592,14 @@ class QFCModel5(tq.QuantumModule):
 
                 result = job.result()
                 counts = result.get_counts()
+            elif apply_noise_model:
+                # Perform a noise simulation
+                result = execute(circ, self.qiskit_simulator,
+                                 coupling_map=self.coupling_map,
+                                 basis_gates=self.basis_gates,
+                                 noise_model=self.noise_model,
+                                 shots=shots).result()
+                counts = result.get_counts(circ)
             else:
                 result = execute(circ, self.qiskit_simulator,
                                  shots=shots).result()

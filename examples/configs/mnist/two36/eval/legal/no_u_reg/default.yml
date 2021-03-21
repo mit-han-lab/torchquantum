@@ -1,2 +1,7 @@
 regularization:
   unitary_loss: False
+
+qiskit:
+  use_qiskit: False
+  use_real_qc: False
+  apply_noise_model: False

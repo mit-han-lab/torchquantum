@@ -51,7 +51,7 @@ def main() -> None:
         pin_memory=True)
 
     state_dict = io.load(
-        os.path.join(args.run_dir, 'checkpoints', 'max-acc_legal-valid.pt'))
+        os.path.join(args.run_dir, 'checkpoints', 'max-acc-valid.pt'))
     model = state_dict['model_arch']
 
     if configs.legalize_unitary:
@@ -59,7 +59,7 @@ def main() -> None:
     model.to(device)
     model.eval()
     model.load_state_dict(state_dict['model'])
-    if configs.use_qiskit:
+    if configs.qiskit.use_qiskit:
         model.qiskit_init()
 
     total_params = sum(p.numel() for p in model.parameters())
@@ -76,10 +76,12 @@ def main() -> None:
                 inputs = feed_dict['image']
                 targets = feed_dict['digit']
 
-            if configs.use_qiskit:
-                outputs = model.forward_qiskit(inputs,
-                                               use_real_qc=configs.use_real_qc,
-                                               targets=targets)
+            if configs.qiskit.use_qiskit:
+                outputs = model.forward_qiskit(
+                    inputs,
+                    use_real_qc=configs.qiskit.use_real_qc,
+                    targets=targets,
+                    apply_noise_model=configs.qiskit.apply_noise_model)
             else:
                 outputs = model(inputs)
 

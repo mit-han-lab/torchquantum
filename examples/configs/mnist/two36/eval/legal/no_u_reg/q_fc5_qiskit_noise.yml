@@ -6,4 +6,5 @@ run:
 
 qiskit:
   use_qiskit: True
-  use_real_qc: True
+  use_real_qc: False
+  apply_noise_model: True
