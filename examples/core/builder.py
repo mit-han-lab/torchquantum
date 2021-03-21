@@ -3,10 +3,13 @@ import torch.nn as nn
 
 from torchpack.utils.config import configs
 from torchpack.utils.typing import Dataset, Optimizer, Scheduler
+from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
+                                 Saver, SaverRestore, CategoricalAccuracy)
+from .callbacks import LegalInferenceRunner
 
 __all__ = [
     'make_dataset', 'make_model', 'make_criterion', 'make_optimizer',
-    'make_scheduler'
+    'make_scheduler', 'make_callbacks'
 ]
 
 
@@ -139,3 +142,45 @@ def make_trainer(model: nn.Module,
         raise NotImplementedError(configs.trainer.name)
 
     return trainer
+
+
+def get_subcallbacks(config):
+    subcallbacks = []
+    for subcallback in config:
+        if subcallback['metrics'] == 'CategoricalAccuracy':
+            subcallbacks.append(
+                CategoricalAccuracy(name=subcallback['name'])
+            )
+        elif subcallback['metrics'] == 'MeanAbsoluteError':
+            subcallbacks.append(
+                MeanAbsoluteError(name=subcallback['name'])
+            )
+        else:
+            raise NotImplementedError(subcallback['metrics'])
+    return subcallbacks
+
+
+def make_callbacks(dataflow):
+    callbacks = []
+    for config in configs['callbacks']:
+        if config['callback'] == 'InferenceRunner':
+            callback = InferenceRunner(
+                dataflow=dataflow[config['split']],
+                callbacks=get_subcallbacks(config['subcallbacks'])
+            )
+        elif config['callback'] == 'LegalInferenceRunner':
+            callback = LegalInferenceRunner(
+                dataflow=dataflow[config['split']],
+                callbacks=get_subcallbacks(config['subcallbacks'])
+            )
+        elif config['callback'] == 'SaverRestore':
+            callback = SaverRestore()
+        elif config['callback'] == 'Saver':
+            callback = Saver()
+        elif config['callback'] == 'MaxSaver':
+            callback = MaxSaver(config['name'])
+        else:
+            raise NotImplementedError(config['callback'])
+        callbacks.append(callback)
+
+    return callbacks
