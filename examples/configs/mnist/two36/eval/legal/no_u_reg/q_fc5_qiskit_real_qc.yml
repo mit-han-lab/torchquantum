@@ -2,7 +2,7 @@ model:
   name: q_fc5
 
 run:
-  bsz: 16
+  bsz: 900
 
 qiskit:
   use_qiskit: True

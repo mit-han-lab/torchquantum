@@ -143,16 +143,22 @@ def switch_little_big_endian_state_test():
 
 
 def get_expectations_from_counts(counts, n_wires):
-    ctr_one = [0] * n_wires
-    total_shots = 0
-    for k, v in counts.items():
-        for wire in range(n_wires):
-            if k[wire] == '1':
-                ctr_one[wire] += v
-        total_shots += v
-    prob_one = np.array(ctr_one) / total_shots
-
-    return -1 * prob_one + 1 * (1 - prob_one)
+    exps = []
+    if isinstance(counts, dict):
+        counts = [counts]
+    for count in counts:
+        ctr_one = [0] * n_wires
+        total_shots = 0
+        for k, v in count.items():
+            for wire in range(n_wires):
+                if k[wire] == '1':
+                    ctr_one[wire] += v
+            total_shots += v
+        prob_one = np.array(ctr_one) / total_shots
+        exp = np.flip(-1 * prob_one + 1 * (1 - prob_one))
+        exps.append(exp)
+    res = np.stack(exps)
+    return res
 
 
 if __name__ == '__main__':

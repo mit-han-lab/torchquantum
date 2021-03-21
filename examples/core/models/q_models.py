@@ -11,7 +11,6 @@ from torchquantum.plugins import tq2qiskit
 from torchquantum.utils import get_expectations_from_counts
 from torchpack.utils.config import configs
 from tqdm import tqdm
-from torchpack.utils.logging import logger
 
 
 __all__ = ['QuanvModel0', 'QuanvModel1', 'QFCModel0',
@@ -550,7 +549,7 @@ class QFCModel5(tq.QuantumModule):
 
         IBMQ.load_account()
         self.provider = IBMQ.get_provider(hub='ibm-q')
-        self.backend = self.provider.get_backend('ibmq_belem')
+        self.backend = self.provider.get_backend('ibmq_lima')
 
         # Build noise model from backend properties
         self.noise_model = NoiseModel.from_backend(self.backend)
@@ -577,57 +576,59 @@ class QFCModel5(tq.QuantumModule):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        measured_qiskit_all = []
+        circs = []
         for i, x_single in tqdm(enumerate(x)):
             circ = tq2qiskit(self.q_sub_layer, x_single.unsqueeze(0))
             circ.measure(list(range(self.n_wires)), list(range(self.n_wires)))
+            circs.append(circ)
 
-            # Execute and get counts
-            if use_real_qc:
-                from qiskit.tools.monitor import job_monitor
+        # Execute and get counts
+        if use_real_qc:
+            from qiskit.tools.monitor import job_monitor
+            job = execute(circs, backend=self.backend, shots=shots,
+                          optimization_level=3)
+            job_monitor(job, interval=2)
+            result = job.result()
+            counts = result.get_counts()
+        elif apply_noise_model:
+            # Perform a noise simulation
+            result = execute(circs, self.qiskit_simulator,
+                             coupling_map=self.coupling_map,
+                             basis_gates=self.basis_gates,
+                             noise_model=self.noise_model,
+                             shots=shots).result()
+            counts = result.get_counts()
+        else:
+            result = execute(circs, self.qiskit_simulator,
+                             shots=shots).result()
+            counts = result.get_counts()
 
-                job = execute(circ, backend=self.backend, shots=shots,
-                              optimization_level=3)
-                job_monitor(job, interval=2)
+        measured_qiskit = get_expectations_from_counts(counts,
+                                                       n_wires=self.n_wires)
 
-                result = job.result()
-                counts = result.get_counts()
-            elif apply_noise_model:
-                # Perform a noise simulation
-                result = execute(circ, self.qiskit_simulator,
-                                 coupling_map=self.coupling_map,
-                                 basis_gates=self.basis_gates,
-                                 noise_model=self.noise_model,
-                                 shots=shots).result()
-                counts = result.get_counts(circ)
-            else:
-                result = execute(circ, self.qiskit_simulator,
-                                 shots=shots).result()
-                counts = result.get_counts(circ)
+        # measured_qiskit = torch.tensor(np.flip(
+        #     get_expectations_from_counts(
+        #         counts, n_wires=self.n_wires)).copy(), device=x.device)
+        # measured_qiskit_all.append(measured_qiskit)
 
-            measured_qiskit = torch.tensor(np.flip(
-                get_expectations_from_counts(
-                    counts, n_wires=self.n_wires)).copy(), device=x.device)
-            measured_qiskit_all.append(measured_qiskit)
+        # logger.info(f"{measured_qiskit.data.cpu().numpy()}")
+        # _, idx = measured_qiskit[
+        #          :len(configs.dataset.digits_of_interest)].topk(1)
 
-            logger.info(f"{measured_qiskit.data.cpu().numpy()}")
-            _, idx = measured_qiskit[
-                     :len(configs.dataset.digits_of_interest)].topk(1)
+        # self.size += 1
+        # if idx[0] == targets[i]:
+        #     self.corrects += 1
+        #     logger.info(f"CORRECT {targets[i].item()}, size {self.size}, "
+        #                 f"corrects {self.corrects}, "
+        #                 f"current accuracy: "
+        #                 f"{self.corrects / self.size:.5f}")
+        # else:
+        #     logger.warning(f"WRONG {targets[i].item()}, size {self.size},"
+        #                    f"corrects {self.corrects}, "
+        #                    f"current accuracy: "
+        #                    f"{self.corrects / self.size:.5f}")
 
-            self.size += 1
-            if idx[0] == targets[i]:
-                self.corrects += 1
-                logger.info(f"CORRECT {targets[i].item()}, size {self.size}, "
-                            f"corrects {self.corrects}, "
-                            f"current accuracy: "
-                            f"{self.corrects / self.size:.5f}")
-            else:
-                logger.warning(f"WRONG {targets[i].item()}, size {self.size},"
-                               f"corrects {self.corrects}, "
-                               f"current accuracy: "
-                               f"{self.corrects / self.size:.5f}")
-
-        x = torch.stack(measured_qiskit_all, dim=0)[:, :len(
+        x = torch.tensor(measured_qiskit, device=x.device)[:, :len(
             configs.dataset.digits_of_interest)]
 
         x = F.log_softmax(x, dim=1)
