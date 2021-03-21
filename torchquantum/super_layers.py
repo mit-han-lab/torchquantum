@@ -7,6 +7,8 @@ __all__ = ['SuperQuantumModule',
            'Super1QLayer',
            'Super2QLayer',
            'Super1QShareFrontLayer',
+           'Super1QSingleWireLayer',
+           'Super1QAllButOneLayer',
            ]
 
 
@@ -130,6 +132,30 @@ class Super1QSingleWireLayer(SuperQuantumModule):
     def forward(self, q_device):
         for k in range(self.n_wires):
             if k == self.sample_config:
+                self.ops_all[k](q_device, wires=k)
+
+    @property
+    def config_space(self):
+        return list(range(self.n_wires))
+
+
+class Super1QAllButOneLayer(SuperQuantumModule):
+    """Only one wire will NOT have the gate"""
+    def __init__(self,
+                 op,
+                 n_wires: int,
+                 has_params=False,
+                 trainable=False,):
+        super().__init__(n_wires=n_wires)
+        self.op = op
+        self.ops_all = tq.QuantumModuleList()
+        for k in range(n_wires):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    def forward(self, q_device):
+        for k in range(self.n_wires):
+            if k != self.sample_config:
                 self.ops_all[k](q_device, wires=k)
 
     @property
