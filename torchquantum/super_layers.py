@@ -110,7 +110,7 @@ class Super1QShareFrontLayer(SuperQuantumModule):
 
     @property
     def config_space(self):
-        return list(range(self.n_front_share_wires, self.n_wires))
+        return list(range(self.n_front_share_wires, self.n_wires + 1))
 
 
 class Super1QSingleWireLayer(SuperQuantumModule):
