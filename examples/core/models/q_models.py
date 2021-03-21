@@ -548,9 +548,8 @@ class QFCModel5(tq.QuantumModule):
         self.corrects = 0
         self.qiskit_simulator = Aer.get_backend('qasm_simulator')
 
-        IBMQ.load_account()
         self.provider = IBMQ.get_provider(hub='ibm-q')
-        self.backend = self.provider.get_backend('ibmq_lima')
+        self.backend = self.provider.get_backend(configs.qiskit.backend)
 
         # Build noise model from backend properties
         self.noise_model = NoiseModel.from_backend(self.backend)

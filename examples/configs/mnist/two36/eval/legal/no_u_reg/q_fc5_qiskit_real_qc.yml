@@ -2,8 +2,9 @@ model:
   name: q_fc5
 
 run:
-  bsz: 900
+  bsz: qiskit_max
 
 qiskit:
   use_qiskit: True
   use_real_qc: True
+  backend: ibmq_lima

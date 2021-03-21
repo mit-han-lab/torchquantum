@@ -10,6 +10,7 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import legalize_unitary
+from qiskit import IBMQ
 
 
 def main() -> None:
@@ -40,6 +41,12 @@ def main() -> None:
         raise ValueError(configs.run.device)
 
     logger.info(f'Evaluation started: "{args.run_dir}".' + '\n' + f'{configs}')
+
+    if configs.qiskit.use_qiskit:
+        IBMQ.load_account()
+        if configs.run.bsz == 'qiskit_max':
+            configs.run.bsz = IBMQ.get_provider(hub='ibm-q').get_backend(
+                configs.qiskit.backend).configuration().max_experiments
 
     dataset = builder.make_dataset()
     sampler = torch.utils.data.SequentialSampler(dataset['test'])
