@@ -10,6 +10,7 @@ from qiskit.providers.aer.noise import NoiseModel
 from torchquantum.plugins import tq2qiskit
 from torchquantum.utils import get_expectations_from_counts
 from torchpack.utils.config import configs
+from torchpack.utils.logging import logger
 from tqdm import tqdm
 
 
@@ -605,31 +606,18 @@ class QFCModel5(tq.QuantumModule):
 
         measured_qiskit = get_expectations_from_counts(counts,
                                                        n_wires=self.n_wires)
+        measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
-        # measured_qiskit = torch.tensor(np.flip(
-        #     get_expectations_from_counts(
-        #         counts, n_wires=self.n_wires)).copy(), device=x.device)
-        # measured_qiskit_all.append(measured_qiskit)
+        _, idx = measured_qiskit[:, :len(
+            configs.dataset.digits_of_interest)].topk(1)
+        masks = idx.reshape(-1).eq(targets)
 
-        # logger.info(f"{measured_qiskit.data.cpu().numpy()}")
-        # _, idx = measured_qiskit[
-        #          :len(configs.dataset.digits_of_interest)].topk(1)
+        self.size += targets.shape[0]
+        self.corrects += masks.sum()
+        logger.info(f"Total: {self.size}, Corrects: {self.corrects}, "
+                    f"Running Accuracy: {self.corrects / self.size:.5f}")
 
-        # self.size += 1
-        # if idx[0] == targets[i]:
-        #     self.corrects += 1
-        #     logger.info(f"CORRECT {targets[i].item()}, size {self.size}, "
-        #                 f"corrects {self.corrects}, "
-        #                 f"current accuracy: "
-        #                 f"{self.corrects / self.size:.5f}")
-        # else:
-        #     logger.warning(f"WRONG {targets[i].item()}, size {self.size},"
-        #                    f"corrects {self.corrects}, "
-        #                    f"current accuracy: "
-        #                    f"{self.corrects / self.size:.5f}")
-
-        x = torch.tensor(measured_qiskit, device=x.device)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = measured_qiskit[:, :len(configs.dataset.digits_of_interest)]
 
         x = F.log_softmax(x, dim=1)
 
