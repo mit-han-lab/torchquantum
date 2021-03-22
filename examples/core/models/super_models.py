@@ -55,52 +55,74 @@ class SuperQFCModel0(tq.QuantumModule):
 
 
 class SuperQFCModel1(tq.QuantumModule):
+    class QLayer(tq.QuantumModule):
+        def __init__(self, n_wires):
+            super().__init__()
+            self.n_wires = n_wires
+            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
+                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.super_layers_all = tq.QuantumModuleList()
+
+            for k in range(4):
+                self.super_layers_all.append(
+                    tq.Super1QShareFrontLayer(op=tq.RX, n_wires=self.n_wires,
+                                              n_front_share_wires=2,
+                                              has_params=True, trainable=True))
+                self.super_layers_all.append(
+                    tq.Super1QShareFrontLayer(op=tq.RY, n_wires=self.n_wires,
+                                              n_front_share_wires=2,
+                                              has_params=True, trainable=True))
+                self.super_layers_all.append(
+                    tq.Super1QShareFrontLayer(op=tq.RZ, n_wires=self.n_wires,
+                                              n_front_share_wires=2,
+                                              has_params=True, trainable=True))
+
+        def set_sample_arch(self, sample_arch):
+            for k, layer_arch in enumerate(sample_arch):
+                self.super_layers_all[k].set_sample_arch(layer_arch)
+
+        def forward(self, q_device: tq.QuantumDevice, x):
+            self.q_device = q_device
+            self.encoder(self.q_device, x)
+
+            for k in range(len(self.super_layers_all)):
+                self.super_layers_all[k](self.q_device)
+
+                if k % 3 == 1:
+                    tqf.cnot(self.q_device, wires=[0, 1])
+                    tqf.cnot(self.q_device, wires=[2, 3])
+                    tqf.cnot(self.q_device, wires=[k % 4, (k + 1) % 4])
+
     def __init__(self):
         super().__init__()
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
         self.measure = tq.MeasureAll(tq.PauliZ)
-        self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                            [tqf.rz] * 4 + [tqf.rx] * 4)
-
-        self.super_layers_all = tq.QuantumModuleList()
-
-        for k in range(4):
-            self.super_layers_all.append(
-                tq.Super1QShareFrontLayer(op=tq.RX, n_wires=self.n_wires,
-                                          n_front_share_wires=2,
-                                          has_params=True, trainable=True))
-            self.super_layers_all.append(
-                tq.Super1QShareFrontLayer(op=tq.RY, n_wires=self.n_wires,
-                                          n_front_share_wires=2,
-                                          has_params=True, trainable=True))
-            self.super_layers_all.append(
-                tq.Super1QShareFrontLayer(op=tq.RZ, n_wires=self.n_wires,
-                                          n_front_share_wires=2,
-                                          has_params=True, trainable=True))
-            # self.super_cnot_layers.append(
-            #     tq.Super2QLayer(op=tq.CNOT, n_wires=self.n_wires))
+        self.q_layer = self.QLayer(n_wires=self.n_wires)
 
     def set_sample_arch(self, sample_arch):
-        for k, layer_arch in enumerate(sample_arch):
-            self.super_layers_all[k].set_sample_arch(layer_arch)
+        self.q_layer.set_sample_arch(sample_arch)
 
     def forward(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-        self.encoder(self.q_device, x)
 
-        for k in range(len(self.super_layers_all)):
-            self.super_layers_all[k](self.q_device)
-
-            if k % 3 == 1:
-                tqf.cnot(self.q_device, wires=[0, 1])
-                tqf.cnot(self.q_device, wires=[2, 3])
-                tqf.cnot(self.q_device, wires=[k % 4, (k + 1) % 4])
-
+        self.q_layer(self.q_device, x)
         x = self.measure(self.q_device).reshape(bsz, 2, 2)
-        x = x.sum(-1).squeeze()
 
+        x = x.sum(-1).squeeze()
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+    def forward_qiskit(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+        measured = self.qiskit_processor.process(self.q_device,
+                                                 self.q_layer, x)
+        measured = measured.reshape(bsz, 2, 2)
+
+        x = measured.sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
         return x
@@ -108,7 +130,7 @@ class SuperQFCModel1(tq.QuantumModule):
     @property
     def arch_space(self):
         space = []
-        for layer in self.super_layers_all:
+        for layer in self.q_layer.super_layers_all:
             space.append(layer.arch_space)
         return space
 
