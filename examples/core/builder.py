@@ -6,10 +6,12 @@ from torchpack.utils.typing import Dataset, Optimizer, Scheduler
 from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
 from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, NLLError
+from torchquantum.plugins import QiskitProcessor
+
 
 __all__ = [
     'make_dataset', 'make_model', 'make_criterion', 'make_optimizer',
-    'make_scheduler', 'make_callbacks'
+    'make_scheduler', 'make_callbacks', 'make_qiskit_processor'
 ]
 
 
@@ -195,3 +197,19 @@ def make_callbacks(dataflow):
         callbacks.append(callback)
 
     return callbacks
+
+
+def make_qiskit_processor():
+    processor = QiskitProcessor(
+        use_real_qc=configs.qiskit.use_real_qc,
+        backend_name=configs.qiskit.backend_name,
+        noise_model_name=configs.qiskit.noise_model_name,
+        coupling_map_name=configs.qiskit.coupling_map_name,
+        basis_gates_name=configs.qiskit.basis_gates_name,
+        n_shots=configs.qiskit.n_shots,
+        initial_layout=configs.qiskit.initial_layout,
+        seed_transpiler=configs.qiskit.seed_transpiler,
+        seed_simulator=configs.qiskit.seed_simulator,
+        optimization_level=configs.qiskit.optimization_level
+    )
+    return processor

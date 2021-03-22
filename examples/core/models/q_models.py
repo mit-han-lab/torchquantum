@@ -5,9 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from qiskit import Aer, execute, IBMQ
-from qiskit.providers.aer.noise import NoiseModel
-from torchquantum.plugins import tq2qiskit
+from qiskit import Aer, execute
+from torchquantum.plugins import tq2qiskit, QiskitProcessor
 from torchquantum.utils import get_expectations_from_counts
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
@@ -533,29 +532,12 @@ class QFCModel5(tq.QuantumModule):
         self.q_sub_layer = QFC5Sub()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
-        self.qiskit_simulator = None
-        self.provider = None
-        self.backend = None
-        self.noise_model = None
-        self.coupling_map = None
-        self.basis_gates = None
         self.size = 0
         self.corrects = 0
+        self.qiskit_processor = None
 
-    def qiskit_init(self):
-        self.size = 0
-        self.corrects = 0
-        self.qiskit_simulator = Aer.get_backend('qasm_simulator')
-
-        self.provider = IBMQ.get_provider(hub='ibm-q')
-        self.backend = self.provider.get_backend(configs.qiskit.backend)
-
-        # Build noise model from backend properties
-        self.noise_model = NoiseModel.from_backend(self.backend)
-        # Get coupling map from backend
-        self.coupling_map = self.backend.configuration().coupling_map
-        # Get basis gates from noise model
-        self.basis_gates = self.noise_model.basis_gates
+    def set_qiskit_processor(self, processor: QiskitProcessor):
+        self.qiskit_processor = processor
 
     def forward(self, x):
         bsz = x.shape[0]
@@ -570,43 +552,13 @@ class QFCModel5(tq.QuantumModule):
 
         return x
 
-    def forward_qiskit(self, x, targets, shots=8192, use_real_qc=False,
-                       apply_noise_model=False):
+    def forward_qiskit(self, x, targets):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        circs = []
-        for i, x_single in tqdm(enumerate(x)):
-            circ = tq2qiskit(self.q_sub_layer, x_single.unsqueeze(0))
-            circ.measure(list(range(self.n_wires)), list(range(self.n_wires)))
-            circs.append(circ)
+        measured_qiskit = self.qiskit_processor.process(
+            self.q_device, self.q_sub_layer, x)
 
-        # Execute and get counts
-        if use_real_qc:
-            from qiskit.tools.monitor import job_monitor
-            job = execute(circs, backend=self.backend, shots=shots,
-                          initial_layout=[1, 2, 3, 4],
-                          seed_transpiler=42,
-                          optimization_level=1)
-            job_monitor(job, interval=1)
-            result = job.result()
-            counts = result.get_counts()
-        elif apply_noise_model:
-            # Perform a noise simulation
-            result = execute(circs, self.qiskit_simulator,
-                             coupling_map=self.coupling_map,
-                             basis_gates=self.basis_gates,
-                             noise_model=self.noise_model,
-                             shots=shots).result()
-            counts = result.get_counts()
-        else:
-            result = execute(circs, self.qiskit_simulator,
-                             shots=shots).result()
-            counts = result.get_counts()
-
-        measured_qiskit = get_expectations_from_counts(counts,
-                                                       n_wires=self.n_wires)
-        measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
         logger.info(f"Measured: {measured_qiskit}")
 
         _, idx = measured_qiskit[:, :len(

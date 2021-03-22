@@ -67,8 +67,10 @@ def main() -> None:
     model.to(device)
     model.eval()
     model.load_state_dict(state_dict['model'])
+
     if configs.qiskit.use_qiskit:
-        model.qiskit_init()
+        qiskit_processor = builder.make_qiskit_processor()
+        model.set_qiskit_processor(qiskit_processor)
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
@@ -85,11 +87,7 @@ def main() -> None:
                 targets = feed_dict['digit']
 
             if configs.qiskit.use_qiskit:
-                outputs = model.forward_qiskit(
-                    inputs,
-                    use_real_qc=configs.qiskit.use_real_qc,
-                    targets=targets,
-                    apply_noise_model=configs.qiskit.apply_noise_model)
+                outputs = model.forward_qiskit(inputs, targets)
             else:
                 outputs = model(inputs)
 
