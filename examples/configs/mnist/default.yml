@@ -7,6 +7,7 @@ dataset:
   binarize: False
   binarize_threshold: 0.1307
   digits_of_interest: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  n_test_samples: null
 
 criterion:
   name: nll
@@ -69,3 +70,9 @@ callbacks:
         name: 'acc_legal/test'
   - callback: 'MaxSaver'
     name: 'acc/valid'
+
+qiskit:
+  use_qiskit: False
+  use_real_qc: False
+  apply_noise_model: False
+  backend: null
