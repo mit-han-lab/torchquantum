@@ -4,6 +4,7 @@ import pdb
 import torch
 import torch.backends.cudnn
 import tqdm
+import torch.nn.functional as F
 
 from torchpack.utils import io
 from torchpack.utils.config import configs
@@ -105,6 +106,7 @@ def main() -> None:
     size = target_all.shape[0]
     corrects = masks.sum().item()
     logger.info(f"Accuracy: {corrects / size}")
+    logger.info(f"Loss: {F.nll_loss(output_all, target_all)}")
 
 
 if __name__ == '__main__':
