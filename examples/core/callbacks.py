@@ -75,10 +75,10 @@ class SubnetInferenceRunner(Callback):
         self.callbacks.before_epoch()
 
         with torch.no_grad():
-            sample_config = \
-                self.trainer.config_sampler.get_named_sample_config(
+            sample_arch = \
+                self.trainer.config_sampler.get_named_sample_arch(
                     self.subnet)
-            self.trainer.model.set_sample_config(sample_config)
+            self.trainer.model.set_sample_arch(sample_arch)
             for feed_dict in tqdm.tqdm(self.dataflow, ncols=0):
                 self.callbacks.before_step(feed_dict)
                 output_dict = self.trainer.run_step(feed_dict)

@@ -31,10 +31,10 @@ class SuperQuantumModule(tq.QuantumModule):
     def __init__(self, n_wires):
         super().__init__()
         self.n_wires = n_wires
-        self.sample_config = None
+        self.sample_arch = None
 
-    def set_sample_config(self, sample_config):
-        self.sample_config = sample_config
+    def set_sample_arch(self, sample_arch):
+        self.sample_arch = sample_arch
 
     @property
     def config_space(self):
@@ -53,7 +53,7 @@ class Super1QLayer(SuperQuantumModule):
 
     def forward(self, q_device):
         for k in range(self.n_wires):
-            if k in self.sample_config:
+            if k in self.sample_arch:
                 self.ops_all[k](q_device, wires=k)
 
     @property
@@ -77,8 +77,8 @@ class Super2QLayer(SuperQuantumModule):
 
     def forward(self, q_device):
         for k in range(self.n_wires):
-            if [k, (k + 1) % self.n_wires] in self.sample_config or \
-                    [(k + 1) % self.n_wires, k] in self.sample_config:
+            if [k, (k + 1) % self.n_wires] in self.sample_arch or \
+                    [(k + 1) % self.n_wires, k] in self.sample_arch:
                 wires = sorted([k, (k + 1) % self.n_wires],
                                reverse=self.wire_reverse)
                 self.ops_all[k](q_device, wires=wires)
@@ -107,7 +107,7 @@ class Super1QShareFrontLayer(SuperQuantumModule):
 
     def forward(self, q_device):
         for k in range(self.n_wires):
-            if k < self.sample_config:
+            if k < self.sample_arch:
                 self.ops_all[k](q_device, wires=k)
 
     @property
@@ -131,7 +131,7 @@ class Super1QSingleWireLayer(SuperQuantumModule):
 
     def forward(self, q_device):
         for k in range(self.n_wires):
-            if k == self.sample_config:
+            if k == self.sample_arch:
                 self.ops_all[k](q_device, wires=k)
 
     @property
@@ -155,7 +155,7 @@ class Super1QAllButOneLayer(SuperQuantumModule):
 
     def forward(self, q_device):
         for k in range(self.n_wires):
-            if k != self.sample_config:
+            if k != self.sample_arch:
                 self.ops_all[k](q_device, wires=k)
 
     @property

@@ -27,9 +27,9 @@ class SuperQFCModel0(tq.QuantumModule):
             self.super_layers_all.append(
                 tq.Super2QLayer(op=tq.CNOT, n_wires=self.n_wires))
 
-    def set_sample_config(self, sample_config):
-        for k, layer_config in enumerate(sample_config):
-            self.super_layers_all[k].set_sample_config(layer_config)
+    def set_sample_arch(self, sample_arch):
+        for k, layer_config in enumerate(sample_arch):
+            self.super_layers_all[k].set_sample_arch(layer_config)
 
     def forward(self, x):
         bsz = x.shape[0]
@@ -81,9 +81,9 @@ class SuperQFCModel1(tq.QuantumModule):
             # self.super_cnot_layers.append(
             #     tq.Super2QLayer(op=tq.CNOT, n_wires=self.n_wires))
 
-    def set_sample_config(self, sample_config):
-        for k, layer_config in enumerate(sample_config):
-            self.super_layers_all[k].set_sample_config(layer_config)
+    def set_sample_arch(self, sample_arch):
+        for k, layer_config in enumerate(sample_arch):
+            self.super_layers_all[k].set_sample_arch(layer_config)
 
     def forward(self, x):
         bsz = x.shape[0]
@@ -159,9 +159,9 @@ class SuperQFCModel2(tq.QuantumModule):
                 tq.Super1QSingleWireLayer(op=tq.RZ, n_wires=self.n_wires,
                                           has_params=True, trainable=True))
 
-    def set_sample_config(self, sample_config):
-        for k, layer_config in enumerate(sample_config):
-            self.super_layers_all[k].set_sample_config(layer_config)
+    def set_sample_arch(self, sample_arch):
+        for k, layer_config in enumerate(sample_arch):
+            self.super_layers_all[k].set_sample_arch(layer_config)
 
     def forward(self, x):
         bsz = x.shape[0]

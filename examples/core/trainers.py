@@ -156,15 +156,15 @@ class SuperQTrainer(Trainer):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.sample_config = None
+        self.sample_arch = None
         self.config_sampler = ConfigSampler(model)
 
     def _before_epoch(self) -> None:
         self.model.train()
 
     def _before_step(self, feed_dict: Dict[str, Any]) -> None:
-        self.sample_config = self.config_sampler.get_uniform_sample_config()
-        self.model.set_sample_config(self.sample_config)
+        self.sample_arch = self.config_sampler.get_uniform_sample_arch()
+        self.model.set_sample_arch(self.sample_arch)
 
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
