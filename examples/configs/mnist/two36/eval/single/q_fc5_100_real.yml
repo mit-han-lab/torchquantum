@@ -1,0 +1,10 @@
+run:
+  bsz: 900
+
+qiskit:
+  use_qiskit: True
+  use_real_qc: True
+  backend: ibmq_lima
+
+dataset:
+  n_test_samples: 100

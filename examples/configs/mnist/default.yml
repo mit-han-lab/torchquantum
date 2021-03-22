@@ -58,16 +58,6 @@ callbacks:
     subcallbacks:
       - metrics: 'CategoricalAccuracy'
         name: 'acc/test'
-  - callback: 'LegalInferenceRunner'
-    split: 'valid'
-    subcallbacks:
-      - metrics: 'CategoricalAccuracy'
-        name: 'acc_legal/valid'
-  - callback: 'LegalInferenceRunner'
-    split: 'test'
-    subcallbacks:
-      - metrics: 'CategoricalAccuracy'
-        name: 'acc_legal/test'
   - callback: 'MaxSaver'
     name: 'acc/valid'
 
