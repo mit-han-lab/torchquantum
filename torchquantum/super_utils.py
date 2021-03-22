@@ -10,8 +10,8 @@ class ConfigSampler(object):
     def get_uniform_sample_arch(self):
         sample_arch = []
         for layer_arch_space in self.arch_space:
-            layer_config = np.random.choice(layer_arch_space)
-            sample_arch.append(layer_config)
+            layer_arch = np.random.choice(layer_arch_space)
+            sample_arch.append(layer_arch)
 
         return sample_arch
 
@@ -19,16 +19,16 @@ class ConfigSampler(object):
         sample_arch = []
         if name == 'smallest':
             for layer_arch_space in self.arch_space:
-                layer_config = layer_arch_space[0]
-                sample_arch.append(layer_config)
+                layer_arch = layer_arch_space[0]
+                sample_arch.append(layer_arch)
         elif name == 'largest':
             for layer_arch_space in self.arch_space:
-                layer_config = layer_arch_space[-1]
-                sample_arch.append(layer_config)
+                layer_arch = layer_arch_space[-1]
+                sample_arch.append(layer_arch)
         elif name == 'middle':
             for layer_arch_space in self.arch_space:
-                layer_config = layer_arch_space[len(layer_arch_space) // 2]
-                sample_arch.append(layer_config)
+                layer_arch = layer_arch_space[len(layer_arch_space) // 2]
+                sample_arch.append(layer_arch)
         else:
             raise NotImplementedError(name)
         return sample_arch
