@@ -3,3 +3,6 @@ model:
 
 run:
   bsz: 900
+
+dataset:
+  n_test_samples: 100

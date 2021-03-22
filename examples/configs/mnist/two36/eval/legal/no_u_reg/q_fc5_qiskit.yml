@@ -7,3 +7,7 @@ run:
 qiskit:
   use_qiskit: True
   use_real_qc: False
+  backend: ibmq_lima
+
+dataset:
+  n_test_samples: 100

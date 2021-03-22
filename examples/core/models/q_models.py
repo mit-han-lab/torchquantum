@@ -586,8 +586,10 @@ class QFCModel5(tq.QuantumModule):
         if use_real_qc:
             from qiskit.tools.monitor import job_monitor
             job = execute(circs, backend=self.backend, shots=shots,
-                          optimization_level=3)
-            job_monitor(job, interval=2)
+                          initial_layout=[1, 2, 3, 4],
+                          seed_transpiler=42,
+                          optimization_level=1)
+            job_monitor(job, interval=1)
             result = job.result()
             counts = result.get_counts()
         elif apply_noise_model:
@@ -606,6 +608,7 @@ class QFCModel5(tq.QuantumModule):
         measured_qiskit = get_expectations_from_counts(counts,
                                                        n_wires=self.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
+        logger.info(f"Measured: {measured_qiskit}")
 
         _, idx = measured_qiskit[:, :len(
             configs.dataset.digits_of_interest)].topk(1)
