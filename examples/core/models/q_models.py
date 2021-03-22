@@ -515,8 +515,8 @@ class QFC5Sub(tq.QuantumModule):
         self.n_wires = 4
         self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
                                             [tqf.rz] * 4 + [tqf.rx] * 4)
-        self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
-            self.n_wires)))
+        self.random_layer = tq.RandomLayer(n_ops=configs.model.n_random_ops[0],
+                                           wires=list(range(self.n_wires)))
 
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
@@ -539,7 +539,6 @@ class QFCModel5(tq.QuantumModule):
         self.noise_model = None
         self.coupling_map = None
         self.basis_gates = None
-        self.qiskit_init()
         self.size = 0
         self.corrects = 0
 
