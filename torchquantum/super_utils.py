@@ -2,7 +2,7 @@ import numpy as np
 import torch.nn as nn
 
 
-class ConfigSampler(object):
+class ArchSampler(object):
     def __init__(self, model: nn.Module):
         self.model = model
         self.arch_space = model.arch_space

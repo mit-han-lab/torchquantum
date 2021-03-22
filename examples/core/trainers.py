@@ -5,7 +5,7 @@ from torchpack.train import Trainer
 from torchpack.utils.typing import Optimizer, Scheduler
 from torchpack.utils.config import configs
 from torchquantum.utils import get_unitary_loss, legalize_unitary
-from torchquantum.super_utils import ConfigSampler
+from torchquantum.super_utils import ArchSampler
 
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer']
@@ -157,13 +157,13 @@ class SuperQTrainer(Trainer):
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.sample_arch = None
-        self.config_sampler = ConfigSampler(model)
+        self.arch_sampler = ArchSampler(model)
 
     def _before_epoch(self) -> None:
         self.model.train()
 
     def _before_step(self, feed_dict: Dict[str, Any]) -> None:
-        self.sample_arch = self.config_sampler.get_uniform_sample_arch()
+        self.sample_arch = self.arch_sampler.get_uniform_sample_arch()
         self.model.set_sample_arch(self.sample_arch)
 
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[

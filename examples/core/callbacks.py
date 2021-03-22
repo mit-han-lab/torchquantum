@@ -76,7 +76,7 @@ class SubnetInferenceRunner(Callback):
 
         with torch.no_grad():
             sample_arch = \
-                self.trainer.config_sampler.get_named_sample_arch(
+                self.trainer.arch_sampler.get_named_sample_arch(
                     self.subnet)
             self.trainer.model.set_sample_arch(sample_arch)
             for feed_dict in tqdm.tqdm(self.dataflow, ncols=0):
