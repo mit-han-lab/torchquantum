@@ -1,0 +1,5 @@
+run:
+  bsz: 900
+
+qiskit:
+  use_qiskit: True

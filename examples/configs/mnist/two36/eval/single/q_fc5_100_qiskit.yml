@@ -1,5 +1,8 @@
 run:
   bsz: 900
 
+qiskit:
+  use_qiskit: True
+
 dataset:
   n_test_samples: 100

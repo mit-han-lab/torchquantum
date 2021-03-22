@@ -1,10 +1,10 @@
 run:
-  bsz: 900
+  bsz: qiskit_max
 
 qiskit:
   use_qiskit: True
   use_real_qc: True
-  backend: ibmq_lima
+  backend_name: ibmq_athens
 
 dataset:
   n_test_samples: 100
