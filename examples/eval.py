@@ -47,7 +47,7 @@ def main() -> None:
         IBMQ.load_account()
         if configs.run.bsz == 'qiskit_max':
             configs.run.bsz = IBMQ.get_provider(hub='ibm-q').get_backend(
-                configs.qiskit.backend).configuration().max_experiments
+                configs.qiskit.backend_name).configuration().max_experiments
 
     dataset = builder.make_dataset()
     sampler = torch.utils.data.SequentialSampler(dataset['test'])
