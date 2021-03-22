@@ -37,7 +37,7 @@ class SuperQuantumModule(tq.QuantumModule):
         self.sample_arch = sample_arch
 
     @property
-    def config_space(self):
+    def arch_space(self):
         return None
 
 
@@ -57,7 +57,7 @@ class Super1QLayer(SuperQuantumModule):
                 self.ops_all[k](q_device, wires=k)
 
     @property
-    def config_space(self):
+    def arch_space(self):
         choices = list(range(self.n_wires))
         return get_combs(choices)
 
@@ -84,7 +84,7 @@ class Super2QLayer(SuperQuantumModule):
                 self.ops_all[k](q_device, wires=wires)
 
     @property
-    def config_space(self):
+    def arch_space(self):
         choices = list(itertools.combinations(list(range(self.n_wires)), 2))
         return get_combs(choices)
 
@@ -111,7 +111,7 @@ class Super1QShareFrontLayer(SuperQuantumModule):
                 self.ops_all[k](q_device, wires=k)
 
     @property
-    def config_space(self):
+    def arch_space(self):
         return list(range(self.n_front_share_wires, self.n_wires + 1))
 
 
@@ -135,7 +135,7 @@ class Super1QSingleWireLayer(SuperQuantumModule):
                 self.ops_all[k](q_device, wires=k)
 
     @property
-    def config_space(self):
+    def arch_space(self):
         return list(range(self.n_wires))
 
 
@@ -159,5 +159,5 @@ class Super1QAllButOneLayer(SuperQuantumModule):
                 self.ops_all[k](q_device, wires=k)
 
     @property
-    def config_space(self):
+    def arch_space(self):
         return list(range(self.n_wires))

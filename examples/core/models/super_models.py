@@ -47,10 +47,10 @@ class SuperQFCModel0(tq.QuantumModule):
         return x
 
     @property
-    def config_space(self):
+    def arch_space(self):
         space = []
         for layer in self.super_layers_all:
-            space.append(layer.config_space)
+            space.append(layer.arch_space)
         return space
 
 
@@ -106,10 +106,10 @@ class SuperQFCModel1(tq.QuantumModule):
         return x
 
     @property
-    def config_space(self):
+    def arch_space(self):
         space = []
         for layer in self.super_layers_all:
-            space.append(layer.config_space)
+            space.append(layer.arch_space)
         return space
 
 
@@ -188,10 +188,10 @@ class SuperQFCModel2(tq.QuantumModule):
         return x
 
     @property
-    def config_space(self):
+    def arch_space(self):
         space = []
         for layer in self.super_layers_all:
-            space.append(layer.config_space)
+            space.append(layer.arch_space)
         return space
 
 
