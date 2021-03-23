@@ -51,6 +51,7 @@ class Super1QLayer(SuperQuantumModule):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
+    @tq.static_support
     def forward(self, q_device):
         for k in range(self.n_wires):
             if k in self.sample_arch:
@@ -75,6 +76,7 @@ class Super2QLayer(SuperQuantumModule):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
+    @tq.static_support
     def forward(self, q_device):
         for k in range(self.n_wires):
             if [k, (k + 1) % self.n_wires] in self.sample_arch or \
@@ -105,7 +107,9 @@ class Super1QShareFrontLayer(SuperQuantumModule):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
+    @tq.static_support
     def forward(self, q_device):
+        self.q_device = q_device
         for k in range(self.n_wires):
             if k < self.sample_arch:
                 self.ops_all[k](q_device, wires=k)
@@ -129,6 +133,7 @@ class Super1QSingleWireLayer(SuperQuantumModule):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
+    @tq.static_support
     def forward(self, q_device):
         for k in range(self.n_wires):
             if k == self.sample_arch:
@@ -153,6 +158,7 @@ class Super1QAllButOneLayer(SuperQuantumModule):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
+    @tq.static_support
     def forward(self, q_device):
         for k in range(self.n_wires):
             if k != self.sample_arch:
