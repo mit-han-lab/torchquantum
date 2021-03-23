@@ -59,7 +59,8 @@ def main() -> None:
         pin_memory=True)
 
     state_dict = io.load(
-        os.path.join(args.run_dir, 'checkpoints', 'max-acc-valid.pt'))
+        os.path.join(args.run_dir, 'checkpoints', 'max-acc-valid.pt'),
+        map_location=device)
     model = state_dict['model_arch']
 
     if configs.legalize_unitary:
