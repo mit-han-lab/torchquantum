@@ -81,6 +81,7 @@ class SuperQFCModel1(tq.QuantumModule):
             for k, layer_arch in enumerate(sample_arch):
                 self.super_layers_all[k].set_sample_arch(layer_arch)
 
+        @tq.static_support
         def forward(self, q_device: tq.QuantumDevice, x):
             self.q_device = q_device
             self.encoder(self.q_device, x)
@@ -89,9 +90,12 @@ class SuperQFCModel1(tq.QuantumModule):
                 self.super_layers_all[k](self.q_device)
 
                 if k % 3 == 1:
-                    tqf.cnot(self.q_device, wires=[0, 1])
-                    tqf.cnot(self.q_device, wires=[2, 3])
-                    tqf.cnot(self.q_device, wires=[k % 4, (k + 1) % 4])
+                    tqf.cnot(self.q_device, wires=[0, 1],
+                             static=self.static_mode, parent_graph=self.graph)
+                    tqf.cnot(self.q_device, wires=[2, 3],
+                             static=self.static_mode, parent_graph=self.graph)
+                    tqf.cnot(self.q_device, wires=[k % 4, (k + 1) % 4],
+                             static=self.static_mode, parent_graph=self.graph)
 
     def __init__(self):
         super().__init__()
@@ -118,14 +122,14 @@ class SuperQFCModel1(tq.QuantumModule):
     def forward_qiskit(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-        measured = self.qiskit_processor.process(self.q_device,
-                                                 self.q_layer, x)
+        measured, transpiled_circs = self.qiskit_processor.process(
+            self.q_device, self.q_layer, x)
         measured = measured.reshape(bsz, 2, 2)
 
         x = measured.sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
-        return x
+        return x, transpiled_circs
 
     @property
     def arch_space(self):
