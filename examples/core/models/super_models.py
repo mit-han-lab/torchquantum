@@ -122,14 +122,14 @@ class SuperQFCModel1(tq.QuantumModule):
     def forward_qiskit(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-        measured, transpiled_circs = self.qiskit_processor.process(
+        measured = self.qiskit_processor.process(
             self.q_device, self.q_layer, x)
         measured = measured.reshape(bsz, 2, 2)
 
         x = measured.sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
-        return x, transpiled_circs
+        return x
 
     @property
     def arch_space(self):

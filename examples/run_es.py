@@ -60,7 +60,7 @@ def evaluate_all(model, dataflow, solutions):
                     inputs = feed_dict['image']
                     targets = feed_dict['digit']
                 if configs.qiskit.use_qiskit:
-                    outputs, _ = model.forward_qiskit(inputs)
+                    outputs = model.forward_qiskit(inputs)
                 else:
                     outputs = model.forward(inputs)
 

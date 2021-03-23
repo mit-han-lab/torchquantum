@@ -43,6 +43,8 @@ class QiskitProcessor(object):
         self.basis_gates = None
         self.properties = None
 
+        self.transpiled_circs = None
+
         self.qiskit_init()
 
     def get_noise_model(self, name):
@@ -111,6 +113,8 @@ class QiskitProcessor(object):
             circs.append(circ)
 
         transpiled_circs = self.transpile(circs)
+        self.transpiled_circs = transpiled_circs
+
         job = execute(experiments=transpiled_circs,
                       backend=self.backend,
                       shots=self.n_shots,
@@ -131,4 +135,4 @@ class QiskitProcessor(object):
             counts, n_wires=q_device.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
-        return measured_qiskit, transpiled_circs
+        return measured_qiskit
