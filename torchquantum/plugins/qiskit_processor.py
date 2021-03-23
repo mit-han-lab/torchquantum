@@ -41,12 +41,14 @@ class QiskitProcessor(object):
         self.noise_model = None
         self.coupling_map = None
         self.basis_gates = None
+        self.properties = None
 
         self.qiskit_init()
 
     def get_noise_model(self, name):
         if name in IBMQ_NAMES:
             backend = self.provider.get_backend(name)
+            self.properties = backend.properties()
             noise_model = NoiseModel.from_backend(backend)
         else:
             noise_model = None
@@ -129,4 +131,4 @@ class QiskitProcessor(object):
             counts, n_wires=q_device.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
-        return measured_qiskit
+        return measured_qiskit, transpiled_circs
