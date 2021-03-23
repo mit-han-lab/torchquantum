@@ -2,6 +2,7 @@ import torch
 import torchquantum as tq
 
 from qiskit import Aer, execute, IBMQ
+from qiskit.compiler import transpile
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from torchquantum.plugins import tq2qiskit
@@ -87,6 +88,17 @@ class QiskitProcessor(object):
     def set_layout(self, layout):
         self.initial_layout = layout
 
+    def transpile(self, circs):
+        transpiled_circs = transpile(circuits=circs,
+                                     backend=self.backend,
+                                     basis_gates=self.basis_gates,
+                                     coupling_map=self.coupling_map,
+                                     initial_layout=self.initial_layout,
+                                     seed_transpiler=self.seed_transpiler,
+                                     optimization_level=self.optimization_level
+                                     )
+        return transpiled_circs
+
     def process(self, q_device: tq.QuantumDevice, q_layer: tq.QuantumModule,
                 x):
         circs = []
@@ -96,10 +108,11 @@ class QiskitProcessor(object):
                 q_device.n_wires)))
             circs.append(circ)
 
-        job = execute(experiments=circs,
+        transpiled_circs = self.transpile(circs)
+        job = execute(experiments=transpiled_circs,
                       backend=self.backend,
                       shots=self.n_shots,
-                      initial_layout=self.initial_layout,
+                      # initial_layout=self.initial_layout,
                       seed_transpiler=self.seed_transpiler,
                       seed_simulator=self.seed_simulator,
                       coupling_map=self.coupling_map,
