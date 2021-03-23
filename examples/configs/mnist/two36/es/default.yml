@@ -16,5 +16,10 @@ dataset:
 
 legalize_unitary: True
 
-run:
-  bsz: 900
+es:
+  population_size: 10
+  parent_size: 4
+  mutation_size: 3
+  mutation_prob: 0.3
+  crossover_size: 3
+  n_iterations: 40
