@@ -84,6 +84,9 @@ class QiskitProcessor(object):
             self.coupling_map = self.get_coupling_map(self.coupling_map_name)
             self.basis_gates = self.get_basis_gates(self.basis_gates_name)
 
+    def set_layout(self, layout):
+        self.initial_layout = layout
+
     def process(self, q_device: tq.QuantumDevice, q_layer: tq.QuantumModule,
                 x):
         circs = []
