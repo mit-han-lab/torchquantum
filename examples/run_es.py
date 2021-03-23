@@ -11,25 +11,48 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import legalize_unitary
+from torchquantum.plugins import tq2qiskit
 from qiskit import IBMQ
 from core.tools import EvolutionEngine
+from qiskit.providers.aer.noise.device.parameters import gate_error_values
 
 
-def estimate_noise(model, solution):
-    return 0
+def get_success_rate(properties, transpiled_circ):
+    # estimate the success rate according to the error rates of single and
+    # two-qubit gates in transpiled circuits
+
+    gate_errors = gate_error_values(properties)
+    # construct the error dict
+    gate_error_dict = {}
+    for gate_error in gate_errors:
+        if gate_error[0] not in gate_error_dict.keys():
+            gate_error_dict[gate_error[0]] = {tuple(gate_error[1]):
+                                              gate_error[2]}
+        else:
+            gate_error_dict[gate_error[0]][tuple(gate_error[1])] = \
+                gate_error[2]
+
+    success_rate = 1
+    for gate in transpiled_circ.data:
+        gate_success_rate = 1 - gate_error_dict[gate[0].name][tuple(
+            map(lambda x: x.index, gate[1])
+        )]
+        success_rate *= gate_success_rate
+
+    return success_rate
 
 
 def evaluate_all(model, dataflow, solutions):
     scores = []
 
     for solution in solutions:
-        if configs.qiskit.use_qiskit:
+        if configs.qiskit.use_qiskit or configs.es.est_success_rate:
             model.qiskit_processor.set_layout(solution['layout'])
         model.set_sample_arch(solution['arch'])
         with torch.no_grad():
             target_all = None
             output_all = None
-            for feed_dict in tqdm.tqdm(dataflow):
+            for feed_dict in tqdm.tqdm(dataflow, leave=False):
                 if configs.run.device == 'gpu':
                     inputs = feed_dict['image'].cuda(non_blocking=True)
                     targets = feed_dict['digit'].cuda(non_blocking=True)
@@ -37,7 +60,7 @@ def evaluate_all(model, dataflow, solutions):
                     inputs = feed_dict['image']
                     targets = feed_dict['digit']
                 if configs.qiskit.use_qiskit:
-                    outputs = model.forward_qiskit(inputs)
+                    outputs, _ = model.forward_qiskit(inputs)
                 else:
                     outputs = model.forward(inputs)
 
@@ -55,10 +78,21 @@ def evaluate_all(model, dataflow, solutions):
         corrects = masks.sum().item()
         accuracy = corrects / size
         loss = F.nll_loss(output_all, target_all).item()
-        logger.info(f"Accuracy: {accuracy}")
-        logger.info(f"Loss: {loss}")
 
-        scores.append(loss + estimate_noise(model, solution))
+        if configs.es.est_success_rate:
+            circ = tq2qiskit(model.q_layer, torch.randn(1, 16))
+
+            transpiled_circ = model.qiskit_processor.transpile(circ)
+
+            success_rate = get_success_rate(
+                model.qiskit_processor.properties,
+                transpiled_circ)
+        else:
+            success_rate = 1
+        score = loss / success_rate
+        scores.append(score)
+        logger.info(f"Accuracy: {accuracy:.5f}, Loss: {loss:.5f}, "
+                    f"Success Rate: {success_rate: .5f}, Score: {score:.5f}")
 
     return scores
 
@@ -118,11 +152,13 @@ def main() -> None:
     model.eval()
     model.load_state_dict(state_dict['model'])
 
-    if configs.qiskit.use_qiskit:
+    if configs.qiskit.use_qiskit or configs.es.est_success_rate:
+        IBMQ.load_account()
+        properties = IBMQ.get_provider(hub='ibm-q').get_backend(
+            configs.qiskit.backend_name).properties()
+        n_available_wires = len(properties.qubits)
         qiskit_processor = builder.make_qiskit_processor()
         model.set_qiskit_processor(qiskit_processor)
-        n_available_wires = len(IBMQ.get_provider(hub='ibm-q').get_backend(
-            configs.qiskit.backend_name).properties().qubits)
     else:
         n_available_wires = model.q_device.n_wires
 
@@ -146,7 +182,7 @@ def main() -> None:
         solutions = es_engine.ask()
         scores = evaluate_all(model, dataflow, solutions)
         es_engine.tell(scores)
-        logger.info(f"Best solution: {es_engine.best_solution} \t with score")
+        logger.info(f"Best solution: {es_engine.best_solution}")
         logger.info(f"Best score: {es_engine.best_score}")
 
 
