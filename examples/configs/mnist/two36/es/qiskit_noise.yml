@@ -22,5 +22,10 @@ es:
   mutation_size: 3
   mutation_prob: 0.3
   crossover_size: 3
-  n_iterations: 40
+  n_iterations: 1
   est_success_rate: True
+  eval:
+    use_noise_model: True
+    use_real_qc: True
+    bsz: qiskit_max
+    n_test_samples: 75

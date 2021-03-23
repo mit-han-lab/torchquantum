@@ -76,12 +76,20 @@ class QiskitProcessor(object):
         return basis_gates
 
     def qiskit_init(self):
+        self.backend = None
+        self.provider = None
+        self.noise_model = None
+        self.coupling_map = None
+        self.basis_gates = None
+        self.properties = None
+
         IBMQ.load_account()
         self.provider = IBMQ.get_provider(hub='ibm-q')
 
         if self.use_real_qc:
             self.backend = self.provider.get_backend(
                 configs.qiskit.backend_name)
+            self.properties = self.backend.properties()
         else:
             # use simulator
             self.backend = Aer.get_backend('qasm_simulator')

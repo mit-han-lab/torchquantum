@@ -46,7 +46,7 @@ def evaluate_all(model, dataflow, solutions):
     scores = []
 
     for solution in solutions:
-        if configs.qiskit.use_qiskit or configs.es.est_success_rate:
+        if model.qiskit_processor is not None:
             model.qiskit_processor.set_layout(solution['layout'])
         model.set_sample_arch(solution['arch'])
         with torch.no_grad():
@@ -81,7 +81,6 @@ def evaluate_all(model, dataflow, solutions):
 
         if configs.es.est_success_rate:
             circ = tq2qiskit(model.q_layer, torch.randn(1, 16))
-
             transpiled_circ = model.qiskit_processor.transpile(circ)
 
             success_rate = get_success_rate(
@@ -184,6 +183,47 @@ def main() -> None:
         es_engine.tell(scores)
         logger.info(f"Best solution: {es_engine.best_solution}")
         logger.info(f"Best score: {es_engine.best_score}")
+
+    logger.info("Best solution evaluation:")
+    # eval the best solution and save the model
+    evaluate_all(model, dataflow, [es_engine.best_solution])
+
+    # eval with the noise model
+    if configs.es.eval.use_noise_model:
+        logger.info(f"Best solution evaluation with noise model "
+                    f"of {configs.qiskit.noise_model_name}:")
+        configs.qiskit.use_qiskit = True
+        evaluate_all(model, dataflow, [es_engine.best_solution])
+
+    # eval on real QC
+    if configs.es.eval.use_real_qc:
+        logger.info(f"Best solution evaluation on real "
+                    f"QC {configs.qiskit.backend_name}:")
+
+        # need reset some parameters
+        configs.qiskit.use_qiskit = True
+        model.qiskit_processor.use_real_qc = True
+        model.qiskit_processor.noise_model_name = None
+        model.qiskit_processor.qiskit_init()
+
+        if configs.es.eval.bsz == 'qiskit_max':
+            configs.run.bsz = \
+                model.qiskit_processor.backend.configuration().max_experiments
+        else:
+            configs.run.bsz = configs.es.eval.bsz
+
+        configs.dataset.n_test_samples = configs.es.eval.n_test_samples
+        dataset = builder.make_dataset()
+
+        dataflow = torch.utils.data.DataLoader(
+            dataset['test'],
+            sampler=sampler,
+            batch_size=configs.run.bsz,
+            num_workers=configs.run.workers_per_gpu,
+            pin_memory=True)
+
+        evaluate_all(model, dataflow, [es_engine.best_solution])
+
 
 
 if __name__ == '__main__':
