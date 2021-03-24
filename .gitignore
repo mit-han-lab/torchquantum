@@ -287,3 +287,4 @@ fabric.properties
 /examples/data/
 runs/
 /profilings/
+/mnist_data/
