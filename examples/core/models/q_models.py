@@ -508,42 +508,35 @@ class QFCModel4(tq.QuantumModule):
         return x
 
 
-class QFC5Sub(tq.QuantumModule):
-    def __init__(self):
-        super().__init__()
-        self.n_wires = 4
-        self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                            [tqf.rz] * 4 + [tqf.rx] * 4)
-        self.random_layer = tq.RandomLayer(n_ops=configs.model.n_random_ops[0],
-                                           wires=list(range(self.n_wires)))
-
-    @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice, x):
-        self.q_device = q_device
-        self.encoder(self.q_device, x)
-        self.random_layer(self.q_device)
-
-
 class QFCModel5(tq.QuantumModule):
+    class QLayer(tq.QuantumModule):
+        def __init__(self):
+            super().__init__()
+            self.n_wires = 4
+            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
+                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.random_layer = tq.RandomLayer(
+                n_ops=configs.model.n_random_ops[0],
+                wires=list(range(self.n_wires)))
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice, x):
+            self.q_device = q_device
+            self.encoder(self.q_device, x)
+            self.random_layer(self.q_device)
+
     def __init__(self):
         super().__init__()
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_sub_layer = QFC5Sub()
+        self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
-
-        self.size = 0
-        self.corrects = 0
-        self.qiskit_processor = None
-
-    def set_qiskit_processor(self, processor: QiskitProcessor):
-        self.qiskit_processor = processor
 
     def forward(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        self.q_sub_layer(self.q_device, x)
+        self.q_layer(self.q_device, x)
 
         x = self.measure(self.q_device)[:, :len(
             configs.dataset.digits_of_interest)]
@@ -552,23 +545,63 @@ class QFCModel5(tq.QuantumModule):
 
         return x
 
-    def forward_qiskit(self, x, targets):
+    def forward_qiskit(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
         measured_qiskit = self.qiskit_processor.process(
-            self.q_device, self.q_sub_layer, x)
+            self.q_device, self.q_layer, x)
 
-        logger.info(f"Measured: {measured_qiskit}")
+        x = measured_qiskit[:, :len(configs.dataset.digits_of_interest)]
 
-        _, idx = measured_qiskit[:, :len(
-            configs.dataset.digits_of_interest)].topk(1)
-        masks = idx.reshape(-1).eq(targets)
+        x = F.log_softmax(x, dim=1)
 
-        self.size += targets.shape[0]
-        self.corrects += masks.sum()
-        logger.info(f"Total: {self.size}, Corrects: {self.corrects}, "
-                    f"Running Accuracy: {self.corrects / self.size:.5f}")
+        return x
+
+
+class QFCModel5Resize4(tq.QuantumModule):
+    class QLayer(tq.QuantumModule):
+        def __init__(self):
+            super().__init__()
+            self.n_wires = 4
+            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
+                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.random_layer = tq.RandomLayer(
+                n_ops=configs.model.n_random_ops[0],
+                wires=list(range(self.n_wires)))
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice, x):
+            self.q_device = q_device
+            self.encoder(self.q_device, x)
+            self.random_layer(self.q_device)
+
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 4
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.q_layer = self.QLayer()
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = x.view(bsz, 16)
+
+        self.q_layer(self.q_device, x)
+
+        x = self.measure(self.q_device)[:, :len(
+            configs.dataset.digits_of_interest)]
+
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+    def forward_qiskit(self, x):
+        bsz = x.shape[0]
+        x = x.view(bsz, 16)
+
+        measured_qiskit = self.qiskit_processor.process(
+            self.q_device, self.q_layer, x)
 
         x = measured_qiskit[:, :len(configs.dataset.digits_of_interest)]
 
@@ -644,6 +677,7 @@ model_dict = {
     'q_fc3': QFCModel3,
     'q_fc4': QFCModel4,
     'q_fc5': QFCModel5,
+    'q_fc5_resize4': QFCModel5Resize4,
     'q_fc6': QFCModel6,
     'q_qsvt0': QSVT0,
 }

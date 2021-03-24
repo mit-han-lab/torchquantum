@@ -2,7 +2,7 @@ dataset:
   name: mnist
   root: 'examples/data'
   train_valid_split_ratio: [0.95, 0.05]
-  center_crop: 28
+  center_crop: 24
   resize: 28
   resize_mode: bilinear
   binarize: False
