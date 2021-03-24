@@ -7,7 +7,6 @@ from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from torchquantum.plugins import tq2qiskit
 from torchquantum.utils import get_expectations_from_counts
-from torchpack.utils.config import configs
 from .qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
 
@@ -88,7 +87,7 @@ class QiskitProcessor(object):
 
         if self.use_real_qc:
             self.backend = self.provider.get_backend(
-                configs.qiskit.backend_name)
+                self.backend_name)
             self.properties = self.backend.properties()
         else:
             # use simulator
