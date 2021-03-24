@@ -237,6 +237,5 @@ def main() -> None:
         evaluate_all(model, dataflow, [es_engine.best_solution])
 
 
-
 if __name__ == '__main__':
     main()

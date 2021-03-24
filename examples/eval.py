@@ -20,7 +20,7 @@ def log_acc(output_all, target_all, k=1):
     size = target_all.shape[0]
     corrects = masks.sum().item()
     accuracy = corrects / size
-    loss = F.nll_loss(output_all, target_all)
+    loss = F.nll_loss(output_all, target_all).item()
     logger.info(f"Accuracy: {accuracy}")
     logger.info(f"Loss: {loss}")
 
