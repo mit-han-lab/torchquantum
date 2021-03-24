@@ -14,6 +14,17 @@ from torchquantum.utils import legalize_unitary
 from qiskit import IBMQ
 
 
+def log_acc(output_all, target_all, k=1):
+    _, indices = output_all.topk(k, dim=1)
+    masks = indices.eq(target_all.view(-1, 1).expand_as(indices))
+    size = target_all.shape[0]
+    corrects = masks.sum().item()
+    accuracy = corrects / size
+    loss = F.nll_loss(output_all, target_all)
+    logger.info(f"Accuracy: {accuracy}")
+    logger.info(f"Loss: {loss}")
+
+
 def main() -> None:
     torch.backends.cudnn.benchmark = True
 
@@ -59,7 +70,7 @@ def main() -> None:
         pin_memory=True)
 
     state_dict = io.load(
-        os.path.join(args.run_dir, 'checkpoints', 'max-acc-valid.pt'),
+        os.path.join(args.run_dir, configs.ckpt.name),
         map_location=device)
     model = state_dict['model_arch']
 
@@ -69,8 +80,16 @@ def main() -> None:
     model.eval()
     model.load_state_dict(state_dict['model'])
 
+    if 'solution' in state_dict.keys():
+        solution = state_dict['solution']
+        logger.info(f"Evaluate the solution {solution}")
+        logger.info(f"Original score: {state_dict['score']}")
+        model.set_sample_arch(solution['arch'])
+
     if configs.qiskit.use_qiskit:
         qiskit_processor = builder.make_qiskit_processor()
+        if 'solution' in state_dict.keys():
+            qiskit_processor.set_layout(state_dict['solution']['layout'])
         model.set_qiskit_processor(qiskit_processor)
 
     total_params = sum(p.numel() for p in model.parameters())
@@ -88,7 +107,7 @@ def main() -> None:
                 targets = feed_dict['digit']
 
             if configs.qiskit.use_qiskit:
-                outputs = model.forward_qiskit(inputs, targets)
+                outputs = model.forward_qiskit(inputs)
             else:
                 outputs = model(inputs)
 
@@ -99,13 +118,11 @@ def main() -> None:
                 target_all = torch.cat([target_all, targets], dim=0)
                 output_all = torch.cat([output_all, outputs], dim=0)
 
-    k = 1
-    _, indices = output_all.topk(k, dim=1)
-    masks = indices.eq(target_all.view(-1, 1).expand_as(indices))
-    size = target_all.shape[0]
-    corrects = masks.sum().item()
-    logger.info(f"Accuracy: {corrects / size}")
-    logger.info(f"Loss: {F.nll_loss(output_all, target_all)}")
+            logger.info(f"Measured log_softmax: {outputs}")
+            log_acc(output_all, target_all)
+
+    logger.info("Final:")
+    log_acc(output_all, target_all)
 
 
 if __name__ == '__main__':
