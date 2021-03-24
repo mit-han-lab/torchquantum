@@ -187,16 +187,16 @@ def main() -> None:
         logger.info(f"Best solution: {es_engine.best_solution}")
         logger.info(f"Best score: {es_engine.best_score}")
 
+        # store the model and solution after every iteration
+        state_dict = dict()
+        state_dict['model_arch'] = model
+        state_dict['model'] = model.state_dict()
+        state_dict['solution'] = es_engine.best_solution
+        state_dict['score'] = es_engine.best_score
+
     logger.info("Best solution evaluation:")
     # eval the best solution and save the model
     evaluate_all(model, dataflow, [es_engine.best_solution])
-
-    # store the model and solution
-    state_dict = dict()
-    state_dict['model_arch'] = model
-    state_dict['model'] = model.state_dict()
-    state_dict['solution'] = es_engine.best_solution
-    state_dict['score'] = es_engine.best_score
 
     io.save(os.path.join(es_dir, 'checkpoints/best_solution.pt'), state_dict)
 
