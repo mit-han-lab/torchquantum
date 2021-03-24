@@ -23,6 +23,7 @@ def make_dataset() -> Dataset:
             train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
             center_crop=configs.dataset.center_crop,
             resize=configs.dataset.resize,
+            resize_mode=configs.dataset.resize_mode,
             binarize=configs.dataset.binarize,
             binarize_threshold=configs.dataset.binarize_threshold,
             digits_of_interest=configs.dataset.digits_of_interest,

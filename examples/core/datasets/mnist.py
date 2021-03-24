@@ -4,9 +4,17 @@ from torchpack.datasets.dataset import Dataset
 from torchvision import datasets, transforms
 from typing import List
 from torchpack.utils.logging import logger
+from torchvision.transforms import InterpolationMode
 
 
 __all__ = ['MNIST']
+
+
+resize_modes = {
+    'bilinear': InterpolationMode.BILINEAR,
+    'bicubic': InterpolationMode.BICUBIC,
+    'nearest': InterpolationMode.NEAREST,
+}
 
 
 class MNISTDataset:
@@ -16,6 +24,7 @@ class MNISTDataset:
                  train_valid_split_ratio: List[float],
                  center_crop,
                  resize,
+                 resize_mode,
                  binarize,
                  binarize_threshold,
                  digits_of_interest,
@@ -27,6 +36,7 @@ class MNISTDataset:
         self.data = None
         self.center_crop = center_crop
         self.resize = resize
+        self.resize_mode = resize_modes[resize_mode]
         self.binarize = binarize
         self.binarize_threshold = binarize_threshold
         self.digits_of_interest = digits_of_interest
@@ -41,7 +51,8 @@ class MNISTDataset:
         if not self.center_crop == 28:
             tran.append(transforms.CenterCrop(self.center_crop))
         if not self.resize == 28:
-            tran.append(transforms.Resize(self.resize))
+            tran.append(transforms.Resize(self.resize,
+                                          interpolation=self.resize_mode))
         transform = transforms.Compose(tran)
 
         if self.split == 'train' or self.split == 'valid':
@@ -99,6 +110,7 @@ class MNIST(Dataset):
                  train_valid_split_ratio: List[float],
                  center_crop=28,
                  resize=28,
+                 resize_mode='bilinear',
                  binarize=False,
                  binarize_threshold=0.1307,
                  digits_of_interest=tuple(range(10)),
@@ -113,6 +125,7 @@ class MNIST(Dataset):
                 train_valid_split_ratio=train_valid_split_ratio,
                 center_crop=center_crop,
                 resize=resize,
+                resize_mode=resize_mode,
                 binarize=binarize,
                 binarize_threshold=binarize_threshold,
                 digits_of_interest=digits_of_interest,
@@ -130,6 +143,7 @@ if __name__ == '__main__':
                          train_valid_split_ratio=[0.9, 0.1],
                          center_crop=28,
                          resize=28,
+                         resize_mode='bilinear',
                          binarize=False,
                          binarize_threshold=0.1307,
                          digits_of_interest=(3, 6),
