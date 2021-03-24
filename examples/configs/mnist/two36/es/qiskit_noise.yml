@@ -14,8 +14,6 @@ qiskit:
 dataset:
   n_test_samples: null
 
-legalize_unitary: True
-
 es:
   population_size: 10
   parent_size: 4

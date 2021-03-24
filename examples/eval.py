@@ -74,7 +74,7 @@ def main() -> None:
         map_location=device)
     model = state_dict['model_arch']
 
-    if configs.legalize_unitary:
+    if configs.legalization.legalize:
         legalize_unitary(model)
     model.to(device)
     model.eval()

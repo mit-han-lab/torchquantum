@@ -4,6 +4,7 @@ dataset:
   train_valid_split_ratio: [0.95, 0.05]
   center_crop: 28
   resize: 28
+  resize_mode: bilinear
   binarize: False
   binarize_threshold: 0.1307
   digits_of_interest: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -45,8 +46,6 @@ legalization:
   epoch_interval: 9999999999
   step_interval: 9999999999
 
-use_qiskit: False
-
 callbacks:
   - callback: 'InferenceRunner'
     split: 'valid'
@@ -64,5 +63,29 @@ callbacks:
 qiskit:
   use_qiskit: False
   use_real_qc: False
-  apply_noise_model: False
-  backend: null
+  backend_name: null
+  noise_model_name: null
+  coupling_map_name: null
+  basis_gates_name: null
+  n_shots: 8192
+  initial_layout: null
+  seed_transpiler: 42
+  seed_simulator: 42
+  optimization_level: 0
+
+ckpt:
+  name: 'checkpoints/max-acc-valid.pt'
+
+es:
+  population_size: 100
+  parent_size: 40
+  mutation_size: 30
+  mutation_prob: 0.3
+  crossover_size: 30
+  n_iterations: 40
+  est_success_rate: True
+  eval:
+    use_noise_model: False
+    use_real_qc: False
+    bsz: qiskit_max
+    n_test_samples: 75
