@@ -51,6 +51,27 @@ class ClassicalConv1(nn.Module):
         return output
 
 
+class ClassicalConv1Resize4(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 32, 3, 1, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, 3, 1, padding=1)
+        self.fc1 = nn.Linear(1024, 128)
+        self.fc2 = nn.Linear(128, 10)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = torch.flatten(x, 1)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        output = F.log_softmax(x, dim=1)
+        return output
+
+
 class ClassicalConv2(nn.Module):
     def __init__(self):
         super().__init__()
@@ -114,6 +135,7 @@ class ClassicalFC1(nn.Module):
 model_dict = {
     'c_conv0': ClassicalConv0,
     'c_conv1': ClassicalConv1,
+    'c_conv1_resize4': ClassicalConv1Resize4,
     'c_conv2': ClassicalConv2,
     'c_fc0': ClassicalFC0,
     'c_fc1': ClassicalFC1
