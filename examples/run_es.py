@@ -150,6 +150,9 @@ def main() -> None:
     model.to(device)
     model.eval()
     model.load_state_dict(state_dict['model'])
+    es_dir = 'es_runs/' + args.config.replace('/', '.').replace(
+        'examples.', '').replace('.yml', '').replace('configs.', '')
+    io.save(os.path.join(es_dir, 'metainfo/configs.yaml'), configs.dict())
 
     if configs.qiskit.use_qiskit or configs.es.est_success_rate:
         IBMQ.load_account()
@@ -194,9 +197,8 @@ def main() -> None:
     state_dict['model'] = model.state_dict()
     state_dict['solution'] = es_engine.best_solution
     state_dict['score'] = es_engine.best_score
-    es_dir = 'es_runs/' + args.config.replace('/', '.').replace(
-        'examples.', '').replace('.yml', '').replace('configs.', '')
-    io.save(os.path.join(es_dir, 'best_solution.pt'), state_dict)
+
+    io.save(os.path.join(es_dir, 'checkpoints/best_solution.pt'), state_dict)
 
     # eval with the noise model
     if configs.es.eval.use_noise_model:
