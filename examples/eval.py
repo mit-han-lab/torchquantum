@@ -88,8 +88,16 @@ def main() -> None:
 
     if configs.qiskit.use_qiskit:
         qiskit_processor = builder.make_qiskit_processor()
-        if 'solution' in state_dict.keys():
-            qiskit_processor.set_layout(state_dict['solution']['layout'])
+        if configs.qiskit.initial_layout is not None:
+            layout = configs.qiskit.initial_layout
+            logger.warning(f"Use layout {layout} from config file")
+        elif 'solution' in state_dict.keys():
+            layout = state_dict['solution']['layout']
+            logger.warning(f"Use layout {layout} from checkpoint file")
+        else:
+            layout = None
+            logger.warning(f"No specified layout")
+        qiskit_processor.set_layout(layout)
         model.set_qiskit_processor(qiskit_processor)
 
     total_params = sum(p.numel() for p in model.parameters())
