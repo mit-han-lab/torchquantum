@@ -188,6 +188,16 @@ def main() -> None:
     # eval the best solution and save the model
     evaluate_all(model, dataflow, [es_engine.best_solution])
 
+    # store the model and solution
+    state_dict = dict()
+    state_dict['model_arch'] = model
+    state_dict['model'] = model.state_dict()
+    state_dict['solution'] = es_engine.best_solution
+    state_dict['score'] = es_engine.best_score
+    es_dir = 'es_runs/' + args.config.replace('/', '.').replace(
+        'examples.', '').replace('.yml', '').replace('configs.', '')
+    io.save(os.path.join(es_dir, 'best_solution.pt'), state_dict)
+
     # eval with the noise model
     if configs.es.eval.use_noise_model:
         logger.info(f"Best solution evaluation with noise model "
@@ -214,7 +224,7 @@ def main() -> None:
 
         configs.dataset.n_test_samples = configs.es.eval.n_test_samples
         dataset = builder.make_dataset()
-
+        sampler = torch.utils.data.SequentialSampler(dataset['test'])
         dataflow = torch.utils.data.DataLoader(
             dataset['test'],
             sampler=sampler,
