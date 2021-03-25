@@ -368,10 +368,10 @@ def crot_matrix(params):
                            [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
                           ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
 
-    matrix[:, 2, 2] = (torch.exp(-0.5j * (phi + omega)) * co)
-    matrix[:, 2, 3] = (-torch.exp(0.5j * (phi - omega)) * si)
-    matrix[:, 3, 2] = (torch.exp(-0.5j * (phi - omega)) * si)
-    matrix[:, 3, 3] = (torch.exp(0.5j * (phi + omega)) * co)
+    matrix[:, 2, 2] = torch.exp(-0.5j * (phi + omega)) * co
+    matrix[:, 2, 3] = -torch.exp(0.5j * (phi - omega)) * si
+    matrix[:, 3, 2] = torch.exp(-0.5j * (phi - omega)) * si
+    matrix[:, 3, 3] = torch.exp(0.5j * (phi + omega)) * co
 
     return matrix.squeeze(0)
 
