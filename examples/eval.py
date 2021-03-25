@@ -5,6 +5,8 @@ import torch
 import torch.backends.cudnn
 import tqdm
 import torch.nn.functional as F
+import torchquantum as tq
+import copy
 
 from torchpack.utils import io
 from torchpack.utils.config import configs
@@ -72,13 +74,18 @@ def main() -> None:
     state_dict = io.load(
         os.path.join(args.run_dir, configs.ckpt.name),
         map_location=device)
-    model = state_dict['model_arch']
+    model_load = state_dict['model_arch']
+    model = builder.make_model()
+    for module_load, module in zip(model_load.modules(), model.modules()):
+        if isinstance(module, tq.RandomLayer):
+            # random layer, need to restore the architecture
+            module.op_list = copy.deepcopy(module_load.op_list)
 
     if configs.legalization.legalize:
         legalize_unitary(model)
     model.to(device)
     model.eval()
-    model.load_state_dict(state_dict['model'])
+    model.load_state_dict(state_dict['model'], strict=False)
 
     if 'solution' in state_dict.keys():
         solution = state_dict['solution']
