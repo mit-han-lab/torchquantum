@@ -89,10 +89,14 @@ def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
             circ.crz(module.params[0][0].item(), *module.wires)
         elif module.name == 'U1':
             circ.u1(module.params[0][0].item(), *module.wires)
+        elif module.name == 'CU1':
+            circ.cu1(module.params[0][0].item(), *module.wires)
         elif module.name == 'U2':
             circ.u2(*list(module.params[0].data.numpy()), *module.wires)
         elif module.name == 'U3':
             circ.u3(*list(module.params[0].data.numpy()), *module.wires)
+        elif module.name == 'CU3':
+            circ.cu3(*list(module.params[0].data.numpy()), *module.wires)
         elif module.name == 'QubitUnitary' or \
                 module.name == 'QubitUnitaryFast' or \
                 module.name == 'TrainableUnitary' or \
