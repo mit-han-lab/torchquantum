@@ -1,0 +1,4 @@
+model:
+  name: q_fc12
+  q_fc12:
+    n_layers: 4
