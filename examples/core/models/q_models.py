@@ -610,53 +610,55 @@ class QFCModel5Resize4(tq.QuantumModule):
         return x
 
 
-class QFC6Sub(tq.QuantumModule):
-    def __init__(self):
-        super().__init__()
-        self.n_wires = 4
-        self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                            [tqf.rz] * 4 + [tqf.rx] * 4)
-        self.rx_layers = tq.QuantumModuleList()
-        self.ry_layers = tq.QuantumModuleList()
-        self.rz_layers = tq.QuantumModuleList()
-        self.cnot_layers = tq.QuantumModuleList()
-
-        for k in range(1):
-            self.rx_layers.append(
-                tq.Op1QAllLayer(op=tq.RX, n_wires=self.n_wires,
-                                has_params=True, trainable=True))
-            self.ry_layers.append(
-                tq.Op1QAllLayer(op=tq.RY, n_wires=self.n_wires,
-                                has_params=True, trainable=True))
-            self.rz_layers.append(
-                tq.Op1QAllLayer(op=tq.RZ, n_wires=self.n_wires,
-                                has_params=True, trainable=True))
-            self.cnot_layers.append(
-                tq.Op2QAllLayer(op=tq.CNOT, n_wires=self.n_wires))
-
-    def forward(self, q_device: tq.QuantumDevice, x):
-        self.q_device = q_device
-        self.encoder(self.q_device, x)
-        for k in range(1):
-            self.rx_layers[k](self.q_device)
-            self.ry_layers[k](self.q_device)
-            self.rz_layers[k](self.q_device)
-            self.cnot_layers[k](self.q_device)
-
-
 class QFCModel6(tq.QuantumModule):
+    class QLayer(tq.QuantumModule):
+        def __init__(self):
+            super().__init__()
+            self.n_wires = 4
+            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
+                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.rx_layers = tq.QuantumModuleList()
+            self.ry_layers = tq.QuantumModuleList()
+            self.rz_layers = tq.QuantumModuleList()
+            self.cnot_layers = tq.QuantumModuleList()
+
+            for k in range(4):
+                self.rx_layers.append(
+                    tq.Op1QAllLayer(op=tq.RX, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.ry_layers.append(
+                    tq.Op1QAllLayer(op=tq.RY, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.rz_layers.append(
+                    tq.Op1QAllLayer(op=tq.RZ, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.cnot_layers.append(
+                    tq.Op2QAllLayer(op=tq.CNOT, n_wires=self.n_wires,
+                                    jump=1, circular=False))
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice, x):
+            self.q_device = q_device
+            self.encoder(self.q_device, x)
+
+            for k in range(4):
+                self.rx_layers[k](self.q_device)
+                self.ry_layers[k](self.q_device)
+                self.rz_layers[k](self.q_device)
+                self.cnot_layers[k](self.q_device)
+
     def __init__(self):
         super().__init__()
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_sub_layer = QFC6Sub()
+        self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        self.q_sub_layer(self.q_device, x)
+        self.q_layer(self.q_device, x)
 
         x = self.measure(self.q_device)[:, :len(
             configs.dataset.digits_of_interest)]
