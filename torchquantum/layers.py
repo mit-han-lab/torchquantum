@@ -355,7 +355,7 @@ class Op2QDenseLayer(tq.QuantumModule):
         # reverse the wires, for example from [1, 2] to [2, 1]
         self.wire_reverse = wire_reverse
 
-        for k in range(self.n_wires * (self.n_wires - 1) / 2):
+        for k in range(self.n_wires * (self.n_wires - 1) // 2):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
