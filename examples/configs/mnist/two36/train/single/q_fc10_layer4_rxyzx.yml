@@ -1,9 +1,6 @@
-trainer:
-  name: q_trainer
-
 model:
+  name: q_fc10
   q_fc10:
-    tanh: False
+    n_layers: 4
     encoder:
       name: rxyzx
-

@@ -1,6 +1,7 @@
 import torch
 import torchquantum as tq
 
+from torchquantum.functional import func_name_dict
 from typing import Iterable
 from torchquantum.macro import C_DTYPE
 from abc import ABCMeta
@@ -30,18 +31,35 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
 
 
 class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
-    def __init__(self, func):
+    def __init__(self, funcs, wires=None):
         super().__init__()
-        self.func = func if isinstance(func, Iterable) else [func]
+        self.funcs = funcs if isinstance(funcs, Iterable) else [funcs]
+        self.wires = wires
 
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
+        if self.wires is None:
+            self.wires = list(range(q_device.n_wires)) * (len(self.funcs) //
+                                                          q_device.n_wires)
         self.q_device = q_device
         self.q_device.reset_states(x.shape[0])
-        for k, func in enumerate(self.func):
-            func(self.q_device, wires=k % self.q_device.n_wires,
-                 params=x[:, k], static=self.static_mode,
-                 parent_graph=self.graph)
+
+        x_id = 0
+        for k, func in enumerate(self.funcs):
+            if func in ['rx', 'ry', 'rz', 'u1', 'phaseshift']:
+                stride = 1
+            elif func == 'u2':
+                stride = 2
+            elif func == 'u3':
+                stride = 3
+            else:
+                raise ValueError(func)
+
+            func_name_dict[func](self.q_device, wires=self.wires[k],
+                                 params=x[:, x_id:(x_id + stride)],
+                                 static=self.static_mode,
+                                 parent_graph=self.graph)
+            x_id += stride
 
 
 class StateEncoder(Encoder, metaclass=ABCMeta):

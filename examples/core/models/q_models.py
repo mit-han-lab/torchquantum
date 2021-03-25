@@ -448,7 +448,7 @@ class QFC4Sub(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.n_wires = 8
-        self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 8 + [tqf.ry] * 8)
+        self.encoder = tq.MultiPhaseEncoder(['rx'] * 8 + ['ry'] * 8)
         self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
             self.n_wires)))
 
@@ -513,8 +513,8 @@ class QFCModel5(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
+                                                ['rz'] * 4 + ['rx'] * 4)
             self.random_layer = tq.RandomLayer(
                 n_ops=configs.model.n_random_ops[0],
                 wires=list(range(self.n_wires)))
@@ -564,8 +564,8 @@ class QFCModel5Resize4(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
+                                                ['rz'] * 4 + ['rx'] * 4)
             self.random_layer = tq.RandomLayer(
                 n_ops=configs.model.n_random_ops[0],
                 wires=list(range(self.n_wires)))
@@ -615,8 +615,8 @@ class QFCModel6(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
+                                                ['rz'] * 4 + ['rx'] * 4)
             self.rx_layers = tq.QuantumModuleList()
             self.ry_layers = tq.QuantumModuleList()
             self.rz_layers = tq.QuantumModuleList()
@@ -674,8 +674,8 @@ class QFCModel7(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
+                                                ['rz'] * 4 + ['rx'] * 4)
             self.rx_layers = tq.QuantumModuleList()
             self.ry_layers = tq.QuantumModuleList()
             self.rz_layers = tq.QuantumModuleList()
@@ -733,8 +733,8 @@ class QFCModel8(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
+                                                ['rz'] * 4 + ['rx'] * 4)
             self.rx_layers = tq.QuantumModuleList()
             self.ry_layers = tq.QuantumModuleList()
             self.rz_layers = tq.QuantumModuleList()
@@ -792,8 +792,8 @@ class QFCModel9(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
+                                                ['rz'] * 4 + ['rx'] * 4)
             self.rx_layers = tq.QuantumModuleList()
             self.ry_layers = tq.QuantumModuleList()
             self.rz_layers = tq.QuantumModuleList()
@@ -851,8 +851,47 @@ class QFCModel10(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            if configs.model.q_fc10.encoder.name == 'rxyzx':
+                self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 +
+                                                    ['ry'] * 4 +
+                                                    ['rz'] * 4 +
+                                                    ['rx'] * 4)
+            elif configs.model.q_fc10.encoder.name == 'rxyzx_interleave':
+                self.encoder = tq.MultiPhaseEncoder(
+                    ['rx', 'ry', 'rz', 'rx'] * 4)
+            elif configs.model.q_fc10.encoder.name == 'ryzxy':
+                self.encoder = tq.MultiPhaseEncoder(['ry'] * 4 +
+                                                    ['rz'] * 4 +
+                                                    ['rx'] * 4 +
+                                                    ['ry'] * 4)
+            elif configs.model.q_fc10.encoder.name == 'rzxyz':
+                self.encoder = tq.MultiPhaseEncoder(['rz'] * 4 +
+                                                    ['rx'] * 4 +
+                                                    ['ry'] * 4 +
+                                                    ['rz'] * 4)
+            elif configs.model.q_fc10.encoder.name == 'u3u1':
+                self.encoder = tq.MultiPhaseEncoder(
+                    funcs=['u3', 'u1'] * 4,
+                    wires=[0, 0, 1, 1, 2, 2, 3, 3]
+                )
+            elif configs.model.q_fc10.encoder.name == 'u3rx':
+                self.encoder = tq.MultiPhaseEncoder(
+                    funcs=['u3', 'rx'] * 4,
+                    wires=[0, 0, 1, 1, 2, 2, 3, 3]
+                )
+            elif configs.model.q_fc10.encoder.name == 'u3ry':
+                self.encoder = tq.MultiPhaseEncoder(
+                    funcs=['u3', 'ry'] * 4,
+                    wires=[0, 0, 1, 1, 2, 2, 3, 3]
+                )
+            elif configs.model.q_fc10.encoder.name == 'u3rz':
+                self.encoder = tq.MultiPhaseEncoder(
+                    funcs=['u3', 'rz'] * 4,
+                    wires=[0, 0, 1, 1, 2, 2, 3, 3]
+                )
+            else:
+                raise NotImplementedError
+
             self.rx_layers = tq.QuantumModuleList()
             self.ry_layers = tq.QuantumModuleList()
             self.rz_layers = tq.QuantumModuleList()
@@ -906,6 +945,8 @@ class QFCModel10(tq.QuantumModule):
     def forward(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
+        if configs.model.q_fc10.tanh:
+            x = F.tanh(x) * np.pi
 
         self.q_layer(self.q_device, x)
         x = self.measure(self.q_device)
@@ -934,8 +975,8 @@ class QFCModel11(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
+                                                ['rz'] * 4 + ['rx'] * 4)
             self.u3_0_layers = tq.QuantumModuleList()
             self.u3_1_layers = tq.QuantumModuleList()
             self.u3_2_layers = tq.QuantumModuleList()
