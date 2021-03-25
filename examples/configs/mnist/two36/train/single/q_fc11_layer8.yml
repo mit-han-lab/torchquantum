@@ -1,0 +1,4 @@
+model:
+  name: q_fc11
+  q_fc11:
+    n_layers: 8

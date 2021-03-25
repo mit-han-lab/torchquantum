@@ -908,6 +908,77 @@ class QFCModel10(tq.QuantumModule):
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
         self.q_layer(self.q_device, x)
+        x = self.measure(self.q_device)
+
+        x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+    def forward_qiskit(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        x = self.qiskit_processor.process(
+            self.q_device, self.q_layer, x)
+
+        x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+
+class QFCModel11(tq.QuantumModule):
+    """u3 and cu3 layers"""
+    class QLayer(tq.QuantumModule):
+        def __init__(self):
+            super().__init__()
+            self.n_wires = 4
+            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
+                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.u3_0_layers = tq.QuantumModuleList()
+            self.u3_1_layers = tq.QuantumModuleList()
+            self.u3_2_layers = tq.QuantumModuleList()
+            self.cu3_layers = tq.QuantumModuleList()
+
+            for k in range(configs.model.q_fc11.n_layers):
+                self.u3_0_layers.append(
+                    tq.Op1QAllLayer(op=tq.U3, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.u3_1_layers.append(
+                    tq.Op1QAllLayer(op=tq.U3, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.u3_2_layers.append(
+                    tq.Op1QAllLayer(op=tq.U3, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.cu3_layers.append(
+                    tq.Op2QAllLayer(op=tq.CU3, n_wires=self.n_wires,
+                                    has_params=True, trainable=True,
+                                    circular=True))
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice, x):
+            self.q_device = q_device
+            self.encoder(self.q_device, x)
+
+            for k in range(configs.model.q_fc11.n_layers):
+                self.u3_0_layers[k](self.q_device)
+                self.u3_1_layers[k](self.q_device)
+                self.u3_2_layers[k](self.q_device)
+                self.cu3_layers[k](self.q_device)
+
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 4
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.q_layer = self.QLayer()
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        self.q_layer(self.q_device, x)
 
         x = self.measure(self.q_device).reshape(bsz, 2, 2)
         x = x.sum(-1).squeeze()
@@ -934,5 +1005,6 @@ model_dict = {
     'q_fc8': QFCModel8,
     'q_fc9': QFCModel9,
     'q_fc10': QFCModel10,
+    'q_fc11': QFCModel11,
     'q_qsvt0': QSVT0,
 }
