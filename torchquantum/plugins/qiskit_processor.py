@@ -114,7 +114,7 @@ class QiskitProcessor(object):
                 x):
         circs = []
         for i, x_single in tqdm(enumerate(x)):
-            circ = tq2qiskit(q_layer, x_single.unsqueeze(0))
+            circ = tq2qiskit(q_device, q_layer, x_single.unsqueeze(0))
             circ.measure(list(range(q_device.n_wires)), list(range(
                 q_device.n_wires)))
             circs.append(circ)

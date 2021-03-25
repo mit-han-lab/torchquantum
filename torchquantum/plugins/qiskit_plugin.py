@@ -13,19 +13,20 @@ __all__ = ['tq2qiskit']
 
 
 # construct a QuantumCircuit object according to the tq module
-def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
+def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
+              draw=False):
     # build the module list without changing the statevector of QuantumDevice
     original_wires_per_block = m.wires_per_block
     original_static_mode = m.static_mode
     m.static_off()
-    m.static_on(wires_per_block=m.q_device.n_wires)
+    m.static_on(wires_per_block=q_device.n_wires)
     m.is_graph_top = False
 
     # forward to register all modules and parameters
     if x is None:
-        m.forward(m.q_device)
+        m.forward(q_device)
     else:
-        m.forward(m.q_device, x)
+        m.forward(q_device, x)
 
     m.is_graph_top = True
     m.graph.build_flat_module_list()
@@ -36,7 +37,7 @@ def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
     if original_static_mode:
         m.static_on(wires_per_block=original_wires_per_block)
 
-    circ = QuantumCircuit(m.q_device.n_wires, m.q_device.n_wires)
+    circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
 
     for module in module_list:
         try:
