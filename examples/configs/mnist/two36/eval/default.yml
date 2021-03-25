@@ -9,7 +9,7 @@ qiskit:
   initial_layout: null
   seed_transpiler: 42
   seed_simulator: 42
-  optimization_level: null
+  optimization_level: 0
 
 dataset:
   n_test_samples: null
