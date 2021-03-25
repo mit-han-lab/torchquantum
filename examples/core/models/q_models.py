@@ -669,6 +669,7 @@ class QFCModel6(tq.QuantumModule):
 
 
 class QFCModel7(tq.QuantumModule):
+    """difference: self.measure(self.q_device).reshape(bsz, 2, 2)"""
     class QLayer(tq.QuantumModule):
         def __init__(self):
             super().__init__()
@@ -727,6 +728,7 @@ class QFCModel7(tq.QuantumModule):
 
 
 class QFCModel8(tq.QuantumModule):
+    """difference: Op2QButterflyLayer"""
     class QLayer(tq.QuantumModule):
         def __init__(self):
             super().__init__()
@@ -785,6 +787,7 @@ class QFCModel8(tq.QuantumModule):
 
 
 class QFCModel9(tq.QuantumModule):
+    """difference: Op2QDenseLayer"""
     class QLayer(tq.QuantumModule):
         def __init__(self):
             super().__init__()
@@ -796,7 +799,7 @@ class QFCModel9(tq.QuantumModule):
             self.rz_layers = tq.QuantumModuleList()
             self.cnot_layers = tq.QuantumModuleList()
 
-            for k in range(4):
+            for k in range(configs.model.q_fc9.n_layers):
                 self.rx_layers.append(
                     tq.Op1QAllLayer(op=tq.RX, n_wires=self.n_wires,
                                     has_params=True, trainable=True))
@@ -815,11 +818,83 @@ class QFCModel9(tq.QuantumModule):
             self.q_device = q_device
             self.encoder(self.q_device, x)
 
-            for k in range(4):
+            for k in range(configs.model.q_fc9.n_layers):
                 self.rx_layers[k](self.q_device)
                 self.ry_layers[k](self.q_device)
                 self.rz_layers[k](self.q_device)
                 self.cnot_layers[k](self.q_device)
+
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 4
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.q_layer = self.QLayer()
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = F.avg_pool2d(x, 6).view(bsz, 16)
+
+        self.q_layer(self.q_device, x)
+
+        x = self.measure(self.q_device).reshape(bsz, 2, 2)
+        x = x.sum(-1).squeeze()
+
+        x = F.log_softmax(x, dim=1)
+
+        return x
+
+
+class QFCModel10(tq.QuantumModule):
+    """crx cry crz layers"""
+    class QLayer(tq.QuantumModule):
+        def __init__(self):
+            super().__init__()
+            self.n_wires = 4
+            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
+                                                [tqf.rz] * 4 + [tqf.rx] * 4)
+            self.rx_layers = tq.QuantumModuleList()
+            self.ry_layers = tq.QuantumModuleList()
+            self.rz_layers = tq.QuantumModuleList()
+            self.crx_layers = tq.QuantumModuleList()
+            self.cry_layers = tq.QuantumModuleList()
+            self.crz_layers = tq.QuantumModuleList()
+
+            for k in range(configs.model.q_fc10.n_layers):
+                self.rx_layers.append(
+                    tq.Op1QAllLayer(op=tq.RX, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.ry_layers.append(
+                    tq.Op1QAllLayer(op=tq.RY, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.rz_layers.append(
+                    tq.Op1QAllLayer(op=tq.RZ, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.crx_layers.append(
+                    tq.Op2QAllLayer(op=tq.CRX, n_wires=self.n_wires,
+                                    has_params=True, trainable=True,
+                                    circular=True))
+                self.cry_layers.append(
+                    tq.Op2QAllLayer(op=tq.CRY, n_wires=self.n_wires,
+                                    has_params=True, trainable=True,
+                                    circular=True))
+                self.crz_layers.append(
+                    tq.Op2QAllLayer(op=tq.CRZ, n_wires=self.n_wires,
+                                    has_params=True, trainable=True,
+                                    circular=True))
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice, x):
+            self.q_device = q_device
+            self.encoder(self.q_device, x)
+
+            for k in range(configs.model.q_fc10.n_layers):
+                self.rx_layers[k](self.q_device)
+                self.ry_layers[k](self.q_device)
+                self.rz_layers[k](self.q_device)
+                self.crx_layers[k](self.q_device)
+                self.cry_layers[k](self.q_device)
+                self.crz_layers[k](self.q_device)
 
     def __init__(self):
         super().__init__()
@@ -858,5 +933,6 @@ model_dict = {
     'q_fc7': QFCModel7,
     'q_fc8': QFCModel8,
     'q_fc9': QFCModel9,
+    'q_fc10': QFCModel10,
     'q_qsvt0': QSVT0,
 }
