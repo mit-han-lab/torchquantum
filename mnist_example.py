@@ -141,13 +141,14 @@ def main():
 
     model = QFCModel().to(device)
 
-    n_epochs = 5
+    n_epochs = 30
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
-    static_mode = False
+    static_mode = True
     if static_mode:
         # optionally to switch to the static mode, which may bring speedup
+        # on training
         model.q_layer.static_on(wires_per_block=2)
 
     for epoch in range(1, n_epochs + 1):
