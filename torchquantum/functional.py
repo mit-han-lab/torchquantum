@@ -355,9 +355,9 @@ def crz_matrix(params):
 
 
 def crot_matrix(params):
-    phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
-    theta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
-    omega = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 0].type(C_DTYPE)
+    theta = params[:, 1].type(C_DTYPE)
+    omega = params[:, 2].type(C_DTYPE)
 
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
@@ -368,10 +368,10 @@ def crot_matrix(params):
                            [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
                           ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
 
-    matrix[:, 2, 2] = (torch.exp(-0.5j * (phi + omega)) * co)[:, 0]
-    matrix[:, 2, 3] = (-torch.exp(0.5j * (phi - omega)) * si)[:, 0]
-    matrix[:, 3, 2] = (torch.exp(-0.5j * (phi - omega)) * si)[:, 0]
-    matrix[:, 3, 3] = (torch.exp(0.5j * (phi + omega)) * co)[:, 0]
+    matrix[:, 2, 2] = (torch.exp(-0.5j * (phi + omega)) * co)
+    matrix[:, 2, 3] = (-torch.exp(0.5j * (phi - omega)) * si)
+    matrix[:, 3, 2] = (torch.exp(-0.5j * (phi - omega)) * si)
+    matrix[:, 3, 3] = (torch.exp(0.5j * (phi + omega)) * co)
 
     return matrix.squeeze(0)
 
