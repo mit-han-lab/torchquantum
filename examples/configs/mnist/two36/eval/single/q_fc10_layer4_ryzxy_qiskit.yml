@@ -1,0 +1,10 @@
+model:
+  name: q_fc10
+  q_fc10:
+    n_layers: 4
+    encoder:
+      name: ryzxy
+
+qiskit:
+  use_qiskit: True
+  use_real_qc: False
