@@ -16,6 +16,58 @@ class Encoder(tq.QuantumModule):
         raise NotImplementedError
 
 
+class GeneralEncoder(Encoder, metaclass=ABCMeta):
+    """func_list list of dict
+    Example 1:
+    [
+    {'input_idx': [0], 'func': 'rx', 'wires': [0]}
+    {'input_idx': [1], 'func': 'rx', 'wires': [1]}
+    {'input_idx': [2], 'func': 'rx', 'wires': [2]}
+    {'input_idx': [3], 'func': 'rx', 'wires': [3]}
+    {'input_idx': [4], 'func': 'ry', 'wires': [0]}
+    {'input_idx': [5], 'func': 'ry', 'wires': [1]}
+    {'input_idx': [6], 'func': 'ry', 'wires': [2]}
+    {'input_idx': [7], 'func': 'ry', 'wires': [3]}
+    {'input_idx': [8], 'func': 'rz', 'wires': [0]}
+    {'input_idx': [9], 'func': 'rz', 'wires': [1]}
+    {'input_idx': [10], 'func': 'rz', 'wires': [2]}
+    {'input_idx': [11], 'func': 'rz', 'wires': [3]}
+    {'input_idx': [12], 'func': 'rx', 'wires': [0]}
+    {'input_idx': [13], 'func': 'rx', 'wires': [1]}
+    {'input_idx': [14], 'func': 'rx', 'wires': [2]}
+    {'input_idx': [15], 'func': 'rx', 'wires': [3]}
+    ]
+
+    Example 2:
+    [
+    {'input_idx': [0, 1, 2], 'func': 'u3', 'wires': [0]}
+    {'input_idx': [3], 'func': 'u1', 'wires': [0]}
+    {'input_idx': [4, 5, 6], 'func': 'u3', 'wires': [1]}
+    {'input_idx': [7], 'func': 'u1', 'wires': [1]}
+    {'input_idx': [8, 9, 10], 'func': 'u3', 'wires': [2]}
+    {'input_idx': [11], 'func': 'u1', 'wires': [2]}
+    {'input_idx': [12, 13, 14], 'func': 'u3', 'wires': [3]}
+    {'input_idx': [15], 'func': 'u1', 'wires': [3]}
+    ]
+    """
+    def __init__(self, func_list):
+        super().__init__()
+        self.func_list = func_list
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice, x):
+        self.q_device = q_device
+        self.q_device.reset_states(x.shape[0])
+        for info in self.func_list:
+            func_name_dict[info['func']](
+                self.q_device,
+                wires=info['wires'],
+                params=x[:, info['input_idx']],
+                static=self.static_mode,
+                parent_graph=self.graph
+            )
+
+
 class PhaseEncoder(Encoder, metaclass=ABCMeta):
     def __init__(self, func):
         super().__init__()
