@@ -190,7 +190,7 @@ def make_callbacks(dataflow):
         elif config['callback'] == 'SaverRestore':
             callback = SaverRestore()
         elif config['callback'] == 'Saver':
-            callback = Saver()
+            callback = Saver(max_to_keep=config['max_to_keep'])
         elif config['callback'] == 'MaxSaver':
             callback = MaxSaver(config['name'])
         else:

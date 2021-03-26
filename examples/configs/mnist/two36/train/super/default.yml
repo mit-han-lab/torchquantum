@@ -52,3 +52,5 @@ callbacks:
         name: 'loss/largest_test'
   - callback: 'MaxSaver'
     name: 'acc/largest_valid'
+  - callback: 'Saver'
+    max_to_keep: 10
