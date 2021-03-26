@@ -1065,7 +1065,7 @@ class QFCModel12(tq.QuantumModule):
                                     circular=True))
 
         @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice, x):
+        def forward(self, q_device: tq.QuantumDevice):
             self.q_device = q_device
 
             for k in range(configs.model.q_fc12.n_layers):
@@ -1106,7 +1106,7 @@ class QFCModel12(tq.QuantumModule):
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         self.encoder(self.q_device, x)
 
-        self.q_layer(self.q_device, x)
+        self.q_layer(self.q_device)
         x = self.measure(self.q_device)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
@@ -1118,8 +1118,8 @@ class QFCModel12(tq.QuantumModule):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        x = self.qiskit_processor.process(
-            self.q_device, self.q_layer, x)
+        x = self.qiskit_processor.process_parameterized(
+            self.q_device, self.encoder, self.q_layer, x)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
