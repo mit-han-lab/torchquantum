@@ -157,7 +157,8 @@ class SuperQTrainer(Trainer):
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.sample_arch = None
-        self.arch_sampler = ArchSampler(model)
+        self.arch_sampler = ArchSampler(model,
+                                        configs.es.sampler.strategy.dict())
 
     def _before_epoch(self) -> None:
         self.model.train()
