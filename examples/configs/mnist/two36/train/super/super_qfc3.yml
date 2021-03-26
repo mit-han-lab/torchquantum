@@ -1,2 +1,8 @@
 model:
   name: super_qfc3
+  super_qfc3:
+    n_blocks: 4
+    n_front_share_blocks: 2
+    n_front_share_wires: 2
+    n_front_share_ops: 2
+

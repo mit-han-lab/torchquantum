@@ -2,6 +2,8 @@ import torchquantum as tq
 import torchquantum.functional as tqf
 import torch.nn.functional as F
 
+from torchpack.utils.config import configs
+
 
 class SuperQFCModel0(tq.QuantumModule):
     def __init__(self):
@@ -228,58 +230,71 @@ class SuperQFCModel3(tq.QuantumModule):
             self.n_wires = n_wires
 
             self.super_layers_all = tq.QuantumModuleList()
+            self.n_blocks = configs.model.super_qfc3.n_blocks
+            self.n_front_share_wires = \
+                configs.model.super_qfc3.n_front_share_wires
+            self.n_front_share_ops = \
+                configs.model.super_qfc3.n_front_share_ops
+            self.n_front_share_blocks = \
+                configs.model.super_qfc3.n_front_share_blocks
 
-            for k in range(4):
+            for k in range(self.n_blocks):
                 self.super_layers_all.append(
-                    tq.Super1QShareFrontLayer(op=tq.RX, n_wires=self.n_wires,
-                                              n_front_share_wires=2,
-                                              has_params=True, trainable=True))
+                    tq.Super1QShareFrontLayer(
+                        op=tq.RX, n_wires=self.n_wires,
+                        n_front_share_wires=self.n_front_share_wires,
+                        has_params=True, trainable=True))
                 self.super_layers_all.append(
-                    tq.Super1QShareFrontLayer(op=tq.RY, n_wires=self.n_wires,
-                                              n_front_share_wires=2,
-                                              has_params=True, trainable=True))
+                    tq.Super1QShareFrontLayer(
+                        op=tq.RY, n_wires=self.n_wires,
+                        n_front_share_wires=self.n_front_share_wires,
+                        has_params=True, trainable=True))
                 self.super_layers_all.append(
-                    tq.Super1QShareFrontLayer(op=tq.RZ, n_wires=self.n_wires,
-                                              n_front_share_wires=2,
-                                              has_params=True, trainable=True))
+                    tq.Super1QShareFrontLayer(
+                        op=tq.RZ, n_wires=self.n_wires,
+                        n_front_share_wires=self.n_front_share_wires,
+                        has_params=True, trainable=True))
                 self.super_layers_all.append(
-                    tq.Super2QAllShareFrontLayer(op=tq.CRX,
-                                                 n_wires=self.n_wires,
-                                                 n_front_share_ops=2,
-                                                 has_params=True,
-                                                 trainable=True,
-                                                 jump=1,
-                                                 circular=True,
-                                                 ))
+                    tq.Super2QAllShareFrontLayer(
+                        op=tq.CRX,
+                        n_wires=self.n_wires,
+                        n_front_share_ops=self.n_front_share_ops,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
                 self.super_layers_all.append(
-                    tq.Super2QAllShareFrontLayer(op=tq.CRY,
-                                                 n_wires=self.n_wires,
-                                                 n_front_share_ops=2,
-                                                 has_params=True,
-                                                 trainable=True,
-                                                 jump=1,
-                                                 circular=True,
-                                                 ))
+                    tq.Super2QAllShareFrontLayer(
+                        op=tq.CRY,
+                        n_wires=self.n_wires,
+                        n_front_share_ops=self.n_front_share_ops,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
                 self.super_layers_all.append(
-                    tq.Super2QAllShareFrontLayer(op=tq.CRZ,
-                                                 n_wires=self.n_wires,
-                                                 n_front_share_ops=2,
-                                                 has_params=True,
-                                                 trainable=True,
-                                                 jump=1,
-                                                 circular=True,
-                                                 ))
+                    tq.Super2QAllShareFrontLayer(
+                        op=tq.CRZ,
+                        n_wires=self.n_wires,
+                        n_front_share_ops=self.n_front_share_ops,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
+            self.sample_n_blocks = None
 
         def set_sample_arch(self, sample_arch):
-            for k, layer_arch in enumerate(sample_arch):
+            for k, layer_arch in enumerate(sample_arch[:-1]):
                 self.super_layers_all[k].set_sample_arch(layer_arch)
+            self.sample_n_blocks = sample_arch[-1]
 
         @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice, x):
+        def forward(self, q_device: tq.QuantumDevice):
             self.q_device = q_device
 
             for k in range(len(self.super_layers_all)):
-                self.super_layers_all[k](self.q_device)
+                if k < self.sample_n_blocks * 6:
+                    self.super_layers_all[k](self.q_device)
 
     def __init__(self):
         super().__init__()
@@ -314,7 +329,7 @@ class SuperQFCModel3(tq.QuantumModule):
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         self.encoder(self.q_device, x)
 
-        self.q_layer(self.q_device, x)
+        self.q_layer(self.q_device)
         x = self.measure(self.q_device).reshape(bsz, 2, 2)
 
         x = x.sum(-1).squeeze()
@@ -340,6 +355,11 @@ class SuperQFCModel3(tq.QuantumModule):
         space = []
         for layer in self.q_layer.super_layers_all:
             space.append(layer.arch_space)
+
+        # for the number of sampled blocks
+        space.append(list(range(self.q_layer.n_front_share_blocks,
+                                self.q_layer.n_blocks + 1)))
+
         return space
 
 
