@@ -12,7 +12,7 @@ from torchquantum.utils import switch_little_big_endian_matrix
 from typing import Iterable
 
 
-__all__ = ['tq2qiskit']
+__all__ = ['tq2qiskit', 'tq2qiskit_parameterized']
 
 
 # construct a QuantumCircuit object according to the tq module
