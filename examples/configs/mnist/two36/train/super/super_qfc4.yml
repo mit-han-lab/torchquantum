@@ -1,0 +1,5 @@
+model:
+  name: super_qfc4
+  arch:
+    n_blocks: 4
+    n_front_share_blocks: 2
