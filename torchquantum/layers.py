@@ -252,7 +252,6 @@ class Op1QAllLayer(tq.QuantumModule):
         super().__init__()
         self.n_wires = n_wires
         self.op = op
-        self.sample_wires = None
         self.ops_all = tq.QuantumModuleList()
         for k in range(n_wires):
             self.ops_all.append(op(has_params=has_params,
@@ -287,7 +286,6 @@ class Op2QAllLayer(tq.QuantumModule):
         self.jump = jump
         self.circular = circular
         self.op = op
-        self.sample_wire_pairs = []
         self.ops_all = tq.QuantumModuleList()
 
         # reverse the wires, for example from [1, 2] to [2, 1]
@@ -318,7 +316,6 @@ class Op2QButterflyLayer(tq.QuantumModule):
         super().__init__()
         self.n_wires = n_wires
         self.op = op
-        self.sample_wire_pairs = []
         self.ops_all = tq.QuantumModuleList()
 
         # reverse the wires, for example from [1, 2] to [2, 1]
@@ -349,7 +346,6 @@ class Op2QDenseLayer(tq.QuantumModule):
         super().__init__()
         self.n_wires = n_wires
         self.op = op
-        self.sample_wire_pairs = []
         self.ops_all = tq.QuantumModuleList()
 
         # reverse the wires, for example from [1, 2] to [2, 1]
