@@ -2,30 +2,35 @@ import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
 import qiskit.circuit.library.standard_gates as qiskit_gate
+import numpy as np
 
 from qiskit import QuantumCircuit
 from qiskit import Aer, execute
+from qiskit.circuit import Parameter
 from torchpack.utils.logging import logger
-from torchquantum.utils import switch_little_big_endian_matrix
+from torchquantum.utils import (switch_little_big_endian_matrix,
+                                find_global_phase)
+from typing import Iterable
 
 
-__all__ = ['tq2qiskit']
+__all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq']
 
 
 # construct a QuantumCircuit object according to the tq module
-def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
+def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
+              draw=False):
     # build the module list without changing the statevector of QuantumDevice
     original_wires_per_block = m.wires_per_block
     original_static_mode = m.static_mode
     m.static_off()
-    m.static_on(wires_per_block=m.q_device.n_wires)
+    m.static_on(wires_per_block=q_device.n_wires)
     m.is_graph_top = False
 
     # forward to register all modules and parameters
     if x is None:
-        m.forward(m.q_device)
+        m.forward(q_device)
     else:
-        m.forward(m.q_device, x)
+        m.forward(q_device, x)
 
     m.is_graph_top = True
     m.graph.build_flat_module_list()
@@ -36,7 +41,7 @@ def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
     if original_static_mode:
         m.static_on(wires_per_block=original_wires_per_block)
 
-    circ = QuantumCircuit(m.q_device.n_wires, m.q_device.n_wires)
+    circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
 
     for module in module_list:
         try:
@@ -89,10 +94,14 @@ def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
             circ.crz(module.params[0][0].item(), *module.wires)
         elif module.name == 'U1':
             circ.u1(module.params[0][0].item(), *module.wires)
+        elif module.name == 'CU1':
+            circ.cu1(module.params[0][0].item(), *module.wires)
         elif module.name == 'U2':
             circ.u2(*list(module.params[0].data.numpy()), *module.wires)
         elif module.name == 'U3':
             circ.u3(*list(module.params[0].data.numpy()), *module.wires)
+        elif module.name == 'CU3':
+            circ.cu3(*list(module.params[0].data.numpy()), *module.wires)
         elif module.name == 'QubitUnitary' or \
                 module.name == 'QubitUnitaryFast' or \
                 module.name == 'TrainableUnitary' or \
@@ -124,6 +133,168 @@ def tq2qiskit(m: tq.QuantumModule, x=None, draw=False):
         circ.draw()
         plt.show()
     return circ
+
+
+def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
+    """
+    construct parameterized qiskit QuantumCircuit,
+    useful in the classical-quantum encoder
+    """
+    circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+
+    params = {}
+    for info in func_list:
+        input_idx = info['input_idx']
+        for idx in input_idx:
+            param = Parameter(f"param{idx}")
+            params[idx] = param
+
+        func = info['func']
+        wires = info['wires']
+        wires = wires if isinstance(wires, Iterable) else [wires]
+
+        if func == 'rx':
+            circ.rx(theta=params[input_idx[0]], qubit=wires[0])
+        elif func == 'ry':
+            circ.ry(theta=params[input_idx[0]], qubit=wires[0])
+        elif func == 'rz':
+            circ.rz(phi=params[input_idx[0]], qubit=wires[0])
+        elif func == 'phaseshift':
+            circ.p(theta=params[input_idx[0]], qubit=wires[0])
+        elif func == 'crx':
+            circ.crx(theta=params[input_idx[0]], control_qubit=wires[0],
+                     target_qubit=wires[1])
+        elif func == 'cry':
+            circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
+                     target_qubit=wires[1])
+        elif func == 'crz':
+            circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
+                     target_qubit=wires[1])
+        elif func == 'u1':
+            circ.p(theta=params[input_idx[0]], qubit=wires[0])
+        elif func == 'cu1':
+            circ.cu1(theta=params[input_idx[0]], control_qubit=wires[0],
+                     target_qubit=wires[1])
+        elif func == 'u2':
+            circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]],
+                    qubit=wires[0])
+        elif func == 'u3':
+            circ.u3(theta=params[input_idx[0]], phi=params[input_idx[1]],
+                    lam=params[input_idx[2]], qubit=wires[0])
+        elif func == 'cu3':
+            circ.cu3(theta=params[input_idx[0]], phi=params[input_idx[1]],
+                     lam=params[input_idx[2]], qubit=wires[0])
+        else:
+            raise NotImplementedError(f"{func} cannot be converted to "
+                                      f"parameterized Qiskit QuantumCircuit")
+
+    return circ, params
+
+
+class GeneratedQuantumModule(tq.QuantumModule):
+    def __init__(self, ops):
+        super().__init__()
+        self.ops = tq.QuantumModuleList(ops)
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        for op in self.ops:
+            op(q_device)
+
+
+# construct a tq QuantumModule object according to the qiskit QuantumCircuit
+# object
+def qiskit2tq(circ: QuantumCircuit):
+    ops = []
+    for gate in circ.data:
+        op_name = gate[0].name
+        wires = list(map(lambda x: x.index, gate[1]))
+        init_params = gate[0].params if len(gate[0].params) > 0 else None
+
+        if op_name in ['h',
+                       'x',
+                       'y',
+                       'z',
+                       's',
+                       't',
+                       'sx',
+                       'cx',
+                       'cz',
+                       'cy',
+                       'swap',
+                       'cswap',
+                       'ccx',
+                       ]:
+            ops.append(tq.op_name_dict[op_name](wires=wires))
+        elif op_name in ['rx',
+                         'ry',
+                         'rz',
+                         'p',
+                         'cp',
+                         'crx',
+                         'cry',
+                         'crz',
+                         'u1',
+                         'cu1',
+                         'u2',
+                         'u3',
+                         'cu3',
+                         'u',
+                         'cu']:
+            ops.append(tq.op_name_dict[op_name](has_params=True,
+                                                trainable=True,
+                                                init_params=init_params,
+                                                wires=wires))
+        else:
+            raise NotImplementedError(
+                f"{op_name} conversion to tq is currently not supported."
+            )
+
+    return GeneratedQuantumModule(ops)
+
+
+def test_qiskit2tq():
+    import pdb
+    pdb.set_trace()
+    n_wires = 4
+    q_dev = tq.QuantumDevice(n_wires=n_wires)
+
+    circ = QuantumCircuit(n_wires, n_wires)
+    circ.h(0)
+    circ.h(0)
+
+    circ.rx(theta=0.1, qubit=2)
+    circ.ry(theta=0.2, qubit=3)
+    circ.rz(phi=0.3, qubit=2)
+    circ.sx(2)
+    circ.sx(3)
+
+    circ.crx(theta=0.4, control_qubit=0, target_qubit=1)
+    circ.cnot(control_qubit=2, target_qubit=1)
+
+    circ.u3(theta=-0.1, phi=-0.2, lam=-0.4, qubit=3)
+    circ.cnot(control_qubit=3, target_qubit=0)
+    circ.cnot(control_qubit=0, target_qubit=2)
+    circ.x(2)
+    circ.x(3)
+    circ.u2(phi=-0.2, lam=-0.9, qubit=3)
+    circ.x(0)
+
+    m = qiskit2tq(circ)
+
+    simulator = Aer.get_backend('unitary_simulator')
+    result = execute(circ, simulator).result()
+    unitary_qiskit = result.get_unitary(circ)
+
+    unitary_tq = m.get_unitary(q_dev)
+    unitary_tq = switch_little_big_endian_matrix(unitary_tq.data.numpy())
+
+    circ_from_m = tq2qiskit(q_dev, m)
+    assert circ_from_m == circ
+
+    phase = find_global_phase(unitary_tq, unitary_qiskit, 1e-4)
+
+    assert np.allclose(unitary_tq * phase, unitary_qiskit, atol=1e-6)
 
 
 class T00(tq.QuantumModule):
@@ -224,7 +395,46 @@ class TestModule(tq.QuantumModule):
         # self.gate4(q_device, wires=5)
 
 
-if __name__ == '__main__':
+class TestModuleParameterized(tq.QuantumModule):
+    def __init__(self):
+        super().__init__()
+        # self.func_list = [
+        #     {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+        #     {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+        #     {'input_idx': [2], 'func': 'ry', 'wires': [2]},
+        #     {'input_idx': [3], 'func': 'ry', 'wires': [3]},
+        #     {'input_idx': [4], 'func': 'rz', 'wires': [0]},
+        #     {'input_idx': [5], 'func': 'rz', 'wires': [1]},
+        #     {'input_idx': [6], 'func': 'rz', 'wires': [2]},
+        #     {'input_idx': [7], 'func': 'rz', 'wires': [3]},
+        #     {'input_idx': [8], 'func': 'rx', 'wires': [0]},
+        #     {'input_idx': [9], 'func': 'rx', 'wires': [1]},
+        #     {'input_idx': [10], 'func': 'rx', 'wires': [2]},
+        #     {'input_idx': [11], 'func': 'rx', 'wires': [3]},
+        #     {'input_idx': [12], 'func': 'ry', 'wires': [0]},
+        #     {'input_idx': [13], 'func': 'ry', 'wires': [1]},
+        #     {'input_idx': [14], 'func': 'ry', 'wires': [2]},
+        #     {'input_idx': [15], 'func': 'ry', 'wires': [3]}
+        # ]
+        self.func_list = [
+            {'input_idx': [6, 5, 4], 'func': 'u3', 'wires': [1]},
+            {'input_idx': [7], 'func': 'u1', 'wires': [1]},
+            {'input_idx': [0, 1, 2], 'func': 'u3', 'wires': [0]},
+            {'input_idx': [3], 'func': 'u1', 'wires': [0]},
+            {'input_idx': [8, 9, 10], 'func': 'u3', 'wires': [2]},
+            {'input_idx': [11], 'func': 'u1', 'wires': [2]},
+            {'input_idx': [12, 13, 14], 'func': 'u3', 'wires': [3]},
+            {'input_idx': [15], 'func': 'u1', 'wires': [3]},
+        ]
+        self.encoder = tq.GeneralEncoder(self.func_list)
+
+    @tq.static_support
+    def forward(self, q_device, x):
+        self.q_device = q_device
+        self.encoder(q_device, x)
+
+
+def test_tq2qiskit():
     import pdb
     pdb.set_trace()
     inputs = torch.ones((1, 1)) * 0.42
@@ -242,3 +452,34 @@ if __name__ == '__main__':
 
     print(unitary_qiskit)
     print(unitary_tq)
+    assert np.allclose(unitary_qiskit, unitary_tq, atol=1e-6)
+
+
+def test_tq2qiskit_parameterized():
+    import pdb
+    pdb.set_trace()
+    inputs = torch.randn((1, 16))
+    q_dev = tq.QuantumDevice(n_wires=4)
+    test_module = TestModuleParameterized()
+    test_module(q_dev, inputs)
+    unitary_tq = test_module.get_unitary(q_dev, inputs)
+    unitary_tq = switch_little_big_endian_matrix(unitary_tq.data.numpy())
+
+    circuit, params = tq2qiskit_parameterized(
+        q_dev, test_module.encoder.func_list)
+    binds = {}
+    for k, x in enumerate(inputs[0]):
+        binds[params[k]] = x.item()
+
+    simulator = Aer.get_backend('unitary_simulator')
+    result = execute(circuit, simulator, parameter_binds=[binds]).result()
+    unitary_qiskit = result.get_unitary(circuit)
+
+    # print(unitary_qiskit)
+    # print(unitary_tq)
+    assert np.allclose(unitary_qiskit, unitary_tq, atol=1e-6)
+
+
+if __name__ == '__main__':
+    # test_tq2qiskit_parameterized()
+    test_qiskit2tq()

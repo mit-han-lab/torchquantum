@@ -1,0 +1,14 @@
+model:
+  name: q_fc10
+  q_fc10:
+    n_layers: 4
+
+qiskit:
+  use_qiskit: True
+  use_real_qc: False
+  backend_name: ibmq_santiago
+  noise_model_name: ibmq_santiago
+  coupling_map_name: ibmq_santiago
+  basis_gates_name: ibmq_santiago
+  initial_layout: [0, 1, 2, 3]
+  optimization_level: 1

@@ -3,8 +3,18 @@ import torch
 from torchpack.datasets.dataset import Dataset
 from torchvision import datasets, transforms
 from typing import List
+from torchpack.utils.logging import logger
+from torchvision.transforms import InterpolationMode
+
 
 __all__ = ['MNIST']
+
+
+resize_modes = {
+    'bilinear': InterpolationMode.BILINEAR,
+    'bicubic': InterpolationMode.BICUBIC,
+    'nearest': InterpolationMode.NEAREST,
+}
 
 
 class MNISTDataset:
@@ -14,18 +24,23 @@ class MNISTDataset:
                  train_valid_split_ratio: List[float],
                  center_crop,
                  resize,
+                 resize_mode,
                  binarize,
                  binarize_threshold,
-                 digits_of_interest):
+                 digits_of_interest,
+                 n_test_samples,
+                 ):
         self.root = root
         self.split = split
         self.train_valid_split_ratio = train_valid_split_ratio
         self.data = None
         self.center_crop = center_crop
         self.resize = resize
+        self.resize_mode = resize_modes[resize_mode]
         self.binarize = binarize
         self.binarize_threshold = binarize_threshold
         self.digits_of_interest = digits_of_interest
+        self.n_test_samples = n_test_samples
 
         self.load()
         self.n_instance = len(self.data)
@@ -36,7 +51,8 @@ class MNISTDataset:
         if not self.center_crop == 28:
             tran.append(transforms.CenterCrop(self.center_crop))
         if not self.resize == 28:
-            tran.append(transforms.Resize(self.resize))
+            tran.append(transforms.Resize(self.resize,
+                                          interpolation=self.resize_mode))
         transform = transforms.Compose(tran)
 
         if self.split == 'train' or self.split == 'valid':
@@ -63,8 +79,16 @@ class MNISTDataset:
                                   self.digits_of_interest]).max(dim=0)
             test.targets = test.targets[idx]
             test.data = test.data[idx]
-
-            self.data = test
+            if self.n_test_samples is None:
+                # use all samples as test set
+                self.data = test
+            else:
+                # use a subset as test set
+                test.targets = test.targets[:self.n_test_samples]
+                test.data = test.data[:self.n_test_samples]
+                self.data = test
+                logger.warning(f"Only use the front {self.n_test_samples} "
+                               f"images as test set.")
 
     def __getitem__(self, index: int):
         img = self.data[index][0]
@@ -86,9 +110,11 @@ class MNIST(Dataset):
                  train_valid_split_ratio: List[float],
                  center_crop=28,
                  resize=28,
+                 resize_mode='bilinear',
                  binarize=False,
                  binarize_threshold=0.1307,
                  digits_of_interest=tuple(range(10)),
+                 n_test_samples=None
                  ):
         self.root = root
 
@@ -99,9 +125,11 @@ class MNIST(Dataset):
                 train_valid_split_ratio=train_valid_split_ratio,
                 center_crop=center_crop,
                 resize=resize,
+                resize_mode=resize_mode,
                 binarize=binarize,
                 binarize_threshold=binarize_threshold,
-                digits_of_interest=digits_of_interest
+                digits_of_interest=digits_of_interest,
+                n_test_samples=n_test_samples,
             )
             for split in ['train', 'valid', 'test']
         })
@@ -115,9 +143,11 @@ if __name__ == '__main__':
                          train_valid_split_ratio=[0.9, 0.1],
                          center_crop=28,
                          resize=28,
+                         resize_mode='bilinear',
                          binarize=False,
                          binarize_threshold=0.1307,
-                         digits_of_interest=(3, 6)
+                         digits_of_interest=(3, 6),
+                         n_test_samples=100,
                          )
     mnist.__getitem__(20)
     print('finish')

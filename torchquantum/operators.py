@@ -44,6 +44,9 @@ __all__ = [
     'U1',
     'U2',
     'U3',
+    'CU1',
+    'CU2',
+    'CU3',
     'QubitUnitary',
     'QubitUnitaryFast',
     'TrainableUnitary',
@@ -114,6 +117,9 @@ class Operator(tq.QuantumModule):
         'U1',
         'U2',
         'U3',
+        'CU1',
+        'CU2',
+        'CU3',
         'QubitUnitary',
         'QubitUnitaryFast',
         'TrainableUnitary',
@@ -644,6 +650,16 @@ class U1(DiagonalOperation, metaclass=ABCMeta):
         return tqf.u1_matrix(params)
 
 
+class CU1(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.cu1)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.cu1_matrix(params)
+
+
 class U2(Operation, metaclass=ABCMeta):
     num_params = 2
     num_wires = 1
@@ -654,6 +670,16 @@ class U2(Operation, metaclass=ABCMeta):
         return tqf.u2_matrix(params)
 
 
+class CU2(Operation, metaclass=ABCMeta):
+    num_params = 2
+    num_wires = 2
+    func = staticmethod(tqf.cu2)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.cu2_matrix(params)
+
+
 class U3(Operation, metaclass=ABCMeta):
     num_params = 3
     num_wires = 1
@@ -662,6 +688,16 @@ class U3(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.u3_matrix(params)
+
+
+class CU3(Operation, metaclass=ABCMeta):
+    num_params = 3
+    num_wires = 2
+    func = staticmethod(tqf.cu3)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.cu3_matrix(params)
 
 
 class QubitUnitary(Operation, metaclass=ABCMeta):
@@ -730,13 +766,18 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
 
 op_name_dict = {
     'hadamard': Hadamard,
+    'h': Hadamard,
     'paulix': PauliX,
+    'x': PauliX,
     'pauliy': PauliY,
+    'y': PauliY,
     'pauliz': PauliZ,
+    'z': PauliZ,
     'i': I,
     's': S,
     't': T,
     'sx': SX,
+    'cx': CNOT,
     'cnot': CNOT,
     'cz': CZ,
     'cy': CY,
@@ -746,6 +787,7 @@ op_name_dict = {
     'swap': SWAP,
     'cswap': CSWAP,
     'toffoli': Toffoli,
+    'ccx': Toffoli,
     'phaseshift': PhaseShift,
     'rot': Rot,
     'multirz': MultiRZ,
@@ -754,8 +796,15 @@ op_name_dict = {
     'crz': CRZ,
     'crot': CRot,
     'u1': U1,
+    'p': U1,
     'u2': U2,
     'u3': U3,
+    'u': U3,
+    'cu1': CU1,
+    'cp': CU1,
+    'cu2': CU2,
+    'cu3': CU3,
+    'cu': CU3,
     'qubitunitary': QubitUnitary,
     'qubitunitarystrict': QubitUnitaryFast,
     'qubitunitaryfast': QubitUnitaryFast,

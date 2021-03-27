@@ -1,0 +1,4 @@
+model:
+  name: q_fc9
+  q_fc9:
+    n_layers: 8

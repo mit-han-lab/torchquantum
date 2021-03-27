@@ -1,0 +1,14 @@
+model:
+  name: q_fc5
+  n_random_ops: [30]
+
+run:
+  bsz: qiskit_max
+
+qiskit:
+  use_qiskit: True
+  use_real_qc: True
+  backend: ibmq_lima
+
+dataset:
+  n_test_samples: 100

@@ -9,14 +9,10 @@ import torch.cuda
 import torch.nn
 import torch.utils.data
 from torchpack import distributed as dist
-from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
-                                 Saver, SaverRestore, CategoricalAccuracy)
 from torchpack.environ import auto_set_run_dir, set_run_dir
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
-from core.trainers import QTrainer
-from core.callbacks import LegalInferenceRunner
 
 
 def main() -> None:
@@ -108,27 +104,12 @@ def main() -> None:
         optimizer=optimizer,
         scheduler=scheduler
     )
+    callbacks = builder.make_callbacks(dataflow)
 
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.run.n_epochs,
-        callbacks=[
-            # SaverRestore(),
-            InferenceRunner(
-                dataflow=dataflow['valid'],
-                callbacks=[CategoricalAccuracy(name='acc/valid')]),
-            InferenceRunner(
-                dataflow=dataflow['test'],
-                callbacks=[CategoricalAccuracy(name='acc/test')]),
-            LegalInferenceRunner(
-                dataflow=dataflow['valid'],
-                callbacks=[CategoricalAccuracy(name='acc_legal/valid')]),
-            LegalInferenceRunner(
-                dataflow=dataflow['test'],
-                callbacks=[CategoricalAccuracy(name='acc_legal/test')]),
-            MaxSaver('acc_legal/valid'),
-            # Saver(),
-        ])
+        callbacks=callbacks)
 
 
 if __name__ == '__main__':

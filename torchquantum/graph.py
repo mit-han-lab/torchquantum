@@ -195,7 +195,11 @@ class QuantumGraph(object):
         if module_list is None:
             module_list = self.module_list
         for module in module_list:
-            if len(module.graph.module_list) == 0:
+            if len(module.graph.module_list) == 0 and not \
+                    isinstance(module, tq.Operator):
+                logger.warning(f"Module with no operations exists!")
+            if len(module.graph.module_list) == 0 and isinstance(module,
+                                                                 tq.Operator):
                 # leaf node
                 self.flat_module_list.append(module)
             else:
@@ -265,6 +269,7 @@ class QuantumGraph(object):
             max_schedule = None
             for comb in itertools.combinations(list(range(n_wires)),
                                                min(wires_per_block, n_wires)):
+                comb = list(comb)
                 comb_module_per_block = 0
                 comb_ptrs = module_ptrs.copy()
                 comb_schedule = []

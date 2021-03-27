@@ -1,0 +1,12 @@
+model:
+  name: super_qfc4
+  arch:
+    n_blocks: 4
+    n_front_share_blocks: 2
+    n_layers_per_block: 6
+
+es:
+  sampler:
+    strategy:
+      name: limit_diff
+      n_diffs: 6

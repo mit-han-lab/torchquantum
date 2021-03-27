@@ -1,0 +1,5 @@
+model:
+  name: t_hybrid
+
+dataset:
+  center_crop: 28
