@@ -196,10 +196,10 @@ class QuantumGraph(object):
             module_list = self.module_list
         for module in module_list:
             if len(module.graph.module_list) == 0 and not \
-                    isinstance(module, tq.Operation):
+                    isinstance(module, tq.Operator):
                 logger.warning(f"Module with no operations exists!")
             if len(module.graph.module_list) == 0 and isinstance(module,
-                                                                 tq.Operation):
+                                                                 tq.Operator):
                 # leaf node
                 self.flat_module_list.append(module)
             else:
