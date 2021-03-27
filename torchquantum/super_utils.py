@@ -159,7 +159,7 @@ class ArchSampler(object):
                             break
                     else:
                         raise NotImplementedError(
-                            f"Subspace mode {self.strategy['subspace_mode']} "
+                            f"Direction mode {self.strategy['direction']} "
                             f"not supported.")
                 elif self.strategy['subspace_mode'] == 'same':
                     # the subspace size is the same
@@ -168,15 +168,20 @@ class ArchSampler(object):
                                         current_stage + 1]
                         right = list(reversed(self.n_ops_per_chunk))[
                                         current_stage]
-                    elif self.strategy['direction'] == 'top_down':
+                    elif self.strategy['direction'] == 'bottom_up':
                         left = self.n_ops_per_chunk[current_stage]
                         right = self.n_ops_per_chunk[current_stage + 1]
                     else:
                         raise NotImplementedError(
-                            f"Subspace mode {self.strategy['subspace_mode']} "
+                            f"Direction mode {self.strategy['direction']} "
                             f"not supported.")
+
                     if left <= n_ops <= right:
                         break
+                else:
+                    raise NotImplementedError(
+                        f"Subspace mode {self.strategy['subspace_mode']} "
+                        f"not supported.")
 
         else:
             raise NotImplementedError(f"Strategy {self.strategy} not "
