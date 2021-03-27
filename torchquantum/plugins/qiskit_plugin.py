@@ -8,11 +8,12 @@ from qiskit import QuantumCircuit
 from qiskit import Aer, execute
 from qiskit.circuit import Parameter
 from torchpack.utils.logging import logger
-from torchquantum.utils import switch_little_big_endian_matrix
+from torchquantum.utils import (switch_little_big_endian_matrix,
+                                find_global_phase)
 from typing import Iterable
 
 
-__all__ = ['tq2qiskit', 'tq2qiskit_parameterized']
+__all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq']
 
 
 # construct a QuantumCircuit object according to the tq module
@@ -188,6 +189,112 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
                                       f"parameterized Qiskit QuantumCircuit")
 
     return circ, params
+
+
+class GeneratedQuantumModule(tq.QuantumModule):
+    def __init__(self, ops):
+        super().__init__()
+        self.ops = tq.QuantumModuleList(ops)
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        for op in self.ops:
+            op(q_device)
+
+
+# construct a tq QuantumModule object according to the qiskit QuantumCircuit
+# object
+def qiskit2tq(circ: QuantumCircuit):
+    ops = []
+    for gate in circ.data:
+        op_name = gate[0].name
+        wires = list(map(lambda x: x.index, gate[1]))
+        init_params = gate[0].params if len(gate[0].params) > 0 else None
+
+        if op_name in ['h',
+                       'x',
+                       'y',
+                       'z',
+                       's',
+                       't',
+                       'sx',
+                       'cx',
+                       'cz',
+                       'cy',
+                       'swap',
+                       'cswap',
+                       'ccx',
+                       ]:
+            ops.append(tq.op_name_dict[op_name](wires=wires))
+        elif op_name in ['rx',
+                         'ry',
+                         'rz',
+                         'p',
+                         'cp',
+                         'crx',
+                         'cry',
+                         'crz',
+                         'u1',
+                         'cu1',
+                         'u2',
+                         'u3',
+                         'cu3',
+                         'u',
+                         'cu']:
+            ops.append(tq.op_name_dict[op_name](has_params=True,
+                                                trainable=True,
+                                                init_params=init_params,
+                                                wires=wires))
+        else:
+            raise NotImplementedError(
+                f"{op_name} conversion to tq is currently not supported."
+            )
+
+    return GeneratedQuantumModule(ops)
+
+
+def test_qiskit2tq():
+    import pdb
+    pdb.set_trace()
+    n_wires = 4
+    q_dev = tq.QuantumDevice(n_wires=n_wires)
+
+    circ = QuantumCircuit(n_wires, n_wires)
+    circ.h(0)
+    circ.h(0)
+
+    circ.rx(theta=0.1, qubit=2)
+    circ.ry(theta=0.2, qubit=3)
+    circ.rz(phi=0.3, qubit=2)
+    circ.sx(2)
+    circ.sx(3)
+
+    circ.crx(theta=0.4, control_qubit=0, target_qubit=1)
+    circ.cnot(control_qubit=2, target_qubit=1)
+
+    circ.u3(theta=-0.1, phi=-0.2, lam=-0.4, qubit=3)
+    circ.cnot(control_qubit=3, target_qubit=0)
+    circ.cnot(control_qubit=0, target_qubit=2)
+    circ.x(2)
+    circ.x(3)
+    circ.u2(phi=-0.2, lam=-0.9, qubit=3)
+    circ.x(0)
+
+    m = qiskit2tq(circ)
+
+    simulator = Aer.get_backend('unitary_simulator')
+    result = execute(circ, simulator).result()
+    unitary_qiskit = result.get_unitary(circ)
+
+    unitary_tq = m.get_unitary(q_dev)
+    unitary_tq = switch_little_big_endian_matrix(unitary_tq.data.numpy())
+
+    circ_from_m = tq2qiskit(q_dev, m)
+    assert circ_from_m == circ
+
+    phase = find_global_phase(unitary_tq, unitary_qiskit, 1e-4)
+
+    assert np.allclose(unitary_tq * phase, unitary_qiskit, atol=1e-6)
 
 
 class T00(tq.QuantumModule):
@@ -374,4 +481,5 @@ def test_tq2qiskit_parameterized():
 
 
 if __name__ == '__main__':
-    test_tq2qiskit_parameterized()
+    # test_tq2qiskit_parameterized()
+    test_qiskit2tq()
