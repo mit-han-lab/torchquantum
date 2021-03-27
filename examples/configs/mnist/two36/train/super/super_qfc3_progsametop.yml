@@ -10,5 +10,10 @@ model:
 es:
   sampler:
     strategy:
-      name: limit_diff
-      n_diffs: 3
+      name: progressive
+      n_chunks: 10
+      n_stages: 40
+      subspace_mode: same
+      direction: top_down
+      chunk_mode: same_n_samples
+      n_chunk_est_samples: 10000

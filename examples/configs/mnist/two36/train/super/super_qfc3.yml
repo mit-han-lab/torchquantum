@@ -5,4 +5,5 @@ model:
     n_front_share_blocks: 2
     n_front_share_wires: 2
     n_front_share_ops: 2
+    n_layers_per_block: 6
 

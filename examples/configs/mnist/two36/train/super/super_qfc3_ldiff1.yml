@@ -11,4 +11,4 @@ es:
   sampler:
     strategy:
       name: limit_diff
-      n_diffs: 3
+      n_diffs: 1

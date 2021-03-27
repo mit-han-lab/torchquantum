@@ -1,0 +1,18 @@
+model:
+  name: super_qfc4
+  arch:
+    n_blocks: 4
+    n_front_share_blocks: 2
+    n_layers_per_block: 6
+
+es:
+  sampler:
+    strategy:
+      name: progressive
+      n_chunks: 10
+      n_stages: 40
+      subspace_mode: same
+      direction: top_down
+      chunk_mode: same_n_samples
+      n_chunk_est_samples: 10000
+
