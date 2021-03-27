@@ -19,12 +19,12 @@ def get_combs(inset: List, n=None) -> List[List]:
     if n is None:
         # all possible combinations, with different #elements in a set
         for k in range(1, len(inset) + 1):
-            all_combs.extend(list(itertools.combinations(inset, k)))
+            all_combs.extend(list(map(list, itertools.combinations(inset, k))))
     elif isinstance(n, int):
-        all_combs.extend(list(itertools.combinations(inset, n)))
+        all_combs.extend(list(map(list, itertools.combinations(inset, n))))
     elif isinstance(n, Iterable):
         for k in n:
-            all_combs.extend(list(itertools.combinations(inset, k)))
+            all_combs.extend(list(map(list, itertools.combinations(inset, k))))
 
     return all_combs
 
@@ -89,7 +89,8 @@ class Super2QLayer(SuperQuantumModule):
 
     @property
     def arch_space(self):
-        choices = list(itertools.combinations(list(range(self.n_wires)), 2))
+        choices = list(map(list, itertools.combinations(list(range(
+            self.n_wires)), 2)))
         return get_combs(choices)
 
 
@@ -266,7 +267,7 @@ class Super2QAllLayer(SuperQuantumModule):
             if self.wire_reverse:
                 wires.reverse()
 
-            if wires in self.sample_arch or reversed(wires) in \
+            if wires in self.sample_arch or list(reversed(wires)) in \
                     self.sample_arch:
                 self.ops_all[k](q_device, wires=wires)
 
@@ -275,5 +276,5 @@ class Super2QAllLayer(SuperQuantumModule):
         choices = []
         for k in range(self.n_ops):
             wires = [k, (k + self.jump) % self.n_wires]
-            choices.append(tuple(wires))
+            choices.append(wires)
         return get_combs(choices)
