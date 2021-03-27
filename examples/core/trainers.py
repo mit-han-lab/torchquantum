@@ -157,11 +157,16 @@ class SuperQTrainer(Trainer):
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.sample_arch = None
-        self.arch_sampler = ArchSampler(model,
-                                        configs.es.sampler.strategy.dict())
+        self.arch_sampler = ArchSampler(
+            model=model,
+            strategy=configs.es.sampler.strategy.dict(),
+            n_layers_per_block=configs.model.arch.n_layers_per_block
+        )
 
     def _before_epoch(self) -> None:
         self.model.train()
+        self.arch_sampler.set_total_steps(self.steps_per_epoch *
+                                          self.num_epochs)
 
     def _before_step(self, feed_dict: Dict[str, Any]) -> None:
         self.sample_arch = self.arch_sampler.get_uniform_sample_arch()
@@ -202,6 +207,10 @@ class SuperQTrainer(Trainer):
                 self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
+            self.summary.add_scalar('current_stage',
+                                    self.arch_sampler.current_stage)
+            self.summary.add_scalar('sample_n_ops',
+                                    self.arch_sampler.sample_n_ops)
 
             if configs.regularization.unitary_loss:
                 if configs.regularization.unitary_loss_lambda_trainable:
