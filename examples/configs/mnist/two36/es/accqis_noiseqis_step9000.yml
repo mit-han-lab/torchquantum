@@ -1,8 +1,7 @@
-model:
-  name: super_qfc4
+
 
 qiskit:
-  use_qiskit: False
+  use_qiskit: True
   use_real_qc: False
   backend_name: ibmq_lima
   noise_model_name: ibmq_lima
@@ -17,19 +16,24 @@ qiskit:
 dataset:
   n_test_samples: null
 
+legalize_unitary: True
+
 es:
   population_size: 10
   parent_size: 4
   mutation_size: 3
   mutation_prob: 0.3
   crossover_size: 3
-  n_iterations: 1
-  est_success_rate: True
+  n_iterations: 20
+  est_success_rate: False
   eval:
     use_noise_model: True
     use_real_qc: True
     bsz: qiskit_max
     n_test_samples: 75
+
+run:
+  bsz: 1968
 
 ckpt:
   name: 'checkpoints/step-9000.pt'

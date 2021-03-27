@@ -121,6 +121,9 @@ def main() -> None:
     if args.gpu is not None:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+    # if use qiskit, then not need to estimate success rate
+    assert not (configs.es.est_success_rate and configs.qiskit.use_qiskit)
+
     if configs.run.device == 'gpu':
         device = torch.device('cuda')
     elif configs.run.device == 'cpu':
