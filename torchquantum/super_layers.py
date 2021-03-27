@@ -272,5 +272,8 @@ class Super2QAllLayer(SuperQuantumModule):
 
     @property
     def arch_space(self):
-        choices = list(itertools.combinations(list(range(self.n_wires)), 2))
+        choices = []
+        for k in range(self.n_ops):
+            wires = [k, (k + self.jump) % self.n_wires]
+            choices.append(tuple(wires))
         return get_combs(choices)
