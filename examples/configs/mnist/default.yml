@@ -92,3 +92,9 @@ es:
     use_real_qc: False
     bsz: qiskit_max
     n_test_samples: 75
+
+model:
+  name: null
+  arch:
+    n_layers_per_block: null
+

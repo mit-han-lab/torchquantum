@@ -372,6 +372,7 @@ class SuperQFCModel4(tq.QuantumModule):
 
             self.super_layers_all = tq.QuantumModuleList()
             self.n_blocks = configs.model.arch.n_blocks
+            self.n_layers_per_block = configs.model.arch.n_layers_per_block
             self.n_front_share_blocks = \
                 configs.model.arch.n_front_share_blocks
 
@@ -424,7 +425,7 @@ class SuperQFCModel4(tq.QuantumModule):
             self.q_device = q_device
 
             for k in range(len(self.super_layers_all)):
-                if k < self.sample_n_blocks * 6:
+                if k < self.sample_n_blocks * self.n_layers_per_block:
                     self.super_layers_all[k](self.q_device)
 
     def __init__(self):
