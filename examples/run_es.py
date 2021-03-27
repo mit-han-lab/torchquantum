@@ -5,13 +5,15 @@ import torch
 import torch.backends.cudnn
 import tqdm
 import torch.nn.functional as F
+import copy
+import torchquantum as tq
 
 from torchpack.utils import io
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import legalize_unitary
-from torchquantum.plugins import tq2qiskit
+from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from qiskit import IBMQ
 from core.tools import EvolutionEngine
 from qiskit.providers.aer.noise.device.parameters import gate_error_values
@@ -80,7 +82,10 @@ def evaluate_all(model, dataflow, solutions):
         loss = F.nll_loss(output_all, target_all).item()
 
         if configs.es.est_success_rate:
-            circ = tq2qiskit(model.q_layer, torch.randn(1, 16))
+            circ_parameterized, params = tq2qiskit_parameterized(
+                model.q_device, model.encoder.func_list)
+            circ_fixed = tq2qiskit(model.q_device, model.q_layer)
+            circ = circ_parameterized + circ_fixed
             transpiled_circ = model.qiskit_processor.transpile(circ)
 
             success_rate = get_success_rate(
@@ -143,13 +148,18 @@ def main() -> None:
     state_dict = io.load(
         os.path.join(args.run_dir, 'checkpoints', 'max-acc-largest_valid.pt'),
         map_location=device)
-    model = state_dict['model_arch']
+    model_load = state_dict['model_arch']
+    model = builder.make_model()
+    for module_load, module in zip(model_load.modules(), model.modules()):
+        if isinstance(module, tq.RandomLayer):
+            # random layer, need to restore the architecture
+            module.op_list = copy.deepcopy(module_load.op_list)
 
     if configs.legalize_unitary:
         legalize_unitary(model)
     model.to(device)
     model.eval()
-    model.load_state_dict(state_dict['model'])
+    model.load_state_dict(state_dict['model'], strict=False)
     es_dir = 'es_runs/' + args.config.replace('/', '.').replace(
         'examples.', '').replace('.yml', '').replace('configs.', '')
     io.save(os.path.join(es_dir, 'metainfo/configs.yaml'), configs.dict())
