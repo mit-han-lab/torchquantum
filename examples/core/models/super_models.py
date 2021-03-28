@@ -2,8 +2,6 @@ import torchquantum as tq
 import torchquantum.functional as tqf
 import torch.nn.functional as F
 
-from torchpack.utils.config import configs
-
 
 class SuperQFCModel0(tq.QuantumModule):
     def __init__(self):
@@ -225,18 +223,16 @@ class SuperQFCModel2(tq.QuantumModule):
 
 class SuperQFCModel3(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
-        def __init__(self, n_wires):
+        def __init__(self, n_wires, arch):
             super().__init__()
             self.n_wires = n_wires
+            self.arch = arch
 
             self.super_layers_all = tq.QuantumModuleList()
-            self.n_blocks = configs.model.arch.n_blocks
-            self.n_front_share_wires = \
-                configs.model.arch.n_front_share_wires
-            self.n_front_share_ops = \
-                configs.model.arch.n_front_share_ops
-            self.n_front_share_blocks = \
-                configs.model.arch.n_front_share_blocks
+            self.n_blocks = arch['n_blocks']
+            self.n_front_share_wires = arch['n_front_share_wires']
+            self.n_front_share_ops = arch['n_front_share_ops']
+            self.n_front_share_blocks = arch['n_front_share_blocks']
 
             for k in range(self.n_blocks):
                 self.super_layers_all.append(
@@ -296,8 +292,9 @@ class SuperQFCModel3(tq.QuantumModule):
                 if k < self.sample_n_blocks * 6:
                     self.super_layers_all[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
         self.encoder = tq.GeneralEncoder([
@@ -318,7 +315,7 @@ class SuperQFCModel3(tq.QuantumModule):
             {'input_idx': [14], 'func': 'ry', 'wires': [2]},
             {'input_idx': [15], 'func': 'ry', 'wires': [3]}
         ])
-        self.q_layer = self.QLayer(n_wires=self.n_wires)
+        self.q_layer = self.QLayer(n_wires=self.n_wires, arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def set_sample_arch(self, sample_arch):
@@ -366,15 +363,15 @@ class SuperQFCModel3(tq.QuantumModule):
 class SuperQFCModel4(tq.QuantumModule):
     """different from model3: no share front"""
     class QLayer(tq.QuantumModule):
-        def __init__(self, n_wires):
+        def __init__(self, n_wires, arch):
             super().__init__()
             self.n_wires = n_wires
+            self.arch = arch
 
             self.super_layers_all = tq.QuantumModuleList()
-            self.n_blocks = configs.model.arch.n_blocks
-            self.n_layers_per_block = configs.model.arch.n_layers_per_block
-            self.n_front_share_blocks = \
-                configs.model.arch.n_front_share_blocks
+            self.n_blocks = arch['n_blocks']
+            self.n_layers_per_block = arch['n_layers_per_block']
+            self.n_front_share_blocks = arch['n_front_share_blocks']
 
             for k in range(self.n_blocks):
                 self.super_layers_all.append(
@@ -428,9 +425,10 @@ class SuperQFCModel4(tq.QuantumModule):
                 if k < self.sample_n_blocks * self.n_layers_per_block:
                     self.super_layers_all[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
         self.n_wires = 4
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
         self.encoder = tq.GeneralEncoder([
             {'input_idx': [0], 'func': 'ry', 'wires': [0]},
@@ -450,7 +448,7 @@ class SuperQFCModel4(tq.QuantumModule):
             {'input_idx': [14], 'func': 'ry', 'wires': [2]},
             {'input_idx': [15], 'func': 'ry', 'wires': [3]}
         ])
-        self.q_layer = self.QLayer(n_wires=self.n_wires)
+        self.q_layer = self.QLayer(n_wires=self.n_wires, arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def set_sample_arch(self, sample_arch):

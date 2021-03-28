@@ -47,13 +47,13 @@ def make_model() -> nn.Module:
         model = model_dict[configs.model.name]()
     elif configs.model.name.startswith('q_'):
         from .models.q_models import model_dict
-        model = model_dict[configs.model.name]()
+        model = model_dict[configs.model.name](arch=configs.model.arch)
     elif configs.model.name == 'layer_regression':
         from .models import LayerRegression
         model = LayerRegression()
     elif configs.model.name.startswith('super_'):
         from .models.super_models import model_dict
-        model = model_dict[configs.model.name]()
+        model = model_dict[configs.model.name](arch=configs.model.arch)
     else:
         raise NotImplementedError(configs.model.name)
 

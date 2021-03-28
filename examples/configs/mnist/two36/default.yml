@@ -1,2 +1,6 @@
 dataset:
   digits_of_interest: [3, 6]
+
+model:
+  arch:
+    output_len: 2
