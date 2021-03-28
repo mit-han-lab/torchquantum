@@ -135,17 +135,37 @@ class Operator(tq.QuantumModule):
     def name(self, value):
         self._name = value
 
-    def __init__(self, wires=None):
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None,
+                 n_wires=None,
+                 wires=None):
         super().__init__()
         self.params = None
         # number of wires of the operator
-        self.n_wires = None
+        # n_wires is used in gates that can be applied to arbitrary number
+        # of qubits such as MultiRZ
+        self.n_wires = n_wires
         # wires that the operator applies to
         self.wires = wires
         self._name = self.__class__.__name__
         # for static mode
         self.static_matrix = None
         self.inverse = False
+
+        try:
+            assert not (trainable and not has_params)
+        except AssertionError:
+            has_params = True
+            logger.warning(f"Module must have parameters to be trainable; "
+                           f"Switched 'has_params' to True.")
+
+        self.has_params = has_params
+        self.trainable = trainable
+        if self.has_params:
+            self.params = self.build_params(trainable=self.trainable)
+            self.reset_params(init_params)
 
     @classmethod
     def _matrix(cls, params):
@@ -221,8 +241,19 @@ class Operator(tq.QuantumModule):
 
 
 class Observable(Operator, metaclass=ABCMeta):
-    def __init__(self, wires=None):
-        super().__init__(wires=wires)
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None,
+                 n_wires=None,
+                 wires=None):
+        super().__init__(
+            has_params=has_params,
+            trainable=trainable,
+            init_params=init_params,
+            n_wires=n_wires,
+            wires=wires
+        )
         self.return_type = None
 
     def diagonalizing_gates(self):
@@ -236,24 +267,13 @@ class Operation(Operator, metaclass=ABCMeta):
                  init_params=None,
                  n_wires=None,
                  wires=None):
-        # n_wires is used in gates that can be applied to arbitrary number
-        # of qubits such as MultiRZ
-        super().__init__(wires=wires)
-
-        try:
-            assert not (trainable and not has_params)
-        except AssertionError:
-            has_params = True
-            logger.warning(f"Module must have parameters to be trainable; "
-                           f"Switched 'has_params' to True.")
-
-        self.has_params = has_params
-        self.trainable = trainable
-        self.n_wires = n_wires
-        self.wires = wires
-        if self.has_params:
-            self.params = self.build_params(trainable=self.trainable)
-            self.reset_params(init_params)
+        super().__init__(
+            has_params=has_params,
+            trainable=trainable,
+            init_params=init_params,
+            n_wires=n_wires,
+            wires=wires
+        )
 
     @property
     def matrix(self):
@@ -302,7 +322,7 @@ class DiagonalOperation(Operation, metaclass=ABCMeta):
         return torch.diag(cls._eigvals(params))
 
 
-class Hadamard(Observable, Operation, metaclass=ABCMeta):
+class Hadamard(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
