@@ -305,7 +305,7 @@ class Operation(Operator, metaclass=ABCMeta):
             else:
                 torch.nn.init.constant_(self.params, init_params)
         else:
-            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+            torch.nn.init.uniform_(self.params, -np.pi, np.pi)
 
 
 class DiagonalOperation(Operation, metaclass=ABCMeta):
