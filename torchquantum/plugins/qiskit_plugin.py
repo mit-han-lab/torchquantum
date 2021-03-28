@@ -191,17 +191,6 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
     return circ, params
 
 
-class GeneratedQuantumModule(tq.QuantumModule):
-    def __init__(self, ops):
-        super().__init__()
-        self.ops = tq.QuantumModuleList(ops)
-
-    @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice):
-        for op in self.ops:
-            op(q_device)
-
-
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit
 # object
 def qiskit2tq(circ: QuantumCircuit):
@@ -250,7 +239,7 @@ def qiskit2tq(circ: QuantumCircuit):
                 f"{op_name} conversion to tq is currently not supported."
             )
 
-    return GeneratedQuantumModule(ops)
+    return tq.QuantumModuleFromOps(ops)
 
 
 def test_qiskit2tq():

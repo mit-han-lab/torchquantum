@@ -9,6 +9,7 @@ from torchquantum.plugins.qiskit_macros import QISKIT_INCOMPATIBLE_OPS
 from torchpack.utils.logging import logger
 
 __all__ = [
+    'QuantumModuleFromOps',
     'TrainableOpAll',
     'ClassicalInOpAll',
     'FixedOpAll',
@@ -20,6 +21,18 @@ __all__ = [
     'Op2QButterflyLayer',
     'Op2QDenseLayer',
 ]
+
+
+class QuantumModuleFromOps(tq.QuantumModule):
+    def __init__(self, ops):
+        super().__init__()
+        self.ops = tq.QuantumModuleList(ops)
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        for op in self.ops:
+            op(q_device)
 
 
 class TrainableOpAll(tq.QuantumModule):
