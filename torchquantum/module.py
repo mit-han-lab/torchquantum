@@ -6,7 +6,7 @@ from abc import ABCMeta
 __all__ = [
     'QuantumModule',
     'QuantumModuleList',
-    'QuantumModuleDict'
+    'QuantumModuleDict',
 ]
 
 
