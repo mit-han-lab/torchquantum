@@ -1,5 +1,6 @@
-from torchquantum.operators import Operation
 import torch.nn as nn
+import torchquantum as tq
+import torch.nn.utils.prune
 
 from typing import Any, Callable, Dict
 from torchpack.train import Trainer
@@ -7,7 +8,8 @@ from torchpack.utils.typing import Optimizer, Scheduler
 from torchpack.utils.config import configs
 from torchquantum.utils import get_unitary_loss, legalize_unitary
 from torchquantum.super_utils import ArchSampler
-from torchquantum.prune_utils import PhaseL1UnstructuredPruningMethod, ThresholdScheduler
+from torchquantum.prune_utils import (PhaseL1UnstructuredPruningMethod,
+                                      ThresholdScheduler)
 
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer',
@@ -259,11 +261,10 @@ class SuperQTrainer(Trainer):
         self.scheduler.load_state_dict(state_dict['scheduler'])
 
 
-
 class PruningTrainer(Trainer):
-    '''
+    """
     Perform pruning-aware training
-    '''
+    """
     def __init__(self, *, model: nn.Module, criterion: Callable,
                  optimizer: Optimizer, scheduler: Scheduler) -> None:
         self.model = model
@@ -271,21 +272,35 @@ class PruningTrainer(Trainer):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
+
+        self._parameters_to_prune = None
+        self._target_pruning_amount = None
+        self._init_pruning_amount = None
+        self.prune_amount_scheduler = None
+        self.prune_amount = None
+
         self.init_pruning()
 
-    def extract_prunable_parameters(self, model: nn.Module) -> tuple:
+    @staticmethod
+    def extract_prunable_parameters(model: nn.Module) -> tuple:
         _parameters_to_prune = (
             (module, "params")
-        for _, module in model.named_modules() if isinstance(module, Operation) and module.params is not None)
+            for _, module in model.named_modules() if isinstance(module,
+                                                                 tq.Operation)
+            and module.params is not None)
         return _parameters_to_prune
 
     def init_pruning(self) -> None:
-        """Initialize pruning procedure
         """
-        self._parameters_to_prune = self.extract_prunable_parameters(self.model)
+        Initialize pruning procedure
+        """
+        self._parameters_to_prune = self.extract_prunable_parameters(
+            self.model)
         self._target_pruning_amount = configs.prune.target_pruning_amount
         self._init_pruning_amount = configs.prune.init_pruning_amount
-        self.prune_amount_scheduler = ThresholdScheduler(0, self.num_epochs, self._init_pruning_amount, self._target_pruning_amount)
+        self.prune_amount_scheduler = ThresholdScheduler(
+            0, self.num_epochs, self._init_pruning_amount,
+            self._target_pruning_amount)
         self.prune_amount = self._init_pruning_amount
 
     def _remove_pruning(self):
@@ -293,12 +308,16 @@ class PruningTrainer(Trainer):
             nn.utils.prune.remove(module, name)
 
     def _prune_model(self, prune_amount) -> None:
-        """Perform global threshold/percentage pruning on the quantum model. This function just performs pruning reparametrization, i.e., record weight_orig and generate weight_mask
         """
-        ### first clear current prunine container, since we do not want cascaded pruning methods
-        ### remove operation will make pruning permanent
+        Perform global threshold/percentage pruning on the quantum model.
+        This function just performs pruning re-parametrization, i.e.,
+        record weight_orig and generate weight_mask
+        """
+        # first clear current pruning container, since we do not want cascaded
+        # pruning methods
+        # remove operation will make pruning permanent
         self._remove_pruning()
-        ### perform global phase pruning based on the given pruning amount
+        # perform global phase pruning based on the given pruning amount
         nn.utils.prune.global_unstructured(
             self._parameters_to_prune,
             pruning_method=PhaseL1UnstructuredPruningMethod,
@@ -316,9 +335,6 @@ class PruningTrainer(Trainer):
 
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
-        self.sample_config = self.config_sampler.get_sample_config()
-        self.model.set_sample_config(self.sample_config)
-
         if configs.run.device == 'gpu':
             inputs = feed_dict['image'].cuda(non_blocking=True)
             targets = feed_dict['digit'].cuda(non_blocking=True)
@@ -368,12 +384,12 @@ class PruningTrainer(Trainer):
         if configs.legalization.legalize:
             if self.epoch_num % configs.legalization.epoch_interval == 0:
                 legalize_unitary(self.model)
-        ### update pruning amount using the scheduler
+        # update pruning amount using the scheduler
         self.prune_amount = self.prune_amount_scheduler.step()
-        ### prune the model
+        # prune the model
         self._prune_model(self.prune_amount)
-        ### commit pruned parameters after training
-        if(self.epoch_num == self.num_epochs):
+        # commit pruned parameters after training
+        if self.epoch_num == self.num_epochs:
             self._remove_pruning()
 
     def _after_step(self, output_dict) -> None:
