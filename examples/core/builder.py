@@ -142,6 +142,12 @@ def make_trainer(model: nn.Module,
                                 criterion=criterion,
                                 optimizer=optimizer,
                                 scheduler=scheduler)
+    elif configs.trainer.name == 'pruning_trainer':
+        from .trainers import PruningTrainer
+        trainer = PruningTrainer(model=model,
+                                 criterion=criterion,
+                                 optimizer=optimizer,
+                                 scheduler=scheduler)
     else:
         raise NotImplementedError(configs.trainer.name)
 

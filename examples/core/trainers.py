@@ -283,11 +283,11 @@ class PruningTrainer(Trainer):
 
     @staticmethod
     def extract_prunable_parameters(model: nn.Module) -> tuple:
-        _parameters_to_prune = (
+        _parameters_to_prune = [
             (module, "params")
             for _, module in model.named_modules() if isinstance(module,
-                                                                 tq.Operation)
-            and module.params is not None)
+                                                                 tq.Operator)
+            and module.params is not None]
         return _parameters_to_prune
 
     def init_pruning(self) -> None:
@@ -299,7 +299,7 @@ class PruningTrainer(Trainer):
         self._target_pruning_amount = configs.prune.target_pruning_amount
         self._init_pruning_amount = configs.prune.init_pruning_amount
         self.prune_amount_scheduler = ThresholdScheduler(
-            0, self.num_epochs, self._init_pruning_amount,
+            0, configs.run.n_epochs, self._init_pruning_amount,
             self._target_pruning_amount)
         self.prune_amount = self._init_pruning_amount
 
@@ -316,7 +316,8 @@ class PruningTrainer(Trainer):
         # first clear current pruning container, since we do not want cascaded
         # pruning methods
         # remove operation will make pruning permanent
-        self._remove_pruning()
+        if self.epoch_num > 1:
+            self._remove_pruning()
         # perform global phase pruning based on the given pruning amount
         nn.utils.prune.global_unstructured(
             self._parameters_to_prune,

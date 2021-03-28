@@ -18,7 +18,7 @@ __all__ = ["PhaseL1UnstructuredPruningMethod", "ThresholdScheduler"]
 
 class PhaseL1UnstructuredPruningMethod(torch.nn.utils.prune.BasePruningMethod):
     """
-    Prune rotation phases which is close to 0, +2pi, ..
+    Prune rotation phases which is close to -2pi, 0, +2pi, ..
     """
     PRUNING_TYPE = 'unstructured'
 
