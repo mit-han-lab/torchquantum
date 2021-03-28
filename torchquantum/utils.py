@@ -2,9 +2,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchquantum as tq
 
 from torchquantum.macro import C_DTYPE
 from torchpack.utils.logging import logger
+from typing import List, Dict
 
 
 def pauli_eigs(n):
@@ -171,6 +173,94 @@ def find_global_phase(mat1, mat2, threshold):
     return None
 
 
+def build_module_description(m: tq.QuantumModule, x=None) -> dict:
+    """
+    serialize all operations in the module and generate a list with
+    [{'name': RX, 'has_params': True, 'trainable': True, 'wires': [0],
+    n_wires: 1, 'params': [array([[0.01]])]}]
+    so that an identity module can be reconstructed
+    The module needs to have static support
+    """
+
+    m.static_off()
+    m.static_on(wires_per_block=None)
+    m.is_graph_top = False
+
+    # forward to register all modules and parameters
+    if x is None:
+        m.forward(q_device=None)
+    else:
+        m.forward(q_device=None, x=x)
+
+    m.is_graph_top = True
+    m.graph.build_flat_module_list()
+
+    module_list = m.graph.flat_module_list
+    m.static_off()
+
+    desc = []
+
+    for module in module_list:
+        if module.params is not None:
+            if module.params.shape[0] > 1:
+                # more than one param, so it is from classical input with
+                # batch mode
+                assert not module.has_params
+                params = None
+            else:
+                # has quantum params, batch has to be 1
+                params = module.params[0].data.cpu().numpy()
+        else:
+            params = None
+
+        desc.append({
+            'name': module.name.lower(),
+            'has_params': module.has_params,
+            'trainable': module.trainable,
+            'wires': module.wires,
+            'n_wires': module.n_wires,
+            'params': params
+        })
+
+    return desc
+
+
+def build_module_from_description(desc: List[Dict]) -> tq.QuantumModule:
+    ops = []
+    for info in desc:
+        op = tq.op_name_dict[info['name']](
+            has_params=info['has_params'],
+            trainable=info['trainable'],
+            wires=info['wires'],
+            n_wires=info['n_wires'],
+            init_params=info['params'],
+        )
+        ops.append(op)
+
+    return tq.QuantumModuleFromOps(ops)
+
+
+def build_module_description_test():
+    import pdb
+    from torchquantum.plugins import tq2qiskit
+
+    pdb.set_trace()
+    from examples.core.models.q_models import QFCModel12
+    q_model = QFCModel12({'n_blocks': 4})
+    desc = build_module_description(q_model.q_layer)
+    print(desc)
+    q_dev = tq.QuantumDevice(n_wires=4)
+    m = build_module_from_description(desc)
+    tq2qiskit(q_dev, m, draw=True)
+
+    desc = build_module_description(tq.RandomLayerAllTypes(
+        n_ops=200,  wires=[0, 1, 2, 3], qiskit_compatible=True))
+    print(desc)
+    m1 = build_module_from_description(desc)
+    tq2qiskit(q_dev, m1, draw=True)
+
+
 if __name__ == '__main__':
+    build_module_description_test()
     switch_little_big_endian_matrix_test()
     switch_little_big_endian_state_test()
