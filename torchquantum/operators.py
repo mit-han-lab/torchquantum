@@ -9,7 +9,7 @@ from torchquantum.functional import mat_dict
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE
 from torchpack.utils.logging import logger
-
+from typing import Iterable
 
 __all__ = [
     'op_name_dict',
@@ -299,7 +299,7 @@ class Operation(Operator, metaclass=ABCMeta):
 
     def reset_params(self, init_params=None):
         if init_params is not None:
-            if isinstance(init_params, list):
+            if isinstance(init_params, Iterable):
                 for k, init_param in enumerate(init_params):
                     torch.nn.init.constant_(self.params[:, k], init_param)
             else:
