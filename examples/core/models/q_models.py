@@ -1146,6 +1146,27 @@ class QFCModel12(tq.QuantumModule):
         return x
 
 
+class QFCRandomModel0(QFCModel12):
+    """model with random gates"""
+    class QLayer(tq.QuantumModule):
+        def __init__(self, arch=None):
+            super().__init__()
+            self.arch = arch
+            self.n_wires = 4
+            op_type_name = arch['op_type_name']
+            op_types = [tq.op_name_dict[name] for name in op_type_name]
+
+            self.random_layer = tq.RandomLayer(
+                n_ops=arch['n_random_ops'],
+                wires=list(range(self.n_wires)),
+                op_types=op_types)
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice):
+            self.q_device = q_device
+            self.random_layer(q_device)
+
+
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
@@ -1165,5 +1186,6 @@ model_dict = {
     'q_fc10': QFCModel10,
     'q_fc11': QFCModel11,
     'q_fc12': QFCModel12,
+    'q_fc_rand0': QFCRandomModel0,
     'q_qsvt0': QSVT0,
 }
