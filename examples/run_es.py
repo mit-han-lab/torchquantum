@@ -12,7 +12,7 @@ from torchpack.utils import io
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
-from torchquantum.utils import legalize_unitary
+from torchquantum.utils import legalize_unitary, build_module_op_list
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from qiskit import IBMQ
 from core.tools import EvolutionEngine
@@ -131,7 +131,8 @@ def main() -> None:
     else:
         raise ValueError(configs.run.device)
 
-    logger.info(f'Evaluation started: "{args.run_dir}".' + '\n' + f'{configs}')
+    logger.info(f'Evolutionary Search started: "{args.run_dir}".' + '\n' +
+                f'{configs}')
 
     if configs.qiskit.use_qiskit:
         IBMQ.load_account()
@@ -149,8 +150,9 @@ def main() -> None:
         pin_memory=True)
 
     state_dict = io.load(
-        os.path.join(args.run_dir, 'checkpoints', 'max-acc-largest_valid.pt'),
+        os.path.join(args.run_dir, configs.ckpt.name),
         map_location=device)
+
     model_load = state_dict['model_arch']
     model = builder.make_model()
     for module_load, module in zip(model_load.modules(), model.modules()):
@@ -158,11 +160,13 @@ def main() -> None:
             # random layer, need to restore the architecture
             module.op_list = copy.deepcopy(module_load.op_list)
 
+    model.load_state_dict(state_dict['model'], strict=False)
+
     if configs.legalize_unitary:
         legalize_unitary(model)
     model.to(device)
     model.eval()
-    model.load_state_dict(state_dict['model'], strict=False)
+
     es_dir = 'es_runs/' + args.config.replace('/', '.').replace(
         'examples.', '').replace('.yml', '').replace('configs.', '')
     io.save(os.path.join(es_dir, 'metainfo/configs.yaml'), configs.dict())
@@ -207,22 +211,25 @@ def main() -> None:
         state_dict['solution'] = es_engine.best_solution
         state_dict['score'] = es_engine.best_score
 
-    logger.info("Best solution evaluation:")
+        state_dict['encoder_func_list'] = model.encoder.func_list
+        state_dict['q_layer_op_list'] = build_module_op_list(model.q_layer)
+        io.save(os.path.join(es_dir, 'checkpoints/best_solution.pt'),
+                state_dict)
+
+    logger.info(f"\n Best solution evaluation on tq:")
     # eval the best solution and save the model
     evaluate_all(model, dataflow, [es_engine.best_solution])
 
-    io.save(os.path.join(es_dir, 'checkpoints/best_solution.pt'), state_dict)
-
     # eval with the noise model
     if configs.es.eval.use_noise_model:
-        logger.info(f"Best solution evaluation with noise model "
+        logger.info(f"\n Best solution evaluation with noise model "
                     f"of {configs.qiskit.noise_model_name}:")
         configs.qiskit.use_qiskit = True
         evaluate_all(model, dataflow, [es_engine.best_solution])
 
     # eval on real QC
     if configs.es.eval.use_real_qc:
-        logger.info(f"Best solution evaluation on real "
+        logger.info(f"\n Best solution evaluation on real "
                     f"QC {configs.qiskit.backend_name}:")
 
         # need reset some parameters

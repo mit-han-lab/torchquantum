@@ -12,8 +12,10 @@ from torchpack.utils import io
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
-from torchquantum.utils import legalize_unitary
+from torchquantum.utils import (legalize_unitary, build_module_from_op_list,
+                                get_q_c_reg_mapping)
 from qiskit import IBMQ
+from torchquantum.plugins import tq2qiskit, qiskit2tq
 
 
 def log_acc(output_all, target_all, k=1):
@@ -34,6 +36,7 @@ def main() -> None:
     parser.add_argument('config', metavar='FILE', help='config file')
     parser.add_argument('--run_dir', metavar='DIR', help='run directory')
     parser.add_argument('--pdb', action='store_true', help='pdb')
+    parser.add_argument('--verbose', action='store_true', help='verbose')
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
     args, opts = parser.parse_known_args()
 
@@ -43,6 +46,8 @@ def main() -> None:
 
     if configs.debug.pdb or args.pdb:
         pdb.set_trace()
+
+    configs.verbose = args.verbose
 
     if args.gpu is not None:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -73,7 +78,7 @@ def main() -> None:
 
     state_dict = io.load(
         os.path.join(args.run_dir, configs.ckpt.name),
-        map_location=device)
+        map_location='cpu')
     model_load = state_dict['model_arch']
     model = builder.make_model()
     for module_load, module in zip(model_load.modules(), model.modules()):
@@ -81,10 +86,6 @@ def main() -> None:
             # random layer, need to restore the architecture
             module.op_list = copy.deepcopy(module_load.op_list)
 
-    if configs.legalization.legalize:
-        legalize_unitary(model)
-    model.to(device)
-    model.eval()
     model.load_state_dict(state_dict['model'], strict=False)
 
     if 'solution' in state_dict.keys():
@@ -92,6 +93,50 @@ def main() -> None:
         logger.info(f"Evaluate the solution {solution}")
         logger.info(f"Original score: {state_dict['score']}")
         model.set_sample_arch(solution['arch'])
+
+    if 'q_c_reg_mapping' in state_dict.keys():
+        try:
+            model.measure.set_q_c_reg_mapping(state_dict['q_c_reg_mapping'])
+        except AttributeError:
+            logger.warning(f"Cannot set q_c_reg_mapping.")
+
+    if configs.model.load_op_list:
+        assert state_dict['q_layer_op_list'] is not None
+        logger.warning(f"Loading the op_list, will replace the q_layer in "
+                       f"the original model!")
+        q_layer = build_module_from_op_list(
+            op_list=state_dict['q_layer_op_list'],
+            remove_ops=configs.prune.eval.remove_ops,
+            thres=configs.prune.eval.remove_ops_thres)
+        model.q_layer = q_layer
+
+    if configs.model.transpile_before_run:
+        # transpile the q_layer
+        logger.warning(f"Transpile the q_layer to basis gate set before "
+                       f"evaluation, will replace the q_layer!")
+        processor = builder.make_qiskit_processor()
+
+        circ = tq2qiskit(model.q_device, model.q_layer)
+
+        """
+        add measure because the transpile process may permute the wires, 
+        so we need to get the final q reg to c reg mapping 
+        """
+        circ.measure(list(range(model.q_device.n_wires)),
+                     list(range(model.q_device.n_wires)))
+
+        logger.info("Transpiling circuit...")
+        circ_transpiled = processor.transpile(circs=circ)
+        q_layer = qiskit2tq(circ=circ_transpiled)
+
+        model.measure.set_q_c_reg_mapping(
+            get_q_c_reg_mapping(circ_transpiled))
+        model.q_layer = q_layer
+
+    if configs.legalization.legalize:
+        legalize_unitary(model)
+    model.to(device)
+    model.eval()
 
     if configs.qiskit.use_qiskit:
         qiskit_processor = builder.make_qiskit_processor()
@@ -132,8 +177,8 @@ def main() -> None:
             else:
                 target_all = torch.cat([target_all, targets], dim=0)
                 output_all = torch.cat([output_all, outputs], dim=0)
-
-            logger.info(f"Measured log_softmax: {outputs}")
+            if configs.verbose:
+                logger.info(f"Measured log_softmax: {outputs}")
             log_acc(output_all, target_all)
 
     logger.info("Final:")

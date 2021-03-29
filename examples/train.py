@@ -8,11 +8,17 @@ import torch.backends.cudnn
 import torch.cuda
 import torch.nn
 import torch.utils.data
-from torchpack import distributed as dist
-from torchpack.environ import auto_set_run_dir, set_run_dir
+import torchquantum as tq
+import copy
+
+from torchpack.utils import io
+# from torchpack import distributed as dist
+from torchpack.environ import set_run_dir
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
+from torchquantum.plugins import tq2qiskit, qiskit2tq
+from torchquantum.utils import build_module_from_op_list, get_q_c_reg_mapping
 
 
 def main() -> None:
@@ -84,6 +90,64 @@ def main() -> None:
             pin_memory=True)
 
     model = builder.make_model()
+
+    state_dict = None
+    if configs.ckpt.load_ckpt:
+        state_dict = io.load(
+            os.path.join(configs.ckpt.path, configs.ckpt.name),
+            map_location='cpu')
+        model_load = state_dict['model_arch']
+
+        for module_load, module in zip(model_load.modules(), model.modules()):
+            if isinstance(module, tq.RandomLayer):
+                # random layer, need to restore the architecture
+                module.op_list = copy.deepcopy(module_load.op_list)
+
+        model.load_state_dict(state_dict['model'], strict=False)
+
+        if 'solution' in state_dict.keys():
+            solution = state_dict['solution']
+            logger.info(f"Loading the solution {solution}")
+            logger.info(f"Original score: {state_dict['score']}")
+            model.set_sample_arch(solution['arch'])
+
+        if 'q_c_reg_mapping' in state_dict.keys():
+            try:
+                model.measure.set_q_c_reg_mapping(
+                    state_dict['q_c_reg_mapping'])
+            except AttributeError:
+                logger.warning(f"Cannot set q_c_reg_mapping.")
+
+        if configs.model.load_op_list:
+            assert state_dict['q_layer_op_list'] is not None
+            logger.warning(f"Loading the op_list, will replace the q_layer in "
+                           f"the original model!")
+            q_layer = build_module_from_op_list(state_dict['q_layer_op_list'])
+            model.q_layer = q_layer
+
+    if configs.model.transpile_before_run:
+        # transpile the q_layer
+        logger.warning(f"Transpile the q_layer to basis gate set before "
+                       f"training, will replace the q_layer!")
+        processor = builder.make_qiskit_processor()
+
+        circ = tq2qiskit(model.q_device, model.q_layer)
+
+        """
+        add measure because the transpile process may permute the wires, 
+        so we need to get the final q reg to c reg mapping 
+        """
+        circ.measure(list(range(model.q_device.n_wires)),
+                     list(range(model.q_device.n_wires)))
+
+        logger.info("Transpiling circuit...")
+        circ_transpiled = processor.transpile(circs=circ)
+        q_layer = qiskit2tq(circ=circ_transpiled)
+
+        model.measure.set_q_c_reg_mapping(
+            get_q_c_reg_mapping(circ_transpiled))
+        model.q_layer = q_layer
+
     model.to(device)
     # model = torch.nn.parallel.DistributedDataParallel(
     #     model.cuda(),
@@ -104,7 +168,9 @@ def main() -> None:
         optimizer=optimizer,
         scheduler=scheduler
     )
-    callbacks = builder.make_callbacks(dataflow)
+
+    # trainer state_dict will be loaded in a callback
+    callbacks = builder.make_callbacks(dataflow, state_dict)
 
     trainer.train_with_defaults(
         dataflow['train'],
