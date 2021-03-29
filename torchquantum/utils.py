@@ -275,6 +275,19 @@ def build_module_description_test():
     tq2qiskit(q_dev, m1, draw=True)
 
 
+def get_q_c_reg_mapping(circ):
+    mapping = {
+        'q2c': {},
+        'c2q': {},
+    }
+    for gate in circ.data:
+        if gate[0].name == 'measure':
+            mapping['q2c'][gate[1][0].index] = gate[2][0].index
+            mapping['c2q'][gate[2][0].index] = gate[1][0].index
+
+    return mapping
+
+
 if __name__ == '__main__':
     build_module_description_test()
     switch_little_big_endian_matrix_test()
