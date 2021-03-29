@@ -10,6 +10,7 @@ from torchquantum.utils import get_unitary_loss, legalize_unitary
 from torchquantum.super_utils import ArchSampler
 from torchquantum.prune_utils import (PhaseL1UnstructuredPruningMethod,
                                       ThresholdScheduler)
+from torchpack.utils.logging import logger
 
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer',
@@ -106,6 +107,8 @@ class QTrainer(Trainer):
                         unitary_loss
 
         if loss.requires_grad:
+            for k, group in enumerate(self.optimizer.param_groups):
+                self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
 
@@ -145,10 +148,14 @@ class QTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
+        try:
+            state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
+        except AttributeError:
+            logger.warning(f"No q_c_reg_mapping found, will not save it.")
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.model.load_state_dict(state_dict['model'])
+        # self.model.load_state_dict(state_dict['model'])
         self.optimizer.load_state_dict(state_dict['optimizer'])
         self.scheduler.load_state_dict(state_dict['scheduler'])
 
@@ -212,9 +219,9 @@ class SuperQTrainer(Trainer):
                 self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
-            self.summary.add_scalar('current_stage',
+            self.summary.add_scalar('stage',
                                     self.arch_sampler.current_stage)
-            self.summary.add_scalar('sample_n_ops',
+            self.summary.add_scalar('n_ops',
                                     self.arch_sampler.sample_n_ops)
 
             if configs.regularization.unitary_loss:
@@ -253,10 +260,14 @@ class SuperQTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
+        try:
+            state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
+        except AttributeError:
+            logger.warning(f"No q_c_reg_mapping found, will not save it.")
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.model.load_state_dict(state_dict['model'])
+        # self.model.load_state_dict(state_dict['model'], strict=False)
         self.optimizer.load_state_dict(state_dict['optimizer'])
         self.scheduler.load_state_dict(state_dict['scheduler'])
 
@@ -405,9 +416,13 @@ class PruningTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
+        try:
+            state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
+        except AttributeError:
+            logger.warning(f"No q_c_reg_mapping found, will not save it.")
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.model.load_state_dict(state_dict['model'])
+        # self.model.load_state_dict(state_dict['model'])
         self.optimizer.load_state_dict(state_dict['optimizer'])
         self.scheduler.load_state_dict(state_dict['scheduler'])
