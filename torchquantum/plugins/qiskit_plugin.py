@@ -198,7 +198,9 @@ def qiskit2tq(circ: QuantumCircuit):
     for gate in circ.data:
         op_name = gate[0].name
         wires = list(map(lambda x: x.index, gate[1]))
-        init_params = gate[0].params if len(gate[0].params) > 0 else None
+        # sometimes the gate.params is ParameterExpression class
+        init_params = list(map(float, gate[0].params)) if len(
+            gate[0].params) > 0 else None
 
         if op_name in ['h',
                        'x',
@@ -234,6 +236,8 @@ def qiskit2tq(circ: QuantumCircuit):
                                                 trainable=True,
                                                 init_params=init_params,
                                                 wires=wires))
+        elif op_name in ['barrier', 'measure']:
+            continue
         else:
             raise NotImplementedError(
                 f"{op_name} conversion to tq is currently not supported."
