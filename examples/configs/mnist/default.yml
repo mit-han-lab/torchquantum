@@ -80,21 +80,4 @@ ckpt:
   load_trainer: False
   name: 'checkpoints/max-acc-valid.pt'
 
-es:
-  population_size: 100
-  parent_size: 40
-  mutation_size: 30
-  mutation_prob: 0.3
-  crossover_size: 30
-  n_iterations: 40
-  est_success_rate: True
-  sampler:
-    strategy:
-      name: null
-  eval:
-    use_noise_model: False
-    use_real_qc: False
-    bsz: qiskit_max
-    n_test_samples: 75
-
 verbose: False

@@ -172,7 +172,7 @@ class SuperQTrainer(Trainer):
         self.sample_arch = None
         self.arch_sampler = ArchSampler(
             model=model,
-            strategy=configs.es.sampler.strategy.dict(),
+            strategy=configs.model.sampler.strategy.dict(),
             n_layers_per_block=configs.model.arch.n_layers_per_block
         )
 
