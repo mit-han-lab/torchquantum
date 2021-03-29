@@ -5,7 +5,8 @@ from torchpack.utils.config import configs
 from torchpack.utils.typing import Dataset, Optimizer, Scheduler
 from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
-from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, NLLError
+from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
+    NLLError, TrainerRestore
 from torchquantum.plugins import QiskitProcessor
 
 
@@ -174,7 +175,7 @@ def get_subcallbacks(config):
     return subcallbacks
 
 
-def make_callbacks(dataflow):
+def make_callbacks(dataflow, state=None):
     callbacks = []
     for config in configs['callbacks']:
         if config['callback'] == 'InferenceRunner':
@@ -201,6 +202,11 @@ def make_callbacks(dataflow):
             callback = MaxSaver(config['name'])
         else:
             raise NotImplementedError(config['callback'])
+        callbacks.append(callback)
+
+    if configs.ckpt.load_trainer:
+        assert state is not None
+        callback = TrainerRestore(state)
         callbacks.append(callback)
 
     return callbacks

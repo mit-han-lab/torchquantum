@@ -17,7 +17,8 @@ from torchpack import distributed as dist
 from torchquantum.utils import legalize_unitary
 
 
-__all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError']
+__all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError',
+           'TrainerRestore']
 
 
 class LegalInferenceRunner(Callback):
@@ -116,3 +117,11 @@ class NLLError(Callback):
         self.size = dist.allreduce(self.size, reduction='sum')
         self.errors = dist.allreduce(self.errors, reduction='sum')
         self.trainer.summary.add_scalar(self.name, self.errors / self.size)
+
+
+class TrainerRestore(Callback):
+    def __init__(self, state) -> None:
+        self.state = state
+
+    def _before_train(self) -> None:
+        self.trainer.load_state_dict(self.state)
