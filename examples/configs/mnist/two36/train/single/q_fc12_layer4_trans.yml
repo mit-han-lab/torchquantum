@@ -1,0 +1,5 @@
+model:
+  name: q_fc12
+  arch:
+    n_blocks: 4
+  transpile_before_run: True
