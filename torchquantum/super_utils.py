@@ -117,9 +117,9 @@ class ArchSampler(object):
         return sample_arch
 
     def get_uniform_sample_arch(self):
-        if self.strategy['name'] is None or (self.strategy['name'] ==
-                                             'limit_diff' and
-                                             self.sample_arch_old is None):
+        if self.strategy['name'] == 'plain' or (self.strategy['name'] ==
+                                                'limit_diff' and
+                                                self.sample_arch_old is None):
             sample_arch = self.get_random_sample_arch()
         elif self.strategy['name'] == 'limit_diff':
             """
