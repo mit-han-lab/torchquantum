@@ -228,8 +228,9 @@ def build_module_op_list(m: tq.QuantumModule, x=None) -> List:
 def build_module_from_op_list(op_list: List[Dict],
                               remove_ops=False,
                               thres=None) -> tq.QuantumModule:
+    logger.info(f"Building module from op_list...")
     thres = 1e-5 if thres is None else thres
-
+    n_removed_ops = 0
     ops = []
     for info in op_list:
         params = info['params']
@@ -248,9 +249,14 @@ def build_module_from_op_list(op_list: List[Dict],
             trainable=info['trainable'],
             wires=info['wires'],
             n_wires=info['n_wires'],
-            init_params=params,
+            init_params=info['params'],
         )
         ops.append(op)
+
+    if n_removed_ops > 0:
+        logger.warning(f"Remove in total {n_removed_ops} pruned operations.")
+    else:
+        logger.info(f"Do not remove any operations.")
 
     return tq.QuantumModuleFromOps(ops)
 
