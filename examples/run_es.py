@@ -158,7 +158,11 @@ def main() -> None:
     for module_load, module in zip(model_load.modules(), model.modules()):
         if isinstance(module, tq.RandomLayer):
             # random layer, need to restore the architecture
-            module.op_list = copy.deepcopy(module_load.op_list)
+            module.rebuild_random_layer_from_op_list(
+                n_ops_in=module_load.n_ops,
+                wires_in=module_load.wires,
+                op_list_in=module_load.op_list,
+            )
 
     model.load_state_dict(state_dict['model'], strict=False)
 

@@ -5,7 +5,7 @@ import numpy as np
 
 
 from typing import Iterable
-from torchquantum.plugins.qiskit_macros import QISKIT_INCOMPATIBLE_OPS
+from torchquantum.plugins.qiskit_macros import QISKIT_INCOMPATIBLE_FUNC_NAMES
 from torchpack.utils.logging import logger
 
 __all__ = [
@@ -119,7 +119,7 @@ class RandomLayer(tq.QuantumModule):
     def __init__(self,
                  n_ops,
                  wires,
-                 op_ratios=(1, 1, 1, 1),
+                 op_ratios=None,
                  op_types=(tq.RX, tq.RY, tq.RZ, tq.CNOT),
                  seed=None,
                  qiskit_compatible=False,
@@ -130,14 +130,17 @@ class RandomLayer(tq.QuantumModule):
         self.n_wires = len(wires)
 
         op_types = op_types if isinstance(op_types, Iterable) else [op_types]
-        op_ratios = op_ratios if isinstance(op_ratios, Iterable) else [
-            op_ratios]
+        if op_ratios is None:
+            op_ratios = [1] * len(op_types)
+        else:
+            op_ratios = op_ratios if isinstance(op_ratios, Iterable) else [
+                op_ratios]
         op_types_valid = []
         op_ratios_valid = []
 
         if qiskit_compatible:
             for op_type, op_ratio in zip(op_types, op_ratios):
-                if op_type in QISKIT_INCOMPATIBLE_OPS:
+                if op_type().name.lower() in QISKIT_INCOMPATIBLE_FUNC_NAMES:
                     logger.warning(f"Remove {op_type} from op_types to make "
                                    f"the layer qiskit-compatible.")
                 else:
@@ -155,6 +158,23 @@ class RandomLayer(tq.QuantumModule):
         if seed is not None:
             np.random.seed(seed)
         self.build_random_layer()
+
+    def rebuild_random_layer_from_op_list(self,
+                                          n_ops_in,
+                                          wires_in,
+                                          op_list_in):
+        """Used for loading random layer from checkpoint"""
+        self.n_ops = n_ops_in
+        self.wires = wires_in
+        self.op_list = tq.QuantumModuleList()
+        for op_in in op_list_in:
+            op = tq.op_name_dict[op_in.name.lower()](
+                has_params=op_in.has_params,
+                trainable=op_in.trainable,
+                wires=op_in.wires,
+                n_wires=op_in.n_wires,
+            )
+            self.op_list.append(op)
 
     def build_random_layer(self):
         cnt = 0
@@ -228,8 +248,6 @@ class RandomLayerAllTypes(RandomLayer):
                  seed=None,
                  qiskit_compatible=False,
                  ):
-        if op_ratios is None:
-            op_ratios = [1] * len(op_types)
         super().__init__(
             n_ops,
             wires,
