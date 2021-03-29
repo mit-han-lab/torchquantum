@@ -59,6 +59,8 @@ callbacks:
         name: 'acc/test'
   - callback: 'MaxSaver'
     name: 'acc/valid'
+  - callback: 'Saver'
+    max_to_keep: 10
 
 qiskit:
   use_qiskit: False

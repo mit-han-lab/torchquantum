@@ -29,4 +29,4 @@ model:
 prune:
   eval:
     remove_ops: False
-    remove_ops_thres: 1e-5
+    remove_ops_thres: 1.0e-5
