@@ -115,6 +115,51 @@ class Super4DigitShareFrontQFCModel1(tq.QuantumModule):
         return space
 
 
+class Super4DigitArbitraryQFCModel1(Super4DigitShareFrontQFCModel1):
+    """u3 cu3 blocks arbitrary n gates"""
+    class QLayer(tq.QuantumModule):
+        def __init__(self, arch=None):
+            super().__init__()
+            self.arch = arch
+            self.n_wires = arch['n_wires']
+
+            self.n_blocks = arch['n_blocks']
+            self.n_layers_per_block = arch['n_layers_per_block']
+            self.n_front_share_blocks = arch['n_front_share_blocks']
+
+            self.super_layers_all = tq.QuantumModuleList()
+
+            for k in range(arch['n_blocks']):
+                self.super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.U3,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                self.super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.CU3,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
+            self.sample_n_blocks = None
+
+        def set_sample_arch(self, sample_arch):
+            for k, layer_arch in enumerate(sample_arch[:-1]):
+                self.super_layers_all[k].set_sample_arch(layer_arch)
+            self.sample_n_blocks = sample_arch[-1]
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice):
+            self.q_device = q_device
+            for k in range(len(self.super_layers_all)):
+                if k < self.sample_n_blocks * self.n_layers_per_block:
+                    self.super_layers_all[k](q_device)
+
+
 model_dict = {
     'super4digit_sharefront_fc1': Super4DigitShareFrontQFCModel1,
+    'super4digit_arbitrary_fc1': Super4DigitArbitraryQFCModel1,
 }
