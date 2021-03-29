@@ -114,7 +114,8 @@ class QiskitProcessor(object):
     def process_parameterized(self, q_device: tq.QuantumDevice,
                               q_layer_parameterized: tq.QuantumModule,
                               q_layer_fixed: tq.QuantumModule,
-                              x):
+                              x,
+                              q_c_reg_mapping=None):
         """
         separate the conversion, encoder part will be converted to a
         parameterized Qiskit QuantumCircuit. The remaining part will be a
@@ -127,8 +128,13 @@ class QiskitProcessor(object):
             q_device, q_layer_parameterized.func_list)
         circ_fixed = tq2qiskit(q_device, q_layer_fixed)
         circ = circ_parameterized + circ_fixed
-        circ.measure(list(range(q_device.n_wires)), list(range(
-            q_device.n_wires)))
+
+        if q_c_reg_mapping is not None:
+            for q_reg, c_reg in q_c_reg_mapping['q2c'].items():
+                circ.measure(q_reg, c_reg)
+        else:
+            circ.measure(list(range(q_device.n_wires)), list(range(
+                q_device.n_wires)))
 
         transpiled_circ = self.transpile(circ)
         self.transpiled_circs = [transpiled_circ]
@@ -163,12 +169,16 @@ class QiskitProcessor(object):
         return measured_qiskit
 
     def process(self, q_device: tq.QuantumDevice, q_layer: tq.QuantumModule,
-                x):
+                x, q_c_reg_mapping=None):
         circs = []
         for i, x_single in tqdm(enumerate(x)):
             circ = tq2qiskit(q_device, q_layer, x_single.unsqueeze(0))
-            circ.measure(list(range(q_device.n_wires)), list(range(
-                q_device.n_wires)))
+            if q_c_reg_mapping is not None:
+                for q_reg, c_reg in q_c_reg_mapping['q2c'].items():
+                    circ.measure(q_reg, c_reg)
+            else:
+                circ.measure(list(range(q_device.n_wires)), list(range(
+                    q_device.n_wires)))
             circs.append(circ)
 
         transpiled_circs = self.transpile(circs)
