@@ -14,10 +14,19 @@ qiskit:
 dataset:
   n_test_samples: null
 
-legalize_unitary: True
-
 run:
   bsz: 900
 
 ckpt:
+  load_ckpt: True
+  load_trainer: False
   name: 'checkpoints/max-acc-valid.pt'
+
+model:
+  load_op_list: False
+  transpile_before_run: False
+
+prune:
+  eval:
+    remove_ops: False
+    remove_ops_thres: 1e-5

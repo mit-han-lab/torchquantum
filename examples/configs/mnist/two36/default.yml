@@ -4,3 +4,5 @@ dataset:
 model:
   arch:
     output_len: 2
+  transpile_before_run: False
+  load_op_list: False

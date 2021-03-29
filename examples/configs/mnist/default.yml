@@ -74,6 +74,8 @@ qiskit:
   optimization_level: 0
 
 ckpt:
+  load_ckpt: False
+  load_trainer: False
   name: 'checkpoints/max-acc-valid.pt'
 
 es:
@@ -92,3 +94,5 @@ es:
     use_real_qc: False
     bsz: qiskit_max
     n_test_samples: 75
+
+verbose: False

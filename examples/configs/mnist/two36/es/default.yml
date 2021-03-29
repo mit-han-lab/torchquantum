@@ -14,8 +14,6 @@ qiskit:
 dataset:
   n_test_samples: null
 
-legalize_unitary: True
-
 es:
   population_size: 10
   parent_size: 4
@@ -23,3 +21,6 @@ es:
   mutation_prob: 0.3
   crossover_size: 3
   n_iterations: 40
+
+ckpt:
+  load_ckpt: True
