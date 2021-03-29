@@ -1,0 +1,23 @@
+model:
+  model:
+  name: super_qfc3
+  arch:
+    n_blocks: 4
+    n_front_share_blocks: 2
+    n_front_share_wires: 2
+    n_front_share_ops: 2
+    n_layers_per_block: 6
+  load_op_list: True
+
+ckpt:
+  load_ckpt: True
+  load_trainer: False
+  path: 'es_runs/mnist.two36.es.acctq_noiseqis_step9000'
+  name: 'checkpoints/best_solution.pt'
+
+run:
+  n_epochs: 200
+
+prune:
+  target_pruning_amount: 0.4
+  init_pruning_amount: 0.1
