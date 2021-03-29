@@ -6,7 +6,7 @@ import torchquantum as tq
 
 from torchquantum.macro import C_DTYPE
 from torchpack.utils.logging import logger
-from typing import List, Dict
+from typing import List, Dict, Iterable
 
 
 def pauli_eigs(n):
@@ -173,7 +173,7 @@ def find_global_phase(mat1, mat2, threshold):
     return None
 
 
-def build_module_description(m: tq.QuantumModule, x=None) -> dict:
+def build_module_op_list(m: tq.QuantumModule, x=None) -> List:
     """
     serialize all operations in the module and generate a list with
     [{'name': RX, 'has_params': True, 'trainable': True, 'wires': [0],
@@ -198,7 +198,7 @@ def build_module_description(m: tq.QuantumModule, x=None) -> dict:
     module_list = m.graph.flat_module_list
     m.static_off()
 
-    desc = []
+    op_list = []
 
     for module in module_list:
         if module.params is not None:
@@ -213,7 +213,7 @@ def build_module_description(m: tq.QuantumModule, x=None) -> dict:
         else:
             params = None
 
-        desc.append({
+        op_list.append({
             'name': module.name.lower(),
             'has_params': module.has_params,
             'trainable': module.trainable,
@@ -222,18 +222,33 @@ def build_module_description(m: tq.QuantumModule, x=None) -> dict:
             'params': params
         })
 
-    return desc
+    return op_list
 
 
-def build_module_from_description(desc: List[Dict]) -> tq.QuantumModule:
+def build_module_from_op_list(op_list: List[Dict],
+                              remove_ops=False,
+                              thres=None) -> tq.QuantumModule:
+    thres = 1e-5 if thres is None else thres
+
     ops = []
-    for info in desc:
+    for info in op_list:
+        params = info['params']
+
+        if remove_ops:
+            if params is not None:
+                params = np.array(params) if isinstance(params, Iterable) \
+                    else np.array([params])
+                params = params % (2 * np.pi)
+                params[params > np.pi] -= 2 * np.pi
+                if all(abs(params) < thres):
+                    continue
+
         op = tq.op_name_dict[info['name']](
             has_params=info['has_params'],
             trainable=info['trainable'],
             wires=info['wires'],
             n_wires=info['n_wires'],
-            init_params=info['params'],
+            init_params=params,
         )
         ops.append(op)
 
@@ -247,16 +262,16 @@ def build_module_description_test():
     pdb.set_trace()
     from examples.core.models.q_models import QFCModel12
     q_model = QFCModel12({'n_blocks': 4})
-    desc = build_module_description(q_model.q_layer)
+    desc = build_module_op_list(q_model.q_layer)
     print(desc)
     q_dev = tq.QuantumDevice(n_wires=4)
-    m = build_module_from_description(desc)
+    m = build_module_from_op_list(desc)
     tq2qiskit(q_dev, m, draw=True)
 
-    desc = build_module_description(tq.RandomLayerAllTypes(
+    desc = build_module_op_list(tq.RandomLayerAllTypes(
         n_ops=200,  wires=[0, 1, 2, 3], qiskit_compatible=True))
     print(desc)
-    m1 = build_module_from_description(desc)
+    m1 = build_module_from_op_list(desc)
     tq2qiskit(q_dev, m1, draw=True)
 
 
