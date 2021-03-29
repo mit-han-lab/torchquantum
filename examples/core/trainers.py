@@ -6,7 +6,8 @@ from typing import Any, Callable, Dict
 from torchpack.train import Trainer
 from torchpack.utils.typing import Optimizer, Scheduler
 from torchpack.utils.config import configs
-from torchquantum.utils import get_unitary_loss, legalize_unitary
+from torchquantum.utils import (get_unitary_loss, legalize_unitary,
+                                build_module_op_list)
 from torchquantum.super_utils import ArchSampler
 from torchquantum.prune_utils import (PhaseL1UnstructuredPruningMethod,
                                       ThresholdScheduler)
@@ -416,6 +417,15 @@ class PruningTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
+
+        try:
+            state_dict['q_layer_op_list'] = build_module_op_list(
+                self.model.q_layer)
+            state_dict['encoder_func_list'] = self.model.encoder.func_list
+        except AttributeError:
+            logger.warning(f"No q_layer_op_list or encoder_func_list found, "
+                           f"will not save them")
+
         try:
             state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
         except AttributeError:
