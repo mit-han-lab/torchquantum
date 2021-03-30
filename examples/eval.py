@@ -13,7 +13,7 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import (legalize_unitary, build_module_from_op_list,
-                                get_q_c_reg_mapping)
+                                get_q_c_reg_mapping, get_cared_configs)
 from qiskit import IBMQ
 from torchquantum.plugins import tq2qiskit, qiskit2tq
 
@@ -34,10 +34,12 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
-    parser.add_argument('--run_dir', metavar='DIR', help='run directory')
+    parser.add_argument('--run-dir', metavar='DIR', help='run directory')
     parser.add_argument('--pdb', action='store_true', help='pdb')
     parser.add_argument('--verbose', action='store_true', help='verbose')
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
+    parser.add_argument('--print-configs', action='store_true',
+                        help='print ALL configs')
     args, opts = parser.parse_known_args()
 
     configs.load(os.path.join(args.run_dir, 'metainfo', 'configs.yaml'))
@@ -59,7 +61,13 @@ def main() -> None:
     else:
         raise ValueError(configs.run.device)
 
-    logger.info(f'Evaluation started: "{args.run_dir}".' + '\n' + f'{configs}')
+    if args.print_configs:
+        print_conf = configs
+    else:
+        print_conf = get_cared_configs(configs, 'eval')
+
+    logger.info(f'Evaluation started: "{args.run_dir}".' + '\n' +
+                f'{print_conf}')
 
     if configs.qiskit.use_qiskit:
         IBMQ.load_account()
@@ -171,9 +179,9 @@ def main() -> None:
                 targets = feed_dict['digit']
 
             if configs.qiskit.use_qiskit:
-                outputs = model.forward_qiskit(inputs)
+                outputs = model.forward_qiskit(inputs, verbose=configs.verbose)
             else:
-                outputs = model(inputs)
+                outputs = model(inputs, verbose=configs.verbose)
 
             if target_all is None:
                 target_all = targets
@@ -181,8 +189,8 @@ def main() -> None:
             else:
                 target_all = torch.cat([target_all, targets], dim=0)
                 output_all = torch.cat([output_all, outputs], dim=0)
-            if configs.verbose:
-                logger.info(f"Measured log_softmax: {outputs}")
+            # if configs.verbose:
+            #     logger.info(f"Measured log_softmax: {outputs}")
             log_acc(output_all, target_all)
 
     logger.info("Final:")

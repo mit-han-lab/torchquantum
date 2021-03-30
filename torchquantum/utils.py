@@ -3,10 +3,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchquantum as tq
+import copy
 
 from torchquantum.macro import C_DTYPE
 from torchpack.utils.logging import logger
 from typing import List, Dict, Iterable
+from torchpack.utils.config import Config
 
 
 def pauli_eigs(n):
@@ -292,6 +294,65 @@ def get_q_c_reg_mapping(circ):
             mapping['c2q'][gate[2][0].index] = gate[1][0].index
 
     return mapping
+
+
+def get_cared_configs(conf, mode) -> Config:
+    """only preserve cared configs"""
+    conf = copy.deepcopy(conf)
+    ignores = ['callbacks',
+               'criterion',
+               'debug',
+               'legalization',
+               'optimizer',
+               'regularization',
+               'scheduler',
+               'verbose',
+               ]
+
+    for ignore in ignores:
+        if hasattr(conf, ignore):
+            delattr(conf, ignore)
+
+    if hasattr(conf, 'dataset'):
+        dataset_ignores = ['binarize',
+                           'binarize_threshold',
+                           'center_crop',
+                           'name',
+                           'resize',
+                           'resize_mode',
+                           'root',
+                           'train_valid_split_ratio',
+                           ]
+        for dataset_ignore in dataset_ignores:
+            if hasattr(conf.dataset, dataset_ignore):
+                delattr(conf.dataset, dataset_ignore)
+
+    if not mode == 'es' and hasattr(conf, 'es'):
+        delattr(conf, 'es')
+
+    if not mode == 'train' and hasattr(conf, 'trainer'):
+        delattr(conf, 'trainer')
+
+    if hasattr(conf, 'qiskit'):
+        qiskit_ignores = ['n_shots',
+                          'seed_simulator',
+                          'seed_transpiler',
+                          'coupling_map_name',
+                          'basis_gates_name',
+                          ]
+        for qiskit_ignore in qiskit_ignores:
+            if hasattr(conf.qiskit, qiskit_ignore):
+                delattr(conf.qiskit, qiskit_ignore)
+
+    if hasattr(conf, 'run'):
+        run_ignores = ['device',
+                       'workers_per_gpu',
+                       'n_epochs']
+        for run_ignore in run_ignores:
+            if hasattr(conf.run, run_ignore):
+                delattr(conf.run, run_ignore)
+
+    return conf
 
 
 if __name__ == '__main__':

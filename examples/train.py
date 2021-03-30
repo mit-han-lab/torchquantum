@@ -18,7 +18,9 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.plugins import tq2qiskit, qiskit2tq
-from torchquantum.utils import build_module_from_op_list, get_q_c_reg_mapping
+from torchquantum.utils import (build_module_from_op_list,
+                                get_q_c_reg_mapping,
+                                get_cared_configs)
 
 
 def main() -> None:
@@ -28,9 +30,11 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
-    parser.add_argument('--run-dir', metavar='DIR', help='run directory')
+    parser.add_argument('--ckpt-dir', metavar='DIR', help='run directory')
     parser.add_argument('--pdb', action='store_true', help='pdb')
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
+    parser.add_argument('--print-configs', action='store_true',
+                        help='print ALL configs')
     args, opts = parser.parse_known_args()
 
     configs.load(args.config, recursive=True)
@@ -62,7 +66,14 @@ def main() -> None:
     set_run_dir(args.run_dir)
 
     logger.info(' '.join([sys.executable] + sys.argv))
-    logger.info(f'Experiment started: "{args.run_dir}".' + '\n' + f'{configs}')
+
+    if args.print_configs:
+        print_conf = configs
+    else:
+        print_conf = get_cared_configs(configs, 'train')
+
+    logger.info(f'Training started: "{args.run_dir}".' + '\n' +
+                f'{print_conf}')
 
     dataset = builder.make_dataset()
     dataflow = dict()
@@ -92,9 +103,12 @@ def main() -> None:
     model = builder.make_model()
 
     state_dict = None
+    solution = None
+    score = None
     if configs.ckpt.load_ckpt:
+        logger.warning('Loading checkpoint!')
         state_dict = io.load(
-            os.path.join(configs.ckpt.path, configs.ckpt.name),
+            os.path.join(args.ckpt_dir, configs.ckpt.name),
             map_location='cpu')
         model_load = state_dict['model_arch']
 
@@ -172,6 +186,8 @@ def main() -> None:
         optimizer=optimizer,
         scheduler=scheduler
     )
+    trainer.solution = solution
+    trainer.score = score
 
     # trainer state_dict will be loaded in a callback
     callbacks = builder.make_callbacks(dataflow, state_dict)

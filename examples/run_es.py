@@ -11,7 +11,8 @@ from torchpack.utils import io
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
-from torchquantum.utils import legalize_unitary, build_module_op_list
+from torchquantum.utils import (legalize_unitary, build_module_op_list,
+                                get_cared_configs)
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from qiskit import IBMQ
 from core.tools import EvolutionEngine
@@ -159,8 +160,13 @@ def main() -> None:
     else:
         raise ValueError(configs.run.device)
 
+    if args.print_configs:
+        print_conf = configs
+    else:
+        print_conf = get_cared_configs(configs, 'es')
+
     logger.info(f'Evolutionary Search started: "{args.run_dir}".' + '\n' +
-                f'{configs}')
+                f'{print_conf}')
 
     if configs.qiskit.use_qiskit:
         IBMQ.load_account()
