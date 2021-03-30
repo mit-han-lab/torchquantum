@@ -1,0 +1,5 @@
+qiskit:
+  backend_name: ibmqx2
+  noise_model_name: ibmqx2
+  coupling_map_name: ibmqx2
+  basis_gates_name: ibmqx2

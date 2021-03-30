@@ -1,0 +1,12 @@
+qiskit:
+  use_qiskit: True
+  use_real_qc: True
+  backend_name: ibmqx2
+  noise_model_name: ibmqx2
+  optimization_level: 2
+
+run:
+  bsz: 10000
+
+dataset:
+  n_test_samples: 75

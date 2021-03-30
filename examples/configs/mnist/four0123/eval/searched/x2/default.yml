@@ -1,0 +1,6 @@
+qiskit:
+  use_qiskit: True
+  backend_name: ibmqx2
+
+run:
+  bsz: 10000
