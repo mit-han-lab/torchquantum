@@ -1,5 +1,6 @@
 import torchquantum as tq
 import torch.nn.functional as F
+from torchpack.utils.logging import logger
 
 
 class Q4DigitFCModel0(tq.QuantumModule):
@@ -77,7 +78,7 @@ class Q4DigitFCModel0(tq.QuantumModule):
         self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
-    def forward(self, x):
+    def forward(self, x, verbose=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         self.encoder(self.q_device, x)
@@ -85,12 +86,15 @@ class Q4DigitFCModel0(tq.QuantumModule):
         self.q_layer(self.q_device)
         x = self.measure(self.q_device)
 
+        if verbose:
+            logger.info(f"Theoretical expectation:\n {x.data}")
+
         x = x.squeeze()
         x = F.log_softmax(x, dim=1)
 
         return x
 
-    def forward_qiskit(self, x):
+    def forward_qiskit(self, x, verbose=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
@@ -98,6 +102,8 @@ class Q4DigitFCModel0(tq.QuantumModule):
             self.q_device, self.encoder, self.q_layer, x)
 
         x = x.squeeze()
+        if verbose:
+            logger.info(f"Qiskit measured expectation:\n {x.data}")
         x = F.log_softmax(x, dim=1)
 
         return x

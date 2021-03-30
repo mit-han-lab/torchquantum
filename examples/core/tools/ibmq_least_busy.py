@@ -37,8 +37,13 @@ if __name__ == '__main__':
         circ.measure(0, 0)
         logger.info(f"Queue on {args.name}")
         backend = provider.get_backend(qc_name_dict[args.name])
-        job = execute(circ, backend)
-        job_monitor(job, interval=1)
+        job1 = execute(circ, backend)
+        job2 = execute(circ, backend)
+        print('here1')
+        job_monitor(job1, interval=1)
+        print('here2')
+        job_monitor(job2, interval=1)
+
         exit(0)
 
     backends = provider.backends(
