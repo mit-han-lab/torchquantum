@@ -74,6 +74,8 @@ class QTrainer(Trainer):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.solution = None
+        self.score = None
 
     def _before_epoch(self) -> None:
         self.model.train()
@@ -149,6 +151,10 @@ class QTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
+        if self.solution is not None:
+            state_dict['solution'] = self.solution
+            state_dict['score'] = self.score
+
         try:
             state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
         except AttributeError:
