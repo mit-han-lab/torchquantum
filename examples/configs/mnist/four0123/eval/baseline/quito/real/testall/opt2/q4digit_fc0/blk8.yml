@@ -1,0 +1,3 @@
+model:
+  arch:
+    n_blocks: 8

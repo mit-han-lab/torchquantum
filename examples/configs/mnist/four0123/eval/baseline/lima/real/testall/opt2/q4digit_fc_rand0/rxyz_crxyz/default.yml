@@ -1,0 +1,3 @@
+model:
+  arch:
+    op_type_name: ['rx', 'ry', 'rz', 'crx', 'cry', 'crz']
