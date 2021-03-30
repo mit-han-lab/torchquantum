@@ -97,17 +97,17 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
         elif module.name == 'CU1':
             circ.cu1(module.params[0][0].item(), *module.wires)
         elif module.name == 'U2':
-            circ.u2(*list(module.params[0].data.numpy()), *module.wires)
+            circ.u2(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == 'U3':
-            circ.u3(*list(module.params[0].data.numpy()), *module.wires)
+            circ.u3(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == 'CU3':
-            circ.cu3(*list(module.params[0].data.numpy()), *module.wires)
+            circ.cu3(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == 'QubitUnitary' or \
                 module.name == 'QubitUnitaryFast' or \
                 module.name == 'TrainableUnitary' or \
                 module.name == 'TrainableUnitaryStrict':
             from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
-            mat = module.params[0].data.numpy()
+            mat = module.params[0].data.cpu().numpy()
             mat = switch_little_big_endian_matrix(mat)
             circ.append(UnitaryGate(mat), module.wires, [])
         elif module.name == 'MultiCNOT':
