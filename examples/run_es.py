@@ -5,7 +5,6 @@ import torch
 import torch.backends.cudnn
 import tqdm
 import torch.nn.functional as F
-import copy
 import torchquantum as tq
 
 from torchpack.utils import io
@@ -17,6 +16,7 @@ from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from qiskit import IBMQ
 from core.tools import EvolutionEngine
 from qiskit.providers.aer.noise.device.parameters import gate_error_values
+from torch.utils.tensorboard import SummaryWriter
 
 
 def get_success_rate(properties, transpiled_circ):
@@ -44,10 +44,16 @@ def get_success_rate(properties, transpiled_circ):
     return success_rate
 
 
-def evaluate_all(model, dataflow, solutions):
+def evaluate_all(model, dataflow, solutions, writer=None, iter_n=None,
+                 population_size=None):
     scores = []
 
-    for solution in solutions:
+    best_solution_accuracy = 0
+    best_solution_loss = 0
+    best_solution_success_rate = 0
+    best_solution_score = 999999
+
+    for i, solution in enumerate(solutions):
         if model.qiskit_processor is not None:
             model.qiskit_processor.set_layout(solution['layout'])
         model.set_sample_arch(solution['arch'])
@@ -98,7 +104,29 @@ def evaluate_all(model, dataflow, solutions):
         logger.info(f"Accuracy: {accuracy:.5f}, Loss: {loss:.5f}, "
                     f"Success Rate: {success_rate: .5f}, Score: {score:.5f}")
 
-    return scores
+        if score < best_solution_score:
+            best_solution_accuracy = accuracy
+            best_solution_success_rate = success_rate
+            best_solution_loss = loss
+            best_solution_score = score
+
+        logger.info(f"Best of iteration: "
+                    f"Accuracy: {best_solution_accuracy:.5f}, "
+                    f"Loss: {best_solution_loss:.5f}, "
+                    f"Success Rate: {best_solution_success_rate: .5f}, "
+                    f"Score: {best_solution_score:.5f}")
+
+        if population_size is not None and writer is not None and \
+                population_size is not None:
+            writer.add_scalar('es/accuracy', accuracy,
+                              iter_n * population_size + i)
+            writer.add_scalar('es/loss', loss, iter_n * population_size + i)
+            writer.add_scalar('es/success_rate', success_rate,
+                              iter_n * population_size + i)
+            writer.add_scalar('es/score', score, iter_n * population_size + i)
+
+    return scores, best_solution_accuracy, best_solution_loss, \
+        best_solution_success_rate, best_solution_score
 
 
 def main() -> None:
@@ -166,7 +194,7 @@ def main() -> None:
 
     model.load_state_dict(state_dict['model'], strict=False)
 
-    if configs.legalize_unitary:
+    if configs.legalization.legalize:
         legalize_unitary(model)
     model.to(device)
     model.eval()
@@ -174,6 +202,9 @@ def main() -> None:
     es_dir = 'es_runs/' + args.config.replace('/', '.').replace(
         'examples.', '').replace('.yml', '').replace('configs.', '')
     io.save(os.path.join(es_dir, 'metainfo/configs.yaml'), configs.dict())
+
+    writer = SummaryWriter(os.path.normpath(os.path.join(es_dir,
+                                                         'tb')))
 
     if configs.qiskit.use_qiskit or configs.es.est_success_rate:
         IBMQ.load_account()
@@ -203,10 +234,23 @@ def main() -> None:
     for k in range(configs.es.n_iterations):
         logger.info(f"ES iteration {k}:")
         solutions = es_engine.ask()
-        scores = evaluate_all(model, dataflow, solutions)
+        scores, best_solution_accuracy, best_solution_loss, \
+            best_solution_success_rate, best_solution_score \
+            = evaluate_all(model, dataflow, solutions, writer, k,
+                           configs.es.population_size)
         es_engine.tell(scores)
         logger.info(f"Best solution: {es_engine.best_solution}")
         logger.info(f"Best score: {es_engine.best_score}")
+
+        assert best_solution_score == es_engine.best_score
+        writer.add_text('es/best_solution_arch',
+                        str(es_engine.best_solution), k)
+        writer.add_scalar('es/best_solution_accuracy',
+                          best_solution_accuracy, k)
+        writer.add_scalar('es/best_solution_loss', best_solution_loss, k)
+        writer.add_scalar('es/best_solution_success_rate',
+                          best_solution_success_rate, k)
+        writer.add_scalar('es/best_solution_score', es_engine.best_score, k)
 
         # store the model and solution after every iteration
         state_dict = dict()
