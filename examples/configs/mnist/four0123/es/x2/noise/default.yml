@@ -1,0 +1,7 @@
+qiskit:
+  use_qiskit: True
+  noise_model_name: ibmqx2
+  max_jobs: 64
+
+es:
+  est_success_rate: False
