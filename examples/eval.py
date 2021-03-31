@@ -40,6 +40,8 @@ def main() -> None:
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
     parser.add_argument('--print-configs', action='store_true',
                         help='print ALL configs')
+    parser.add_argument('--jobs', type=int, default=None,
+                        help='max parallel job on qiskit')
     args, opts = parser.parse_known_args()
 
     configs.load(os.path.join(args.run_dir, 'metainfo', 'configs.yaml'))
@@ -53,6 +55,9 @@ def main() -> None:
 
     if args.gpu is not None:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
+    if args.jobs is not None:
+        configs.qiskit.max_jobs = args.jobs
 
     if configs.run.device == 'gpu':
         device = torch.device('cuda')
@@ -69,11 +74,11 @@ def main() -> None:
     logger.info(f'Evaluation started: "{args.run_dir}".' + '\n' +
                 f'{print_conf}')
 
-    if configs.qiskit.use_qiskit:
-        IBMQ.load_account()
-        if configs.run.bsz == 'qiskit_max':
-            configs.run.bsz = IBMQ.get_provider(hub='ibm-q').get_backend(
-                configs.qiskit.backend_name).configuration().max_experiments
+    # if configs.qiskit.use_qiskit:
+    #     IBMQ.load_account()
+    #     if configs.run.bsz == 'qiskit_max':
+    #         configs.run.bsz = IBMQ.get_provider(hub='ibm-q').get_backend(
+    #             configs.qiskit.backend_name).configuration().max_experiments
 
     dataset = builder.make_dataset()
     sampler = torch.utils.data.SequentialSampler(dataset['test'])

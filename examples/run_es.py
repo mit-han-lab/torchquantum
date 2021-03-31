@@ -138,6 +138,8 @@ def main() -> None:
     parser.add_argument('--run_dir', metavar='DIR', help='run directory')
     parser.add_argument('--pdb', action='store_true', help='pdb')
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
+    parser.add_argument('--jobs', type=int, default=None,
+                        help='max parallel job on qiskit')
     args, opts = parser.parse_known_args()
 
     configs.load(os.path.join(args.run_dir, 'metainfo', 'configs.yaml'))
@@ -149,6 +151,9 @@ def main() -> None:
 
     if args.gpu is not None:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
+    if args.jobs is not None:
+        configs.qiskit.max_jobs = args.jobs
 
     # if use qiskit, then not need to estimate success rate
     assert not (configs.es.est_success_rate and configs.qiskit.use_qiskit)
@@ -292,11 +297,11 @@ def main() -> None:
         model.qiskit_processor.noise_model_name = None
         model.qiskit_processor.qiskit_init()
 
-        if configs.es.eval.bsz == 'qiskit_max':
-            configs.run.bsz = \
-                model.qiskit_processor.backend.configuration().max_experiments
-        else:
-            configs.run.bsz = configs.es.eval.bsz
+        # if configs.es.eval.bsz == 'qiskit_max':
+        #     configs.run.bsz = \
+        #         model.qiskit_processor.backend.configuration().max_experiments
+        # else:
+        configs.run.bsz = configs.es.eval.bsz
 
         configs.dataset.n_test_samples = configs.es.eval.n_test_samples
         dataset = builder.make_dataset()
