@@ -135,11 +135,13 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
-    parser.add_argument('--run_dir', metavar='DIR', help='run directory')
+    parser.add_argument('--run-dir', metavar='DIR', help='run directory')
     parser.add_argument('--pdb', action='store_true', help='pdb')
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
     parser.add_argument('--jobs', type=int, default=None,
                         help='max parallel job on qiskit')
+    parser.add_argument('--print-configs', action='store_true',
+                        help='print ALL configs')
     args, opts = parser.parse_known_args()
 
     configs.load(os.path.join(args.run_dir, 'metainfo', 'configs.yaml'))
@@ -180,9 +182,9 @@ def main() -> None:
                 configs.qiskit.backend_name).configuration().max_experiments
 
     dataset = builder.make_dataset()
-    sampler = torch.utils.data.SequentialSampler(dataset['test'])
+    sampler = torch.utils.data.SequentialSampler(dataset['valid'])
     dataflow = torch.utils.data.DataLoader(
-        dataset['test'],
+        dataset['valid'],
         sampler=sampler,
         batch_size=configs.run.bsz,
         num_workers=configs.run.workers_per_gpu,
