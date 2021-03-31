@@ -221,6 +221,7 @@ class QiskitProcessor(object):
         counts = list(itertools.chain(*results))
         measured_qiskit = get_expectations_from_counts(
             counts, n_wires=q_device.n_wires)
+        p.close()
 
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
