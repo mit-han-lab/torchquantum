@@ -18,8 +18,10 @@ from torchpack.utils.logging import logger
 def run_job_worker(data):
     while True:
         try:
-            job = execute(**data)
-            job_monitor(job, interval=1)
+            job = execute(**(data[0]))
+            qiskit_verbose = data[1]
+            if qiskit_verbose:
+                job_monitor(job, interval=1)
             result = job.result()
             counts = result.get_counts()
             break
@@ -196,6 +198,7 @@ class QiskitProcessor(object):
         split_binds = [binds_all[i:i + chunk_size] for i in range(0,
                        len(binds_all), chunk_size)]
 
+        qiskit_verbose = self.max_jobs <= 6
         feed_dicts = []
         for split_bind in split_binds:
             feed_dict = {
@@ -210,7 +213,7 @@ class QiskitProcessor(object):
                 'optimization_level': self.optimization_level,
                 'parameter_binds': split_bind,
             }
-            feed_dicts.append(feed_dict)
+            feed_dicts.append([feed_dict, qiskit_verbose])
 
         p = multiprocessing.Pool(self.max_jobs)
         results = p.map(run_job_worker, feed_dicts)

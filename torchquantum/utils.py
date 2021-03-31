@@ -329,6 +329,8 @@ def get_cared_configs(conf, mode) -> Config:
 
     if not mode == 'es' and hasattr(conf, 'es'):
         delattr(conf, 'es')
+    elif mode == 'es' and hasattr(conf, 'es') and hasattr(conf.es, 'eval'):
+        delattr(conf.es, 'eval')
 
     if not mode == 'train' and hasattr(conf, 'trainer'):
         delattr(conf, 'trainer')
