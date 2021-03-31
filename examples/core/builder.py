@@ -229,6 +229,7 @@ def make_qiskit_processor():
         initial_layout=configs.qiskit.initial_layout,
         seed_transpiler=configs.qiskit.seed_transpiler,
         seed_simulator=configs.qiskit.seed_simulator,
-        optimization_level=configs.qiskit.optimization_level
+        optimization_level=configs.qiskit.optimization_level,
+        max_jobs=configs.qiskit.max_jobs,
     )
     return processor

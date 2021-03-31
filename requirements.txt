@@ -7,3 +7,6 @@ torchquantum>=0.1
 torchpack>=0.3.0
 qiskit>=0.24.0
 matplotlib>=3.3.2
+
+pathos>=0.2.7
+tensorflow>=2.4.1
