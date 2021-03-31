@@ -54,14 +54,14 @@ def evaluate_all(model, dataflow, solutions, writer=None, iter_n=None,
     best_solution_success_rate = 0
     best_solution_score = 999999
 
-    for i, solution in enumerate(solutions):
+    for i, solution in tqdm.tqdm(enumerate(solutions)):
         if model.qiskit_processor is not None:
             model.qiskit_processor.set_layout(solution['layout'])
         model.set_sample_arch(solution['arch'])
         with torch.no_grad():
             target_all = None
             output_all = None
-            for feed_dict in tqdm.tqdm(dataflow, leave=False):
+            for feed_dict in dataflow:
                 if configs.run.device == 'gpu':
                     inputs = feed_dict['image'].cuda(non_blocking=True)
                     targets = feed_dict['digit'].cuda(non_blocking=True)
@@ -182,9 +182,10 @@ def main() -> None:
                 configs.qiskit.backend_name).configuration().max_experiments
 
     dataset = builder.make_dataset()
-    sampler = torch.utils.data.SequentialSampler(dataset['valid'])
+    sampler = torch.utils.data.SequentialSampler(dataset[
+                                                     configs.dataset.split])
     dataflow = torch.utils.data.DataLoader(
-        dataset['valid'],
+        dataset[configs.dataset.split],
         sampler=sampler,
         batch_size=configs.run.bsz,
         num_workers=configs.run.workers_per_gpu,

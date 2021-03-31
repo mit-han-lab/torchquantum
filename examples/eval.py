@@ -81,9 +81,10 @@ def main() -> None:
     #             configs.qiskit.backend_name).configuration().max_experiments
 
     dataset = builder.make_dataset()
-    sampler = torch.utils.data.SequentialSampler(dataset['test'])
+    sampler = torch.utils.data.SequentialSampler(dataset[
+                                                     configs.dataset.split])
     dataflow = torch.utils.data.DataLoader(
-        dataset['test'],
+        dataset[configs.dataset.split],
         sampler=sampler,
         batch_size=configs.run.bsz,
         num_workers=configs.run.workers_per_gpu,
@@ -168,6 +169,12 @@ def main() -> None:
             logger.warning(f"No specified layout")
         qiskit_processor.set_layout(layout)
         model.set_qiskit_processor(qiskit_processor)
+
+    if hasattr(configs.model.arch, 'sample_arch') and \
+            configs.model.arch.sample_arch is not None:
+        sample_arch = configs.model.arch.sample_arch
+        logger.warning(f"Setting sample arch {sample_arch}")
+        model.set_sample_arch(sample_arch)
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
