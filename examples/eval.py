@@ -189,7 +189,11 @@ def main() -> None:
         success_rate = get_success_rate(
             model.qiskit_processor.properties,
             transpiled_circ)
-        logger.info(f"Success_rate: {success_rate}")
+        logger.info(f"Success rate: {success_rate}")
+        logger.info(f"Size: {transpiled_circ.size()}")
+        logger.info(f"Depth: {transpiled_circ.depth()}")
+        logger.info(f"Width: {transpiled_circ.width()}")
+        exit(0)
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
