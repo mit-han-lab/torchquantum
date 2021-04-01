@@ -12,8 +12,9 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import (legalize_unitary, build_module_from_op_list,
-                                get_q_c_reg_mapping, get_cared_configs)
-from torchquantum.plugins import tq2qiskit, qiskit2tq
+                                get_q_c_reg_mapping, get_cared_configs,
+                                get_success_rate)
+from torchquantum.plugins import tq2qiskit, qiskit2tq, tq2qiskit_parameterized
 from torchquantum.super_utils import get_named_sample_arch
 
 
@@ -177,6 +178,18 @@ def main() -> None:
             sample_arch = get_named_sample_arch(model.arch_space, sample_arch)
             logger.warning(f"Decoded sample arch: {sample_arch}")
         model.set_sample_arch(sample_arch)
+
+    if configs.qiskit.est_success_rate:
+        circ_parameterized, params = tq2qiskit_parameterized(
+            model.q_device, model.encoder.func_list)
+        circ_fixed = tq2qiskit(model.q_device, model.q_layer)
+        circ = circ_parameterized + circ_fixed
+        transpiled_circ = model.qiskit_processor.transpile(circ)
+
+        success_rate = get_success_rate(
+            model.qiskit_processor.properties,
+            transpiled_circ)
+        logger.info(f"Success_rate: {success_rate}")
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')

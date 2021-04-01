@@ -12,37 +12,11 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import (legalize_unitary, build_module_op_list,
-                                get_cared_configs)
+                                get_cared_configs, get_success_rate)
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from qiskit import IBMQ
 from core.tools import EvolutionEngine
-from qiskit.providers.aer.noise.device.parameters import gate_error_values
 from torch.utils.tensorboard import SummaryWriter
-
-
-def get_success_rate(properties, transpiled_circ):
-    # estimate the success rate according to the error rates of single and
-    # two-qubit gates in transpiled circuits
-
-    gate_errors = gate_error_values(properties)
-    # construct the error dict
-    gate_error_dict = {}
-    for gate_error in gate_errors:
-        if gate_error[0] not in gate_error_dict.keys():
-            gate_error_dict[gate_error[0]] = {tuple(gate_error[1]):
-                                              gate_error[2]}
-        else:
-            gate_error_dict[gate_error[0]][tuple(gate_error[1])] = \
-                gate_error[2]
-
-    success_rate = 1
-    for gate in transpiled_circ.data:
-        gate_success_rate = 1 - gate_error_dict[gate[0].name][tuple(
-            map(lambda x: x.index, gate[1])
-        )]
-        success_rate *= gate_success_rate
-
-    return success_rate
 
 
 def evaluate_all(model, dataflow, solutions, writer=None, iter_n=None,

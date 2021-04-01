@@ -9,6 +9,7 @@ from torchquantum.macro import C_DTYPE
 from torchpack.utils.logging import logger
 from typing import List, Dict, Iterable
 from torchpack.utils.config import Config
+from qiskit.providers.aer.noise.device.parameters import gate_error_values
 
 
 def pauli_eigs(n):
@@ -355,6 +356,31 @@ def get_cared_configs(conf, mode) -> Config:
                 delattr(conf.run, run_ignore)
 
     return conf
+
+
+def get_success_rate(properties, transpiled_circ):
+    # estimate the success rate according to the error rates of single and
+    # two-qubit gates in transpiled circuits
+
+    gate_errors = gate_error_values(properties)
+    # construct the error dict
+    gate_error_dict = {}
+    for gate_error in gate_errors:
+        if gate_error[0] not in gate_error_dict.keys():
+            gate_error_dict[gate_error[0]] = {tuple(gate_error[1]):
+                                              gate_error[2]}
+        else:
+            gate_error_dict[gate_error[0]][tuple(gate_error[1])] = \
+                gate_error[2]
+
+    success_rate = 1
+    for gate in transpiled_circ.data:
+        gate_success_rate = 1 - gate_error_dict[gate[0].name][tuple(
+            map(lambda x: x.index, gate[1])
+        )]
+        success_rate *= gate_success_rate
+
+    return success_rate
 
 
 if __name__ == '__main__':
