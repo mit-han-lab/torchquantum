@@ -6,7 +6,6 @@ import torch.backends.cudnn
 import tqdm
 import torch.nn.functional as F
 import torchquantum as tq
-import copy
 
 from torchpack.utils import io
 from torchpack.utils.config import configs
@@ -14,7 +13,6 @@ from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import (legalize_unitary, build_module_from_op_list,
                                 get_q_c_reg_mapping, get_cared_configs)
-from qiskit import IBMQ
 from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.super_utils import get_named_sample_arch
 
