@@ -1,2 +1,5 @@
 run:
   bsz: 10000
+
+dataset:
+  split: test

@@ -18,3 +18,6 @@ es:
     use_real_qc: False
     bsz: qiskit_max
     n_test_samples: 150
+
+dataset:
+  split: valid
