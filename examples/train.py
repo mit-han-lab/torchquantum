@@ -9,7 +9,6 @@ import torch.cuda
 import torch.nn
 import torch.utils.data
 import torchquantum as tq
-import copy
 
 from torchpack.utils import io
 # from torchpack import distributed as dist
@@ -21,6 +20,7 @@ from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.utils import (build_module_from_op_list,
                                 get_q_c_reg_mapping,
                                 get_cared_configs)
+from torchquantum.super_utils import get_named_sample_arch
 
 
 def main() -> None:
@@ -165,6 +165,15 @@ def main() -> None:
         model.measure.set_q_c_reg_mapping(
             get_q_c_reg_mapping(circ_transpiled))
         model.q_layer = q_layer
+
+    if getattr(configs.model.arch, 'sample_arch', None) is not None:
+        sample_arch = configs.model.arch.sample_arch
+        logger.warning(f"Setting sample arch {sample_arch}")
+        if isinstance(sample_arch, str):
+            # this is the name of arch
+            sample_arch = get_named_sample_arch(model.arch_space, sample_arch)
+            logger.warning(f"Decoded sample arch: {sample_arch}")
+        model.set_sample_arch(sample_arch)
 
     model.to(device)
     # model = torch.nn.parallel.DistributedDataParallel(

@@ -193,20 +193,49 @@ class ArchSampler(object):
 
         return sample_arch
 
-    def get_named_sample_arch(self, name):
-        sample_arch = []
-        if name == 'smallest':
-            for layer_arch_space in self.arch_space:
-                layer_arch = layer_arch_space[0]
+
+def get_named_sample_arch(arch_space, name):
+    """
+    examples:
+    - blk1_ratio0.5 means 1 block and each layers' arch is the 0.5 of all
+    choices
+    - blk8_ratio0.3 means 8 block and each layers' arch is 0.3 of all choices
+    - ratio0.4 means 0.4 for each arch choice, including blk if exists
+    """
+
+    sample_arch = []
+    if name == 'smallest':
+        for layer_arch_space in arch_space:
+            layer_arch = layer_arch_space[0]
+            sample_arch.append(layer_arch)
+    elif name == 'largest':
+        for layer_arch_space in arch_space:
+            layer_arch = layer_arch_space[-1]
+            sample_arch.append(layer_arch)
+    elif name == 'middle':
+        for layer_arch_space in arch_space:
+            layer_arch = layer_arch_space[len(layer_arch_space) // 2]
+            sample_arch.append(layer_arch)
+    else:
+        if name.startswith('blk'):
+            # decode the block and ratio
+            n_block = eval(name.split('_')[0].replace('blk', ''))
+            ratio = eval(name.split('_')[1].replace('ratio', ''))
+            assert ratio <= 1
+            for layer_arch_space in arch_space[:-1]:
+                layer_arch = layer_arch_space[
+                    int(round((len(layer_arch_space) - 1) * ratio))]
                 sample_arch.append(layer_arch)
-        elif name == 'largest':
-            for layer_arch_space in self.arch_space:
-                layer_arch = layer_arch_space[-1]
-                sample_arch.append(layer_arch)
-        elif name == 'middle':
-            for layer_arch_space in self.arch_space:
-                layer_arch = layer_arch_space[len(layer_arch_space) // 2]
+            sample_arch.append(n_block)
+        elif name.startswith('ratio'):
+            # decode the numerator and denominator
+            ratio = eval(name.replace('ratio', ''))
+            assert ratio <= 1
+            for layer_arch_space in arch_space:
+                layer_arch = layer_arch_space[
+                    int(round((len(layer_arch_space) - 1) * ratio))]
                 sample_arch.append(layer_arch)
         else:
-            raise NotImplementedError(name)
-        return sample_arch
+            raise NotImplementedError(f"Arch name {name} not supported.")
+
+    return sample_arch

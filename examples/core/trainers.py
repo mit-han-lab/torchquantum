@@ -151,6 +151,9 @@ class QTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
+        if getattr(self.model, 'sample_arch', None) is not None:
+            state_dict['sample_arch'] = self.model.sample_arch
+
         if self.solution is not None:
             state_dict['solution'] = self.solution
             state_dict['score'] = self.score
@@ -267,6 +270,8 @@ class SuperQTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
+        if getattr(self.model, 'sample_arch', None) is not None:
+            state_dict['sample_arch'] = self.model.sample_arch
         try:
             state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
         except AttributeError:
@@ -423,7 +428,8 @@ class PruningTrainer(Trainer):
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
-
+        if getattr(self.model, 'sample_arch', None) is not None:
+            state_dict['sample_arch'] = self.model.sample_arch
         try:
             state_dict['q_layer_op_list'] = build_module_op_list(
                 self.model.q_layer)

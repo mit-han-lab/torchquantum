@@ -16,6 +16,7 @@ from torchquantum.utils import (legalize_unitary, build_module_from_op_list,
                                 get_q_c_reg_mapping, get_cared_configs)
 from qiskit import IBMQ
 from torchquantum.plugins import tq2qiskit, qiskit2tq
+from torchquantum.super_utils import get_named_sample_arch
 
 
 def log_acc(output_all, target_all, k=1):
@@ -170,10 +171,13 @@ def main() -> None:
         qiskit_processor.set_layout(layout)
         model.set_qiskit_processor(qiskit_processor)
 
-    if hasattr(configs.model.arch, 'sample_arch') and \
-            configs.model.arch.sample_arch is not None:
+    if getattr(configs.model.arch, 'sample_arch', None) is not None:
         sample_arch = configs.model.arch.sample_arch
         logger.warning(f"Setting sample arch {sample_arch}")
+        if isinstance(sample_arch, str):
+            # this is the name of arch
+            sample_arch = get_named_sample_arch(model.arch_space, sample_arch)
+            logger.warning(f"Decoded sample arch: {sample_arch}")
         model.set_sample_arch(sample_arch)
 
     total_params = sum(p.numel() for p in model.parameters())

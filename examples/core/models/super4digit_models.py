@@ -76,8 +76,10 @@ class Super4DigitShareFrontQFCModel1(tq.QuantumModule):
         ])
         self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
+        self.sample_arch = None
 
     def set_sample_arch(self, sample_arch):
+        self.sample_arch = sample_arch
         self.q_layer.set_sample_arch(sample_arch)
 
     def forward(self, x, verbose=False):
