@@ -74,6 +74,7 @@ qiskit:
   seed_transpiler: 42
   seed_simulator: 42
   optimization_level: 0
+  est_success_rate: False
 
 ckpt:
   load_ckpt: False
