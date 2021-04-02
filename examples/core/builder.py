@@ -126,6 +126,15 @@ def make_scheduler(optimizer: Optimizer) -> Scheduler:
     elif configs.scheduler.name == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=configs.run.n_epochs)
+    elif configs.scheduler.name == 'cosine_warm':
+        from .schedulers import CosineAnnealingWarmupRestarts
+        scheduler = CosineAnnealingWarmupRestarts(
+            optimizer,
+            first_cycle_steps=configs.run.n_epochs,
+            max_lr=configs.optimizer.lr,
+            min_lr=0,
+            warmup_steps=configs.run.n_warm_epochs,
+        )
     else:
         raise NotImplementedError(configs.scheduler.name)
 

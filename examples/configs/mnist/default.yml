@@ -27,6 +27,7 @@ trainer:
 
 run:
   n_epochs: 200
+  n_warm_epochs: 0
   bsz: 256
   workers_per_gpu: 8
   device: gpu
