@@ -1,0 +1,3 @@
+model:
+  arch:
+    sample_arch: super4digit_arbitrary_fc1_blk8_rand2
