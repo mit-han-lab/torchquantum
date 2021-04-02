@@ -1,7 +1,7 @@
 model:
   sampler:
     strategy:
-      name: plain
+      name: ldiff_blkexpand
 
 callbacks:
   - callback: 'SubnetInferenceRunner'

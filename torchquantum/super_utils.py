@@ -186,7 +186,7 @@ class ArchSampler(object):
                         f"not supported.")
         elif self.strategy['name'] == 'limit_diff_expanding':
             """
-            shrink the overall number of blocks
+            shrink the overall number of blocks and in-block size
             """
             if self.sample_arch_old is None:
                 self.sample_arch_old = get_named_sample_arch(
@@ -215,6 +215,40 @@ class ArchSampler(object):
                     sample_arch[idx] = new_space[0]
                 else:
                     sample_arch[idx] = np.random.choice(new_space)
+        elif self.strategy['name'] == 'ldiff_blkexpand':
+            """
+            shrink the overall number of blocks only
+            """
+            if self.sample_arch_old is None:
+                self.sample_arch_old = get_named_sample_arch(
+                    self.arch_space, 'largest')
+            sample_arch = self.sample_arch_old.copy()
+            n_stages = self.strategy['n_stages']
+            n_chunks = self.strategy['n_chunks']
+            n_diffs = self.strategy['n_diffs']
+            assert n_diffs <= len(self.arch_space)
+
+            current_stage = int(self.step // (self.total_steps / n_stages))
+            if current_stage > n_chunks:
+                """
+                major difference here, after expanding the space, 
+                will not go back
+                """
+                current_chunk = n_chunks - 1
+            else:
+                current_chunk = current_stage
+            self.current_stage = current_stage
+            self.current_chunk = current_chunk
+            diff_parts_idx = np.random.choice(np.arange(len(self.arch_space)),
+                                              n_diffs,
+                                              replace=False)
+            new_arch_space = self.arch_space.copy()
+            n_blk_choices = len(new_arch_space[-1])
+            new_arch_space[-1] = new_arch_space[-1][
+                int(round((n_blk_choices - 1) * (1 - (current_chunk + 1) / (
+                    n_chunks)))):]
+            for idx in diff_parts_idx:
+                sample_arch[idx] = np.random.choice(new_arch_space[idx])
         else:
             raise NotImplementedError(f"Strategy {self.strategy} not "
                                       f"supported.")

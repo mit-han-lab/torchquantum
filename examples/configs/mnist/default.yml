@@ -52,11 +52,15 @@ callbacks:
     subcallbacks:
       - metrics: 'CategoricalAccuracy'
         name: 'acc/valid'
+      - metrics: 'NLLError'
+        name: 'loss/valid'
   - callback: 'InferenceRunner'
     split: 'test'
     subcallbacks:
       - metrics: 'CategoricalAccuracy'
         name: 'acc/test'
+      - metrics: 'NLLError'
+        name: 'loss/test'
   - callback: 'MaxSaver'
     name: 'acc/valid'
   - callback: 'Saver'
