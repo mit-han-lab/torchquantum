@@ -136,6 +136,32 @@ class Q4DigitFCModel1(Q4DigitFCModel0):
                 self.cu3_layers[k](self.q_device)
 
 
+class Q4DigitFCModel2(Q4DigitFCModel0):
+    """ry and cz layers, one layer of ry and one layer of cz in one block"""
+    class QLayer(tq.QuantumModule):
+        def __init__(self, arch=None):
+            super().__init__()
+            self.arch = arch
+            self.n_wires = arch['n_wires']
+            self.ry_layers = tq.QuantumModuleList()
+            self.cz_layers = tq.QuantumModuleList()
+
+            for k in range(arch['n_blocks']):
+                self.ry_layers.append(
+                    tq.Op1QAllLayer(op=tq.RY, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.cz_layers.append(
+                    tq.Op2QAllLayer(op=tq.CZ, n_wires=self.n_wires,
+                                    circular=True))
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice):
+            self.q_device = q_device
+            for k in range(self.arch['n_blocks']):
+                self.ry_layers[k](self.q_device)
+                self.cz_layers[k](self.q_device)
+
+
 class Q4DigitFCRandomModel0(Q4DigitFCModel0):
     """model with random gates"""
     class QLayer(tq.QuantumModule):
@@ -160,5 +186,6 @@ class Q4DigitFCRandomModel0(Q4DigitFCModel0):
 model_dict = {
     'q4digit_fc0': Q4DigitFCModel0,
     'q4digit_fc1': Q4DigitFCModel1,
+    'q4digit_fc2': Q4DigitFCModel2,
     'q4digit_fc_rand0': Q4DigitFCRandomModel0,
 }
