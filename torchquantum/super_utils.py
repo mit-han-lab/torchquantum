@@ -229,7 +229,7 @@ class ArchSampler(object):
             assert n_diffs <= len(self.arch_space)
 
             current_stage = int(self.step // (self.total_steps / n_stages))
-            if current_stage > n_chunks:
+            if current_stage >= n_chunks:
                 """
                 major difference here, after expanding the space, 
                 will not go back
