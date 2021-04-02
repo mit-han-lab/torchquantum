@@ -304,11 +304,13 @@ def get_cared_configs(conf, mode) -> Config:
                'criterion',
                'debug',
                'legalization',
-               'optimizer',
                'regularization',
-               'scheduler',
                'verbose',
                ]
+
+    if 'super' not in conf.trainer.name:
+        ignores.append('scheduler')
+        ignores.append('optimizer')
 
     for ignore in ignores:
         if hasattr(conf, ignore):
@@ -342,6 +344,7 @@ def get_cared_configs(conf, mode) -> Config:
                           'seed_transpiler',
                           'coupling_map_name',
                           'basis_gates_name',
+                          'est_success_rate',
                           ]
         for qiskit_ignore in qiskit_ignores:
             if hasattr(conf.qiskit, qiskit_ignore):

@@ -32,6 +32,7 @@ class ArchSampler(object):
 
         self.sample_n_ops = None
         self.current_stage = 0
+        self.current_chunk = 0
 
     def set_total_steps(self, total_steps):
         self.total_steps = total_steps
@@ -145,17 +146,18 @@ class ArchSampler(object):
             while True:
                 sample_arch = self.get_random_sample_arch()
                 n_ops = self.get_sample_stats(sample_arch)
-                current_stage = self.step // (self.total_steps / n_stages)
-                current_stage = int(current_stage % n_chunks)
+                current_stage = int(self.step // (self.total_steps / n_stages))
+                current_chunk = current_stage % n_chunks
+                self.current_chunk = current_chunk
                 self.current_stage = current_stage
                 if self.strategy['subspace_mode'] == 'expand':
                     # the subspace size is expanding
                     if self.strategy['direction'] == 'top_down':
                         if n_ops >= list(reversed(self.n_ops_per_chunk))[
-                                current_stage + 1]:
+                                current_chunk + 1]:
                             break
                     elif self.strategy['direction'] == 'bottom_up':
-                        if n_ops <= self.n_ops_per_chunk[current_stage + 1]:
+                        if n_ops <= self.n_ops_per_chunk[current_chunk + 1]:
                             break
                     else:
                         raise NotImplementedError(
@@ -165,12 +167,12 @@ class ArchSampler(object):
                     # the subspace size is the same
                     if self.strategy['direction'] == 'top_down':
                         left = list(reversed(self.n_ops_per_chunk))[
-                                        current_stage + 1]
+                            current_chunk + 1]
                         right = list(reversed(self.n_ops_per_chunk))[
-                                        current_stage]
+                            current_chunk]
                     elif self.strategy['direction'] == 'bottom_up':
-                        left = self.n_ops_per_chunk[current_stage]
-                        right = self.n_ops_per_chunk[current_stage + 1]
+                        left = self.n_ops_per_chunk[current_chunk]
+                        right = self.n_ops_per_chunk[current_chunk + 1]
                     else:
                         raise NotImplementedError(
                             f"Direction mode {self.strategy['direction']} "
@@ -182,7 +184,37 @@ class ArchSampler(object):
                     raise NotImplementedError(
                         f"Subspace mode {self.strategy['subspace_mode']} "
                         f"not supported.")
+        elif self.strategy['name'] == 'limit_diff_expanding':
+            """
+            shrink the overall number of blocks
+            """
+            if self.sample_arch_old is None:
+                self.sample_arch_old = get_named_sample_arch(
+                    self.arch_space, 'largest')
+            sample_arch = self.sample_arch_old.copy()
+            n_stages = self.strategy['n_stages']
+            n_chunks = self.strategy['n_chunks']
+            n_diffs = self.strategy['n_diffs']
+            assert n_diffs <= len(self.arch_space)
 
+            current_stage = int(self.step // (self.total_steps / n_stages))
+            current_chunk = current_stage % n_chunks
+            self.current_stage = current_stage
+            self.current_chunk = current_chunk
+            diff_parts_idx = np.random.choice(np.arange(len(self.arch_space)),
+                                              n_diffs,
+                                              replace=False)
+
+            for idx in diff_parts_idx:
+                layer_arch_space = self.arch_space[idx]
+                n_choices = len(layer_arch_space)
+                new_space = layer_arch_space[
+                    int(round((n_choices - 1) * (1 - (current_chunk + 1) / (
+                        n_chunks)))):]
+                if len(new_space) == 1:
+                    sample_arch[idx] = new_space[0]
+                else:
+                    sample_arch[idx] = np.random.choice(new_space)
         else:
             raise NotImplementedError(f"Strategy {self.strategy} not "
                                       f"supported.")

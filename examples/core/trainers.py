@@ -12,6 +12,7 @@ from torchquantum.super_utils import ArchSampler
 from torchquantum.prune_utils import (PhaseL1UnstructuredPruningMethod,
                                       ThresholdScheduler)
 from torchpack.utils.logging import logger
+from torchpack.callbacks.writers import TFEventWriter
 
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer',
@@ -114,6 +115,12 @@ class QTrainer(Trainer):
                 self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
+            if getattr(self.model, 'sample_arch', None) is not None:
+                for writer in self.summary.writers:
+                    if isinstance(writer, TFEventWriter):
+                        writer.writer.add_text(
+                            'sample_arch', str(self.model.sample_arch),
+                            self.global_step)
 
             if configs.regularization.unitary_loss:
                 if configs.regularization.unitary_loss_lambda_trainable:
@@ -212,7 +219,7 @@ class SuperQTrainer(Trainer):
         else:
             outputs = self.model(inputs)
         loss = self.criterion(outputs, targets)
-        nll_loss = loss.item()
+        # nll_loss = loss.item()
         unitary_loss = 0
 
         if configs.regularization.unitary_loss:
@@ -228,11 +235,19 @@ class SuperQTrainer(Trainer):
             for k, group in enumerate(self.optimizer.param_groups):
                 self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
-            self.summary.add_scalar('nll_loss', nll_loss)
-            self.summary.add_scalar('stage',
+            # self.summary.add_scalar('nll_loss', nll_loss)
+            self.summary.add_scalar('sta',
                                     self.arch_sampler.current_stage)
+            self.summary.add_scalar('chk',
+                                    self.arch_sampler.current_chunk)
             self.summary.add_scalar('n_ops',
                                     self.arch_sampler.sample_n_ops)
+            if getattr(self.model, 'sample_arch', None) is not None:
+                for writer in self.summary.writers:
+                    if isinstance(writer, TFEventWriter):
+                        writer.writer.add_text(
+                            'sample_arch', str(self.model.sample_arch),
+                            self.global_step)
 
             if configs.regularization.unitary_loss:
                 if configs.regularization.unitary_loss_lambda_trainable:
@@ -384,6 +399,12 @@ class PruningTrainer(Trainer):
         if loss.requires_grad:
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
+            if getattr(self.model, 'sample_arch', None) is not None:
+                for writer in self.summary.writers:
+                    if isinstance(writer, TFEventWriter):
+                        writer.writer.add_text(
+                            'sample_arch', str(self.model.sample_arch),
+                            self.global_step)
 
             if configs.regularization.unitary_loss:
                 if configs.regularization.unitary_loss_lambda_trainable:
