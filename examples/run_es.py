@@ -19,89 +19,120 @@ from core.tools import EvolutionEngine
 from torch.utils.tensorboard import SummaryWriter
 
 
-def evaluate_all(model, dataflow, solutions, writer=None, iter_n=None,
-                 population_size=None):
-    scores = []
+class Evaluator(object):
+    def __init__(self):
+        self.solution_lib = {}
 
-    best_solution_accuracy = 0
-    best_solution_loss = 0
-    best_solution_success_rate = 0
-    best_solution_score = 999999
+    def evaluate_all(self, model, dataflow, solutions, writer=None,
+                     iter_n=None, population_size=None):
+        scores = []
 
-    for i, solution in tqdm.tqdm(enumerate(solutions)):
-        if model.qiskit_processor is not None:
-            model.qiskit_processor.set_layout(solution['layout'])
-        model.set_sample_arch(solution['arch'])
-        with torch.no_grad():
-            target_all = None
-            output_all = None
-            for feed_dict in dataflow:
-                if configs.run.device == 'gpu':
-                    inputs = feed_dict['image'].cuda(non_blocking=True)
-                    targets = feed_dict['digit'].cuda(non_blocking=True)
+        best_solution_accuracy = 0
+        best_solution_loss = 0
+        best_solution_success_rate = 0
+        best_solution_score = 999999
+
+        for i, solution in tqdm.tqdm(enumerate(solutions)):
+            fingerprint = solution.copy()
+            arch = solution['arch']
+            fingerprint['arch'] = arch[:arch[-1] *
+                                       configs.model.arch.n_layers_per_block]
+            fingerprint['arch'].append(arch[-1])
+            fingerprint = str(fingerprint)
+            if fingerprint in self.solution_lib.keys():
+                """circuit has been simulated before"""
+                logger.info(f"loaded from lib")
+                loss = self.solution_lib[fingerprint]['loss']
+                accuracy = self.solution_lib[fingerprint]['accuracy']
+                success_rate = self.solution_lib[fingerprint][
+                    'success_rate']
+            else:
+                if model.qiskit_processor is not None:
+                    model.qiskit_processor.set_layout(solution['layout'])
+                model.set_sample_arch(solution['arch'])
+                with torch.no_grad():
+                    target_all = None
+                    output_all = None
+                    for feed_dict in dataflow:
+                        if configs.run.device == 'gpu':
+                            inputs = feed_dict['image'].cuda(non_blocking=True)
+                            targets = feed_dict['digit'].cuda(
+                                non_blocking=True)
+                        else:
+                            inputs = feed_dict['image']
+                            targets = feed_dict['digit']
+                        if configs.qiskit.use_qiskit:
+                            outputs = model.forward_qiskit(inputs)
+                        else:
+                            outputs = model.forward(inputs)
+
+                        if target_all is None:
+                            target_all = targets
+                            output_all = outputs
+                        else:
+                            target_all = torch.cat([target_all, targets],
+                                                   dim=0)
+                            output_all = torch.cat([output_all, outputs],
+                                                   dim=0)
+
+                k = 1
+                _, indices = output_all.topk(k, dim=1)
+                masks = indices.eq(target_all.view(-1, 1).expand_as(indices))
+                size = target_all.shape[0]
+                corrects = masks.sum().item()
+                accuracy = corrects / size
+                loss = F.nll_loss(output_all, target_all).item()
+
+                if configs.es.est_success_rate:
+                    circ_parameterized, params = tq2qiskit_parameterized(
+                        model.q_device, model.encoder.func_list)
+                    circ_fixed = tq2qiskit(model.q_device, model.q_layer)
+                    circ = circ_parameterized + circ_fixed
+                    transpiled_circ = model.qiskit_processor.transpile(circ)
+
+                    success_rate = get_success_rate(
+                        model.qiskit_processor.properties,
+                        transpiled_circ)
                 else:
-                    inputs = feed_dict['image']
-                    targets = feed_dict['digit']
-                if configs.qiskit.use_qiskit:
-                    outputs = model.forward_qiskit(inputs)
-                else:
-                    outputs = model.forward(inputs)
+                    success_rate = 1
 
-                if target_all is None:
-                    target_all = targets
-                    output_all = outputs
-                else:
-                    target_all = torch.cat([target_all, targets], dim=0)
-                    output_all = torch.cat([output_all, outputs], dim=0)
+                self.solution_lib[fingerprint] = {
+                    'loss': loss,
+                    'accuracy': accuracy,
+                    'success_rate': success_rate,
+                }
 
-        k = 1
-        _, indices = output_all.topk(k, dim=1)
-        masks = indices.eq(target_all.view(-1, 1).expand_as(indices))
-        size = target_all.shape[0]
-        corrects = masks.sum().item()
-        accuracy = corrects / size
-        loss = F.nll_loss(output_all, target_all).item()
+            score = loss / success_rate
+            scores.append(score)
+            logger.info(f"Accuracy: {accuracy:.5f}, Loss: {loss:.5f}, "
+                        f"Success Rate: {success_rate: .5f}, "
+                        f"Score: {score:.5f}")
 
-        if configs.es.est_success_rate:
-            circ_parameterized, params = tq2qiskit_parameterized(
-                model.q_device, model.encoder.func_list)
-            circ_fixed = tq2qiskit(model.q_device, model.q_layer)
-            circ = circ_parameterized + circ_fixed
-            transpiled_circ = model.qiskit_processor.transpile(circ)
+            if score < best_solution_score:
+                best_solution_accuracy = accuracy
+                best_solution_success_rate = success_rate
+                best_solution_loss = loss
+                best_solution_score = score
 
-            success_rate = get_success_rate(
-                model.qiskit_processor.properties,
-                transpiled_circ)
-        else:
-            success_rate = 1
-        score = loss / success_rate
-        scores.append(score)
-        logger.info(f"Accuracy: {accuracy:.5f}, Loss: {loss:.5f}, "
-                    f"Success Rate: {success_rate: .5f}, Score: {score:.5f}")
+            logger.info(f"Best of iteration: "
+                        f"Accuracy: {best_solution_accuracy:.5f}, "
+                        f"Loss: {best_solution_loss:.5f}, "
+                        f"Success Rate: {best_solution_success_rate: .5f}, "
+                        f"Score: {best_solution_score:.5f}")
 
-        if score < best_solution_score:
-            best_solution_accuracy = accuracy
-            best_solution_success_rate = success_rate
-            best_solution_loss = loss
-            best_solution_score = score
+            if population_size is not None and writer is not None and \
+                    population_size is not None:
+                writer.add_scalar('es/accuracy', accuracy,
+                                  iter_n * population_size + i)
+                writer.add_scalar('es/loss', loss,
+                                  iter_n * population_size + i)
+                writer.add_scalar('es/success_rate', success_rate,
+                                  iter_n * population_size + i)
+                writer.add_scalar('es/score', score,
+                                  iter_n * population_size + i)
 
-        logger.info(f"Best of iteration: "
-                    f"Accuracy: {best_solution_accuracy:.5f}, "
-                    f"Loss: {best_solution_loss:.5f}, "
-                    f"Success Rate: {best_solution_success_rate: .5f}, "
-                    f"Score: {best_solution_score:.5f}")
-
-        if population_size is not None and writer is not None and \
-                population_size is not None:
-            writer.add_scalar('es/accuracy', accuracy,
-                              iter_n * population_size + i)
-            writer.add_scalar('es/loss', loss, iter_n * population_size + i)
-            writer.add_scalar('es/success_rate', success_rate,
-                              iter_n * population_size + i)
-            writer.add_scalar('es/score', score, iter_n * population_size + i)
-
-    return scores, best_solution_accuracy, best_solution_loss, \
-        best_solution_success_rate, best_solution_score
+        return scores, best_solution_accuracy, best_solution_loss, \
+            best_solution_success_rate, best_solution_score
 
 
 def main() -> None:
@@ -218,14 +249,16 @@ def main() -> None:
         arch_space=model.arch_space,
     )
 
+    evaluator = Evaluator()
+
     logger.info(f"Start Evolution Search")
     for k in range(configs.es.n_iterations):
         logger.info(f"ES iteration {k}:")
         solutions = es_engine.ask()
         scores, best_solution_accuracy, best_solution_loss, \
             best_solution_success_rate, best_solution_score \
-            = evaluate_all(model, dataflow, solutions, writer, k,
-                           configs.es.population_size)
+            = evaluator.evaluate_all(model, dataflow, solutions, writer, k,
+                                     configs.es.population_size)
         es_engine.tell(scores)
         logger.info(f"Best solution: {es_engine.best_solution}")
         logger.info(f"Best score: {es_engine.best_score}")
@@ -253,44 +286,44 @@ def main() -> None:
                 state_dict)
 
     logger.info(f"\n Best solution evaluation on tq:")
-    # eval the best solution and save the model
-    evaluate_all(model, dataflow, [es_engine.best_solution])
+    # eval the best solution
+    evaluator.evaluate_all(model, dataflow, [es_engine.best_solution])
 
     # eval with the noise model
-    if configs.es.eval.use_noise_model:
-        logger.info(f"\n Best solution evaluation with noise model "
-                    f"of {configs.qiskit.noise_model_name}:")
-        configs.qiskit.use_qiskit = True
-        evaluate_all(model, dataflow, [es_engine.best_solution])
-
-    # eval on real QC
-    if configs.es.eval.use_real_qc:
-        logger.info(f"\n Best solution evaluation on real "
-                    f"QC {configs.qiskit.backend_name}:")
-
-        # need reset some parameters
-        configs.qiskit.use_qiskit = True
-        model.qiskit_processor.use_real_qc = True
-        model.qiskit_processor.noise_model_name = None
-        model.qiskit_processor.qiskit_init()
-
-        # if configs.es.eval.bsz == 'qiskit_max':
-        #     configs.run.bsz = \
-        #         model.qiskit_processor.backend.configuration().max_experiments
-        # else:
-        configs.run.bsz = configs.es.eval.bsz
-
-        configs.dataset.n_test_samples = configs.es.eval.n_test_samples
-        dataset = builder.make_dataset()
-        sampler = torch.utils.data.SequentialSampler(dataset['test'])
-        dataflow = torch.utils.data.DataLoader(
-            dataset['test'],
-            sampler=sampler,
-            batch_size=configs.run.bsz,
-            num_workers=configs.run.workers_per_gpu,
-            pin_memory=True)
-
-        evaluate_all(model, dataflow, [es_engine.best_solution])
+    # if configs.es.eval.use_noise_model:
+    #     logger.info(f"\n Best solution evaluation with noise model "
+    #                 f"of {configs.qiskit.noise_model_name}:")
+    #     configs.qiskit.use_qiskit = True
+    #     evaluate_all(model, dataflow, [es_engine.best_solution])
+    #
+    # # eval on real QC
+    # if configs.es.eval.use_real_qc:
+    #     logger.info(f"\n Best solution evaluation on real "
+    #                 f"QC {configs.qiskit.backend_name}:")
+    #
+    #     # need reset some parameters
+    #     configs.qiskit.use_qiskit = True
+    #     model.qiskit_processor.use_real_qc = True
+    #     model.qiskit_processor.noise_model_name = None
+    #     model.qiskit_processor.qiskit_init()
+    #
+    #     # if configs.es.eval.bsz == 'qiskit_max':
+    #     #     configs.run.bsz = \
+    #     #     model.qiskit_processor.backend.configuration().max_experiments
+    #     # else:
+    #     configs.run.bsz = configs.es.eval.bsz
+    #
+    #     configs.dataset.n_test_samples = configs.es.eval.n_test_samples
+    #     dataset = builder.make_dataset()
+    #     sampler = torch.utils.data.SequentialSampler(dataset['test'])
+    #     dataflow = torch.utils.data.DataLoader(
+    #         dataset['test'],
+    #         sampler=sampler,
+    #         batch_size=configs.run.bsz,
+    #         num_workers=configs.run.workers_per_gpu,
+    #         pin_memory=True)
+    #
+    #     evaluate_all(model, dataflow, [es_engine.best_solution])
 
 
 if __name__ == '__main__':
