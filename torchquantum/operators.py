@@ -31,6 +31,7 @@ __all__ = [
     'RX',
     'RY',
     'RZ',
+    'RZZ',
     'SWAP',
     'CSWAP',
     'Toffoli',
@@ -107,6 +108,7 @@ class Operator(tq.QuantumModule):
         'RX',
         'RY',
         'RZ',
+        'RZZ',
         'PhaseShift',
         'Rot',
         'MultiRZ',
@@ -590,6 +592,16 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
         return tqf.multirz_matrix(params, n_wires)
 
 
+class RZZ(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.rzz)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.rzz_matrix(params)
+
+
 class TrainableUnitary(Operation, metaclass=ABCMeta):
     num_params = AnyNParams
     num_wires = AnyWires
@@ -804,6 +816,8 @@ op_name_dict = {
     'rx': RX,
     'ry': RY,
     'rz': RZ,
+    'rzz': RZZ,
+    'zz': RZZ,
     'swap': SWAP,
     'cswap': CSWAP,
     'toffoli': Toffoli,

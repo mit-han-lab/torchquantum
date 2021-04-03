@@ -29,6 +29,7 @@ __all__ = [
     'rx',
     'ry',
     'rz',
+    'rzz',
     'swap',
     'cswap',
     'toffoli',
@@ -53,6 +54,7 @@ __all__ = [
     'x',
     'y',
     'z',
+    'zz',
     'cx',
     'ccnot',
     'ccx',
@@ -304,6 +306,25 @@ def multirz_matrix(params, n_wires):
     eigvals = multirz_eigvals(params, n_wires)
     dia = diag(eigvals)
     return dia.squeeze(0)
+
+
+def rzz_matrix(params):
+    theta = params.type(C_DTYPE)
+    p = torch.exp(-0.5j * theta)
+    conj_p = torch.conj(p)
+
+    matrix = torch.tensor([[0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(p.shape[0], 1, 1)
+
+    matrix[:, 0, 0] = p[:, 0]
+    matrix[:, 1, 1] = conj_p[:, 0]
+    matrix[:, 2, 2] = conj_p[:, 0]
+    matrix[:, 3, 3] = p[:, 0]
+
+    return matrix.squeeze(0)
 
 
 def crx_matrix(params):
@@ -583,6 +604,7 @@ mat_dict = {
     'rx': rx_matrix,
     'ry': ry_matrix,
     'rz': rz_matrix,
+    'rzz': rzz_matrix,
     'phaseshift': phaseshift_matrix,
     'rot': rot_matrix,
     'multirz': multirz_matrix,
@@ -618,6 +640,7 @@ cy = partial(gate_wrapper, 'cy', mat_dict['cy'], 'bmm')
 rx = partial(gate_wrapper, 'rx', mat_dict['rx'], 'bmm')
 ry = partial(gate_wrapper, 'ry', mat_dict['ry'], 'bmm')
 rz = partial(gate_wrapper, 'rz', mat_dict['rz'], 'bmm')
+rzz = partial(gate_wrapper, 'rzz', mat_dict['rzz'], 'bmm')
 swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'bmm')
 cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'], 'bmm')
 toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'], 'bmm')
@@ -648,10 +671,10 @@ h = hadamard
 x = paulix
 y = pauliy
 z = pauliz
+zz = rzz
 cx = cnot
 ccnot = toffoli
 ccx = toffoli
-
 
 func_name_dict = {
     'hadamard': hadamard,
@@ -668,6 +691,7 @@ func_name_dict = {
     'rx': rx,
     'ry': ry,
     'rz': rz,
+    'rzz': rzz,
     'swap': swap,
     'cswap': cswap,
     'toffoli': toffoli,
