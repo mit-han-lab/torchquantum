@@ -29,6 +29,7 @@ class MNISTDataset:
                  binarize_threshold,
                  digits_of_interest,
                  n_test_samples,
+                 n_valid_samples,
                  ):
         self.root = root
         self.split = split
@@ -41,6 +42,7 @@ class MNISTDataset:
         self.binarize_threshold = binarize_threshold
         self.digits_of_interest = digits_of_interest
         self.n_test_samples = n_test_samples
+        self.n_valid_samples = n_valid_samples
 
         self.load()
         self.n_instance = len(self.data)
@@ -71,7 +73,17 @@ class MNISTDataset:
             if self.split == 'train':
                 self.data = train_subset
             else:
-                self.data = valid_subset
+                if self.n_valid_samples is None:
+                    # use all samples in valid set
+                    self.data = valid_subset
+                else:
+                    # use a subset of valid set, useful to speedup evo search
+                    valid_subset.indices = valid_subset.indices[
+                                           :self.n_valid_samples]
+                    self.data = valid_subset
+                    logger.warning(f"Only use the front "
+                                   f"{self.n_valid_samples} images as "
+                                   f"VALID set.")
 
         else:
             test = datasets.MNIST(self.root, train=False, transform=transform)
@@ -88,7 +100,7 @@ class MNISTDataset:
                 test.data = test.data[:self.n_test_samples]
                 self.data = test
                 logger.warning(f"Only use the front {self.n_test_samples} "
-                               f"images as test set.")
+                               f"images as TEST set.")
 
     def __getitem__(self, index: int):
         img = self.data[index][0]
@@ -114,7 +126,8 @@ class MNIST(Dataset):
                  binarize=False,
                  binarize_threshold=0.1307,
                  digits_of_interest=tuple(range(10)),
-                 n_test_samples=None
+                 n_test_samples=None,
+                 n_valid_samples=None,
                  ):
         self.root = root
 
@@ -130,6 +143,7 @@ class MNIST(Dataset):
                 binarize_threshold=binarize_threshold,
                 digits_of_interest=digits_of_interest,
                 n_test_samples=n_test_samples,
+                n_valid_samples=n_valid_samples,
             )
             for split in ['train', 'valid', 'test']
         })
