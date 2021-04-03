@@ -171,7 +171,7 @@ def main() -> None:
 
     if getattr(configs.model.arch, 'sample_arch', None) is not None:
         sample_arch = configs.model.arch.sample_arch
-        logger.warning(f"Setting sample arch {sample_arch}")
+        logger.warning(f"Setting sample arch {sample_arch} from config file!")
         if isinstance(sample_arch, str):
             # this is the name of arch
             sample_arch = get_named_sample_arch(model.arch_space, sample_arch)

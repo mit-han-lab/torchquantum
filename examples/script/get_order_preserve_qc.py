@@ -236,7 +236,7 @@ if __name__ == '__main__':
 
     cnt = 0
     loss_all = []
-    with open(f'logs/super/eval_subnet_noise_x2_opt2_ratiorand_'
+    with open(f'logs/super/eval_subnet_tq_ratiorand_'
               f'insuper_{args.supernet}.txt',
               'r') as rfid:
     # with open(f'logs/super/eval_subnet_noise_x2_opt2_ratiorand_'
@@ -248,19 +248,21 @@ if __name__ == '__main__':
                 if cnt % 2:
                     loss_all.append(eval(line.split(' ')[-1]))
 
+    loss_all = [loss_all[k] / succ_all[k] for k in range(len(loss_all))]
+
     corrects = 0
     cnt = 0
     for comb in itertools.combinations_with_replacement(
             list(range(len(ground_truth_loss))), 2):
 
-        a = ground_truth_acc[comb[0]]
-        b = ground_truth_acc[comb[1]]
+        a = ground_truth_loss[comb[0]]
+        b = ground_truth_loss[comb[1]]
         a_est = loss_all[comb[0]]
         b_est = loss_all[comb[1]]
-        if a < 0.5 or b < 0.5:
-            continue
+        # if a < 0.5 or b < 0.5:
+        #     continue
         cnt += 1
-        if not (a >= b) ^ (a_est <= b_est):
+        if not (a >= b) ^ (a_est >= b_est):
             corrects += 1
 
     print(f"corrects {corrects}, total {cnt}, Rate: {corrects / cnt}")
