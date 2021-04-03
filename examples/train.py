@@ -120,14 +120,17 @@ def main() -> None:
                     wires_in=module_load.wires,
                     op_list_in=module_load.op_list,
                 )
-
-        model.load_state_dict(state_dict['model'], strict=False)
+        if not configs.ckpt.weight_from_scratch:
+            model.load_state_dict(state_dict['model'], strict=False)
+        else:
+            logger.warning(f"DO NOT load weight, train weights from scratch!")
 
         if 'solution' in state_dict.keys():
             solution = state_dict['solution']
             logger.info(f"Loading the solution {solution}")
             logger.info(f"Original score: {state_dict['score']}")
             model.set_sample_arch(solution['arch'])
+            score = state_dict['score']
 
         if 'q_c_reg_mapping' in state_dict.keys():
             try:

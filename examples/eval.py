@@ -48,6 +48,9 @@ def main() -> None:
     configs.load(args.config, recursive=True)
     configs.update(opts)
 
+    # for eval, always need load weights
+    configs.ckpt.weight_from_scratch = False
+
     if configs.debug.pdb or args.pdb:
         pdb.set_trace()
 
