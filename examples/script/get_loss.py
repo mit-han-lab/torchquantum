@@ -1,7 +1,16 @@
+import argparse
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--supernet', type=str)
+    parser.add_argument('--gpu', type=int)
+    args = parser.parse_args()
+    print(args.supernet)
+
     cnt = 0
-    with open('logs/eval_subnet_tq_rand_insuper_expand'
-              '.blk8s1_diff3_chu3_sta40_con1e-3.txt') as rfid:
+    with open(f'logs/super/eval_subnet_tq_ratiorand_'
+              f'insuper_{args.supernet}.txt',
+              'r') as rfid:
         for line in rfid:
             if 'Loss' in line:
                 cnt += 1
