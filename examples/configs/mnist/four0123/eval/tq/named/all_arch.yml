@@ -4,7 +4,7 @@ dataset:
 
 model:
   arch:
-    sample_arch: blk2_ratio1
+    sample_arch: blk1_ratio0
 
 qiskit:
   initial_layout: [0, 1, 2, 3]

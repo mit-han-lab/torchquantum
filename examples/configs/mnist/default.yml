@@ -88,3 +88,5 @@ ckpt:
   name: 'checkpoints/max-acc-valid.pt'
 
 verbose: False
+
+get_n_params: False
