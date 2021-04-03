@@ -51,6 +51,13 @@ class Super4DigitShareFrontQFCModel1(tq.QuantumModule):
                 if k < self.sample_n_blocks * self.n_layers_per_block:
                     self.super_layers_all[k](q_device)
 
+        def count_sample_params(self):
+            n_params = 0
+            for layer_idx, layer in enumerate(self.super_layers_all):
+                if layer_idx < self.sample_n_blocks * self.n_layers_per_block:
+                    n_params += layer.count_sample_params()
+            return n_params
+
     def __init__(self, arch=None):
         super().__init__()
         self.arch = arch
@@ -81,6 +88,9 @@ class Super4DigitShareFrontQFCModel1(tq.QuantumModule):
     def set_sample_arch(self, sample_arch):
         self.sample_arch = sample_arch
         self.q_layer.set_sample_arch(sample_arch)
+
+    def count_sample_params(self):
+        return self.q_layer.count_sample_params()
 
     def forward(self, x, verbose=False):
         bsz = x.shape[0]
@@ -164,6 +174,13 @@ class Super4DigitArbitraryQFCModel1(Super4DigitShareFrontQFCModel1):
             for k in range(len(self.super_layers_all)):
                 if k < self.sample_n_blocks * self.n_layers_per_block:
                     self.super_layers_all[k](q_device)
+
+        def count_sample_params(self):
+            n_params = 0
+            for layer_idx, layer in enumerate(self.super_layers_all):
+                if layer_idx < self.sample_n_blocks * self.n_layers_per_block:
+                    n_params += layer.count_sample_params()
+            return n_params
 
 
 model_dict = {
