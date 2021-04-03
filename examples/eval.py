@@ -175,12 +175,17 @@ def main() -> None:
 
     if getattr(configs.model.arch, 'sample_arch', None) is not None:
         sample_arch = configs.model.arch.sample_arch
-        logger.warning(f"Setting sample arch {sample_arch}")
+        logger.warning(f"Setting sample arch {sample_arch} from config file!")
         if isinstance(sample_arch, str):
             # this is the name of arch
             sample_arch = get_named_sample_arch(model.arch_space, sample_arch)
             logger.warning(f"Decoded sample arch: {sample_arch}")
         model.set_sample_arch(sample_arch)
+
+    if configs.get_n_params:
+        n_params = model.count_sample_params()
+        logger.info(f"Number of sampled params: {n_params}")
+        exit(0)
 
     if configs.qiskit.est_success_rate:
         circ_parameterized, params = tq2qiskit_parameterized(
@@ -200,6 +205,10 @@ def main() -> None:
 
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
+
+    if hasattr(model, 'sample_arch'):
+        n_params = model.count_sample_params()
+        logger.info(f"Number of sampled params: {n_params}")
 
     with torch.no_grad():
         target_all = None

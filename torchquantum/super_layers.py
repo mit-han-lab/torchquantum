@@ -42,6 +42,9 @@ class SuperQuantumModule(tq.QuantumModule):
     def arch_space(self):
         return None
 
+    def count_sample_params(self):
+        raise NotImplementedError
+
 
 class Super1QLayer(SuperQuantumModule):
     def __init__(self, op, n_wires: int, has_params=False, trainable=False):
@@ -63,6 +66,9 @@ class Super1QLayer(SuperQuantumModule):
     def arch_space(self):
         choices = list(range(self.n_wires))
         return get_combs(choices)
+
+    def count_sample_params(self):
+        return len(self.sample_arch) * self.op.num_params
 
 
 class Super2QLayer(SuperQuantumModule):
@@ -93,6 +99,9 @@ class Super2QLayer(SuperQuantumModule):
             self.n_wires)), 2)))
         return get_combs(choices)
 
+    def count_sample_params(self):
+        return len(self.sample_arch) * self.op.num_params
+
 
 class Super1QShareFrontLayer(SuperQuantumModule):
     """Share the front wires, the rest can be added"""
@@ -121,6 +130,9 @@ class Super1QShareFrontLayer(SuperQuantumModule):
     def arch_space(self):
         return list(range(self.n_front_share_wires, self.n_wires + 1))
 
+    def count_sample_params(self):
+        return min(self.sample_arch, len(self.ops_all)) * self.op.num_params
+
 
 class Super1QSingleWireLayer(SuperQuantumModule):
     """Only one wire will have a gate"""
@@ -146,6 +158,9 @@ class Super1QSingleWireLayer(SuperQuantumModule):
     def arch_space(self):
         return list(range(self.n_wires))
 
+    def count_sample_params(self):
+        return self.op.num_params
+
 
 class Super1QAllButOneLayer(SuperQuantumModule):
     """Only one wire will NOT have the gate"""
@@ -170,6 +185,9 @@ class Super1QAllButOneLayer(SuperQuantumModule):
     @property
     def arch_space(self):
         return list(range(self.n_wires))
+
+    def count_sample_params(self):
+        return (self.n_wires - 1) * self.op.num_params
 
 
 class Super2QAllShareFrontLayer(SuperQuantumModule):
@@ -222,6 +240,9 @@ class Super2QAllShareFrontLayer(SuperQuantumModule):
     def arch_space(self):
         choices = list(range(self.n_front_share_ops, self.n_ops + 1))
         return choices
+
+    def count_sample_params(self):
+        return min(self.sample_arch, self.n_ops) * self.op.num_params
 
 
 class Super2QAllLayer(SuperQuantumModule):
@@ -278,3 +299,6 @@ class Super2QAllLayer(SuperQuantumModule):
             wires = [k, (k + self.jump) % self.n_wires]
             choices.append(wires)
         return get_combs(choices)
+
+    def count_sample_params(self):
+        return len(self.sample_arch) * self.op.num_params

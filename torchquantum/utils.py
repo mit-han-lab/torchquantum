@@ -306,6 +306,7 @@ def get_cared_configs(conf, mode) -> Config:
                'legalization',
                'regularization',
                'verbose',
+               'get_n_params',
                ]
 
     if 'super' not in conf.trainer.name:
