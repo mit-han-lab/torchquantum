@@ -1,0 +1,7 @@
+qiskit:
+  use_qiskit: True
+  backend_name: ibmq_lima
+  initial_layout: [0, 1, 2, 3]
+
+run:
+  bsz: 10000

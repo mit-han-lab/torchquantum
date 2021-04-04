@@ -13,11 +13,12 @@ from torchpack.utils import humanize
 from torchpack.utils.logging import logger
 from torchpack.utils.typing import Trainer
 from torchpack import distributed as dist
-
+from torchquantum.super_utils import get_named_sample_arch
 from torchquantum.utils import legalize_unitary
 
 
-__all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError']
+__all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError',
+           'TrainerRestore']
 
 
 class LegalInferenceRunner(Callback):
@@ -75,9 +76,8 @@ class SubnetInferenceRunner(Callback):
         self.callbacks.before_epoch()
 
         with torch.no_grad():
-            sample_arch = \
-                self.trainer.arch_sampler.get_named_sample_arch(
-                    self.subnet)
+            sample_arch = get_named_sample_arch(self.trainer.model.arch_space,
+                                                self.subnet)
             self.trainer.model.set_sample_arch(sample_arch)
             for feed_dict in tqdm.tqdm(self.dataflow, ncols=0):
                 self.callbacks.before_step(feed_dict)
@@ -116,3 +116,11 @@ class NLLError(Callback):
         self.size = dist.allreduce(self.size, reduction='sum')
         self.errors = dist.allreduce(self.errors, reduction='sum')
         self.trainer.summary.add_scalar(self.name, self.errors / self.size)
+
+
+class TrainerRestore(Callback):
+    def __init__(self, state) -> None:
+        self.state = state
+
+    def _before_train(self) -> None:
+        self.trainer.load_state_dict(self.state)

@@ -1,0 +1,3 @@
+model:
+  arch:
+    sample_arch: blk2_ratio0.25

@@ -16,6 +16,7 @@ __all__ = [
     'apply_unitary_einsum',
     'apply_unitary_bmm',
     'hadamard',
+    'shadamard',
     'paulix',
     'pauliy',
     'pauliz',
@@ -29,6 +30,7 @@ __all__ = [
     'rx',
     'ry',
     'rz',
+    'rzz',
     'swap',
     'cswap',
     'toffoli',
@@ -53,6 +55,7 @@ __all__ = [
     'x',
     'y',
     'z',
+    'zz',
     'cx',
     'ccnot',
     'ccx',
@@ -306,6 +309,25 @@ def multirz_matrix(params, n_wires):
     return dia.squeeze(0)
 
 
+def rzz_matrix(params):
+    theta = params.type(C_DTYPE)
+    p = torch.exp(-0.5j * theta)
+    conj_p = torch.conj(p)
+
+    matrix = torch.tensor([[0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(p.shape[0], 1, 1)
+
+    matrix[:, 0, 0] = p[:, 0]
+    matrix[:, 1, 1] = conj_p[:, 0]
+    matrix[:, 2, 2] = conj_p[:, 0]
+    matrix[:, 3, 3] = p[:, 0]
+
+    return matrix.squeeze(0)
+
+
 def crx_matrix(params):
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
@@ -540,6 +562,9 @@ def multixcnot_matrix(n_wires):
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
+    'shadamard': torch.tensor([[np.cos(np.pi / 8), -np.sin(np.pi / 8)],
+                               [np.sin(np.pi / 8), np.cos(np.pi / 8)]],
+                              dtype=C_DTYPE),
     'paulix': torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
     'pauliy': torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE),
     'pauliz': torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE),
@@ -583,6 +608,7 @@ mat_dict = {
     'rx': rx_matrix,
     'ry': ry_matrix,
     'rz': rz_matrix,
+    'rzz': rzz_matrix,
     'phaseshift': phaseshift_matrix,
     'rot': rot_matrix,
     'multirz': multirz_matrix,
@@ -605,6 +631,7 @@ mat_dict = {
 
 
 hadamard = partial(gate_wrapper, 'hadamard', mat_dict['hadamard'], 'bmm')
+shadamard = partial(gate_wrapper, 'shadamard', mat_dict['shadamard'], 'bmm')
 paulix = partial(gate_wrapper, 'paulix', mat_dict['paulix'], 'bmm')
 pauliy = partial(gate_wrapper, 'pauliy', mat_dict['pauliy'], 'bmm')
 pauliz = partial(gate_wrapper, 'pauliz', mat_dict['pauliz'], 'bmm')
@@ -618,6 +645,7 @@ cy = partial(gate_wrapper, 'cy', mat_dict['cy'], 'bmm')
 rx = partial(gate_wrapper, 'rx', mat_dict['rx'], 'bmm')
 ry = partial(gate_wrapper, 'ry', mat_dict['ry'], 'bmm')
 rz = partial(gate_wrapper, 'rz', mat_dict['rz'], 'bmm')
+rzz = partial(gate_wrapper, 'rzz', mat_dict['rzz'], 'bmm')
 swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'bmm')
 cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'], 'bmm')
 toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'], 'bmm')
@@ -645,16 +673,18 @@ multixcnot = partial(gate_wrapper, 'multixcnot', mat_dict['multixcnot'], 'bmm')
 
 
 h = hadamard
+sh = shadamard
 x = paulix
 y = pauliy
 z = pauliz
+zz = rzz
 cx = cnot
 ccnot = toffoli
 ccx = toffoli
 
-
 func_name_dict = {
     'hadamard': hadamard,
+    'sh': shadamard,
     'paulix': paulix,
     'pauliy': pauliy,
     'pauliz': pauliz,
@@ -668,6 +698,7 @@ func_name_dict = {
     'rx': rx,
     'ry': ry,
     'rz': rz,
+    'rzz': rzz,
     'swap': swap,
     'cswap': cswap,
     'toffoli': toffoli,

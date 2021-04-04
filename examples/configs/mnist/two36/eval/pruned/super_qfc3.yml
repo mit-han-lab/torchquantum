@@ -1,0 +1,19 @@
+model:
+  name: super_qfc3
+  arch:
+    n_blocks: 4
+    n_front_share_blocks: 2
+    n_front_share_wires: 2
+    n_front_share_ops: 2
+    n_layers_per_block: 6
+  load_op_list: True
+
+ckpt:
+  load_ckpt: True
+  load_trainer: False
+  name: 'checkpoints/step-270.pt'
+
+prune:
+  eval:
+    remove_ops: True
+    remove_ops_thres: 1.0e-5

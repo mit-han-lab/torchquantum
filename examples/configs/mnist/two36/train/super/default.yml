@@ -1,3 +1,8 @@
+model:
+  sampler:
+    strategy:
+      name: plain
+
 trainer:
   name: super_q_trainer
 

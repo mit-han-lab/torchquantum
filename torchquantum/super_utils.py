@@ -32,6 +32,7 @@ class ArchSampler(object):
 
         self.sample_n_ops = None
         self.current_stage = 0
+        self.current_chunk = 0
 
     def set_total_steps(self, total_steps):
         self.total_steps = total_steps
@@ -117,9 +118,9 @@ class ArchSampler(object):
         return sample_arch
 
     def get_uniform_sample_arch(self):
-        if self.strategy['name'] is None or (self.strategy['name'] ==
-                                             'limit_diff' and
-                                             self.sample_arch_old is None):
+        if self.strategy['name'] == 'plain' or (self.strategy['name'] ==
+                                                'limit_diff' and
+                                                self.sample_arch_old is None):
             sample_arch = self.get_random_sample_arch()
         elif self.strategy['name'] == 'limit_diff':
             """
@@ -145,17 +146,18 @@ class ArchSampler(object):
             while True:
                 sample_arch = self.get_random_sample_arch()
                 n_ops = self.get_sample_stats(sample_arch)
-                current_stage = self.step // (self.total_steps / n_stages)
-                current_stage = int(current_stage % n_chunks)
+                current_stage = int(self.step // (self.total_steps / n_stages))
+                current_chunk = current_stage % n_chunks
+                self.current_chunk = current_chunk
                 self.current_stage = current_stage
                 if self.strategy['subspace_mode'] == 'expand':
                     # the subspace size is expanding
                     if self.strategy['direction'] == 'top_down':
                         if n_ops >= list(reversed(self.n_ops_per_chunk))[
-                                current_stage + 1]:
+                                current_chunk + 1]:
                             break
                     elif self.strategy['direction'] == 'bottom_up':
-                        if n_ops <= self.n_ops_per_chunk[current_stage + 1]:
+                        if n_ops <= self.n_ops_per_chunk[current_chunk + 1]:
                             break
                     else:
                         raise NotImplementedError(
@@ -165,12 +167,12 @@ class ArchSampler(object):
                     # the subspace size is the same
                     if self.strategy['direction'] == 'top_down':
                         left = list(reversed(self.n_ops_per_chunk))[
-                                        current_stage + 1]
+                            current_chunk + 1]
                         right = list(reversed(self.n_ops_per_chunk))[
-                                        current_stage]
+                            current_chunk]
                     elif self.strategy['direction'] == 'bottom_up':
-                        left = self.n_ops_per_chunk[current_stage]
-                        right = self.n_ops_per_chunk[current_stage + 1]
+                        left = self.n_ops_per_chunk[current_chunk]
+                        right = self.n_ops_per_chunk[current_chunk + 1]
                     else:
                         raise NotImplementedError(
                             f"Direction mode {self.strategy['direction']} "
@@ -182,7 +184,71 @@ class ArchSampler(object):
                     raise NotImplementedError(
                         f"Subspace mode {self.strategy['subspace_mode']} "
                         f"not supported.")
+        elif self.strategy['name'] == 'limit_diff_expanding':
+            """
+            shrink the overall number of blocks and in-block size
+            """
+            if self.sample_arch_old is None:
+                self.sample_arch_old = get_named_sample_arch(
+                    self.arch_space, 'largest')
+            sample_arch = self.sample_arch_old.copy()
+            n_stages = self.strategy['n_stages']
+            n_chunks = self.strategy['n_chunks']
+            n_diffs = self.strategy['n_diffs']
+            assert n_diffs <= len(self.arch_space)
 
+            current_stage = int(self.step // (self.total_steps / n_stages))
+            current_chunk = current_stage % n_chunks
+            self.current_stage = current_stage
+            self.current_chunk = current_chunk
+            diff_parts_idx = np.random.choice(np.arange(len(self.arch_space)),
+                                              n_diffs,
+                                              replace=False)
+
+            for idx in diff_parts_idx:
+                layer_arch_space = self.arch_space[idx]
+                n_choices = len(layer_arch_space)
+                new_space = layer_arch_space[
+                    int(round((n_choices - 1) * (1 - (current_chunk + 1) / (
+                        n_chunks)))):]
+                if len(new_space) == 1:
+                    sample_arch[idx] = new_space[0]
+                else:
+                    sample_arch[idx] = np.random.choice(new_space)
+        elif self.strategy['name'] == 'ldiff_blkexpand':
+            """
+            shrink the overall number of blocks only
+            """
+            if self.sample_arch_old is None:
+                self.sample_arch_old = get_named_sample_arch(
+                    self.arch_space, 'largest')
+            sample_arch = self.sample_arch_old.copy()
+            n_stages = self.strategy['n_stages']
+            n_chunks = self.strategy['n_chunks']
+            n_diffs = self.strategy['n_diffs']
+            assert n_diffs <= len(self.arch_space)
+
+            current_stage = int(self.step // (self.total_steps / n_stages))
+            if current_stage >= n_chunks:
+                """
+                major difference here, after expanding the space, 
+                will not go back
+                """
+                current_chunk = n_chunks - 1
+            else:
+                current_chunk = current_stage
+            self.current_stage = current_stage
+            self.current_chunk = current_chunk
+            diff_parts_idx = np.random.choice(np.arange(len(self.arch_space)),
+                                              n_diffs,
+                                              replace=False)
+            new_arch_space = self.arch_space.copy()
+            n_blk_choices = len(new_arch_space[-1])
+            new_arch_space[-1] = new_arch_space[-1][
+                int(round((n_blk_choices - 1) * (1 - (current_chunk + 1) / (
+                    n_chunks)))):]
+            for idx in diff_parts_idx:
+                sample_arch[idx] = np.random.choice(new_arch_space[idx])
         else:
             raise NotImplementedError(f"Strategy {self.strategy} not "
                                       f"supported.")
@@ -193,20 +259,85 @@ class ArchSampler(object):
 
         return sample_arch
 
-    def get_named_sample_arch(self, name):
-        sample_arch = []
-        if name == 'smallest':
-            for layer_arch_space in self.arch_space:
-                layer_arch = layer_arch_space[0]
-                sample_arch.append(layer_arch)
-        elif name == 'largest':
-            for layer_arch_space in self.arch_space:
-                layer_arch = layer_arch_space[-1]
-                sample_arch.append(layer_arch)
-        elif name == 'middle':
-            for layer_arch_space in self.arch_space:
-                layer_arch = layer_arch_space[len(layer_arch_space) // 2]
-                sample_arch.append(layer_arch)
-        else:
-            raise NotImplementedError(name)
-        return sample_arch
+
+def get_named_sample_arch(arch_space, name):
+    """
+    examples:
+    - blk1_ratio0.5 means 1 block and each layers' arch is the 0.5 of all
+    choices
+    - blk8_ratio0.3 means 8 block and each layers' arch is 0.3 of all choices
+    - ratio0.4 means 0.4 for each arch choice, including blk if exists
+    """
+
+    sample_arch = []
+    if name == 'smallest':
+        for layer_arch_space in arch_space:
+            layer_arch = layer_arch_space[0]
+            sample_arch.append(layer_arch)
+    elif name == 'largest':
+        for layer_arch_space in arch_space:
+            layer_arch = layer_arch_space[-1]
+            sample_arch.append(layer_arch)
+    elif name == 'middle':
+        for layer_arch_space in arch_space:
+            layer_arch = layer_arch_space[len(layer_arch_space) // 2]
+            sample_arch.append(layer_arch)
+    elif name.startswith('blk'):
+        # decode the block and ratio
+        n_block = eval(name.split('_')[0].replace('blk', ''))
+        ratio = eval(name.split('_')[1].replace('ratio', ''))
+        assert ratio <= 1
+        for layer_arch_space in arch_space[:-1]:
+            layer_arch = layer_arch_space[
+                int(round((len(layer_arch_space) - 1) * ratio))]
+            sample_arch.append(layer_arch)
+        sample_arch.append(n_block)
+    elif name.startswith('ratio'):
+        # decode the numerator and denominator
+        ratio = eval(name.replace('ratio', ''))
+        assert ratio <= 1
+        for layer_arch_space in arch_space:
+            layer_arch = layer_arch_space[
+                int(round((len(layer_arch_space) - 1) * ratio))]
+            sample_arch.append(layer_arch)
+    elif name.startswith('super4digit_arbitrary_fc1'):
+        """specific sampled arch for super4digit_arbitrary_fc1 design space"""
+        arch_dict = {
+            'blk1_rand0': [[2], [[1, 2], [2, 3], [3, 0]], [1, 2, 3], [[2, 3]], [0, 1, 2, 3], [[1, 2]], [3], [[0, 1], [1, 2]], [0, 2], [[0, 1], [1, 2], [2, 3], [3, 0]], [0, 1, 3], [[1, 2], [2, 3]], [0, 1, 3], [[0, 1], [1, 2], [2, 3]], [1, 2, 3], [[0, 1], [1, 2], [2, 3]], 1],
+            'blk1_rand1': [[0, 2], [[1, 2]], [0, 2, 3], [[2, 3]], [0, 2], [[0, 1], [1, 2], [3, 0]], [0, 1], [[0, 1], [3, 0]], [1, 3], [[1, 2], [3, 0]], [1], [[0, 1], [1, 2], [2, 3]], [0, 1], [[0, 1], [1, 2], [3, 0]], [1], [[2, 3]], 1],
+            'blk1_rand2': [[0, 1, 3], [[0, 1], [2, 3], [3, 0]], [1, 3], [[2, 3], [3, 0]], [1, 2, 3], [[1, 2]], [1, 3], [[0, 1], [1, 2], [2, 3]], [0], [[2, 3], [3, 0]], [3], [[0, 1], [1, 2], [2, 3], [3, 0]], [0, 2], [[2, 3], [3, 0]], [0, 2], [[0, 1]], 1],
+            'blk1_rand3': [[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 2, 3], [[0, 1], [3, 0]], [3], [[0, 1], [2, 3]], [0, 1, 2, 3], [[2, 3]], [2], [[0, 1], [3, 0]], [1], [[1, 2], [3, 0]], [1, 3], [[0, 1], [1, 2]], [0, 2, 3], [[1, 2], [2, 3]], 1],
+            'blk2_rand0': [[3], [[2, 3], [3, 0]], [0, 3], [[1, 2], [2, 3]], [1], [[0, 1], [1, 2], [2, 3]], [2, 3], [[1, 2]], [2, 3], [[0, 1], [2, 3]], [0, 3], [[2, 3]], [2, 3], [[0, 1], [2, 3]], [3], [[0, 1], [2, 3]], 2],
+            'blk2_rand1': [[2, 3], [[2, 3]], [0, 1], [[0, 1]], [0, 3], [[0, 1], [1, 2], [2, 3], [3, 0]], [3], [[0, 1], [2, 3], [3, 0]], [0, 1, 3], [[2, 3]], [0, 1], [[0, 1]], [0, 2], [[1, 2]], [1, 2, 3], [[0, 1], [1, 2]], 2],
+            'blk2_rand2': [[0, 1, 2], [[1, 2], [2, 3], [3, 0]], [2], [[0, 1], [1, 2], [2, 3], [3, 0]], [0, 2, 3], [[0, 1], [1, 2], [2, 3], [3, 0]], [0, 1, 2], [[0, 1], [2, 3], [3, 0]], [2, 3], [[0, 1], [3, 0]], [0, 1], [[0, 1], [1, 2], [2, 3]], [0, 2], [[0, 1]], [1, 2], [[0, 1], [1, 2], [3, 0]], 2],
+            'blk2_rand3': [[0, 1, 2, 3], [[0, 1], [1, 2], [2, 3]], [2], [[1, 2], [2, 3]], [1, 2], [[0, 1], [1, 2], [2, 3], [3, 0]], [0, 1, 3], [[0, 1], [2, 3], [3, 0]], [3], [[1, 2], [2, 3]], [0, 1, 3], [[2, 3]], [1, 2, 3], [[0, 1], [1, 2], [2, 3]], [0, 1, 2], [[2, 3]], 2],
+            'blk3_rand0': [[2], [[2, 3]], [0, 2, 3], [[1, 2], [2, 3], [3, 0]], [1], [[0, 1], [2, 3], [3, 0]], [2], [[0, 1], [1, 2], [3, 0]], [1, 2, 3], [[2, 3]], [2, 3], [[1, 2], [3, 0]], [1], [[1, 2], [3, 0]], [2, 3], [[0, 1], [1, 2]], 3],
+            'blk3_rand1': [[1, 2], [[2, 3]], [0, 1, 2], [[0, 1], [2, 3]], [0], [[0, 1], [2, 3]], [0], [[1, 2], [2, 3]], [1, 3], [[0, 1], [1, 2], [2, 3]], [2], [[0, 1]], [1, 2], [[3, 0]], [1, 2, 3], [[0, 1], [2, 3]], 3],
+            'blk3_rand2': [[0, 2, 3], [[2, 3], [3, 0]], [0, 1, 2, 3], [[1, 2]], [0, 1, 3], [[2, 3]], [2, 3], [[1, 2], [2, 3], [3, 0]], [0], [[1, 2]], [1, 2], [[0, 1], [2, 3], [3, 0]], [1, 3], [[0, 1], [2, 3], [3, 0]], [2, 3], [[1, 2], [2, 3], [3, 0]], 3],
+            'blk3_rand3': [[0, 1, 2, 3], [[2, 3]], [0, 1, 2], [[0, 1], [2, 3]], [2], [[3, 0]], [1, 3], [[0, 1], [1, 2], [3, 0]], [0, 2], [[1, 2], [3, 0]], [0, 1], [[1, 2]], [2], [[0, 1], [1, 2], [3, 0]], [0, 1], [[0, 1], [2, 3], [3, 0]], 3],
+            'blk4_rand0': [[0], [[2, 3], [3, 0]], [2, 3], [[2, 3], [3, 0]], [1, 3], [[1, 2], [2, 3]], [2, 3], [[2, 3]], [1], [[2, 3]], [0, 1, 2, 3], [[1, 2]], [2], [[1, 2], [2, 3], [3, 0]], [1, 2, 3], [[0, 1], [1, 2], [3, 0]], 4],
+            'blk4_rand1': [[0, 2], [[2, 3], [3, 0]], [0, 3], [[0, 1]], [1], [[0, 1]], [0, 2], [[1, 2], [2, 3], [3, 0]], [1, 2, 3], [[0, 1], [1, 2], [3, 0]], [1, 2], [[0, 1], [1, 2], [2, 3]], [0, 1, 3], [[0, 1], [2, 3]], [0, 1, 3], [[0, 1]], 4],
+            'blk4_rand2': [[0, 1, 2], [[0, 1], [1, 2]], [2, 3], [[2, 3]], [1, 3], [[1, 2], [2, 3], [3, 0]], [1, 2, 3], [[1, 2], [3, 0]], [0, 1, 2], [[0, 1], [3, 0]], [0, 1, 2], [[2, 3]], [0], [[3, 0]], [0, 1], [[1, 2], [3, 0]], 4],
+            'blk4_rand3': [[0, 1, 2, 3], [[0, 1], [1, 2]], [0, 1, 3], [[0, 1]], [0, 1, 2], [[0, 1], [1, 2], [3, 0]], [1, 2, 3], [[2, 3], [3, 0]], [0, 1, 2, 3], [[2, 3], [3, 0]], [1, 2, 3], [[3, 0]], [1, 3], [[0, 1], [1, 2], [2, 3]], [0, 1, 2, 3], [[0, 1]], 4],
+            'blk5_rand0': [[3], [[0, 1], [1, 2], [2, 3]], [0, 1, 3], [[0, 1], [3, 0]], [1, 2], [[0, 1], [1, 2], [2, 3]], [0, 1], [[0, 1], [1, 2], [2, 3]], [1, 2, 3], [[2, 3], [3, 0]], [0, 1, 2], [[1, 2], [2, 3], [3, 0]], [2], [[0, 1], [2, 3], [3, 0]], [3], [[0, 1], [1, 2], [2, 3]], 5],
+            'blk5_rand1': [[0, 1], [[0, 1], [1, 2], [2, 3]], [0, 1, 2], [[1, 2]], [0, 2, 3], [[1, 2], [2, 3]], [0, 1, 3], [[0, 1], [3, 0]], [0, 2], [[0, 1], [1, 2], [3, 0]], [0, 3], [[1, 2], [3, 0]], [1], [[0, 1], [1, 2], [2, 3], [3, 0]], [1], [[1, 2], [2, 3], [3, 0]], 5],
+            'blk5_rand2': [[0, 2, 3], [[0, 1], [1, 2]], [0, 1], [[1, 2], [3, 0]], [2], [[1, 2], [3, 0]], [0, 2], [[0, 1], [2, 3], [3, 0]], [1, 2, 3], [[0, 1], [3, 0]], [2, 3], [[2, 3], [3, 0]], [0, 3], [[1, 2], [2, 3]], [1], [[1, 2], [2, 3]], 5],
+            'blk5_rand3': [[0, 1, 2, 3], [[1, 2], [2, 3], [3, 0]], [0, 1, 3], [[1, 2], [3, 0]], [0, 1], [[2, 3]], [0, 1], [[1, 2], [3, 0]], [2], [[1, 2]], [2, 3], [[0, 1], [1, 2], [2, 3]], [0, 1, 2], [[0, 1], [1, 2]], [0, 3], [[0, 1], [1, 2], [2, 3], [3, 0]], 5],
+            'blk6_rand0': [[2], [[1, 2]], [0, 2, 3], [[1, 2], [3, 0]], [0, 1, 2], [[1, 2], [2, 3]], [0], [[0, 1], [1, 2], [3, 0]], [0, 3], [[1, 2], [2, 3], [3, 0]], [0, 2, 3], [[1, 2], [2, 3], [3, 0]], [0, 2, 3], [[0, 1], [1, 2], [3, 0]], [0, 1, 3], [[0, 1]], 6],
+            'blk6_rand1': [[1, 3], [[2, 3]], [2, 3], [[1, 2]], [2], [[1, 2], [2, 3], [3, 0]], [0, 2, 3], [[0, 1]], [0, 2, 3], [[0, 1], [1, 2], [2, 3]], [2], [[1, 2], [2, 3], [3, 0]], [0, 2], [[2, 3]], [0, 3], [[1, 2], [2, 3], [3, 0]], 6],
+            'blk6_rand2': [[0, 1, 3], [[1, 2], [2, 3], [3, 0]], [0, 3], [[3, 0]], [0, 1, 3], [[0, 1], [1, 2], [3, 0]], [1], [[0, 1]], [0, 1, 3], [[0, 1], [1, 2]], [2], [[0, 1], [2, 3]], [1, 2], [[0, 1], [1, 2], [3, 0]], [0], [[1, 2], [2, 3], [3, 0]], 6],
+            'blk6_rand3': [[0, 1, 2, 3], [[3, 0]], [1], [[3, 0]], [0, 2], [[0, 1]], [2, 3], [[0, 1]], [3], [[1, 2], [2, 3], [3, 0]], [1], [[0, 1], [1, 2]], [0, 1, 2], [[1, 2], [3, 0]], [0, 2, 3], [[1, 2], [3, 0]], 6],
+            'blk7_rand0': [[3], [[1, 2], [2, 3], [3, 0]], [0, 1, 2], [[1, 2], [2, 3]], [1, 3], [[1, 2], [2, 3]], [1], [[1, 2], [3, 0]], [0, 1], [[2, 3]], [0, 3], [[0, 1], [3, 0]], [2, 3], [[1, 2], [2, 3]], [0, 1, 3], [[0, 1], [1, 2], [3, 0]], 7],
+            'blk7_rand1': [[0, 3], [[2, 3]], [0, 1, 2, 3], [[1, 2], [3, 0]], [0, 1, 3], [[0, 1]], [3], [[0, 1], [1, 2], [2, 3], [3, 0]], [1, 2], [[1, 2]], [0, 1, 2], [[0, 1], [1, 2]], [0, 1, 3], [[0, 1], [1, 2], [3, 0]], [3], [[1, 2]], 7],
+            'blk7_rand2': [[0, 1, 2], [[0, 1]], [2], [[1, 2]], [3], [[0, 1], [1, 2], [2, 3], [3, 0]], [1], [[0, 1], [3, 0]], [0], [[0, 1], [1, 2], [2, 3]], [1], [[1, 2], [2, 3], [3, 0]], [0, 1, 3], [[0, 1], [1, 2], [2, 3]], [1, 2, 3], [[1, 2], [3, 0]], 7],
+            'blk7_rand3': [[0, 1, 2, 3], [[2, 3], [3, 0]], [3], [[3, 0]], [0, 1, 3], [[2, 3]], [0, 2, 3], [[1, 2], [2, 3]], [0, 3], [[0, 1], [2, 3]], [1], [[0, 1], [1, 2], [2, 3]], [1, 2, 3], [[0, 1], [1, 2], [2, 3], [3, 0]], [1, 2, 3], [[0, 1], [1, 2]], 7],
+            'blk8_rand0': [[0], [[2, 3]], [0], [[0, 1], [3, 0]], [2, 3], [[1, 2], [2, 3]], [0, 3], [[1, 2], [2, 3]], [0, 1, 2], [[0, 1], [1, 2]], [0], [[0, 1], [2, 3]], [0, 1], [[2, 3]], [0, 1], [[2, 3], [3, 0]], 8],
+            'blk8_rand1': [[0, 1], [[3, 0]], [1], [[1, 2], [2, 3], [3, 0]], [0, 1, 3], [[3, 0]], [0], [[0, 1], [1, 2]], [3], [[0, 1], [1, 2], [2, 3]], [1, 3], [[1, 2], [2, 3]], [1, 2], [[0, 1], [3, 0]], [2, 3], [[3, 0]], 8],
+            'blk8_rand2': [[1, 2, 3], [[1, 2], [2, 3], [3, 0]], [0, 1], [[0, 1], [1, 2], [3, 0]], [0, 1, 2], [[0, 1], [1, 2], [2, 3], [3, 0]], [2], [[0, 1], [2, 3], [3, 0]], [0, 1, 3], [[0, 1], [2, 3], [3, 0]], [1], [[1, 2], [2, 3], [3, 0]], [0, 2], [[0, 1], [2, 3], [3, 0]], [0, 1, 2, 3], [[0, 1], [1, 2], [2, 3]], 8],
+            'blk8_rand3': [[0, 1, 2, 3], [[1, 2], [3, 0]], [0, 1, 2, 3], [[0, 1], [3, 0]], [0, 1, 2], [[0, 1], [2, 3], [3, 0]], [1, 3], [[1, 2]], [1, 3], [[0, 1], [1, 2], [2, 3]], [3], [[0, 1]], [3], [[0, 1], [1, 2]], [0, 1, 3], [[2, 3]], 8],
+        }
+        sample_arch = arch_dict[name.replace('super4digit_arbitrary_fc1_', '')]
+    else:
+        raise NotImplementedError(f"Arch name {name} not supported.")
+
+    return sample_arch

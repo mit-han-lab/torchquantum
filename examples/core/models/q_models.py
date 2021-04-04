@@ -1,24 +1,19 @@
 import torchquantum as tq
 import torchquantum.functional as tqf
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
 from qiskit import Aer, execute
 from torchquantum.plugins import tq2qiskit
 from torchquantum.utils import get_expectations_from_counts
-from torchpack.utils.config import configs
 from tqdm import tqdm
 
 
-__all__ = ['QuanvModel0', 'QuanvModel1', 'QFCModel0',
-           'model_dict']
-
-
 class Quanv0(tq.QuantumModule):
-    def __init__(self, n_wires):
+    def __init__(self, n_wires, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = n_wires
         self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
             self.n_wires)))
@@ -33,8 +28,9 @@ class QuanvModel0(tq.QuantumModule):
     """
     Convolution with quantum filter
     """
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=9)
         self.q_device1 = tq.QuantumDevice(n_wires=12)
         self.measure = tq.MeasureAll(obs=tq.PauliZ)
@@ -91,8 +87,9 @@ class QuanvModel1(tq.QuantumModule):
     """
     Convolution with quantum filter
     """
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=4)
         self.measure = tq.MeasureAll(obs=tq.PauliZ)
         self.wires_per_block = 4
@@ -155,8 +152,9 @@ class QuanvModel1(tq.QuantumModule):
 
 
 class QFCModel0(tq.QuantumModule):
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=4)
         self.encoder = tq.StateEncoder()
         self.trainable_u = tq.TrainableUnitary(has_params=True,
@@ -170,8 +168,8 @@ class QFCModel0(tq.QuantumModule):
         self.encoder(self.q_device, x)
         self.trainable_u(self.q_device, wires=[0, 1, 2, 3])
 
-        x = self.q_device.states.view(bsz, 16)[:, :len(
-            configs.dataset.digits_of_interest)].abs()
+        x = self.q_device.states.view(bsz, 16)[:, :self.arch[
+            'output_len']].abs()
 
         x = F.log_softmax(x, dim=1)
 
@@ -179,8 +177,9 @@ class QFCModel0(tq.QuantumModule):
 
 
 class QFCModel1(tq.QuantumModule):
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=4)
         self.encoder = tq.StateEncoder()
         self.trainable_u = tq.TrainableUnitary(has_params=True,
@@ -195,8 +194,8 @@ class QFCModel1(tq.QuantumModule):
         self.encoder(self.q_device, x)
         self.trainable_u(self.q_device, wires=[0, 1, 2, 3])
 
-        x = self.measure(self.q_device).view(bsz, 4)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = self.measure(self.q_device).view(bsz, 4)[:, :self.arch[
+            'output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -204,8 +203,9 @@ class QFCModel1(tq.QuantumModule):
 
 
 class QFCModel2(tq.QuantumModule):
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 16
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
         self.encoder = tq.PhaseEncoder(tqf.rx)
@@ -220,10 +220,8 @@ class QFCModel2(tq.QuantumModule):
 
         self.encoder(self.q_device, x)
         self.trainable_u(self.q_device, wires=list(range(self.n_wires)))
-        x = self.q_device.states.view(bsz, 16)[:, :len(
-            configs.dataset.digits_of_interest)].abs()
-        # x = self.measure(self.q_device).view(bsz, self.n_wires)[:, :len(
-        #     configs.dataset.digits_of_interest)]
+        x = self.q_device.states.view(bsz, 16)[:, :self.arch[
+            'output_len']].abs()
 
         x = F.log_softmax(x, dim=1)
 
@@ -231,8 +229,9 @@ class QFCModel2(tq.QuantumModule):
 
 
 class QFCModel3(tq.QuantumModule):
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=10)
         self.encoder = tq.StateEncoder()
         self.trainable_u = tq.TrainableUnitary(has_params=True,
@@ -241,10 +240,11 @@ class QFCModel3(tq.QuantumModule):
         self.trainable_u1 = tq.TrainableUnitary(has_params=True,
                                                 trainable=True,
                                                 n_wires=10)
-        if configs.regularization.unitary_loss_lambda_trainable:
-            unitary_loss_lambda = nn.Parameter(
-                torch.ones(1) * configs.regularization.unitary_loss_lambda)
-            self.register_parameter('unitary_loss_lambda', unitary_loss_lambda)
+        # if configs.regularization.unitary_loss_lambda_trainable:
+        #     unitary_loss_lambda = nn.Parameter(
+        #         torch.ones(1) * configs.regularization.unitary_loss_lambda)
+        #     self.register_parameter('unitary_loss_lambda',
+        #                             unitary_loss_lambda)
 
     def forward(self, x):
         bsz = x.shape[0]
@@ -265,8 +265,9 @@ class QuanvModel2(tq.QuantumModule):
     """
     Convolution with quantum filter
     """
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=4)
         self.measure = tq.MeasureAll(obs=tq.PauliZ)
         self.encoder = tq.PhaseEncoder(func=tqf.rx)
@@ -322,7 +323,7 @@ class QuanvModel2(tq.QuantumModule):
         x = torch.stack(quanv2_results, dim=1)
 
         x = F.avg_pool2d(x, kernel_size=2
-                         )[:, :len(configs.dataset.digits_of_interest)]
+                         )[:, :self.arch['output_len']]
         x = F.log_softmax(x, dim=1)
         x = x.squeeze()
 
@@ -333,8 +334,9 @@ class QuanvModel3(tq.QuantumModule):
     """
     Convolution with quantum filter
     """
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=4)
         self.n_wires = 4
         self.measure = tq.MeasureAll(obs=tq.PauliZ)
@@ -389,7 +391,7 @@ class QuanvModel3(tq.QuantumModule):
         x = torch.stack(quanv2_results, dim=1)
 
         x = F.avg_pool2d(x, kernel_size=2
-                         )[:, :len(configs.dataset.digits_of_interest)]
+                         )[:, :self.arch['output_len']]
         x = F.log_softmax(x, dim=1)
         x = x.squeeze()
 
@@ -401,9 +403,11 @@ class QSVT0(tq.QuantumModule):
     def __init__(self,
                  n_wires=8,
                  n_xcnot_wires=8,
-                 depth=16
+                 depth=16,
+                 arch=None
                  ):
         super().__init__()
+        self.arch = arch
         self.n_wires = n_wires
         self.q_device = tq.QuantumDevice(n_wires=n_wires)
         self.depth = depth
@@ -435,8 +439,7 @@ class QSVT0(tq.QuantumModule):
             self.u(self.q_device, wires=list(range(1, self.n_wires)),
                    inverse=(k % 2 == 1))
 
-        x = self.measure(self.q_device)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = self.measure(self.q_device)[:, :self.arch['output_len']]
         x = F.log_softmax(x, dim=1)
         x = x.squeeze()
 
@@ -444,8 +447,9 @@ class QSVT0(tq.QuantumModule):
 
 
 class QFC4Sub(tq.QuantumModule):
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 8
         self.encoder = tq.MultiPhaseEncoder(['rx'] * 8 + ['ry'] * 8)
         self.random_layer = tq.RandomLayer(n_ops=200, wires=list(range(
@@ -459,11 +463,12 @@ class QFC4Sub(tq.QuantumModule):
 
 
 class QFCModel4(tq.QuantumModule):
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 8
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_sub_layer = QFC4Sub()
+        self.q_sub_layer = QFC4Sub(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
         self.qiskit_simulator = Aer.get_backend('qasm_simulator')
@@ -474,8 +479,7 @@ class QFCModel4(tq.QuantumModule):
 
         self.q_sub_layer(self.q_device, x)
 
-        x = self.measure(self.q_device)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = self.measure(self.q_device)[:, :self.arch['output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -499,8 +503,8 @@ class QFCModel4(tq.QuantumModule):
             measured_qiskit_all.append(torch.tensor(measured_qiskit,
                                                     device=x.device))
 
-        x = torch.stack(measured_qiskit_all, dim=0)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = torch.stack(measured_qiskit_all, dim=0)[:, :self.arch[
+            'output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -509,13 +513,14 @@ class QFCModel4(tq.QuantumModule):
 
 class QFCModel5(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
                                                 ['rz'] * 4 + ['rx'] * 4)
             self.random_layer = tq.RandomLayer(
-                n_ops=configs.model.n_random_ops[0],
+                n_ops=arch['n_random_ops'][0],
                 wires=list(range(self.n_wires)))
 
         @tq.static_support
@@ -524,11 +529,12 @@ class QFCModel5(tq.QuantumModule):
             self.encoder(self.q_device, x)
             self.random_layer(self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -537,8 +543,7 @@ class QFCModel5(tq.QuantumModule):
 
         self.q_layer(self.q_device, x)
 
-        x = self.measure(self.q_device)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = self.measure(self.q_device)[:, :self.arch['output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -551,7 +556,7 @@ class QFCModel5(tq.QuantumModule):
         measured_qiskit = self.qiskit_processor.process(
             self.q_device, self.q_layer, x)
 
-        x = measured_qiskit[:, :len(configs.dataset.digits_of_interest)]
+        x = measured_qiskit[:, :self.arch['output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -560,13 +565,14 @@ class QFCModel5(tq.QuantumModule):
 
 class QFCModel5Resize4(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
                                                 ['rz'] * 4 + ['rx'] * 4)
             self.random_layer = tq.RandomLayer(
-                n_ops=configs.model.n_random_ops[0],
+                n_ops=arch['n_random_ops'][0],
                 wires=list(range(self.n_wires)))
 
         @tq.static_support
@@ -575,11 +581,12 @@ class QFCModel5Resize4(tq.QuantumModule):
             self.encoder(self.q_device, x)
             self.random_layer(self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -588,8 +595,7 @@ class QFCModel5Resize4(tq.QuantumModule):
 
         self.q_layer(self.q_device, x)
 
-        x = self.measure(self.q_device)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = self.measure(self.q_device)[:, :self.arch['output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -602,7 +608,7 @@ class QFCModel5Resize4(tq.QuantumModule):
         measured_qiskit = self.qiskit_processor.process(
             self.q_device, self.q_layer, x)
 
-        x = measured_qiskit[:, :len(configs.dataset.digits_of_interest)]
+        x = measured_qiskit[:, :self.arch['output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -611,8 +617,9 @@ class QFCModel5Resize4(tq.QuantumModule):
 
 class QFCModel6(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
                                                 ['rz'] * 4 + ['rx'] * 4)
@@ -646,11 +653,12 @@ class QFCModel6(tq.QuantumModule):
                 self.rz_layers[k](self.q_device)
                 self.cnot_layers[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -659,8 +667,7 @@ class QFCModel6(tq.QuantumModule):
 
         self.q_layer(self.q_device, x)
 
-        x = self.measure(self.q_device)[:, :len(
-            configs.dataset.digits_of_interest)]
+        x = self.measure(self.q_device)[:, :self.arch['output_len']]
 
         x = F.log_softmax(x, dim=1)
 
@@ -670,8 +677,9 @@ class QFCModel6(tq.QuantumModule):
 class QFCModel7(tq.QuantumModule):
     """difference: self.measure(self.q_device).reshape(bsz, 2, 2)"""
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
                                                 ['rz'] * 4 + ['rx'] * 4)
@@ -705,11 +713,12 @@ class QFCModel7(tq.QuantumModule):
                 self.rz_layers[k](self.q_device)
                 self.cnot_layers[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -729,8 +738,9 @@ class QFCModel7(tq.QuantumModule):
 class QFCModel8(tq.QuantumModule):
     """difference: Op2QButterflyLayer"""
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
                                                 ['rz'] * 4 + ['rx'] * 4)
@@ -764,11 +774,12 @@ class QFCModel8(tq.QuantumModule):
                 self.rz_layers[k](self.q_device)
                 self.cnot_layers[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -788,8 +799,9 @@ class QFCModel8(tq.QuantumModule):
 class QFCModel9(tq.QuantumModule):
     """difference: Op2QDenseLayer"""
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
                                                 ['rz'] * 4 + ['rx'] * 4)
@@ -798,7 +810,7 @@ class QFCModel9(tq.QuantumModule):
             self.rz_layers = tq.QuantumModuleList()
             self.cnot_layers = tq.QuantumModuleList()
 
-            for k in range(configs.model.q_fc9.n_layers):
+            for k in range(arch['n_blocks']):
                 self.rx_layers.append(
                     tq.Op1QAllLayer(op=tq.RX, n_wires=self.n_wires,
                                     has_params=True, trainable=True))
@@ -817,17 +829,18 @@ class QFCModel9(tq.QuantumModule):
             self.q_device = q_device
             self.encoder(self.q_device, x)
 
-            for k in range(configs.model.q_fc9.n_layers):
+            for k in range(self.arch['n_blocks']):
                 self.rx_layers[k](self.q_device)
                 self.ry_layers[k](self.q_device)
                 self.rz_layers[k](self.q_device)
                 self.cnot_layers[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -847,43 +860,44 @@ class QFCModel9(tq.QuantumModule):
 class QFCModel10(tq.QuantumModule):
     """crx cry crz layers"""
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
-            if configs.model.q_fc10.encoder.name == 'rxyzx':
+            if arch['encoder']['name'] == 'rxyzx':
                 self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 +
                                                     ['ry'] * 4 +
                                                     ['rz'] * 4 +
                                                     ['rx'] * 4)
-            elif configs.model.q_fc10.encoder.name == 'rxyzx_interleave':
+            elif arch['encoder']['name'] == 'rxyzx_interleave':
                 self.encoder = tq.MultiPhaseEncoder(
                     ['rx', 'ry', 'rz', 'rx'] * 4)
-            elif configs.model.q_fc10.encoder.name == 'ryzxy':
+            elif arch['encoder']['name'] == 'ryzxy':
                 self.encoder = tq.MultiPhaseEncoder(['ry'] * 4 +
                                                     ['rz'] * 4 +
                                                     ['rx'] * 4 +
                                                     ['ry'] * 4)
-            elif configs.model.q_fc10.encoder.name == 'rzxyz':
+            elif arch['encoder']['name'] == 'rzxyz':
                 self.encoder = tq.MultiPhaseEncoder(['rz'] * 4 +
                                                     ['rx'] * 4 +
                                                     ['ry'] * 4 +
                                                     ['rz'] * 4)
-            elif configs.model.q_fc10.encoder.name == 'u3u1':
+            elif arch['encoder']['name'] == 'u3u1':
                 self.encoder = tq.MultiPhaseEncoder(
                     funcs=['u3', 'u1'] * 4,
                     wires=[0, 0, 1, 1, 2, 2, 3, 3]
                 )
-            elif configs.model.q_fc10.encoder.name == 'u3rx':
+            elif arch['encoder']['name'] == 'u3rx':
                 self.encoder = tq.MultiPhaseEncoder(
                     funcs=['u3', 'rx'] * 4,
                     wires=[0, 0, 1, 1, 2, 2, 3, 3]
                 )
-            elif configs.model.q_fc10.encoder.name == 'u3ry':
+            elif arch['encoder']['name'] == 'u3ry':
                 self.encoder = tq.MultiPhaseEncoder(
                     funcs=['u3', 'ry'] * 4,
                     wires=[0, 0, 1, 1, 2, 2, 3, 3]
                 )
-            elif configs.model.q_fc10.encoder.name == 'u3rz':
+            elif arch['encoder']['name'] == 'u3rz':
                 self.encoder = tq.MultiPhaseEncoder(
                     funcs=['u3', 'rz'] * 4,
                     wires=[0, 0, 1, 1, 2, 2, 3, 3]
@@ -898,7 +912,7 @@ class QFCModel10(tq.QuantumModule):
             self.cry_layers = tq.QuantumModuleList()
             self.crz_layers = tq.QuantumModuleList()
 
-            for k in range(configs.model.q_fc10.n_layers):
+            for k in range(arch['n_block']):
                 self.rx_layers.append(
                     tq.Op1QAllLayer(op=tq.RX, n_wires=self.n_wires,
                                     has_params=True, trainable=True))
@@ -926,7 +940,7 @@ class QFCModel10(tq.QuantumModule):
             self.q_device = q_device
             self.encoder(self.q_device, x)
 
-            for k in range(configs.model.q_fc10.n_layers):
+            for k in range(self.arch['n_block']):
                 self.rx_layers[k](self.q_device)
                 self.ry_layers[k](self.q_device)
                 self.rz_layers[k](self.q_device)
@@ -934,17 +948,18 @@ class QFCModel10(tq.QuantumModule):
                 self.cry_layers[k](self.q_device)
                 self.crz_layers[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-        if configs.model.q_fc10.tanh:
+        if self.arch['tanh']:
             x = F.tanh(x) * np.pi
 
         self.q_layer(self.q_device, x)
@@ -971,8 +986,9 @@ class QFCModel10(tq.QuantumModule):
 class QFCModel11(tq.QuantumModule):
     """u3 and cu3 layers"""
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.encoder = tq.MultiPhaseEncoder(['rx'] * 4 + ['ry'] * 4 +
                                                 ['rz'] * 4 + ['rx'] * 4)
@@ -981,7 +997,7 @@ class QFCModel11(tq.QuantumModule):
             self.u3_2_layers = tq.QuantumModuleList()
             self.cu3_layers = tq.QuantumModuleList()
 
-            for k in range(configs.model.q_fc11.n_layers):
+            for k in range(self.arch['n_block']):
                 self.u3_0_layers.append(
                     tq.Op1QAllLayer(op=tq.U3, n_wires=self.n_wires,
                                     has_params=True, trainable=True))
@@ -1001,17 +1017,18 @@ class QFCModel11(tq.QuantumModule):
             self.q_device = q_device
             self.encoder(self.q_device, x)
 
-            for k in range(configs.model.q_fc11.n_layers):
+            for k in range(self.arch['n_block']):
                 self.u3_0_layers[k](self.q_device)
                 self.u3_1_layers[k](self.q_device)
                 self.u3_2_layers[k](self.q_device)
                 self.cu3_layers[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -1031,8 +1048,9 @@ class QFCModel11(tq.QuantumModule):
 class QFCModel12(tq.QuantumModule):
     """crx cry crz layers"""
     class QLayer(tq.QuantumModule):
-        def __init__(self):
+        def __init__(self, arch=None):
             super().__init__()
+            self.arch = arch
             self.n_wires = 4
             self.rx_layers = tq.QuantumModuleList()
             self.ry_layers = tq.QuantumModuleList()
@@ -1041,7 +1059,7 @@ class QFCModel12(tq.QuantumModule):
             self.cry_layers = tq.QuantumModuleList()
             self.crz_layers = tq.QuantumModuleList()
 
-            for k in range(configs.model.q_fc12.n_layers):
+            for k in range(arch['n_blocks']):
                 self.rx_layers.append(
                     tq.Op1QAllLayer(op=tq.RX, n_wires=self.n_wires,
                                     has_params=True, trainable=True))
@@ -1068,7 +1086,7 @@ class QFCModel12(tq.QuantumModule):
         def forward(self, q_device: tq.QuantumDevice):
             self.q_device = q_device
 
-            for k in range(configs.model.q_fc12.n_layers):
+            for k in range(self.arch['n_blocks']):
                 self.rx_layers[k](self.q_device)
                 self.ry_layers[k](self.q_device)
                 self.rz_layers[k](self.q_device)
@@ -1076,8 +1094,9 @@ class QFCModel12(tq.QuantumModule):
                 self.cry_layers[k](self.q_device)
                 self.crz_layers[k](self.q_device)
 
-    def __init__(self):
+    def __init__(self, arch=None):
         super().__init__()
+        self.arch = arch
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
         self.encoder = tq.GeneralEncoder([
@@ -1098,7 +1117,7 @@ class QFCModel12(tq.QuantumModule):
             {'input_idx': [14], 'func': 'ry', 'wires': [2]},
             {'input_idx': [15], 'func': 'ry', 'wires': [3]}
         ])
-        self.q_layer = self.QLayer()
+        self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
@@ -1118,13 +1137,61 @@ class QFCModel12(tq.QuantumModule):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        x = self.qiskit_processor.process_parameterized(
+        x = self.qiskit_processor.process_parameterized_managed(
             self.q_device, self.encoder, self.q_layer, x)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
         return x
+
+
+class QFCModel13(QFCModel12):
+    """u3 and cu3 layers, one layer of u3 and one layer of cu3 in one block"""
+    class QLayer(tq.QuantumModule):
+        def __init__(self, arch=None):
+            super().__init__()
+            self.arch = arch
+            self.n_wires = arch['n_wires']
+            self.u3_layers = tq.QuantumModuleList()
+            self.cu3_layers = tq.QuantumModuleList()
+
+            for k in range(arch['n_blocks']):
+                self.u3_layers.append(
+                    tq.Op1QAllLayer(op=tq.U3, n_wires=self.n_wires,
+                                    has_params=True, trainable=True))
+                self.cu3_layers.append(
+                    tq.Op2QAllLayer(op=tq.CU3, n_wires=self.n_wires,
+                                    has_params=True, trainable=True,
+                                    circular=True))
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice):
+            self.q_device = q_device
+            for k in range(self.arch['n_blocks']):
+                self.u3_layers[k](self.q_device)
+                self.cu3_layers[k](self.q_device)
+
+
+class QFCRandomModel0(QFCModel12):
+    """model with random gates"""
+    class QLayer(tq.QuantumModule):
+        def __init__(self, arch=None):
+            super().__init__()
+            self.arch = arch
+            self.n_wires = 4
+            op_type_name = arch['op_type_name']
+            op_types = [tq.op_name_dict[name] for name in op_type_name]
+
+            self.random_layer = tq.RandomLayer(
+                n_ops=arch['n_random_ops'],
+                wires=list(range(self.n_wires)),
+                op_types=op_types)
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice):
+            self.q_device = q_device
+            self.random_layer(q_device)
 
 
 model_dict = {
@@ -1146,5 +1213,7 @@ model_dict = {
     'q_fc10': QFCModel10,
     'q_fc11': QFCModel11,
     'q_fc12': QFCModel12,
+    'q_fc13': QFCModel13,
+    'q_fc_rand0': QFCRandomModel0,
     'q_qsvt0': QSVT0,
 }

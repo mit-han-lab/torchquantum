@@ -1,6 +1,6 @@
 model:
   name: q_fc10
-  q_fc10:
-    n_layers: 4
+  arch:
+    n_blocks: 4
     encoder:
       name: rxyzx

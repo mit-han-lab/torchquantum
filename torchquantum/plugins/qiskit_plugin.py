@@ -54,6 +54,8 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
     for module in module_list:
         if module.name == 'Hadamard':
             circ.h(*module.wires)
+        elif module.name == 'SHadamard':
+            circ.ry(np.pi / 4, *module.wires)
         elif module.name == 'PauliX':
             circ.x(*module.wires)
         elif module.name == 'PauliY':
@@ -78,6 +80,8 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
             circ.ry(module.params[0][0].item(), *module.wires)
         elif module.name == 'RZ':
             circ.rz(module.params[0][0].item(), *module.wires)
+        elif module.name == 'RZZ':
+            circ.rzz(module.params[0][0].item(), *module.wires)
         elif module.name == 'SWAP':
             circ.swap(*module.wires)
         elif module.name == 'CSWAP':
@@ -97,17 +101,17 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
         elif module.name == 'CU1':
             circ.cu1(module.params[0][0].item(), *module.wires)
         elif module.name == 'U2':
-            circ.u2(*list(module.params[0].data.numpy()), *module.wires)
+            circ.u2(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == 'U3':
-            circ.u3(*list(module.params[0].data.numpy()), *module.wires)
+            circ.u3(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == 'CU3':
-            circ.cu3(*list(module.params[0].data.numpy()), *module.wires)
+            circ.cu3(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == 'QubitUnitary' or \
                 module.name == 'QubitUnitaryFast' or \
                 module.name == 'TrainableUnitary' or \
                 module.name == 'TrainableUnitaryStrict':
             from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
-            mat = module.params[0].data.numpy()
+            mat = module.params[0].data.cpu().numpy()
             mat = switch_little_big_endian_matrix(mat)
             circ.append(UnitaryGate(mat), module.wires, [])
         elif module.name == 'MultiCNOT':
@@ -159,6 +163,9 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
             circ.ry(theta=params[input_idx[0]], qubit=wires[0])
         elif func == 'rz':
             circ.rz(phi=params[input_idx[0]], qubit=wires[0])
+        elif func == 'rzz':
+            circ.rzz(theta=params[input_idx[0]], qubit1=wires[0],
+                     qubit2=wires[1])
         elif func == 'phaseshift':
             circ.p(theta=params[input_idx[0]], qubit=wires[0])
         elif func == 'crx':
@@ -191,17 +198,6 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
     return circ, params
 
 
-class GeneratedQuantumModule(tq.QuantumModule):
-    def __init__(self, ops):
-        super().__init__()
-        self.ops = tq.QuantumModuleList(ops)
-
-    @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice):
-        for op in self.ops:
-            op(q_device)
-
-
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit
 # object
 def qiskit2tq(circ: QuantumCircuit):
@@ -209,7 +205,9 @@ def qiskit2tq(circ: QuantumCircuit):
     for gate in circ.data:
         op_name = gate[0].name
         wires = list(map(lambda x: x.index, gate[1]))
-        init_params = gate[0].params if len(gate[0].params) > 0 else None
+        # sometimes the gate.params is ParameterExpression class
+        init_params = list(map(float, gate[0].params)) if len(
+            gate[0].params) > 0 else None
 
         if op_name in ['h',
                        'x',
@@ -229,6 +227,8 @@ def qiskit2tq(circ: QuantumCircuit):
         elif op_name in ['rx',
                          'ry',
                          'rz',
+                         'rzz',
+                         'zz',
                          'p',
                          'cp',
                          'crx',
@@ -245,12 +245,14 @@ def qiskit2tq(circ: QuantumCircuit):
                                                 trainable=True,
                                                 init_params=init_params,
                                                 wires=wires))
+        elif op_name in ['barrier', 'measure']:
+            continue
         else:
             raise NotImplementedError(
                 f"{op_name} conversion to tq is currently not supported."
             )
 
-    return GeneratedQuantumModule(ops)
+    return tq.QuantumModuleFromOps(ops)
 
 
 def test_qiskit2tq():

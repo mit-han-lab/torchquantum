@@ -1,2 +1,9 @@
 dataset:
   digits_of_interest: [3, 6]
+
+model:
+  arch:
+    output_len: 2
+    n_wires: 4
+  transpile_before_run: False
+  load_op_list: False

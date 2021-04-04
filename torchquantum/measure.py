@@ -38,12 +38,28 @@ def expval(q_device: tq.QuantumDevice,
 
 
 class MeasureAll(tq.QuantumModule):
-    def __init__(self, obs):
+    def __init__(self, obs, q_c_reg_mapping=None):
         super().__init__()
         self.obs = obs
+        self.q_c_reg_mapping = q_c_reg_mapping
 
     def forward(self, q_device: tq.QuantumDevice):
         self.q_device = q_device
         x = expval(q_device, list(range(q_device.n_wires)), [self.obs()] *
                    q_device.n_wires)
+
+        if self.q_c_reg_mapping is not None:
+            c2q_mapping = self.q_c_reg_mapping['c2q']
+            """
+            the measurement is not normal order, need permutation 
+            """
+            perm = []
+            for k in range(x.shape[-1]):
+                if k in c2q_mapping.keys():
+                    perm.append(c2q_mapping[k])
+            x = x[:, perm]
+
         return x
+
+    def set_q_c_reg_mapping(self, mapping):
+        self.q_c_reg_mapping = mapping

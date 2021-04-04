@@ -14,6 +14,7 @@ RND_TIMES = 100
 
 pair_list = [
     {'qiskit': qiskit_gate.HGate, 'tq': tq.Hadamard},
+    {'qiskit': None, 'tq': tq.SHadamard},
     {'qiskit': qiskit_gate.XGate, 'tq': tq.PauliX},
     {'qiskit': qiskit_gate.YGate, 'tq': tq.PauliY},
     {'qiskit': qiskit_gate.ZGate, 'tq': tq.PauliZ},
@@ -26,6 +27,7 @@ pair_list = [
     {'qiskit': qiskit_gate.RXGate, 'tq': tq.RX},
     {'qiskit': qiskit_gate.RYGate, 'tq': tq.RY},
     {'qiskit': qiskit_gate.RZGate, 'tq': tq.RZ},
+    {'qiskit': qiskit_gate.RZZGate, 'tq': tq.RZZ},
     {'qiskit': qiskit_gate.SwapGate, 'tq': tq.SWAP},
     {'qiskit': qiskit_gate.CSwapGate, 'tq': tq.CSWAP},
     {'qiskit': qiskit_gate.CCXGate, 'tq': tq.Toffoli},
@@ -73,7 +75,12 @@ if __name__ == '__main__':
     for pair in pair_list:
         try:
             if pair['tq'].num_params == 0:
-                qiskit_matrix = pair['qiskit']().to_matrix()
+                if pair['tq']().name == 'SHadamard':
+                    """Square root of Hadamard is RY(pi/4)"""
+                    qiskit_matrix = qiskit_gate.RYGate(
+                        theta=np.pi / 4).to_matrix()
+                else:
+                    qiskit_matrix = pair['qiskit']().to_matrix()
                 tq_matrix = pair['tq'].matrix.numpy()
                 tq_matrix = switch_little_big_endian_matrix(tq_matrix)
                 assert np.allclose(qiskit_matrix, tq_matrix)
@@ -92,4 +99,3 @@ if __name__ == '__main__':
         except AssertionError:
             logger.exception(f"Gate {pair['tq']().name} not match.")
             raise AssertionError
-

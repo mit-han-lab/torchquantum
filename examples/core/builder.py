@@ -5,7 +5,8 @@ from torchpack.utils.config import configs
 from torchpack.utils.typing import Dataset, Optimizer, Scheduler
 from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
-from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, NLLError
+from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
+    NLLError, TrainerRestore
 from torchquantum.plugins import QiskitProcessor
 
 
@@ -28,6 +29,7 @@ def make_dataset() -> Dataset:
             binarize_threshold=configs.dataset.binarize_threshold,
             digits_of_interest=configs.dataset.digits_of_interest,
             n_test_samples=configs.dataset.n_test_samples,
+            n_valid_samples=configs.dataset.n_valid_samples,
         )
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
@@ -47,13 +49,19 @@ def make_model() -> nn.Module:
         model = model_dict[configs.model.name]()
     elif configs.model.name.startswith('q_'):
         from .models.q_models import model_dict
-        model = model_dict[configs.model.name]()
+        model = model_dict[configs.model.name](arch=configs.model.arch)
     elif configs.model.name == 'layer_regression':
         from .models import LayerRegression
         model = LayerRegression()
     elif configs.model.name.startswith('super_'):
         from .models.super_models import model_dict
-        model = model_dict[configs.model.name]()
+        model = model_dict[configs.model.name](arch=configs.model.arch)
+    elif configs.model.name.startswith('q4digit_'):
+        from .models.q4digit_models import model_dict
+        model = model_dict[configs.model.name](arch=configs.model.arch)
+    elif configs.model.name.startswith('super4digit_'):
+        from .models.super4digit_models import model_dict
+        model = model_dict[configs.model.name](arch=configs.model.arch)
     else:
         raise NotImplementedError(configs.model.name)
 
@@ -119,6 +127,15 @@ def make_scheduler(optimizer: Optimizer) -> Scheduler:
     elif configs.scheduler.name == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=configs.run.n_epochs)
+    elif configs.scheduler.name == 'cosine_warm':
+        from .schedulers import CosineAnnealingWarmupRestarts
+        scheduler = CosineAnnealingWarmupRestarts(
+            optimizer,
+            first_cycle_steps=configs.run.n_epochs,
+            max_lr=configs.optimizer.lr,
+            min_lr=0,
+            warmup_steps=configs.run.n_warm_epochs,
+        )
     else:
         raise NotImplementedError(configs.scheduler.name)
 
@@ -142,6 +159,12 @@ def make_trainer(model: nn.Module,
                                 criterion=criterion,
                                 optimizer=optimizer,
                                 scheduler=scheduler)
+    elif configs.trainer.name == 'pruning_trainer':
+        from .trainers import PruningTrainer
+        trainer = PruningTrainer(model=model,
+                                 criterion=criterion,
+                                 optimizer=optimizer,
+                                 scheduler=scheduler)
     else:
         raise NotImplementedError(configs.trainer.name)
 
@@ -168,7 +191,7 @@ def get_subcallbacks(config):
     return subcallbacks
 
 
-def make_callbacks(dataflow):
+def make_callbacks(dataflow, state=None):
     callbacks = []
     for config in configs['callbacks']:
         if config['callback'] == 'InferenceRunner':
@@ -197,6 +220,11 @@ def make_callbacks(dataflow):
             raise NotImplementedError(config['callback'])
         callbacks.append(callback)
 
+    if configs.ckpt.load_trainer:
+        assert state is not None
+        callback = TrainerRestore(state)
+        callbacks.append(callback)
+
     return callbacks
 
 
@@ -205,12 +233,13 @@ def make_qiskit_processor():
         use_real_qc=configs.qiskit.use_real_qc,
         backend_name=configs.qiskit.backend_name,
         noise_model_name=configs.qiskit.noise_model_name,
-        coupling_map_name=configs.qiskit.coupling_map_name,
-        basis_gates_name=configs.qiskit.basis_gates_name,
+        coupling_map_name=configs.qiskit.noise_model_name,
+        basis_gates_name=configs.qiskit.noise_model_name,
         n_shots=configs.qiskit.n_shots,
         initial_layout=configs.qiskit.initial_layout,
         seed_transpiler=configs.qiskit.seed_transpiler,
         seed_simulator=configs.qiskit.seed_simulator,
-        optimization_level=configs.qiskit.optimization_level
+        optimization_level=configs.qiskit.optimization_level,
+        max_jobs=configs.qiskit.max_jobs,
     )
     return processor

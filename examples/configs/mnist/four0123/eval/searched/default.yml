@@ -1,0 +1,6 @@
+ckpt:
+  load_ckpt: True
+  name: 'checkpoints/max-acc-valid.pt'
+
+qiskit:
+  initial_layout: null

@@ -2,9 +2,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchquantum as tq
+import copy
 
 from torchquantum.macro import C_DTYPE
 from torchpack.utils.logging import logger
+from typing import List, Dict, Iterable
+from torchpack.utils.config import Config
+from qiskit.providers.aer.noise.device.parameters import gate_error_values
 
 
 def pauli_eigs(n):
@@ -171,6 +176,218 @@ def find_global_phase(mat1, mat2, threshold):
     return None
 
 
+def build_module_op_list(m: tq.QuantumModule, x=None) -> List:
+    """
+    serialize all operations in the module and generate a list with
+    [{'name': RX, 'has_params': True, 'trainable': True, 'wires': [0],
+    n_wires: 1, 'params': [array([[0.01]])]}]
+    so that an identity module can be reconstructed
+    The module needs to have static support
+    """
+
+    m.static_off()
+    m.static_on(wires_per_block=None)
+    m.is_graph_top = False
+
+    # forward to register all modules and parameters
+    if x is None:
+        m.forward(q_device=None)
+    else:
+        m.forward(q_device=None, x=x)
+
+    m.is_graph_top = True
+    m.graph.build_flat_module_list()
+
+    module_list = m.graph.flat_module_list
+    m.static_off()
+
+    op_list = []
+
+    for module in module_list:
+        if module.params is not None:
+            if module.params.shape[0] > 1:
+                # more than one param, so it is from classical input with
+                # batch mode
+                assert not module.has_params
+                params = None
+            else:
+                # has quantum params, batch has to be 1
+                params = module.params[0].data.cpu().numpy()
+        else:
+            params = None
+
+        op_list.append({
+            'name': module.name.lower(),
+            'has_params': module.has_params,
+            'trainable': module.trainable,
+            'wires': module.wires,
+            'n_wires': module.n_wires,
+            'params': params
+        })
+
+    return op_list
+
+
+def build_module_from_op_list(op_list: List[Dict],
+                              remove_ops=False,
+                              thres=None) -> tq.QuantumModule:
+    logger.info(f"Building module from op_list...")
+    thres = 1e-5 if thres is None else thres
+    n_removed_ops = 0
+    ops = []
+    for info in op_list:
+        params = info['params']
+
+        if remove_ops:
+            if params is not None:
+                params = np.array(params) if isinstance(params, Iterable) \
+                    else np.array([params])
+                params = params % (2 * np.pi)
+                params[params > np.pi] -= 2 * np.pi
+                if all(abs(params) < thres):
+                    continue
+
+        op = tq.op_name_dict[info['name']](
+            has_params=info['has_params'],
+            trainable=info['trainable'],
+            wires=info['wires'],
+            n_wires=info['n_wires'],
+            init_params=info['params'],
+        )
+        ops.append(op)
+
+    if n_removed_ops > 0:
+        logger.warning(f"Remove in total {n_removed_ops} pruned operations.")
+    else:
+        logger.info(f"Do not remove any operations.")
+
+    return tq.QuantumModuleFromOps(ops)
+
+
+def build_module_description_test():
+    import pdb
+    from torchquantum.plugins import tq2qiskit
+
+    pdb.set_trace()
+    from examples.core.models.q_models import QFCModel12
+    q_model = QFCModel12({'n_blocks': 4})
+    desc = build_module_op_list(q_model.q_layer)
+    print(desc)
+    q_dev = tq.QuantumDevice(n_wires=4)
+    m = build_module_from_op_list(desc)
+    tq2qiskit(q_dev, m, draw=True)
+
+    desc = build_module_op_list(tq.RandomLayerAllTypes(
+        n_ops=200,  wires=[0, 1, 2, 3], qiskit_compatible=True))
+    print(desc)
+    m1 = build_module_from_op_list(desc)
+    tq2qiskit(q_dev, m1, draw=True)
+
+
+def get_q_c_reg_mapping(circ):
+    mapping = {
+        'q2c': {},
+        'c2q': {},
+    }
+    for gate in circ.data:
+        if gate[0].name == 'measure':
+            mapping['q2c'][gate[1][0].index] = gate[2][0].index
+            mapping['c2q'][gate[2][0].index] = gate[1][0].index
+
+    return mapping
+
+
+def get_cared_configs(conf, mode) -> Config:
+    """only preserve cared configs"""
+    conf = copy.deepcopy(conf)
+    ignores = ['callbacks',
+               'criterion',
+               'debug',
+               'legalization',
+               'regularization',
+               'verbose',
+               'get_n_params',
+               ]
+
+    if 'super' not in conf.trainer.name:
+        ignores.append('scheduler')
+        ignores.append('optimizer')
+
+    for ignore in ignores:
+        if hasattr(conf, ignore):
+            delattr(conf, ignore)
+
+    if hasattr(conf, 'dataset'):
+        dataset_ignores = ['binarize',
+                           'binarize_threshold',
+                           'center_crop',
+                           'name',
+                           'resize',
+                           'resize_mode',
+                           'root',
+                           'train_valid_split_ratio',
+                           ]
+        for dataset_ignore in dataset_ignores:
+            if hasattr(conf.dataset, dataset_ignore):
+                delattr(conf.dataset, dataset_ignore)
+
+    if not mode == 'es' and hasattr(conf, 'es'):
+        delattr(conf, 'es')
+    elif mode == 'es' and hasattr(conf, 'es') and hasattr(conf.es, 'eval'):
+        delattr(conf.es, 'eval')
+
+    if not mode == 'train' and hasattr(conf, 'trainer'):
+        delattr(conf, 'trainer')
+
+    if hasattr(conf, 'qiskit'):
+        qiskit_ignores = ['n_shots',
+                          'seed_simulator',
+                          'seed_transpiler',
+                          'coupling_map_name',
+                          'basis_gates_name',
+                          'est_success_rate',
+                          ]
+        for qiskit_ignore in qiskit_ignores:
+            if hasattr(conf.qiskit, qiskit_ignore):
+                delattr(conf.qiskit, qiskit_ignore)
+
+    if hasattr(conf, 'run'):
+        run_ignores = ['device',
+                       'workers_per_gpu',
+                       'n_epochs']
+        for run_ignore in run_ignores:
+            if hasattr(conf.run, run_ignore):
+                delattr(conf.run, run_ignore)
+
+    return conf
+
+
+def get_success_rate(properties, transpiled_circ):
+    # estimate the success rate according to the error rates of single and
+    # two-qubit gates in transpiled circuits
+
+    gate_errors = gate_error_values(properties)
+    # construct the error dict
+    gate_error_dict = {}
+    for gate_error in gate_errors:
+        if gate_error[0] not in gate_error_dict.keys():
+            gate_error_dict[gate_error[0]] = {tuple(gate_error[1]):
+                                              gate_error[2]}
+        else:
+            gate_error_dict[gate_error[0]][tuple(gate_error[1])] = \
+                gate_error[2]
+
+    success_rate = 1
+    for gate in transpiled_circ.data:
+        gate_success_rate = 1 - gate_error_dict[gate[0].name][tuple(
+            map(lambda x: x.index, gate[1])
+        )]
+        success_rate *= gate_success_rate
+
+    return success_rate
+
+
 if __name__ == '__main__':
+    build_module_description_test()
     switch_little_big_endian_matrix_test()
     switch_little_big_endian_state_test()

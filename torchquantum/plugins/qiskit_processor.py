@@ -1,14 +1,34 @@
 import torch
 import torchquantum as tq
+import pathos.multiprocessing as multiprocessing
+import itertools
 
-from qiskit import Aer, execute, IBMQ
-from qiskit.compiler import transpile
+from qiskit import Aer, execute, IBMQ, transpile
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
+from qiskit.exceptions import QiskitError
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from torchquantum.utils import get_expectations_from_counts
 from .qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
+# from qiskit.providers.ibmq.managed import IBMQJobManager
+from torchpack.utils.logging import logger
+
+
+def run_job_worker(data):
+    while True:
+        try:
+            job = execute(**(data[0]))
+            qiskit_verbose = data[1]
+            if qiskit_verbose:
+                job_monitor(job, interval=1)
+            result = job.result()
+            counts = result.get_counts()
+            break
+        except QiskitError:
+            logger.warning('Job failed, rerun now.')
+
+    return counts
 
 
 class QiskitProcessor(object):
@@ -23,6 +43,7 @@ class QiskitProcessor(object):
                  seed_transpiler=42,
                  seed_simulator=42,
                  optimization_level=None,
+                 max_jobs=5,
                  ):
         self.use_real_qc = use_real_qc
         self.noise_model_name = noise_model_name
@@ -34,6 +55,7 @@ class QiskitProcessor(object):
         self.seed_transpiler = seed_transpiler
         self.seed_simulator = seed_simulator
         self.optimization_level = optimization_level
+        self.max_jobs = max_jobs
 
         self.backend = None
         self.provider = None
@@ -111,10 +133,105 @@ class QiskitProcessor(object):
                                      )
         return transpiled_circs
 
+    def process_parameterized_managed(
+            self,
+            q_device: tq.QuantumDevice,
+            q_layer_parameterized: tq.QuantumModule,
+            q_layer_fixed: tq.QuantumModule,
+            x,
+            q_c_reg_mapping=None):
+        """
+        with job manager, it will automatically separate the experiments,
+        to use this, we have to explicitly expand circuits to make each binds
+        only one set of parameter
+        JobManager has bugs when submitting job, so use multiprocessing instead
+        """
+        # measured_qiskit_reference = self.process_parameterized(
+        #     q_device, q_layer_parameterized, q_layer_fixed, x)
+
+        circ_parameterized, params = tq2qiskit_parameterized(
+            q_device, q_layer_parameterized.func_list)
+        circ_fixed = tq2qiskit(q_device, q_layer_fixed)
+        circ = circ_parameterized + circ_fixed
+
+        if q_c_reg_mapping is not None:
+            for q_reg, c_reg in q_c_reg_mapping['q2c'].items():
+                circ.measure(q_reg, c_reg)
+        else:
+            circ.measure(list(range(q_device.n_wires)), list(range(
+                q_device.n_wires)))
+
+        transpiled_circ = self.transpile(circ)
+        self.transpiled_circs = [transpiled_circ]
+
+        # construct the circuits, each bind one set of parameters
+        # bound_circs = []
+        # for inputs_single in x:
+        #     binds = {}
+        #     for k, input_single in enumerate(inputs_single):
+        #         binds[params[k]] = input_single.item()
+        #     bound_circ = transpiled_circ.bind_parameters(binds)
+        #     bound_circs.append(bound_circ)
+
+        binds_all = []
+        for inputs_single in x:
+            binds = {}
+            for k, input_single in enumerate(inputs_single):
+                binds[params[k]] = input_single.item()
+            binds_all.append(binds)
+
+        # job_manager = IBMQJobManager()
+        # job_set_foo = job_manager.run(experiments=bound_circs,
+        #                               backend=self.backend,
+        #                               name='foo',
+        #                               seed_simulator=self.seed_simulator,
+        #                               )
+        #
+        # results = job_set_foo.results()
+        # counts = results.get_counts()
+        if hasattr(self.backend.configuration(), 'max_experiments'):
+            chunk_size = self.backend.configuration().max_experiments
+        else:
+            # using simulator, apply multithreading
+            chunk_size = len(binds_all) // self.max_jobs
+
+        split_binds = [binds_all[i:i + chunk_size] for i in range(0,
+                       len(binds_all), chunk_size)]
+
+        qiskit_verbose = self.max_jobs <= 6
+        feed_dicts = []
+        for split_bind in split_binds:
+            feed_dict = {
+                'experiments': transpiled_circ,
+                'backend': self.backend,
+                'shots': self.n_shots,
+                'seed_transpiler': self.seed_transpiler,
+                'seed_simulator': self.seed_simulator,
+                'coupling_map': self.coupling_map,
+                'basis_gates': self.basis_gates,
+                'noise_model': self.noise_model,
+                'optimization_level': self.optimization_level,
+                'parameter_binds': split_bind,
+            }
+            feed_dicts.append([feed_dict, qiskit_verbose])
+
+        p = multiprocessing.Pool(self.max_jobs)
+        results = p.map(run_job_worker, feed_dicts)
+
+        counts = list(itertools.chain(*results))
+        measured_qiskit = get_expectations_from_counts(
+            counts, n_wires=q_device.n_wires)
+        p.close()
+
+        measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
+
+        return measured_qiskit
+
     def process_parameterized(self, q_device: tq.QuantumDevice,
                               q_layer_parameterized: tq.QuantumModule,
                               q_layer_fixed: tq.QuantumModule,
-                              x):
+                              x,
+                              q_c_reg_mapping=None):
         """
         separate the conversion, encoder part will be converted to a
         parameterized Qiskit QuantumCircuit. The remaining part will be a
@@ -127,8 +244,13 @@ class QiskitProcessor(object):
             q_device, q_layer_parameterized.func_list)
         circ_fixed = tq2qiskit(q_device, q_layer_fixed)
         circ = circ_parameterized + circ_fixed
-        circ.measure(list(range(q_device.n_wires)), list(range(
-            q_device.n_wires)))
+
+        if q_c_reg_mapping is not None:
+            for q_reg, c_reg in q_c_reg_mapping['q2c'].items():
+                circ.measure(q_reg, c_reg)
+        else:
+            circ.measure(list(range(q_device.n_wires)), list(range(
+                q_device.n_wires)))
 
         transpiled_circ = self.transpile(circ)
         self.transpiled_circs = [transpiled_circ]
@@ -163,12 +285,16 @@ class QiskitProcessor(object):
         return measured_qiskit
 
     def process(self, q_device: tq.QuantumDevice, q_layer: tq.QuantumModule,
-                x):
+                x, q_c_reg_mapping=None):
         circs = []
         for i, x_single in tqdm(enumerate(x)):
             circ = tq2qiskit(q_device, q_layer, x_single.unsqueeze(0))
-            circ.measure(list(range(q_device.n_wires)), list(range(
-                q_device.n_wires)))
+            if q_c_reg_mapping is not None:
+                for q_reg, c_reg in q_c_reg_mapping['q2c'].items():
+                    circ.measure(q_reg, c_reg)
+            else:
+                circ.measure(list(range(q_device.n_wires)), list(range(
+                    q_device.n_wires)))
             circs.append(circ)
 
         transpiled_circs = self.transpile(circs)

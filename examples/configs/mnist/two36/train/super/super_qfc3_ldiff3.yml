@@ -6,8 +6,6 @@ model:
     n_front_share_wires: 2
     n_front_share_ops: 2
     n_layers_per_block: 6
-
-es:
   sampler:
     strategy:
       name: limit_diff

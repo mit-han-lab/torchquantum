@@ -1,0 +1,12 @@
+model:
+  name: q_fc12
+  arch:
+    n_blocks: 4
+
+ckpt:
+  load_ckpt: True
+  path: 'runs/mnist.two36.train.single.q_fc12_layer4'
+  name: 'checkpoints/max-acc-valid.pt'
+
+run:
+  n_epochs: 300

@@ -9,7 +9,7 @@ from torchquantum.functional import mat_dict
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE
 from torchpack.utils.logging import logger
-
+from typing import Iterable
 
 __all__ = [
     'op_name_dict',
@@ -18,6 +18,7 @@ __all__ = [
     'DiagonalOperation',
     'Observable',
     'Hadamard',
+    'SHadamard',
     'PauliX',
     'PauliY',
     'PauliZ',
@@ -31,6 +32,7 @@ __all__ = [
     'RX',
     'RY',
     'RZ',
+    'RZZ',
     'SWAP',
     'CSWAP',
     'Toffoli',
@@ -86,6 +88,7 @@ subsystem. It is equivalent to an integer with value -1."""
 class Operator(tq.QuantumModule):
     fixed_ops = [
         'Hadamard',
+        'SHadamard',
         'PauliX',
         'PauliY',
         'PauliZ',
@@ -107,6 +110,7 @@ class Operator(tq.QuantumModule):
         'RX',
         'RY',
         'RZ',
+        'RZZ',
         'PhaseShift',
         'Rot',
         'MultiRZ',
@@ -135,17 +139,37 @@ class Operator(tq.QuantumModule):
     def name(self, value):
         self._name = value
 
-    def __init__(self, wires=None):
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None,
+                 n_wires=None,
+                 wires=None):
         super().__init__()
         self.params = None
         # number of wires of the operator
-        self.n_wires = None
+        # n_wires is used in gates that can be applied to arbitrary number
+        # of qubits such as MultiRZ
+        self.n_wires = n_wires
         # wires that the operator applies to
         self.wires = wires
         self._name = self.__class__.__name__
         # for static mode
         self.static_matrix = None
         self.inverse = False
+
+        try:
+            assert not (trainable and not has_params)
+        except AssertionError:
+            has_params = True
+            logger.warning(f"Module must have parameters to be trainable; "
+                           f"Switched 'has_params' to True.")
+
+        self.has_params = has_params
+        self.trainable = trainable
+        if self.has_params:
+            self.params = self.build_params(trainable=self.trainable)
+            self.reset_params(init_params)
 
     @classmethod
     def _matrix(cls, params):
@@ -221,8 +245,19 @@ class Operator(tq.QuantumModule):
 
 
 class Observable(Operator, metaclass=ABCMeta):
-    def __init__(self, wires=None):
-        super().__init__(wires=wires)
+    def __init__(self,
+                 has_params: bool = False,
+                 trainable: bool = False,
+                 init_params=None,
+                 n_wires=None,
+                 wires=None):
+        super().__init__(
+            has_params=has_params,
+            trainable=trainable,
+            init_params=init_params,
+            n_wires=n_wires,
+            wires=wires
+        )
         self.return_type = None
 
     def diagonalizing_gates(self):
@@ -236,24 +271,13 @@ class Operation(Operator, metaclass=ABCMeta):
                  init_params=None,
                  n_wires=None,
                  wires=None):
-        # n_wires is used in gates that can be applied to arbitrary number
-        # of qubits such as MultiRZ
-        super().__init__(wires=wires)
-
-        try:
-            assert not (trainable and not has_params)
-        except AssertionError:
-            has_params = True
-            logger.warning(f"Module must have parameters to be trainable; "
-                           f"Switched 'has_params' to True.")
-
-        self.has_params = has_params
-        self.trainable = trainable
-        self.n_wires = n_wires
-        self.wires = wires
-        if self.has_params:
-            self.params = self.build_params(trainable=self.trainable)
-            self.reset_params(init_params)
+        super().__init__(
+            has_params=has_params,
+            trainable=trainable,
+            init_params=init_params,
+            n_wires=n_wires,
+            wires=wires
+        )
 
     @property
     def matrix(self):
@@ -279,13 +303,13 @@ class Operation(Operator, metaclass=ABCMeta):
 
     def reset_params(self, init_params=None):
         if init_params is not None:
-            if isinstance(init_params, list):
+            if isinstance(init_params, Iterable):
                 for k, init_param in enumerate(init_params):
                     torch.nn.init.constant_(self.params[:, k], init_param)
             else:
                 torch.nn.init.constant_(self.params, init_params)
         else:
-            torch.nn.init.uniform_(self.params, 0, 2 * np.pi)
+            torch.nn.init.uniform_(self.params, -np.pi, np.pi)
 
 
 class DiagonalOperation(Operation, metaclass=ABCMeta):
@@ -302,7 +326,7 @@ class DiagonalOperation(Operation, metaclass=ABCMeta):
         return torch.diag(cls._eigvals(params))
 
 
-class Hadamard(Observable, Operation, metaclass=ABCMeta):
+class Hadamard(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
@@ -321,6 +345,17 @@ class Hadamard(Observable, Operation, metaclass=ABCMeta):
         return [tq.RY(has_params=True,
                       trainable=False,
                       init_params=-np.pi / 4)]
+
+
+class SHadamard(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict['shadamard']
+    func = staticmethod(tqf.shadamard)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 
 class PauliX(Observable, metaclass=ABCMeta):
@@ -570,6 +605,16 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
         return tqf.multirz_matrix(params, n_wires)
 
 
+class RZZ(DiagonalOperation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.rzz)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.rzz_matrix(params)
+
+
 class TrainableUnitary(Operation, metaclass=ABCMeta):
     num_params = AnyNParams
     num_wires = AnyWires
@@ -767,6 +812,8 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
 op_name_dict = {
     'hadamard': Hadamard,
     'h': Hadamard,
+    'shadamard': SHadamard,
+    'sh': SHadamard,
     'paulix': PauliX,
     'x': PauliX,
     'pauliy': PauliY,
@@ -784,6 +831,8 @@ op_name_dict = {
     'rx': RX,
     'ry': RY,
     'rz': RZ,
+    'rzz': RZZ,
+    'zz': RZZ,
     'swap': SWAP,
     'cswap': CSWAP,
     'toffoli': Toffoli,

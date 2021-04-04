@@ -1,0 +1,11 @@
+model:
+  name: q_fc12
+  q_fc12:
+    n_layers: 4
+
+trainer:
+  name: pruning_trainer
+
+prune:
+  target_pruning_amount: 0.5
+  init_pruning_amount: 0.1

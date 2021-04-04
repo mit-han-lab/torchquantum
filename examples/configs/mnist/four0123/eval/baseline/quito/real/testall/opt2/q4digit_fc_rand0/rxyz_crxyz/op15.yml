@@ -1,0 +1,3 @@
+model:
+  arch:
+    n_random_ops: 15
