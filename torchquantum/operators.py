@@ -18,6 +18,7 @@ __all__ = [
     'DiagonalOperation',
     'Observable',
     'Hadamard',
+    'SHadamard',
     'PauliX',
     'PauliY',
     'PauliZ',
@@ -87,6 +88,7 @@ subsystem. It is equivalent to an integer with value -1."""
 class Operator(tq.QuantumModule):
     fixed_ops = [
         'Hadamard',
+        'SHadamard',
         'PauliX',
         'PauliY',
         'PauliZ',
@@ -343,6 +345,17 @@ class Hadamard(Observable, metaclass=ABCMeta):
         return [tq.RY(has_params=True,
                       trainable=False,
                       init_params=-np.pi / 4)]
+
+
+class SHadamard(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict['shadamard']
+    func = staticmethod(tqf.shadamard)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 
 class PauliX(Observable, metaclass=ABCMeta):
@@ -799,6 +812,8 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
 op_name_dict = {
     'hadamard': Hadamard,
     'h': Hadamard,
+    'shadamard': SHadamard,
+    'sh': SHadamard,
     'paulix': PauliX,
     'x': PauliX,
     'pauliy': PauliY,

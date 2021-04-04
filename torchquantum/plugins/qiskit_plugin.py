@@ -54,6 +54,8 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
     for module in module_list:
         if module.name == 'Hadamard':
             circ.h(*module.wires)
+        elif module.name == 'SHadamard':
+            circ.ry(np.pi / 4, *module.wires)
         elif module.name == 'PauliX':
             circ.x(*module.wires)
         elif module.name == 'PauliY':

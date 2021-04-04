@@ -14,6 +14,7 @@ RND_TIMES = 100
 
 pair_list = [
     {'qiskit': qiskit_gate.HGate, 'tq': tq.Hadamard},
+    {'qiskit': None, 'tq': tq.SHadamard},
     {'qiskit': qiskit_gate.XGate, 'tq': tq.PauliX},
     {'qiskit': qiskit_gate.YGate, 'tq': tq.PauliY},
     {'qiskit': qiskit_gate.ZGate, 'tq': tq.PauliZ},
@@ -74,7 +75,12 @@ if __name__ == '__main__':
     for pair in pair_list:
         try:
             if pair['tq'].num_params == 0:
-                qiskit_matrix = pair['qiskit']().to_matrix()
+                if pair['tq']().name == 'SHadamard':
+                    """Square root of Hadamard is RY(pi/4)"""
+                    qiskit_matrix = qiskit_gate.RYGate(
+                        theta=np.pi / 4).to_matrix()
+                else:
+                    qiskit_matrix = pair['qiskit']().to_matrix()
                 tq_matrix = pair['tq'].matrix.numpy()
                 tq_matrix = switch_little_big_endian_matrix(tq_matrix)
                 assert np.allclose(qiskit_matrix, tq_matrix)

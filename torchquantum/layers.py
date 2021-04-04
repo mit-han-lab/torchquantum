@@ -217,6 +217,7 @@ class RandomLayerAllTypes(RandomLayer):
                  wires,
                  op_ratios=None,
                  op_types=(tq.Hadamard,
+                           tq.SHadamard,
                            tq.PauliX,
                            tq.PauliY,
                            tq.PauliZ,

@@ -16,6 +16,7 @@ __all__ = [
     'apply_unitary_einsum',
     'apply_unitary_bmm',
     'hadamard',
+    'shadamard',
     'paulix',
     'pauliy',
     'pauliz',
@@ -561,6 +562,9 @@ def multixcnot_matrix(n_wires):
 mat_dict = {
     'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
                              dtype=C_DTYPE),
+    'shadamard': torch.tensor([[np.cos(np.pi / 8), -np.sin(np.pi / 8)],
+                               [np.sin(np.pi / 8), np.cos(np.pi / 8)]],
+                              dtype=C_DTYPE),
     'paulix': torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
     'pauliy': torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE),
     'pauliz': torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE),
@@ -627,6 +631,7 @@ mat_dict = {
 
 
 hadamard = partial(gate_wrapper, 'hadamard', mat_dict['hadamard'], 'bmm')
+shadamard = partial(gate_wrapper, 'shadamard', mat_dict['shadamard'], 'bmm')
 paulix = partial(gate_wrapper, 'paulix', mat_dict['paulix'], 'bmm')
 pauliy = partial(gate_wrapper, 'pauliy', mat_dict['pauliy'], 'bmm')
 pauliz = partial(gate_wrapper, 'pauliz', mat_dict['pauliz'], 'bmm')
@@ -668,6 +673,7 @@ multixcnot = partial(gate_wrapper, 'multixcnot', mat_dict['multixcnot'], 'bmm')
 
 
 h = hadamard
+sh = shadamard
 x = paulix
 y = pauliy
 z = pauliz
@@ -678,6 +684,7 @@ ccx = toffoli
 
 func_name_dict = {
     'hadamard': hadamard,
+    'sh': shadamard,
     'paulix': paulix,
     'pauliy': pauliy,
     'pauliz': pauliz,
