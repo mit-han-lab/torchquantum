@@ -233,9 +233,42 @@ class Super4DigitArbitraryBarrenModel1(Super4DigitShareFrontQFCModel1):
             return super_layers_all
 
 
+class Super4DigitArbitraryFarhiModel1(Super4DigitShareFrontQFCModel1):
+    """
+    zx and xx blocks arbitrary n gates, from Farhi paper
+    https://arxiv.org/pdf/1802.06002.pdf
+    """
+    class QLayer(Super4DigitShareFrontQFCModel1.QLayer):
+        def __init__(self, arch: dict = None):
+            super().__init__(arch=arch)
+
+        def build_super_layers(self):
+            super_layers_all = tq.QuantumModuleList()
+
+            for k in range(self.arch['n_blocks']):
+                super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.RZX,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
+                super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.RXX,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
+            return super_layers_all
+
+
 model_dict = {
     'super4digit_sharefront_fc1': Super4DigitShareFrontQFCModel1,
     'super4digit_arbitrary_fc1': Super4DigitArbitraryQFCModel1,
     'super4digit_arbitrary_seth1': Super4DigitArbitrarySethModel1,
     'super4digit_arbitrary_barren1': Super4DigitArbitraryBarrenModel1,
+    'super4digit_arbitrary_farhi1': Super4DigitArbitraryFarhiModel1,
 }
