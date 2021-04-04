@@ -265,10 +265,94 @@ class Super4DigitArbitraryFarhiModel1(Super4DigitShareFrontQFCModel1):
             return super_layers_all
 
 
+class Super4DigitArbitraryMaxwellModel1(Super4DigitShareFrontQFCModel1):
+    """
+    rx, s, cnot, ry, t, swap, rz, h, sswap, u1, cu3,
+    blocks arbitrary n gates, from Maxwell paper
+    https://arxiv.org/pdf/1904.04767.pdf
+    """
+    class QLayer(Super4DigitShareFrontQFCModel1.QLayer):
+        def __init__(self, arch: dict = None):
+            super().__init__(arch=arch)
+
+        def build_super_layers(self):
+            super_layers_all = tq.QuantumModuleList()
+
+            for k in range(self.arch['n_blocks']):
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.RX,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.S,
+                        n_wires=self.n_wires))
+                super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.CNOT,
+                        n_wires=self.n_wires,
+                        jump=1,
+                        circular=True))
+
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.RY,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.T,
+                        n_wires=self.n_wires))
+                super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.SWAP,
+                        n_wires=self.n_wires,
+                        jump=1,
+                        circular=True))
+
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.RZ,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.T,
+                        n_wires=self.n_wires))
+                super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.SSWAP,
+                        n_wires=self.n_wires,
+                        jump=1,
+                        circular=True))
+
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.U1,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.CU3,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
+
+            return super_layers_all
+
+
 model_dict = {
     'super4digit_sharefront_fc1': Super4DigitShareFrontQFCModel1,
     'super4digit_arbitrary_fc1': Super4DigitArbitraryQFCModel1,
     'super4digit_arbitrary_seth1': Super4DigitArbitrarySethModel1,
     'super4digit_arbitrary_barren1': Super4DigitArbitraryBarrenModel1,
     'super4digit_arbitrary_farhi1': Super4DigitArbitraryFarhiModel1,
+    'super4digit_arbitrary_maxwell1': Super4DigitArbitraryMaxwellModel1,
 }
