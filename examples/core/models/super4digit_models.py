@@ -6,29 +6,33 @@ from torchpack.utils.logging import logger
 class Super4DigitShareFrontQFCModel1(tq.QuantumModule):
     """u3 cu3 blocks"""
     class QLayer(tq.QuantumModule):
-        def __init__(self, arch=None):
+        def __init__(self, arch: dict = None):
             super().__init__()
             self.arch = arch
-            self.n_wires = arch['n_wires']
+            self.n_wires = arch.get('n_wires', None)
 
-            self.n_front_share_wires = arch['n_front_share_wires']
-            self.n_front_share_ops = arch['n_front_share_ops']
+            self.n_front_share_wires = arch.get('n_front_share_wires', None)
+            self.n_front_share_ops = arch.get('n_front_share_ops', None)
 
-            self.n_blocks = arch['n_blocks']
-            self.n_layers_per_block = arch['n_layers_per_block']
-            self.n_front_share_blocks = arch['n_front_share_blocks']
+            self.n_blocks = arch.get('n_blocks', None)
+            self.n_layers_per_block = arch.get('n_layers_per_block', None)
+            self.n_front_share_blocks = arch.get('n_front_share_blocks', None)
 
-            self.super_layers_all = tq.QuantumModuleList()
+            self.sample_n_blocks = None
 
-            for k in range(arch['n_blocks']):
-                self.super_layers_all.append(
+            self.super_layers_all = self.build_super_layers()
+
+        def build_super_layers(self):
+            super_layers_all = tq.QuantumModuleList()
+            for k in range(self.arch['n_blocks']):
+                super_layers_all.append(
                     tq.Super1QShareFrontLayer(
                         op=tq.U3,
                         n_wires=self.n_wires,
                         n_front_share_wires=self.n_front_share_wires,
                         has_params=True,
                         trainable=True))
-                self.super_layers_all.append(
+                super_layers_all.append(
                     tq.Super2QAllShareFrontLayer(
                         op=tq.CU3,
                         n_wires=self.n_wires,
@@ -37,7 +41,7 @@ class Super4DigitShareFrontQFCModel1(tq.QuantumModule):
                         trainable=True,
                         jump=1,
                         circular=True))
-            self.sample_n_blocks = None
+            return super_layers_all
 
         def set_sample_arch(self, sample_arch):
             for k, layer_arch in enumerate(sample_arch[:-1]):
@@ -134,26 +138,20 @@ class Super4DigitShareFrontQFCModel1(tq.QuantumModule):
 
 class Super4DigitArbitraryQFCModel1(Super4DigitShareFrontQFCModel1):
     """u3 cu3 blocks arbitrary n gates"""
-    class QLayer(tq.QuantumModule):
-        def __init__(self, arch=None):
-            super().__init__()
-            self.arch = arch
-            self.n_wires = arch['n_wires']
+    class QLayer(Super4DigitShareFrontQFCModel1.QLayer):
+        def __init__(self, arch: dict = None):
+            super().__init__(arch=arch)
 
-            self.n_blocks = arch['n_blocks']
-            self.n_layers_per_block = arch['n_layers_per_block']
-            self.n_front_share_blocks = arch['n_front_share_blocks']
-
-            self.super_layers_all = tq.QuantumModuleList()
-
-            for k in range(arch['n_blocks']):
-                self.super_layers_all.append(
+        def build_super_layers(self):
+            super_layers_all = tq.QuantumModuleList()
+            for k in range(self.arch['n_blocks']):
+                super_layers_all.append(
                     tq.Super1QLayer(
                         op=tq.U3,
                         n_wires=self.n_wires,
                         has_params=True,
                         trainable=True))
-                self.super_layers_all.append(
+                super_layers_all.append(
                     tq.Super2QAllLayer(
                         op=tq.CU3,
                         n_wires=self.n_wires,
@@ -161,26 +159,7 @@ class Super4DigitArbitraryQFCModel1(Super4DigitShareFrontQFCModel1):
                         trainable=True,
                         jump=1,
                         circular=True))
-            self.sample_n_blocks = None
-
-        def set_sample_arch(self, sample_arch):
-            for k, layer_arch in enumerate(sample_arch[:-1]):
-                self.super_layers_all[k].set_sample_arch(layer_arch)
-            self.sample_n_blocks = sample_arch[-1]
-
-        @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice):
-            self.q_device = q_device
-            for k in range(len(self.super_layers_all)):
-                if k < self.sample_n_blocks * self.n_layers_per_block:
-                    self.super_layers_all[k](q_device)
-
-        def count_sample_params(self):
-            n_params = 0
-            for layer_idx, layer in enumerate(self.super_layers_all):
-                if layer_idx < self.sample_n_blocks * self.n_layers_per_block:
-                    n_params += layer.count_sample_params()
-            return n_params
+            return super_layers_all
 
 
 class Super4DigitArbitrarySethModel1(Super4DigitShareFrontQFCModel1):
@@ -188,19 +167,13 @@ class Super4DigitArbitrarySethModel1(Super4DigitShareFrontQFCModel1):
     zz and ry blocks arbitrary n gates, from Seth Lloyd paper
     https://arxiv.org/pdf/2001.03622.pdf
     """
-    class QLayer(tq.QuantumModule):
-        def __init__(self, arch=None):
-            super().__init__()
-            self.arch = arch
-            self.n_wires = arch['n_wires']
+    class QLayer(Super4DigitShareFrontQFCModel1.QLayer):
+        def __init__(self, arch: dict = None):
+            super().__init__(arch=arch)
 
-            self.n_blocks = arch['n_blocks']
-            self.n_layers_per_block = arch['n_layers_per_block']
-            self.n_front_share_blocks = arch['n_front_share_blocks']
-
-            self.super_layers_all = tq.QuantumModuleList()
-
-            for k in range(arch['n_blocks']):
+        def build_super_layers(self):
+            super_layers_all = tq.QuantumModuleList()
+            for k in range(self.arch['n_blocks']):
                 self.super_layers_all.append(
                     tq.Super2QAllLayer(
                         op=tq.RZZ,
@@ -215,31 +188,54 @@ class Super4DigitArbitrarySethModel1(Super4DigitShareFrontQFCModel1):
                         n_wires=self.n_wires,
                         has_params=True,
                         trainable=True))
+            return super_layers_all
 
-            self.sample_n_blocks = None
 
-        def set_sample_arch(self, sample_arch):
-            for k, layer_arch in enumerate(sample_arch[:-1]):
-                self.super_layers_all[k].set_sample_arch(layer_arch)
-            self.sample_n_blocks = sample_arch[-1]
+class Super4DigitArbitraryBarrenModel1(Super4DigitShareFrontQFCModel1):
+    """
+    zz and ry blocks arbitrary n gates, from Barren plateaus paper
+    https://arxiv.org/pdf/1803.11173.pdf
+    """
+    class QLayer(Super4DigitShareFrontQFCModel1.QLayer):
+        def __init__(self, arch: dict = None):
+            super().__init__(arch=arch)
 
-        @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice):
-            self.q_device = q_device
-            for k in range(len(self.super_layers_all)):
-                if k < self.sample_n_blocks * self.n_layers_per_block:
-                    self.super_layers_all[k](q_device)
+        def build_super_layers(self):
+            super_layers_all = tq.QuantumModuleList()
 
-        def count_sample_params(self):
-            n_params = 0
-            for layer_idx, layer in enumerate(self.super_layers_all):
-                if layer_idx < self.sample_n_blocks * self.n_layers_per_block:
-                    n_params += layer.count_sample_params()
-            return n_params
+            super_layers_all.append(
+                tq.Super1QLayer(op=tq.SHadamard, n_wires=self.n_wires))
+
+            for k in range(self.arch['n_blocks']):
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.RX,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.RY,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.RZ,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+                super_layers_all.append(
+                    tq.Super2QAlterLayer(
+                        op=tq.CZ,
+                        n_wires=self.n_wires,
+                        jump=1))
+            return super_layers_all
 
 
 model_dict = {
     'super4digit_sharefront_fc1': Super4DigitShareFrontQFCModel1,
     'super4digit_arbitrary_fc1': Super4DigitArbitraryQFCModel1,
     'super4digit_arbitrary_seth1': Super4DigitArbitrarySethModel1,
+    'super4digit_arbitrary_barren1': Super4DigitArbitraryBarrenModel1,
 }
