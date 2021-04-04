@@ -11,6 +11,7 @@ __all__ = ['SuperQuantumModule',
            'Super1QAllButOneLayer',
            'Super2QAllShareFrontLayer',
            'Super2QAllLayer',
+           'Super2QAlterLayer'
            ]
 
 
@@ -299,6 +300,62 @@ class Super2QAllLayer(SuperQuantumModule):
             wires = [k, (k + self.jump) % self.n_wires]
             choices.append(wires)
         return get_combs(choices)
+
+    def count_sample_params(self):
+        return len(self.sample_arch) * self.op.num_params
+
+
+class Super2QAlterLayer(SuperQuantumModule):
+    """pattern
+    jump = 1: [0, 1], [2, 3], [4, 5], [1, 2], [3, 4], [5, 6]
+    jump = 2: [0, 2], [4, 6], [2, 4]
+    jump = 3: [0, 3], [3, 6]
+    jump = 4: [0, 4]
+    jump = 5: [0, 5]
+    jump = 6: [0, 6]
+    """
+    def __init__(self, op, n_wires: int,
+                 has_params=False, trainable=False,
+                 wire_reverse=False, jump=1):
+        super().__init__(n_wires=n_wires)
+        self.op = op
+        self.jump = jump
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        self.ops_all = tq.QuantumModuleList()
+        self.n_ops = (n_wires - 1) // jump
+        for k in range(self.n_ops):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+        self.wires_choices = []
+        k = 0
+        while k < n_wires:
+            if k < n_wires and k + jump < n_wires:
+                self.wires_choices.append([k, k + jump])
+            k += jump * 2
+
+        k = jump
+        while k < n_wires:
+            if k < n_wires and k + jump < n_wires:
+                self.wires_choices.append([k, k + jump])
+            k += jump * 2
+
+    @tq.static_support
+    def forward(self, q_device):
+        for k in range(self.n_ops):
+            wires = self.wires_choices[k]
+            if self.wire_reverse:
+                wires.reverse()
+
+            if wires in self.sample_arch or list(reversed(wires)) in \
+                    self.sample_arch:
+                self.ops_all[k](q_device, wires=wires)
+
+    @property
+    def arch_space(self):
+        return get_combs(self.wires_choices)
 
     def count_sample_params(self):
         return len(self.sample_arch) * self.op.num_params
