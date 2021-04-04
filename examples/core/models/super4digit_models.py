@@ -183,7 +183,63 @@ class Super4DigitArbitraryQFCModel1(Super4DigitShareFrontQFCModel1):
             return n_params
 
 
+class Super4DigitArbitrarySethModel1(Super4DigitShareFrontQFCModel1):
+    """
+    zz and ry blocks arbitrary n gates, from Seth Lloyd paper
+    https://arxiv.org/pdf/2001.03622.pdf
+    """
+    class QLayer(tq.QuantumModule):
+        def __init__(self, arch=None):
+            super().__init__()
+            self.arch = arch
+            self.n_wires = arch['n_wires']
+
+            self.n_blocks = arch['n_blocks']
+            self.n_layers_per_block = arch['n_layers_per_block']
+            self.n_front_share_blocks = arch['n_front_share_blocks']
+
+            self.super_layers_all = tq.QuantumModuleList()
+
+            for k in range(arch['n_blocks']):
+                self.super_layers_all.append(
+                    tq.Super2QAllLayer(
+                        op=tq.RZZ,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True,
+                        jump=1,
+                        circular=True))
+                self.super_layers_all.append(
+                    tq.Super1QLayer(
+                        op=tq.RY,
+                        n_wires=self.n_wires,
+                        has_params=True,
+                        trainable=True))
+
+            self.sample_n_blocks = None
+
+        def set_sample_arch(self, sample_arch):
+            for k, layer_arch in enumerate(sample_arch[:-1]):
+                self.super_layers_all[k].set_sample_arch(layer_arch)
+            self.sample_n_blocks = sample_arch[-1]
+
+        @tq.static_support
+        def forward(self, q_device: tq.QuantumDevice):
+            self.q_device = q_device
+            for k in range(len(self.super_layers_all)):
+                if k < self.sample_n_blocks * self.n_layers_per_block:
+                    self.super_layers_all[k](q_device)
+
+        def count_sample_params(self):
+            n_params = 0
+            for layer_idx, layer in enumerate(self.super_layers_all):
+                if layer_idx < self.sample_n_blocks * self.n_layers_per_block:
+                    n_params += layer.count_sample_params()
+            return n_params
+
+
 model_dict = {
     'super4digit_sharefront_fc1': Super4DigitShareFrontQFCModel1,
     'super4digit_arbitrary_fc1': Super4DigitArbitraryQFCModel1,
+    'super4digit_arbitrary_seth1': Super4DigitArbitrarySethModel1,
 }
