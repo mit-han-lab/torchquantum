@@ -174,7 +174,7 @@ class Super4DigitArbitrarySethModel1(Super4DigitShareFrontQFCModel1):
         def build_super_layers(self):
             super_layers_all = tq.QuantumModuleList()
             for k in range(self.arch['n_blocks']):
-                self.super_layers_all.append(
+                super_layers_all.append(
                     tq.Super2QAllLayer(
                         op=tq.RZZ,
                         n_wires=self.n_wires,
@@ -182,7 +182,7 @@ class Super4DigitArbitrarySethModel1(Super4DigitShareFrontQFCModel1):
                         trainable=True,
                         jump=1,
                         circular=True))
-                self.super_layers_all.append(
+                super_layers_all.append(
                     tq.Super1QLayer(
                         op=tq.RY,
                         n_wires=self.n_wires,
