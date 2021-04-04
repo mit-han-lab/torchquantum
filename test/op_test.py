@@ -32,6 +32,7 @@ pair_list = [
     {'qiskit': qiskit_gate.RZZGate, 'tq': tq.RZZ},
     {'qiskit': qiskit_gate.RZXGate, 'tq': tq.RZX},
     {'qiskit': qiskit_gate.SwapGate, 'tq': tq.SWAP},
+    # {'qiskit': qiskit_gate.?, 'tq': tq.SSWAP},
     {'qiskit': qiskit_gate.CSwapGate, 'tq': tq.CSWAP},
     {'qiskit': qiskit_gate.CCXGate, 'tq': tq.Toffoli},
     {'qiskit': qiskit_gate.PhaseGate, 'tq': tq.PhaseShift},

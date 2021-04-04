@@ -90,6 +90,12 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
             circ.rzx(module.params[0][0].item(), *module.wires)
         elif module.name == 'SWAP':
             circ.swap(*module.wires)
+        elif module.name == 'SSWAP':
+            # square root of swap
+            from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
+            mat = module.matrix.data.cpu().numpy()
+            mat = switch_little_big_endian_matrix(mat)
+            circ.append(UnitaryGate(mat), module.wires, [])
         elif module.name == 'CSWAP':
             circ.cswap(*module.wires)
         elif module.name == 'Toffoli':

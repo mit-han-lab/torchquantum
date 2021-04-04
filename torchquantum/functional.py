@@ -37,6 +37,7 @@ __all__ = [
     'rzx',
     'zx',
     'swap',
+    'sswap',
     'cswap',
     'toffoli',
     'phaseshift',
@@ -673,6 +674,10 @@ mat_dict = {
                           [0, 0, 1, 0],
                           [0, 1, 0, 0],
                           [0, 0, 0, 1]], dtype=C_DTYPE),
+    'sswap': torch.tensor([[1, 0, 0, 0],
+                           [0, (1 + 1j) / 2, (1 - 1j) / 2, 0],
+                           [0, (1 - 1j) / 2, (1 + 1j) / 2, 0],
+                           [0, 0, 0, 1]], dtype=C_DTYPE),
     'cswap': torch.tensor([[1, 0, 0, 0, 0, 0, 0, 0],
                            [0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 0, 1, 0, 0, 0, 0, 0],
@@ -737,6 +742,7 @@ ryy = partial(gate_wrapper, 'ryy', mat_dict['ryy'], 'bmm')
 rzz = partial(gate_wrapper, 'rzz', mat_dict['rzz'], 'bmm')
 rzx = partial(gate_wrapper, 'rzx', mat_dict['rzx'], 'bmm')
 swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'bmm')
+sswap = partial(gate_wrapper, 'sswap', mat_dict['sswap'], 'bmm')
 cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'], 'bmm')
 toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'], 'bmm')
 phaseshift = partial(gate_wrapper, 'phaseshift', mat_dict['phaseshift'], 'bmm')
@@ -804,6 +810,7 @@ func_name_dict = {
     'rzx': rzx,
     'zx': zx,
     'swap': swap,
+    'sswap': sswap,
     'cswap': cswap,
     'toffoli': toffoli,
     'phaseshift': phaseshift,

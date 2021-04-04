@@ -37,6 +37,7 @@ __all__ = [
     'RZZ',
     'RZX',
     'SWAP',
+    'SSWAP',
     'CSWAP',
     'Toffoli',
     'PhaseShift',
@@ -103,6 +104,7 @@ class Operator(tq.QuantumModule):
         'CZ',
         'CY',
         'SWAP',
+        'SSWAP',
         'CSWAP',
         'Toffoli',
         'MultiCNOT',
@@ -529,6 +531,17 @@ class SWAP(Operation, metaclass=ABCMeta):
         return cls.matrix
 
 
+class SSWAP(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict['sswap']
+    func = staticmethod(tqf.sswap)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
 class CSWAP(Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 3
@@ -876,6 +889,7 @@ op_name_dict = {
     'rzx': RZX,
     'zx': RZX,
     'swap': SWAP,
+    'sswap': SSWAP,
     'cswap': CSWAP,
     'toffoli': Toffoli,
     'ccx': Toffoli,
