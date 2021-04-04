@@ -261,27 +261,28 @@ def ry_matrix(params):
 
 def rz_matrix(params):
     theta = params.type(C_DTYPE)
-    p = torch.exp(-0.5j * theta)
+    exp = torch.exp(-0.5j * theta)
 
-    return torch.stack([torch.cat([p, torch.zeros(p.shape,
-                                                  device=params.device)],
+    return torch.stack([torch.cat([exp, torch.zeros(exp.shape,
+                                                    device=params.device)],
                                   dim=-1),
-                        torch.cat([torch.zeros(p.shape, device=params.device),
-                                   torch.conj(p)], dim=-1)],
+                        torch.cat([torch.zeros(exp.shape,
+                                               device=params.device),
+                                   torch.conj(exp)], dim=-1)],
                        dim=-2).squeeze(0)
 
 
 def phaseshift_matrix(params):
     phi = params.type(C_DTYPE)
-    p = torch.exp(1j * phi)
+    exp = torch.exp(1j * phi)
 
     return torch.stack([
         torch.cat([
-            torch.ones(p.shape, device=params.device),
-            torch.zeros(p.shape, device=params.device)], dim=-1),
+            torch.ones(exp.shape, device=params.device),
+            torch.zeros(exp.shape, device=params.device)], dim=-1),
         torch.cat([
-            torch.zeros(p.shape, device=params.device),
-            p], dim=-1)],
+            torch.zeros(exp.shape, device=params.device),
+            exp], dim=-1)],
         dim=-2).squeeze(0)
 
 
@@ -318,19 +319,19 @@ def multirz_matrix(params, n_wires):
 
 def rzz_matrix(params):
     theta = params.type(C_DTYPE)
-    p = torch.exp(-0.5j * theta)
-    conj_p = torch.conj(p)
+    exp = torch.exp(-0.5j * theta)
+    conj_exp = torch.conj(exp)
 
     matrix = torch.tensor([[0, 0, 0, 0],
                            [0, 0, 0, 0],
                            [0, 0, 0, 0],
                            [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(p.shape[0], 1, 1)
+                          ).unsqueeze(0).repeat(exp.shape[0], 1, 1)
 
-    matrix[:, 0, 0] = p[:, 0]
-    matrix[:, 1, 1] = conj_p[:, 0]
-    matrix[:, 2, 2] = conj_p[:, 0]
-    matrix[:, 3, 3] = p[:, 0]
+    matrix[:, 0, 0] = exp[:, 0]
+    matrix[:, 1, 1] = conj_exp[:, 0]
+    matrix[:, 2, 2] = conj_exp[:, 0]
+    matrix[:, 3, 3] = exp[:, 0]
 
     return matrix.squeeze(0)
 
@@ -399,15 +400,15 @@ def cry_matrix(params):
 
 def crz_matrix(params):
     theta = params.type(C_DTYPE)
-    p = torch.exp(-0.5j * theta)
+    exp = torch.exp(-0.5j * theta)
 
     matrix = torch.tensor([[1, 0, 0, 0],
                            [0, 1, 0, 0],
                            [0, 0, 0, 0],
                            [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(p.shape[0], 1, 1)
-    matrix[:, 2, 2] = p[:, 0]
-    matrix[:, 3, 3] = torch.conj(p[:, 0])
+                          ).unsqueeze(0).repeat(exp.shape[0], 1, 1)
+    matrix[:, 2, 2] = exp[:, 0]
+    matrix[:, 3, 3] = torch.conj(exp[:, 0])
 
     return matrix.squeeze(0)
 
@@ -436,21 +437,21 @@ def crot_matrix(params):
 
 def u1_matrix(params):
     phi = params.type(C_DTYPE)
-    p = torch.exp(1j * phi)
+    exp = torch.exp(1j * phi)
 
     return torch.stack([
         torch.cat([
-            torch.ones(p.shape, device=params.device),
-            torch.zeros(p.shape, device=params.device)], dim=-1),
+            torch.ones(exp.shape, device=params.device),
+            torch.zeros(exp.shape, device=params.device)], dim=-1),
         torch.cat([
-            torch.zeros(p.shape, device=params.device),
-            p], dim=-1)],
+            torch.zeros(exp.shape, device=params.device),
+            exp], dim=-1)],
         dim=-2).squeeze(0)
 
 
 def cu1_matrix(params):
     phi = params.type(C_DTYPE)
-    p = torch.exp(1j * phi)
+    exp = torch.exp(1j * phi)
 
     matrix = torch.tensor([[1, 0, 0, 0],
                            [0, 1, 0, 0],
@@ -458,7 +459,7 @@ def cu1_matrix(params):
                            [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
                           ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
 
-    matrix[:, 3, 3] = p
+    matrix[:, 3, 3] = exp
 
     return matrix.squeeze(0)
 
