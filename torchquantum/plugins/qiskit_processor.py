@@ -218,6 +218,9 @@ class QiskitProcessor(object):
         p = multiprocessing.Pool(self.max_jobs)
         results = p.map(run_job_worker, feed_dicts)
 
+        if isinstance(results[-1], dict):
+            results[-1] = [results[-1]]
+
         counts = list(itertools.chain(*results))
         measured_qiskit = get_expectations_from_counts(
             counts, n_wires=q_device.n_wires)
