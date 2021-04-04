@@ -174,6 +174,7 @@ class Q4DigitFCRandomModel0(Q4DigitFCModel0):
 
             self.random_layer = tq.RandomLayer(
                 n_ops=arch['n_random_ops'],
+                n_params=arch['n_random_params'],
                 wires=list(range(self.n_wires)),
                 op_types=op_types)
 
