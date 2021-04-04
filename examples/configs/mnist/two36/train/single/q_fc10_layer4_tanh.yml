@@ -1,0 +1,5 @@
+model:
+  name: q_fc10
+  q_fc10:
+    n_layers: 4
+    tanh: True

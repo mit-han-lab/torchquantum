@@ -42,6 +42,9 @@ __all__ = [
     'u1',
     'u2',
     'u3',
+    'cu1',
+    'cu2',
+    'cu3',
     'qubitunitary',
     'qubitunitaryfast',
     'qubitunitarystrict',
@@ -355,9 +358,9 @@ def crz_matrix(params):
 
 
 def crot_matrix(params):
-    phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
-    theta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
-    omega = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 0].type(C_DTYPE)
+    theta = params[:, 1].type(C_DTYPE)
+    omega = params[:, 2].type(C_DTYPE)
 
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
@@ -368,10 +371,10 @@ def crot_matrix(params):
                            [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
                           ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
 
-    matrix[:, 2, 2] = (torch.exp(-0.5j * (phi + omega)) * co)[:, 0]
-    matrix[:, 2, 3] = (-torch.exp(0.5j * (phi - omega)) * si)[:, 0]
-    matrix[:, 3, 2] = (torch.exp(-0.5j * (phi - omega)) * si)[:, 0]
-    matrix[:, 3, 3] = (torch.exp(0.5j * (phi + omega)) * co)[:, 0]
+    matrix[:, 2, 2] = torch.exp(-0.5j * (phi + omega)) * co
+    matrix[:, 2, 3] = -torch.exp(0.5j * (phi - omega)) * si
+    matrix[:, 3, 2] = torch.exp(-0.5j * (phi - omega)) * si
+    matrix[:, 3, 3] = torch.exp(0.5j * (phi + omega)) * co
 
     return matrix.squeeze(0)
 
@@ -390,6 +393,21 @@ def u1_matrix(params):
         dim=-2).squeeze(0)
 
 
+def cu1_matrix(params):
+    phi = params.type(C_DTYPE)
+    p = torch.exp(1j * phi)
+
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 1, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+
+    matrix[:, 3, 3] = p
+
+    return matrix.squeeze(0)
+
+
 def u2_matrix(params):
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
@@ -402,6 +420,23 @@ def u2_matrix(params):
             torch.exp(1j * phi),
             torch.exp(1j * (phi + lam))], dim=-1)],
         dim=-2).squeeze(0)
+
+
+def cu2_matrix(params):
+    phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 1, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+
+    matrix[:, 2, 3] = -torch.exp(1j * lam)
+    matrix[:, 3, 2] = torch.exp(1j * phi)
+    matrix[:, 3, 3] = torch.exp(1j * (phi + lam))
+
+    return matrix.squeeze(0)
 
 
 def u3_matrix(params):
@@ -420,6 +455,28 @@ def u3_matrix(params):
             si * torch.exp(1j * phi),
             co * torch.exp(1j * (phi + lam))], dim=-1)],
         dim=-2).squeeze(0)
+
+
+def cu3_matrix(params):
+    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+    lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    matrix = torch.tensor([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+
+    matrix[:, 2, 2] = co
+    matrix[:, 2, 3] = -si * torch.exp(1j * lam)
+    matrix[:, 3, 2] = si * torch.exp(1j * phi)
+    matrix[:, 3, 3] = co * torch.exp(1j * (phi + lam))
+
+    return matrix.squeeze(0)
 
 
 def qubitunitary_matrix(params):
@@ -536,6 +593,9 @@ mat_dict = {
     'u1': u1_matrix,
     'u2': u2_matrix,
     'u3': u3_matrix,
+    'cu1': cu1_matrix,
+    'cu2': cu2_matrix,
+    'cu3': cu3_matrix,
     'qubitunitary': qubitunitary_matrix,
     'qubitunitaryfast': qubitunitaryfast_matrix,
     'qubitunitarystrict': qubitunitarystrict_matrix,
@@ -571,6 +631,9 @@ crot = partial(gate_wrapper, 'crot', mat_dict['crot'], 'bmm')
 u1 = partial(gate_wrapper, 'u1', mat_dict['u1'], 'bmm')
 u2 = partial(gate_wrapper, 'u2', mat_dict['u2'], 'bmm')
 u3 = partial(gate_wrapper, 'u3', mat_dict['u3'], 'bmm')
+cu1 = partial(gate_wrapper, 'cu1', mat_dict['cu1'], 'bmm')
+cu2 = partial(gate_wrapper, 'cu2', mat_dict['cu2'], 'bmm')
+cu3 = partial(gate_wrapper, 'cu3', mat_dict['cu3'], 'bmm')
 qubitunitary = partial(gate_wrapper, 'qubitunitary', mat_dict[
     'qubitunitary'], 'bmm')
 qubitunitaryfast = partial(gate_wrapper, 'qubitunitaryfast', mat_dict[
@@ -618,6 +681,9 @@ func_name_dict = {
     'u1': u1,
     'u2': u2,
     'u3': u3,
+    'cu1': cu1,
+    'cu2': cu2,
+    'cu3': cu3,
     'qubitunitary': qubitunitary,
     'qubitunitaryfast': qubitunitaryfast,
     'qubitunitarystrict': qubitunitarystrict,

@@ -1,9 +1,13 @@
 model:
   name: q_fc5
 
-use_qiskit: True
-
 run:
-  bsz: 16
+  bsz: qiskit_max
 
-use_real_qc: True
+qiskit:
+  use_qiskit: True
+  use_real_qc: True
+  backend: ibmq_lima
+
+dataset:
+  n_test_samples: 100

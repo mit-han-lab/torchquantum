@@ -25,6 +25,10 @@ class QuantumModule(nn.Module):
         self.device = None
         # for the static tensor network simulation optimizations
         self.wires_per_block = None
+        self.qiskit_processor = None
+
+    def set_qiskit_processor(self, processor):
+        self.qiskit_processor = processor
 
     def set_wires_per_block(self, wires_per_block):
         self.wires_per_block = wires_per_block

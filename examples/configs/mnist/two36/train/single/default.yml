@@ -1,0 +1,9 @@
+trainer:
+  name: q_trainer
+
+model:
+  q_fc10:
+    tanh: False
+    encoder:
+      name: rxyzx
+

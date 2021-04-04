@@ -6,11 +6,12 @@ from torchpack.train import Trainer
 from torchpack.utils.typing import Optimizer, Scheduler
 from torchpack.utils.config import configs
 from torchquantum.utils import get_unitary_loss, legalize_unitary
-from torchquantum.super_utils import ConfigSampler
+from torchquantum.super_utils import ArchSampler
 from torchquantum.prune_utils import PhaseL1UnstructuredPruningMethod, ThresholdScheduler
 
 
-__all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer', 'PruningTrain']
+__all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer',
+           'PruningTrainer']
 
 
 class LayerRegressionTrainer(Trainer):
@@ -158,11 +159,21 @@ class SuperQTrainer(Trainer):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.sample_config = None
-        self.config_sampler = ConfigSampler(model)
+        self.sample_arch = None
+        self.arch_sampler = ArchSampler(
+            model=model,
+            strategy=configs.es.sampler.strategy.dict(),
+            n_layers_per_block=configs.model.arch.n_layers_per_block
+        )
 
     def _before_epoch(self) -> None:
         self.model.train()
+        self.arch_sampler.set_total_steps(self.steps_per_epoch *
+                                          self.num_epochs)
+
+    def _before_step(self, feed_dict: Dict[str, Any]) -> None:
+        self.sample_arch = self.arch_sampler.get_uniform_sample_arch()
+        self.model.set_sample_arch(self.sample_arch)
 
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
@@ -171,9 +182,6 @@ class SuperQTrainer(Trainer):
 
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
-        self.sample_config = self.config_sampler.get_sample_config()
-        self.model.set_sample_config(self.sample_config)
-
         if configs.run.device == 'gpu':
             inputs = feed_dict['image'].cuda(non_blocking=True)
             targets = feed_dict['digit'].cuda(non_blocking=True)
@@ -197,8 +205,15 @@ class SuperQTrainer(Trainer):
                         unitary_loss
 
         if loss.requires_grad:
+            # during training
+            for k, group in enumerate(self.optimizer.param_groups):
+                self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
+            self.summary.add_scalar('current_stage',
+                                    self.arch_sampler.current_stage)
+            self.summary.add_scalar('sample_n_ops',
+                                    self.arch_sampler.sample_n_ops)
 
             if configs.regularization.unitary_loss:
                 if configs.regularization.unitary_loss_lambda_trainable:

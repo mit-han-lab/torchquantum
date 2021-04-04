@@ -1,7 +1,8 @@
 model:
   name: q_fc4
 
-use_qiskit: True
+qiskit:
+  use_qiskit: True
 
 run:
   bsz: 16

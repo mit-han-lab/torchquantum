@@ -2,4 +2,7 @@ model:
   name: q_fc5
 
 run:
-  bsz: 16
+  bsz: 900
+
+dataset:
+  n_test_samples: 100

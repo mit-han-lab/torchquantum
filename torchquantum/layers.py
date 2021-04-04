@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torchquantum as tq
+import torchquantum.functional as tqf
 import numpy as np
+
 
 from typing import Iterable
 from torchquantum.plugins.qiskit_macros import QISKIT_INCOMPATIBLE_OPS
@@ -15,6 +17,8 @@ __all__ = [
     'RandomLayerAllTypes',
     'Op1QAllLayer',
     'Op2QAllLayer',
+    'Op2QButterflyLayer',
+    'Op2QDenseLayer',
 ]
 
 
@@ -33,6 +37,7 @@ class TrainableOpAll(tq.QuantumModule):
                 has_params=True,
                 trainable=True))
 
+    @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
@@ -45,9 +50,6 @@ class TrainableOpAll(tq.QuantumModule):
 
 
 class ClassicalInOpAll(tq.QuantumModule):
-    """Rotation rx on all qubits
-    The rotation angle is from input activation
-    """
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
         self.n_gate = n_gate
@@ -55,6 +57,7 @@ class ClassicalInOpAll(tq.QuantumModule):
         for k in range(self.n_gate):
             self.gate_all.append(op())
 
+    @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
@@ -67,9 +70,6 @@ class ClassicalInOpAll(tq.QuantumModule):
 
 
 class FixedOpAll(tq.QuantumModule):
-    """Rotation rx on all qubits
-    The rotation angle is from input activation
-    """
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
         self.n_gate = n_gate
@@ -77,6 +77,7 @@ class FixedOpAll(tq.QuantumModule):
         for k in range(self.n_gate):
             self.gate_all.append(op())
 
+    @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
@@ -94,6 +95,7 @@ class TwoQAll(tq.QuantumModule):
         self.n_gate = n_gate
         self.op = op()
 
+    @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         for k in range(self.n_gate-1):
             self.op(q_device, wires=[k, k + 1])
@@ -107,7 +109,7 @@ class RandomLayer(tq.QuantumModule):
                  op_ratios=(1, 1, 1, 1),
                  op_types=(tq.RX, tq.RY, tq.RZ, tq.CNOT),
                  seed=None,
-                 qiskit_comparible=False,
+                 qiskit_compatible=False,
                  ):
         super().__init__()
         self.n_ops = n_ops
@@ -120,7 +122,7 @@ class RandomLayer(tq.QuantumModule):
         op_types_valid = []
         op_ratios_valid = []
 
-        if qiskit_comparible:
+        if qiskit_compatible:
             for op_type, op_ratio in zip(op_types, op_ratios):
                 if op_type in QISKIT_INCOMPATIBLE_OPS:
                     logger.warning(f"Remove {op_type} from op_types to make "
@@ -159,7 +161,7 @@ class RandomLayer(tq.QuantumModule):
             if is_AnyWire:
                 if op().name in ['MultiRZ']:
                     operation = op(has_params=True, trainable=True,
-                        n_wires=n_op_wires, wires=op_wires)
+                                   n_wires=n_op_wires, wires=op_wires)
                 else:
                     operation = op(n_wires=n_op_wires, wires=op_wires)
             elif op().name in tq.Operator.parameterized_ops:
@@ -211,7 +213,7 @@ class RandomLayerAllTypes(RandomLayer):
                            tq.MultiXCNOT,
                            ),
                  seed=None,
-                 qiskit_comparible=False,
+                 qiskit_compatible=False,
                  ):
         if op_ratios is None:
             op_ratios = [1] * len(op_types)
@@ -221,7 +223,7 @@ class RandomLayerAllTypes(RandomLayer):
             op_ratios,
             op_types,
             seed,
-            qiskit_comparible,
+            qiskit_compatible,
         )
 
 
@@ -244,38 +246,121 @@ class SimpleQLayer(tq.QuantumModule):
         tqf.x(q_dev, wires=2, static=self.static_mode,
               parent_graph=self.graph)
 
+
 class Op1QAllLayer(tq.QuantumModule):
     def __init__(self, op, n_wires: int, has_params=False, trainable=False):
         super().__init__()
         self.n_wires = n_wires
         self.op = op
-        self.sample_wires = None
         self.ops_all = tq.QuantumModuleList()
         for k in range(n_wires):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
+    @tq.static_support
     def forward(self, q_device):
         for k in range(self.n_wires):
             self.ops_all[k](q_device, wires=k)
 
+
 class Op2QAllLayer(tq.QuantumModule):
+    """pattern:
+    circular = False
+    jump = 1: [0, 1], [1, 2], [2, 3], [3, 4], [4, 5]
+    jump = 2: [0, 2], [1, 3], [2, 4], [3, 5]
+    jump = 3: [0, 3], [1, 4], [2, 5]
+    jump = 4: [0, 4], [1, 5]
+    jump = 5: [0, 5]
+
+    circular = True
+    jump = 1: [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]
+    jump = 2: [0, 2], [1, 3], [2, 4], [3, 5], [4, 0], [5, 1]
+    jump = 3: [0, 3], [1, 4], [2, 5], [3, 0], [4, 1], [5, 2]
+    jump = 4: [0, 4], [1, 5], [2, 0], [3, 1], [4, 2], [5, 3]
+    jump = 5: [0, 5], [1, 0], [2, 1], [3, 2], [4, 3], [5, 4]
+    """
+    def __init__(self, op, n_wires: int, has_params=False, trainable=False,
+                 wire_reverse=False, jump=1, circular=False):
+        super().__init__()
+        self.n_wires = n_wires
+        self.jump = jump
+        self.circular = circular
+        self.op = op
+        self.ops_all = tq.QuantumModuleList()
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        if circular:
+            n_ops = n_wires
+        else:
+            n_ops = n_wires - jump
+        for k in range(n_ops):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    @tq.static_support
+    def forward(self, q_device):
+        for k in range(len(self.ops_all)):
+            wires = [k, (k + self.jump) % self.n_wires]
+            if self.wire_reverse:
+                wires.reverse()
+            self.ops_all[k](q_device, wires=wires)
+
+
+class Op2QButterflyLayer(tq.QuantumModule):
+    """pattern: [0, 5], [1, 4], [2, 3]
+    """
     def __init__(self, op, n_wires: int, has_params=False, trainable=False,
                  wire_reverse=False):
         super().__init__()
         self.n_wires = n_wires
         self.op = op
-        self.sample_wire_pairs = []
         self.ops_all = tq.QuantumModuleList()
 
         # reverse the wires, for example from [1, 2] to [2, 1]
         self.wire_reverse = wire_reverse
-        for k in range(n_wires):
+
+        for k in range(n_wires // 2):
             self.ops_all.append(op(has_params=has_params,
                                    trainable=trainable))
 
     def forward(self, q_device):
-        for k in range(self.n_wires):
-            wires = sorted([k, (k + 1) % self.n_wires],
-                           reverse=self.wire_reverse)
+        for k in range(len(self.ops_all)):
+            wires = [k, self.n_wires - 1 - k]
+            if self.wire_reverse:
+                wires.reverse()
             self.ops_all[k](q_device, wires=wires)
+
+
+class Op2QDenseLayer(tq.QuantumModule):
+    """pattern:
+    [0, 1], [0, 2], [0, 3], [0, 4], [0, 5]
+    [1, 2], [1, 3], [1, 4], [1, 5]
+    [2, 3], [2, 4], [2, 5]
+    [3, 4], [3, 5]
+    [4, 5]
+    """
+    def __init__(self, op, n_wires: int, has_params=False, trainable=False,
+                 wire_reverse=False):
+        super().__init__()
+        self.n_wires = n_wires
+        self.op = op
+        self.ops_all = tq.QuantumModuleList()
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        for k in range(self.n_wires * (self.n_wires - 1) // 2):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    def forward(self, q_device):
+        k = 0
+        for i in range(self.n_wires - 1):
+            for j in range(i + 1, self.n_wires):
+                wires = [i, j]
+                if self.wire_reverse:
+                    wires.reverse()
+                self.ops_all[k](q_device, wires=wires)
+                k += 1

@@ -1,0 +1,21 @@
+qiskit:
+  use_qiskit: True
+  use_real_qc: True
+  backend_name: ibmq_santiago
+  noise_model_name: ibmq_santiago
+  coupling_map_name: ibmq_santiago
+  basis_gates_name: ibmq_santiago
+  n_shots: 8192
+  initial_layout: [0, 3, 2, 1]
+  seed_transpiler: 42
+  seed_simulator: 42
+  optimization_level: 0
+
+dataset:
+  n_test_samples: null
+
+run:
+  bsz: qiskit_max
+
+ckpt:
+  name: 'checkpoints/best_solution.pt'

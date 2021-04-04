@@ -32,7 +32,7 @@ class QLayer(tq.QuantumModule):
             self.rd_layer = tq.RandomLayerAllTypes(
                 n_ops=n_ops_rd,
                 wires=wires,
-                qiskit_comparible=qiskit_compatible)
+                qiskit_compatible=qiskit_compatible)
 
         self.cin_op_types = [
             tq.RX,

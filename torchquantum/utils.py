@@ -143,16 +143,32 @@ def switch_little_big_endian_state_test():
 
 
 def get_expectations_from_counts(counts, n_wires):
-    ctr_one = [0] * n_wires
-    total_shots = 0
-    for k, v in counts.items():
-        for wire in range(n_wires):
-            if k[wire] == '1':
-                ctr_one[wire] += v
-        total_shots += v
-    prob_one = np.array(ctr_one) / total_shots
+    exps = []
+    if isinstance(counts, dict):
+        counts = [counts]
+    for count in counts:
+        ctr_one = [0] * n_wires
+        total_shots = 0
+        for k, v in count.items():
+            for wire in range(n_wires):
+                if k[wire] == '1':
+                    ctr_one[wire] += v
+            total_shots += v
+        prob_one = np.array(ctr_one) / total_shots
+        exp = np.flip(-1 * prob_one + 1 * (1 - prob_one))
+        exps.append(exp)
+    res = np.stack(exps)
+    return res
 
-    return -1 * prob_one + 1 * (1 - prob_one)
+
+def find_global_phase(mat1, mat2, threshold):
+    for i in range(mat1.shape[0]):
+        for j in range(mat1.shape[1]):
+            # find a numerical stable global phase
+            if np.abs(mat1[i][j]) > threshold and \
+                    np.abs(mat1[i][j]) > threshold:
+                return mat2[i][j] / mat1[i][j]
+    return None
 
 
 if __name__ == '__main__':
