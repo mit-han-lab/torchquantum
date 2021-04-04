@@ -183,7 +183,7 @@ def main() -> None:
     #     model.cuda(),
     #     device_ids=[dist.local_rank()],
     #     find_unused_parameters=True)
-    if hasattr(model, 'sample_arch'):
+    if getattr(model, 'sample_arch', None) is not None:
         n_params = model.count_sample_params()
         logger.info(f"Number of sampled params: {n_params}")
 
