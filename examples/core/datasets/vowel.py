@@ -3,7 +3,7 @@ Description:
 Author: Jiaqi Gu (jqgu@utexas.edu)
 Date: 2021-04-04 13:38:43
 LastEditors: Jiaqi Gu (jqgu@utexas.edu)
-LastEditTime: 2021-04-04 15:15:35
+LastEditTime: 2021-04-04 15:16:55
 '''
 import os
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -16,7 +16,7 @@ from torchvision import transforms
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import download_url
 
-
+__all__ = ["Vowel"]
 class VowelRecognition(VisionDataset):
     url = "http://archive.ics.uci.edu/ml/machine-learning-databases/undocumented/connectionist-bench/vowel/vowel-context.data"
     filename = "vowel-context.data"
