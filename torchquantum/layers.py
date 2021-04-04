@@ -229,6 +229,7 @@ class RandomLayerAllTypes(RandomLayer):
                            tq.RX,
                            tq.RY,
                            tq.RZ,
+                           tq.RZZ,
                            tq.SWAP,
                            tq.CSWAP,
                            tq.Toffoli,
