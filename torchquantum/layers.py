@@ -117,8 +117,9 @@ class TwoQAll(tq.QuantumModule):
 
 class RandomLayer(tq.QuantumModule):
     def __init__(self,
-                 n_ops,
                  wires,
+                 n_ops=None,
+                 n_params=None,
                  op_ratios=None,
                  op_types=(tq.RX, tq.RY, tq.RZ, tq.CNOT),
                  seed=None,
@@ -126,6 +127,8 @@ class RandomLayer(tq.QuantumModule):
                  ):
         super().__init__()
         self.n_ops = n_ops
+        self.n_params = n_params
+        assert n_params is not None or n_ops is not None
         self.wires = wires if isinstance(wires, Iterable) else [wires]
         self.n_wires = len(wires)
 
@@ -177,8 +180,9 @@ class RandomLayer(tq.QuantumModule):
             self.op_list.append(op)
 
     def build_random_layer(self):
-        cnt = 0
-        while cnt < self.n_ops:
+        op_cnt = 0
+        param_cnt = 0
+        while True:
             op = np.random.choice(self.op_types, p=self.op_ratios)
             n_op_wires = op.num_wires
             if n_op_wires > self.n_wires:
@@ -202,7 +206,22 @@ class RandomLayer(tq.QuantumModule):
             else:
                 operation = op(wires=op_wires)
             self.op_list.append(operation)
-            cnt += 1
+            op_cnt += 1
+            param_cnt += op.num_params
+
+            if self.n_ops is not None and op_cnt == self.n_ops:
+                break
+            elif self.n_ops is None and self.n_params is not None:
+                if param_cnt == self.n_params:
+                    break
+                elif param_cnt > self.n_params:
+                    """
+                    the last operation has too many params and exceed the 
+                    constraint, so need to remove it and sample another 
+                    """
+                    op_cnt -= 1
+                    param_cnt -= op.num_params
+                    del self.op_list[-1]
 
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
@@ -213,8 +232,9 @@ class RandomLayer(tq.QuantumModule):
 
 class RandomLayerAllTypes(RandomLayer):
     def __init__(self,
-                 n_ops,
                  wires,
+                 n_ops=None,
+                 n_params=None,
                  op_ratios=None,
                  op_types=(tq.Hadamard,
                            tq.SHadamard,
@@ -251,12 +271,13 @@ class RandomLayerAllTypes(RandomLayer):
                  qiskit_compatible=False,
                  ):
         super().__init__(
-            n_ops,
-            wires,
-            op_ratios,
-            op_types,
-            seed,
-            qiskit_compatible,
+            wires=wires,
+            n_ops=n_ops,
+            n_params=n_params,
+            op_ratios=op_ratios,
+            op_types=op_types,
+            seed=seed,
+            qiskit_compatible=qiskit_compatible,
         )
 
 
