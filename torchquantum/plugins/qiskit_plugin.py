@@ -82,6 +82,8 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
             circ.rz(module.params[0][0].item(), *module.wires)
         elif module.name == 'RZZ':
             circ.rzz(module.params[0][0].item(), *module.wires)
+        elif module.name == 'RZX':
+            circ.rzx(module.params[0][0].item(), *module.wires)
         elif module.name == 'SWAP':
             circ.swap(*module.wires)
         elif module.name == 'CSWAP':
@@ -166,6 +168,9 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
         elif func == 'rzz':
             circ.rzz(theta=params[input_idx[0]], qubit1=wires[0],
                      qubit2=wires[1])
+        elif func == 'rzx':
+            circ.rzx(theta=params[input_idx[0]], qubit1=wires[0],
+                     qubit2=wires[1])
         elif func == 'phaseshift':
             circ.p(theta=params[input_idx[0]], qubit=wires[0])
         elif func == 'crx':
@@ -229,6 +234,8 @@ def qiskit2tq(circ: QuantumCircuit):
                          'rz',
                          'rzz',
                          'zz',
+                         'rzx',
+                         'zx',
                          'p',
                          'cp',
                          'crx',

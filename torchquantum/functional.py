@@ -31,10 +31,15 @@ __all__ = [
     'ry',
     'rz',
     'rzz',
+    'zz',
+    'rzx',
+    'zx',
     'swap',
     'cswap',
     'toffoli',
     'phaseshift',
+    'p',
+    'cp',
     'rot',
     'multirz',
     'crx',
@@ -44,9 +49,11 @@ __all__ = [
     'u1',
     'u2',
     'u3',
+    'u',
     'cu1',
     'cu2',
     'cu3',
+    'cu',
     'qubitunitary',
     'qubitunitaryfast',
     'qubitunitarystrict',
@@ -324,6 +331,32 @@ def rzz_matrix(params):
     matrix[:, 1, 1] = conj_p[:, 0]
     matrix[:, 2, 2] = conj_p[:, 0]
     matrix[:, 3, 3] = p[:, 0]
+
+    return matrix.squeeze(0)
+
+
+def rzx_matrix(params):
+    theta = params.type(C_DTYPE)
+    co = torch.cos(theta / 2)
+    jsi = 1j * torch.sin(theta / 2)
+
+    matrix = torch.tensor([[0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+
+    matrix[:, 0, 0] = co[:, 0]
+    matrix[:, 0, 1] = -jsi[:, 0]
+
+    matrix[:, 1, 0] = -jsi[:, 0]
+    matrix[:, 1, 1] = co[:, 0]
+
+    matrix[:, 2, 2] = co[:, 0]
+    matrix[:, 2, 3] = jsi[:, 0]
+
+    matrix[:, 3, 2] = jsi[:, 0]
+    matrix[:, 3, 3] = co[:, 0]
 
     return matrix.squeeze(0)
 
@@ -609,6 +642,7 @@ mat_dict = {
     'ry': ry_matrix,
     'rz': rz_matrix,
     'rzz': rzz_matrix,
+    'rzx': rzx_matrix,
     'phaseshift': phaseshift_matrix,
     'rot': rot_matrix,
     'multirz': multirz_matrix,
@@ -646,6 +680,7 @@ rx = partial(gate_wrapper, 'rx', mat_dict['rx'], 'bmm')
 ry = partial(gate_wrapper, 'ry', mat_dict['ry'], 'bmm')
 rz = partial(gate_wrapper, 'rz', mat_dict['rz'], 'bmm')
 rzz = partial(gate_wrapper, 'rzz', mat_dict['rzz'], 'bmm')
+rzx = partial(gate_wrapper, 'rzx', mat_dict['rzx'], 'bmm')
 swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'bmm')
 cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'], 'bmm')
 toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'], 'bmm')
@@ -678,9 +713,14 @@ x = paulix
 y = pauliy
 z = pauliz
 zz = rzz
+zx = rzx
 cx = cnot
 ccnot = toffoli
 ccx = toffoli
+u = u3
+cu = cu3
+p = phaseshift
+cp = cu1
 
 func_name_dict = {
     'hadamard': hadamard,
@@ -699,10 +739,15 @@ func_name_dict = {
     'ry': ry,
     'rz': rz,
     'rzz': rzz,
+    'zz': zz,
+    'rzx': rzx,
+    'zx': zx,
     'swap': swap,
     'cswap': cswap,
     'toffoli': toffoli,
     'phaseshift': phaseshift,
+    'p': p,
+    'cp': cp,
     'rot': rot,
     'multirz': multirz,
     'crx': crx,
@@ -712,9 +757,11 @@ func_name_dict = {
     'u1': u1,
     'u2': u2,
     'u3': u3,
+    'u': u,
     'cu1': cu1,
     'cu2': cu2,
     'cu3': cu3,
+    'cu': cu,
     'qubitunitary': qubitunitary,
     'qubitunitaryfast': qubitunitaryfast,
     'qubitunitarystrict': qubitunitarystrict,
