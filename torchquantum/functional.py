@@ -30,6 +30,8 @@ __all__ = [
     'rx',
     'ry',
     'rz',
+    'rxx',
+    'ryy',
     'rzz',
     'zz',
     'rzx',
@@ -315,6 +317,54 @@ def multirz_matrix(params, n_wires):
     eigvals = multirz_eigvals(params, n_wires)
     dia = diag(eigvals)
     return dia.squeeze(0)
+
+
+def rxx_matrix(params):
+    theta = params.type(C_DTYPE)
+    co = torch.cos(theta / 2)
+    jsi = 1j * torch.sin(theta / 2)
+
+    matrix = torch.tensor([[0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+
+    matrix[:, 0, 0] = co[:, 0]
+    matrix[:, 1, 1] = co[:, 0]
+    matrix[:, 2, 2] = co[:, 0]
+    matrix[:, 3, 3] = co[:, 0]
+
+    matrix[:, 0, 3] = -jsi[:, 0]
+    matrix[:, 1, 2] = -jsi[:, 0]
+    matrix[:, 2, 1] = -jsi[:, 0]
+    matrix[:, 3, 0] = -jsi[:, 0]
+
+    return matrix.squeeze(0)
+
+
+def ryy_matrix(params):
+    theta = params.type(C_DTYPE)
+    co = torch.cos(theta / 2)
+    jsi = 1j * torch.sin(theta / 2)
+
+    matrix = torch.tensor([[0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
+                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+
+    matrix[:, 0, 0] = co[:, 0]
+    matrix[:, 1, 1] = co[:, 0]
+    matrix[:, 2, 2] = co[:, 0]
+    matrix[:, 3, 3] = co[:, 0]
+
+    matrix[:, 0, 3] = jsi[:, 0]
+    matrix[:, 1, 2] = -jsi[:, 0]
+    matrix[:, 2, 1] = -jsi[:, 0]
+    matrix[:, 3, 0] = jsi[:, 0]
+
+    return matrix.squeeze(0)
 
 
 def rzz_matrix(params):
@@ -642,6 +692,8 @@ mat_dict = {
     'rx': rx_matrix,
     'ry': ry_matrix,
     'rz': rz_matrix,
+    'rxx': rxx_matrix,
+    'ryy': ryy_matrix,
     'rzz': rzz_matrix,
     'rzx': rzx_matrix,
     'phaseshift': phaseshift_matrix,
@@ -680,6 +732,8 @@ cy = partial(gate_wrapper, 'cy', mat_dict['cy'], 'bmm')
 rx = partial(gate_wrapper, 'rx', mat_dict['rx'], 'bmm')
 ry = partial(gate_wrapper, 'ry', mat_dict['ry'], 'bmm')
 rz = partial(gate_wrapper, 'rz', mat_dict['rz'], 'bmm')
+rxx = partial(gate_wrapper, 'rxx', mat_dict['rxx'], 'bmm')
+ryy = partial(gate_wrapper, 'ryy', mat_dict['ryy'], 'bmm')
 rzz = partial(gate_wrapper, 'rzz', mat_dict['rzz'], 'bmm')
 rzx = partial(gate_wrapper, 'rzx', mat_dict['rzx'], 'bmm')
 swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'bmm')
@@ -713,6 +767,8 @@ sh = shadamard
 x = paulix
 y = pauliy
 z = pauliz
+xx = rxx
+yy = ryy
 zz = rzz
 zx = rzx
 cx = cnot
@@ -739,6 +795,10 @@ func_name_dict = {
     'rx': rx,
     'ry': ry,
     'rz': rz,
+    'rxx': rxx,
+    'xx': xx,
+    'ryy': ryy,
+    'yy': yy,
     'rzz': rzz,
     'zz': zz,
     'rzx': rzx,

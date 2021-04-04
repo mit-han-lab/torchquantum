@@ -27,6 +27,8 @@ pair_list = [
     {'qiskit': qiskit_gate.RXGate, 'tq': tq.RX},
     {'qiskit': qiskit_gate.RYGate, 'tq': tq.RY},
     {'qiskit': qiskit_gate.RZGate, 'tq': tq.RZ},
+    {'qiskit': qiskit_gate.RXXGate, 'tq': tq.RXX},
+    {'qiskit': qiskit_gate.RYYGate, 'tq': tq.RYY},
     {'qiskit': qiskit_gate.RZZGate, 'tq': tq.RZZ},
     {'qiskit': qiskit_gate.RZXGate, 'tq': tq.RZX},
     {'qiskit': qiskit_gate.SwapGate, 'tq': tq.SWAP},
