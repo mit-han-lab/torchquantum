@@ -11,7 +11,6 @@ from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from torchquantum.utils import get_expectations_from_counts
 from .qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
-# from qiskit.providers.ibmq.managed import IBMQJobManager
 from torchpack.utils.logging import logger
 from qiskit.transpiler import PassManager
 

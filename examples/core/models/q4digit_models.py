@@ -98,7 +98,7 @@ class Q4DigitFCModel0(tq.QuantumModule):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        x = self.qiskit_processor.process_parameterized_managed(
+        x = self.qiskit_processor.process_parameterized(
             self.q_device, self.encoder, self.q_layer, x)
 
         x = x.squeeze()

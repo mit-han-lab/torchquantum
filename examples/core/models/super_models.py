@@ -338,7 +338,7 @@ class SuperQFCModel3(tq.QuantumModule):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        measured = self.qiskit_processor.process_parameterized_managed(
+        measured = self.qiskit_processor.process_parameterized(
             self.q_device, self.encoder, self.q_layer, x)
         measured = measured.reshape(bsz, 2, 2)
 
@@ -471,7 +471,7 @@ class SuperQFCModel4(tq.QuantumModule):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        measured = self.qiskit_processor.process_parameterized_managed(
+        measured = self.qiskit_processor.process_parameterized(
             self.q_device, self.encoder, self.q_layer, x)
         measured = measured.reshape(bsz, 2, 2)
 
