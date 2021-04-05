@@ -1,0 +1,9 @@
+run:
+  bsz: 10000
+
+ckpt:
+  load_ckpt: True
+  name: 'checkpoints/step-44600.pt'
+
+dataset:
+  split: valid

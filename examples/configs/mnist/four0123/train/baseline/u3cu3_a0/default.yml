@@ -1,0 +1,7 @@
+model:
+  name: super_qfc0
+  arch:
+    q_layer_name: u3cu3_a0
+    n_layers_per_block: 2
+    down_sample_kernel_size: 6
+    encoder_op_list_name: 4x4_ryzxy
