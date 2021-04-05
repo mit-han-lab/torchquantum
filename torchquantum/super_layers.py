@@ -362,6 +362,63 @@ class Super2QAlterLayer(SuperQuantumModule):
         return len(self.sample_arch) * self.op.num_params
 
 
+class Super2QAlterShareFrontLayer(SuperQuantumModule):
+    """pattern
+    jump = 1: [0, 1], [2, 3], [4, 5], [1, 2], [3, 4], [5, 6]
+    jump = 2: [0, 2], [4, 6], [2, 4]
+    jump = 3: [0, 3], [3, 6]
+    jump = 4: [0, 4]
+    jump = 5: [0, 5]
+    jump = 6: [0, 6]
+    """
+    def __init__(self, op, n_wires: int, n_front_share_ops: int,
+                 has_params=False, trainable=False,
+                 wire_reverse=False, jump=1):
+        super().__init__(n_wires=n_wires)
+        self.op = op
+        self.n_front_share_ops = n_front_share_ops
+        self.jump = jump
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        self.ops_all = tq.QuantumModuleList()
+        self.n_ops = (n_wires - 1) // jump
+        for k in range(self.n_ops):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+        self.wires_choices = []
+        k = 0
+        while k < n_wires:
+            if k < n_wires and k + jump < n_wires:
+                self.wires_choices.append([k, k + jump])
+            k += jump * 2
+
+        k = jump
+        while k < n_wires:
+            if k < n_wires and k + jump < n_wires:
+                self.wires_choices.append([k, k + jump])
+            k += jump * 2
+
+    @tq.static_support
+    def forward(self, q_device):
+        for k in range(self.n_ops):
+            if k < self.sample_arch:
+                wires = self.wires_choices[k]
+                if self.wire_reverse:
+                    wires.reverse()
+
+                self.ops_all[k](q_device, wires=wires)
+
+    @property
+    def arch_space(self):
+        choices = list(range(self.n_front_share_ops, self.n_ops + 1))
+        return choices
+
+    def count_sample_params(self):
+        return min(self.sample_arch, self.n_ops) * self.op.num_params
+
+
 class SuperLayerTemplate0(SuperQuantumModule):
     def __init__(self, arch: dict = None):
         super().__init__(n_wires=arch['n_wires'])
@@ -472,6 +529,33 @@ class SuperSethArbitraryLayer0(SuperLayerTemplate0):
         return super_layers_all
 
 
+class SuperSethShareFrontLayer0(SuperLayerTemplate0):
+    """
+    zz and ry blocks share front n gates, from Seth Lloyd paper
+    https://arxiv.org/pdf/2001.03622.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super2QAllShareFrontLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+        return super_layers_all
+
+
 class SuperBarrenArbitraryLayer0(SuperLayerTemplate0):
     """
     rx ry rz and cz blocks arbitrary n gates, from Barren plateaus paper
@@ -510,6 +594,52 @@ class SuperBarrenArbitraryLayer0(SuperLayerTemplate0):
         return super_layers_all
 
 
+class SuperBarrenShareFrontLayer0(SuperLayerTemplate0):
+    """
+    rx ry rz and cz blocks share front n gates, from Barren plateaus paper
+    https://arxiv.org/pdf/1803.11173.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+
+        super_layers_all.append(
+            Super1QShareFrontLayer(
+                op=tq.SHadamard,
+                n_wires=self.n_wires,
+                n_front_share_wires=self.n_front_share_wires
+            ))
+
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.RX,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super2QAlterShareFrontLayer(
+                    op=tq.CZ,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    jump=1))
+        return super_layers_all
+
+
 class SuperFarhiArbitraryLayer0(SuperLayerTemplate0):
     """
     zx and xx blocks arbitrary n gates, from Farhi paper
@@ -531,6 +661,36 @@ class SuperFarhiArbitraryLayer0(SuperLayerTemplate0):
                 tq.Super2QAllLayer(
                     op=tq.RXX,
                     n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return super_layers_all
+
+
+class SuperFarhiShareFrontLayer0(SuperLayerTemplate0):
+    """
+    zx and xx blocks share front n gates, from Farhi paper
+    https://arxiv.org/pdf/1802.06002.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                tq.Super2QAllShareFrontLayer(
+                    op=tq.RZX,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            super_layers_all.append(
+                tq.Super2QAllShareFrontLayer(
+                    op=tq.RXX,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
                     has_params=True,
                     trainable=True,
                     jump=1,
@@ -617,8 +777,102 @@ class SuperMaxwellArbitraryLayer0(SuperLayerTemplate0):
         return super_layers_all
 
 
+class SuperMaxwellShareFrontLayer0(SuperLayerTemplate0):
+    """
+    rx, s, cnot, ry, t, swap, rz, h, sswap, u1, cu3,
+    blocks share front n gates, from Maxwell paper
+    https://arxiv.org/pdf/1904.04767.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                tq.Super1QShareFrontLayer(
+                    op=tq.RX,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super1QShareFrontLayer(
+                    op=tq.S,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires))
+            super_layers_all.append(
+                tq.Super2QAllShareFrontLayer(
+                    op=tq.CNOT,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    jump=1,
+                    circular=True))
+
+            super_layers_all.append(
+                tq.Super1QShareFrontLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super1QShareFrontLayer(
+                    op=tq.T,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires))
+            super_layers_all.append(
+                tq.Super2QAllShareFrontLayer(
+                    op=tq.SWAP,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    jump=1,
+                    circular=True))
+
+            super_layers_all.append(
+                tq.Super1QShareFrontLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super1QShareFrontLayer(
+                    op=tq.T,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires))
+            super_layers_all.append(
+                tq.Super2QAllShareFrontLayer(
+                    op=tq.SSWAP,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    jump=1,
+                    circular=True))
+
+            super_layers_all.append(
+                tq.Super1QShareFrontLayer(
+                    op=tq.U1,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super2QAllShareFrontLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+
+        return super_layers_all
+
+
 super_layer_name_dict = {
     'u3cu3_s0': SuperU3CU3ShareFrontLayer0,
+    'seth_s0': SuperSethShareFrontLayer0,
+    'barren_s0': SuperBarrenShareFrontLayer0,
+    'farhi_s0': SuperFarhiShareFrontLayer0,
+    'maxwell_s0': SuperMaxwellShareFrontLayer0,
     'u3cu3_a0': SuperU3CU3ArbitraryLayer0,
     'seth_a0': SuperSethArbitraryLayer0,
     'barren_a0': SuperBarrenArbitraryLayer0,
