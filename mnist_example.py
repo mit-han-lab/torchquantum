@@ -45,27 +45,18 @@ class QFCModel(nn.Module):
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
-    def forward(self, x):
+    def forward(self, x, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        self.q_layer(self.q_device, x)
+        if use_qiskit:
+            x = self.q_layer.qiskit_processor.process(
+                self.q_device, self.q_layer, x)
+        else:
+            self.q_layer(self.q_device, x)
+            x = self.measure(self.q_device)
 
-        x = self.measure(self.q_device).reshape(bsz, 2, 2)
-        x = x.sum(-1).squeeze()
-        x = F.log_softmax(x, dim=1)
-
-        return x
-
-    def forward_qiskit(self, x):
-        bsz = x.shape[0]
-        x = F.avg_pool2d(x, 6).view(bsz, 16)
-
-        measured = self.q_layer.qiskit_processor.process(
-            self.q_device, self.q_layer, x)
-        measured = measured.reshape(bsz, 2, 2)
-
-        x = measured.sum(-1).squeeze()
+        x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
         return x
@@ -91,10 +82,9 @@ def valid_test(dataflow, split, model, device, qiskit=False):
         for feed_dict in dataflow[split]:
             inputs = feed_dict['image'].to(device)
             targets = feed_dict['digit'].to(device)
-            if qiskit:
-                outputs = model.forward_qiskit(inputs)
-            else:
-                outputs = model(inputs)
+
+            outputs = model(inputs, use_qiskit=qiskit)
+
             target_all.append(targets)
             output_all.append(outputs)
         target_all = torch.cat(target_all, dim=0)

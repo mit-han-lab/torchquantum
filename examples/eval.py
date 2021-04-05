@@ -221,10 +221,9 @@ def main() -> None:
                 inputs = feed_dict['image']
                 targets = feed_dict['digit']
 
-            if configs.qiskit.use_qiskit:
-                outputs = model.forward_qiskit(inputs, verbose=configs.verbose)
-            else:
-                outputs = model(inputs, verbose=configs.verbose)
+            outputs = model(inputs,
+                            verbose=configs.verbose,
+                            use_qiskit=configs.qiskit.use_qiskit)
 
             if target_all is None:
                 target_all = targets

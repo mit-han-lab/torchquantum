@@ -78,32 +78,22 @@ class Q4DigitFCModel0(tq.QuantumModule):
         self.q_layer = self.QLayer(arch=arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
-    def forward(self, x, verbose=False):
-        bsz = x.shape[0]
-        x = F.avg_pool2d(x, 6).view(bsz, 16)
-        self.encoder(self.q_device, x)
-
-        self.q_layer(self.q_device)
-        x = self.measure(self.q_device)
-
-        if verbose:
-            logger.info(f"Theoretical expectation:\n {x.data}")
-
-        x = x.squeeze()
-        x = F.log_softmax(x, dim=1)
-
-        return x
-
-    def forward_qiskit(self, x, verbose=False):
+    def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        x = self.qiskit_processor.process_parameterized(
-            self.q_device, self.encoder, self.q_layer, x)
+        if use_qiskit:
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, x)
+        else:
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
 
         x = x.squeeze()
-        if verbose:
-            logger.info(f"Qiskit measured expectation:\n {x.data}")
         x = F.log_softmax(x, dim=1)
 
         return x
