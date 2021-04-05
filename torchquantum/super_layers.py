@@ -11,7 +11,8 @@ __all__ = ['SuperQuantumModule',
            'Super1QAllButOneLayer',
            'Super2QAllShareFrontLayer',
            'Super2QAllLayer',
-           'Super2QAlterLayer'
+           'Super2QAlterLayer',
+           'super_layer_name_dict',
            ]
 
 
@@ -359,3 +360,268 @@ class Super2QAlterLayer(SuperQuantumModule):
 
     def count_sample_params(self):
         return len(self.sample_arch) * self.op.num_params
+
+
+class SuperLayerTemplate0(SuperQuantumModule):
+    def __init__(self, arch: dict = None):
+        super().__init__(n_wires=arch['n_wires'])
+        self.arch = arch
+
+        self.n_front_share_wires = arch.get('n_front_share_wires', None)
+        self.n_front_share_ops = arch.get('n_front_share_ops', None)
+
+        self.n_blocks = arch.get('n_blocks', None)
+        self.n_layers_per_block = arch.get('n_layers_per_block', None)
+        self.n_front_share_blocks = arch.get('n_front_share_blocks', None)
+
+        self.sample_n_blocks = None
+
+        self.super_layers_all = self.build_super_layers()
+
+    def build_super_layers(self):
+        raise NotImplementedError
+
+    def set_sample_arch(self, sample_arch):
+        for k, layer_arch in enumerate(sample_arch[:-1]):
+            self.super_layers_all[k].set_sample_arch(layer_arch)
+        self.sample_n_blocks = sample_arch[-1]
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        for k in range(len(self.super_layers_all)):
+            if k < self.sample_n_blocks * self.n_layers_per_block:
+                self.super_layers_all[k](q_device)
+
+    def count_sample_params(self):
+        n_params = 0
+        for layer_idx, layer in enumerate(self.super_layers_all):
+            if layer_idx < self.sample_n_blocks * self.n_layers_per_block:
+                n_params += layer.count_sample_params()
+        return n_params
+
+
+class SuperU3CU3ShareFrontLayer0(SuperLayerTemplate0):
+    """u3 cu3 blocks"""
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.U3,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super2QAllShareFrontLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return super_layers_all
+
+
+class SuperU3CU3ArbitraryLayer0(SuperLayerTemplate0):
+    """u3 cu3 blocks arbitrary n gates"""
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.U3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super2QAllLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return super_layers_all
+
+
+class SuperSethArbitraryLayer0(SuperLayerTemplate0):
+    """
+    zz and ry blocks arbitrary n gates, from Seth Lloyd paper
+    https://arxiv.org/pdf/2001.03622.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+        return super_layers_all
+
+
+class SuperBarrenArbitraryLayer0(SuperLayerTemplate0):
+    """
+    rx ry rz and cz blocks arbitrary n gates, from Barren plateaus paper
+    https://arxiv.org/pdf/1803.11173.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+
+        super_layers_all.append(
+            Super1QLayer(op=tq.SHadamard, n_wires=self.n_wires))
+
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.RX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super2QAlterLayer(
+                    op=tq.CZ,
+                    n_wires=self.n_wires,
+                    jump=1))
+        return super_layers_all
+
+
+class SuperFarhiArbitraryLayer0(SuperLayerTemplate0):
+    """
+    zx and xx blocks arbitrary n gates, from Farhi paper
+    https://arxiv.org/pdf/1802.06002.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                tq.Super2QAllLayer(
+                    op=tq.RZX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            super_layers_all.append(
+                tq.Super2QAllLayer(
+                    op=tq.RXX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return super_layers_all
+
+
+class SuperMaxwellArbitraryLayer0(SuperLayerTemplate0):
+    """
+    rx, s, cnot, ry, t, swap, rz, h, sswap, u1, cu3,
+    blocks arbitrary n gates, from Maxwell paper
+    https://arxiv.org/pdf/1904.04767.pdf
+    """
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                tq.Super1QLayer(
+                    op=tq.RX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super1QLayer(
+                    op=tq.S,
+                    n_wires=self.n_wires))
+            super_layers_all.append(
+                tq.Super2QAllLayer(
+                    op=tq.CNOT,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+
+            super_layers_all.append(
+                tq.Super1QLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super1QLayer(
+                    op=tq.T,
+                    n_wires=self.n_wires))
+            super_layers_all.append(
+                tq.Super2QAllLayer(
+                    op=tq.SWAP,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+
+            super_layers_all.append(
+                tq.Super1QLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super1QLayer(
+                    op=tq.T,
+                    n_wires=self.n_wires))
+            super_layers_all.append(
+                tq.Super2QAllLayer(
+                    op=tq.SSWAP,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+
+            super_layers_all.append(
+                tq.Super1QLayer(
+                    op=tq.U1,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                tq.Super2QAllLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+
+        return super_layers_all
+
+
+super_layer_name_dict = {
+    'u3cu3_s0': SuperU3CU3ShareFrontLayer0,
+    'u3cu3_a0': SuperU3CU3ArbitraryLayer0,
+    'seth_a0': SuperSethArbitraryLayer0,
+    'barren_a0': SuperBarrenArbitraryLayer0,
+    'farhi_a0': SuperFarhiArbitraryLayer0,
+    'maxwell_a0': SuperMaxwellArbitraryLayer0,
+}

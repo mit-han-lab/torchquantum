@@ -183,7 +183,7 @@ class Super4DigitArbitrarySethModel1(Super4DigitShareFrontQFCModel1):
 
 class Super4DigitArbitraryBarrenModel1(Super4DigitShareFrontQFCModel1):
     """
-    zz and ry blocks arbitrary n gates, from Barren plateaus paper
+    rx ry rz and cz blocks arbitrary n gates, from Barren plateaus paper
     https://arxiv.org/pdf/1803.11173.pdf
     """
     class QLayer(Super4DigitShareFrontQFCModel1.QLayer):

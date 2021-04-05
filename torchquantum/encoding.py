@@ -135,3 +135,65 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
 class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
+
+
+encoder_op_list_name_dict = {
+    '4x4_ryzxy':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [2], 'func': 'ry', 'wires': [2]},
+            {'input_idx': [3], 'func': 'ry', 'wires': [3]},
+            {'input_idx': [4], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [5], 'func': 'rz', 'wires': [1]},
+            {'input_idx': [6], 'func': 'rz', 'wires': [2]},
+            {'input_idx': [7], 'func': 'rz', 'wires': [3]},
+            {'input_idx': [8], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [9], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [10], 'func': 'rx', 'wires': [2]},
+            {'input_idx': [11], 'func': 'rx', 'wires': [3]},
+            {'input_idx': [12], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [13], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [14], 'func': 'ry', 'wires': [2]},
+            {'input_idx': [15], 'func': 'ry', 'wires': [3]}
+        ],
+    '6x6_ryzxy':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [2], 'func': 'ry', 'wires': [2]},
+            {'input_idx': [3], 'func': 'ry', 'wires': [3]},
+            {'input_idx': [4], 'func': 'ry', 'wires': [4]},
+            {'input_idx': [5], 'func': 'ry', 'wires': [5]},
+            {'input_idx': [6], 'func': 'ry', 'wires': [6]},
+            {'input_idx': [7], 'func': 'ry', 'wires': [7]},
+            {'input_idx': [8], 'func': 'ry', 'wires': [8]},
+            {'input_idx': [9], 'func': 'ry', 'wires': [9]},
+            {'input_idx': [10], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [11], 'func': 'rz', 'wires': [1]},
+            {'input_idx': [12], 'func': 'rz', 'wires': [2]},
+            {'input_idx': [13], 'func': 'rz', 'wires': [3]},
+            {'input_idx': [14], 'func': 'rz', 'wires': [4]},
+            {'input_idx': [15], 'func': 'rz', 'wires': [5]},
+            {'input_idx': [16], 'func': 'rz', 'wires': [6]},
+            {'input_idx': [17], 'func': 'rz', 'wires': [7]},
+            {'input_idx': [18], 'func': 'rz', 'wires': [8]},
+            {'input_idx': [19], 'func': 'rz', 'wires': [9]},
+            {'input_idx': [20], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [21], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [22], 'func': 'rx', 'wires': [2]},
+            {'input_idx': [23], 'func': 'rx', 'wires': [3]},
+            {'input_idx': [24], 'func': 'rx', 'wires': [4]},
+            {'input_idx': [25], 'func': 'rx', 'wires': [5]},
+            {'input_idx': [26], 'func': 'rx', 'wires': [6]},
+            {'input_idx': [27], 'func': 'rx', 'wires': [7]},
+            {'input_idx': [28], 'func': 'rx', 'wires': [8]},
+            {'input_idx': [29], 'func': 'rx', 'wires': [9]},
+            {'input_idx': [30], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [31], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [32], 'func': 'ry', 'wires': [2]},
+            {'input_idx': [33], 'func': 'ry', 'wires': [3]},
+            {'input_idx': [34], 'func': 'ry', 'wires': [4]},
+            {'input_idx': [35], 'func': 'ry', 'wires': [5]},
+        ]
+}
