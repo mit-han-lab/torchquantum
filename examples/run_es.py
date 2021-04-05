@@ -61,10 +61,9 @@ class Evaluator(object):
                         else:
                             inputs = feed_dict['image']
                             targets = feed_dict['digit']
-                        if configs.qiskit.use_qiskit:
-                            outputs = model.forward_qiskit(inputs)
-                        else:
-                            outputs = model.forward(inputs)
+
+                        outputs = model(
+                            inputs, use_qiskit=configs.qiskit.use_qiskit)
 
                         if target_all is None:
                             target_all = targets

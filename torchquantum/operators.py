@@ -32,8 +32,12 @@ __all__ = [
     'RX',
     'RY',
     'RZ',
+    'RXX',
+    'RYY',
     'RZZ',
+    'RZX',
     'SWAP',
+    'SSWAP',
     'CSWAP',
     'Toffoli',
     'PhaseShift',
@@ -100,6 +104,7 @@ class Operator(tq.QuantumModule):
         'CZ',
         'CY',
         'SWAP',
+        'SSWAP',
         'CSWAP',
         'Toffoli',
         'MultiCNOT',
@@ -110,7 +115,10 @@ class Operator(tq.QuantumModule):
         'RX',
         'RY',
         'RZ',
+        'RXX',
+        'RYY',
         'RZZ',
+        'RZX',
         'PhaseShift',
         'Rot',
         'MultiRZ',
@@ -523,6 +531,17 @@ class SWAP(Operation, metaclass=ABCMeta):
         return cls.matrix
 
 
+class SSWAP(Operation, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict['sswap']
+    func = staticmethod(tqf.sswap)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
 class CSWAP(Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 3
@@ -605,6 +624,26 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
         return tqf.multirz_matrix(params, n_wires)
 
 
+class RXX(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.rxx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.rxx_matrix(params)
+
+
+class RYY(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.ryy)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.ryy_matrix(params)
+
+
 class RZZ(DiagonalOperation, metaclass=ABCMeta):
     num_params = 1
     num_wires = 2
@@ -613,6 +652,16 @@ class RZZ(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.rzz_matrix(params)
+
+
+class RZX(Operation, metaclass=ABCMeta):
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.rzx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.rzx_matrix(params)
 
 
 class TrainableUnitary(Operation, metaclass=ABCMeta):
@@ -831,9 +880,16 @@ op_name_dict = {
     'rx': RX,
     'ry': RY,
     'rz': RZ,
+    'rxx': RXX,
+    'xx': RXX,
+    'ryy': RYY,
+    'yy': RYY,
     'rzz': RZZ,
     'zz': RZZ,
+    'rzx': RZX,
+    'zx': RZX,
     'swap': SWAP,
+    'sswap': SSWAP,
     'cswap': CSWAP,
     'toffoli': Toffoli,
     'ccx': Toffoli,

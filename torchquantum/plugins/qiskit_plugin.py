@@ -80,10 +80,22 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
             circ.ry(module.params[0][0].item(), *module.wires)
         elif module.name == 'RZ':
             circ.rz(module.params[0][0].item(), *module.wires)
+        elif module.name == 'RXX':
+            circ.rxx(module.params[0][0].item(), *module.wires)
+        elif module.name == 'RYY':
+            circ.ryy(module.params[0][0].item(), *module.wires)
         elif module.name == 'RZZ':
             circ.rzz(module.params[0][0].item(), *module.wires)
+        elif module.name == 'RZX':
+            circ.rzx(module.params[0][0].item(), *module.wires)
         elif module.name == 'SWAP':
             circ.swap(*module.wires)
+        elif module.name == 'SSWAP':
+            # square root of swap
+            from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
+            mat = module.matrix.data.cpu().numpy()
+            mat = switch_little_big_endian_matrix(mat)
+            circ.append(UnitaryGate(mat), module.wires, [])
         elif module.name == 'CSWAP':
             circ.cswap(*module.wires)
         elif module.name == 'Toffoli':
@@ -163,8 +175,17 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
             circ.ry(theta=params[input_idx[0]], qubit=wires[0])
         elif func == 'rz':
             circ.rz(phi=params[input_idx[0]], qubit=wires[0])
+        elif func == 'rxx':
+            circ.rxx(theta=params[input_idx[0]], qubit1=wires[0],
+                     qubit2=wires[1])
+        elif func == 'ryy':
+            circ.ryy(theta=params[input_idx[0]], qubit1=wires[0],
+                     qubit2=wires[1])
         elif func == 'rzz':
             circ.rzz(theta=params[input_idx[0]], qubit1=wires[0],
+                     qubit2=wires[1])
+        elif func == 'rzx':
+            circ.rzx(theta=params[input_idx[0]], qubit1=wires[0],
                      qubit2=wires[1])
         elif func == 'phaseshift':
             circ.p(theta=params[input_idx[0]], qubit=wires[0])
@@ -227,8 +248,14 @@ def qiskit2tq(circ: QuantumCircuit):
         elif op_name in ['rx',
                          'ry',
                          'rz',
+                         'rxx',
+                         'xx',
+                         'ryy',
+                         'yy',
                          'rzz',
                          'zz',
+                         'rzx',
+                         'zx',
                          'p',
                          'cp',
                          'crx',

@@ -2,55 +2,58 @@ import torchquantum as tq
 import torchquantum.functional as tqf
 import torch.nn.functional as F
 
+from torchpack.utils.logging import logger
+from torchquantum.encoding import encoder_op_list_name_dict
+from torchquantum.super_layers import super_layer_name_dict
+
 
 class SuperQFCModel0(tq.QuantumModule):
-    def __init__(self):
+    def __init__(self, arch):
         super().__init__()
-        self.n_wires = 4
+        self.arch = arch
+        self.n_wires = arch['n_wires']
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.encoder = tq.GeneralEncoder(
+            encoder_op_list_name_dict[arch['encoder_op_list_name']]
+        )
+        self.q_layer = super_layer_name_dict[arch['q_layer_name']](arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
-        self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                            [tqf.rz] * 4 + [tqf.rx] * 4)
-
-        self.super_layers_all = tq.QuantumModuleList()
-
-        for k in range(4):
-            self.super_layers_all.append(
-                tq.Super1QLayer(op=tq.RX, n_wires=self.n_wires,
-                                has_params=True, trainable=True))
-            self.super_layers_all.append(
-                tq.Super1QLayer(op=tq.RY, n_wires=self.n_wires,
-                                has_params=True, trainable=True))
-            self.super_layers_all.append(
-                tq.Super1QLayer(op=tq.RZ, n_wires=self.n_wires,
-                                has_params=True, trainable=True))
-            self.super_layers_all.append(
-                tq.Super2QLayer(op=tq.CNOT, n_wires=self.n_wires))
+        self.sample_arch = None
 
     def set_sample_arch(self, sample_arch):
-        for k, layer_arch in enumerate(sample_arch):
-            self.super_layers_all[k].set_sample_arch(layer_arch)
+        self.sample_arch = sample_arch
+        self.q_layer.set_sample_arch(sample_arch)
 
-    def forward(self, x):
+    def count_sample_params(self):
+        return self.q_layer.count_sample_params()
+
+    def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
-        x = F.avg_pool2d(x, 6).view(bsz, 16)
-        self.encoder(self.q_device, x)
+        x = F.avg_pool2d(x, self.arch['down_sample_kernel_size']).view(bsz, -1)
 
-        for k in range(len(self.super_layers_all)):
-            self.super_layers_all[k](self.q_device)
+        if use_qiskit:
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, x)
+        else:
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
 
-        x = self.measure(self.q_device).reshape(bsz, 2, 2)
-        x = x.sum(-1).squeeze()
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
 
+        x = x.squeeze()
         x = F.log_softmax(x, dim=1)
-
         return x
 
     @property
     def arch_space(self):
         space = []
-        for layer in self.super_layers_all:
+        for layer in self.q_layer.super_layers_all:
             space.append(layer.arch_space)
+        # for the number of sampled blocks
+        space.append(list(range(self.q_layer.n_front_share_blocks,
+                                self.q_layer.n_blocks + 1)))
         return space
 
 
@@ -107,26 +110,17 @@ class SuperQFCModel1(tq.QuantumModule):
     def set_sample_arch(self, sample_arch):
         self.q_layer.set_sample_arch(sample_arch)
 
-    def forward(self, x):
+    def forward(self, x, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-        self.q_layer(self.q_device, x)
-        x = self.measure(self.q_device).reshape(bsz, 2, 2)
+        if use_qiskit:
+            x = self.qiskit_processor.process(self.q_device, self.q_layer, x)
+        else:
+            self.q_layer(self.q_device, x)
+            x = self.measure(self.q_device)
 
-        x = x.sum(-1).squeeze()
-        x = F.log_softmax(x, dim=1)
-
-        return x
-
-    def forward_qiskit(self, x):
-        bsz = x.shape[0]
-        x = F.avg_pool2d(x, 6).view(bsz, 16)
-        measured = self.qiskit_processor.process(
-            self.q_device, self.q_layer, x)
-        measured = measured.reshape(bsz, 2, 2)
-
-        x = measured.sum(-1).squeeze()
+        x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
         return x
@@ -321,28 +315,18 @@ class SuperQFCModel3(tq.QuantumModule):
     def set_sample_arch(self, sample_arch):
         self.q_layer.set_sample_arch(sample_arch)
 
-    def forward(self, x):
+    def forward(self, x, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-        self.encoder(self.q_device, x)
+        if use_qiskit:
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, x)
+        else:
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
 
-        self.q_layer(self.q_device)
-        x = self.measure(self.q_device).reshape(bsz, 2, 2)
-
-        x = x.sum(-1).squeeze()
-        x = F.log_softmax(x, dim=1)
-
-        return x
-
-    def forward_qiskit(self, x):
-        bsz = x.shape[0]
-        x = F.avg_pool2d(x, 6).view(bsz, 16)
-
-        measured = self.qiskit_processor.process_parameterized_managed(
-            self.q_device, self.encoder, self.q_layer, x)
-        measured = measured.reshape(bsz, 2, 2)
-
-        x = measured.sum(-1).squeeze()
+        x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
         return x
@@ -454,28 +438,18 @@ class SuperQFCModel4(tq.QuantumModule):
     def set_sample_arch(self, sample_arch):
         self.q_layer.set_sample_arch(sample_arch)
 
-    def forward(self, x):
+    def forward(self, x, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-        self.encoder(self.q_device, x)
+        if use_qiskit:
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, x)
+        else:
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
 
-        self.q_layer(self.q_device)
-        x = self.measure(self.q_device).reshape(bsz, 2, 2)
-
-        x = x.sum(-1).squeeze()
-        x = F.log_softmax(x, dim=1)
-
-        return x
-
-    def forward_qiskit(self, x):
-        bsz = x.shape[0]
-        x = F.avg_pool2d(x, 6).view(bsz, 16)
-
-        measured = self.qiskit_processor.process_parameterized_managed(
-            self.q_device, self.encoder, self.q_layer, x)
-        measured = measured.reshape(bsz, 2, 2)
-
-        x = measured.sum(-1).squeeze()
+        x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
 
         return x
