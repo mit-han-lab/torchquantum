@@ -62,6 +62,9 @@ def make_model() -> nn.Module:
     elif configs.model.name.startswith('super4digit_'):
         from .models.super4digit_models import model_dict
         model = model_dict[configs.model.name](arch=configs.model.arch)
+    elif configs.model.name.startswith('q10digit_'):
+        from .models.q10digit_models import model_dict
+        model = model_dict[configs.model.name](arch=configs.model.arch)
     else:
         raise NotImplementedError(configs.model.name)
 

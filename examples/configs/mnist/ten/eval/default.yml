@@ -1,0 +1,8 @@
+run:
+  bsz: 10000
+
+ckpt:
+  load_ckpt: True
+
+dataset:
+  split: test
