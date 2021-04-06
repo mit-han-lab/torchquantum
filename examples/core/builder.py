@@ -34,6 +34,17 @@ def make_dataset() -> Dataset:
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
         dataset = LayerRegression()
+    elif configs.dataset.name == 'vowel':
+        from .datasets import Vowel
+        dataset = Vowel(
+            root=configs.dataset.root,
+            test_ratio=configs.dataset.test_ratio,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
+            resize=configs.dataset.resize,
+            binarize=configs.dataset.binarize,
+            binarize_threshold=configs.dataset.binarize_threshold,
+            digits_of_interest=configs.dataset.digits_of_interest,
+        )
     else:
         raise NotImplementedError(configs.dataset.name)
 

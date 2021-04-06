@@ -89,11 +89,13 @@ class QTrainer(Trainer):
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
         if configs.run.device == 'gpu':
-            inputs = feed_dict['image'].cuda(non_blocking=True)
-            targets = feed_dict['digit'].cuda(non_blocking=True)
+            inputs = feed_dict[configs.dataset.input_name].cuda(
+                non_blocking=True)
+            targets = feed_dict[configs.dataset.target_name].cuda(
+                non_blocking=True)
         else:
-            inputs = feed_dict['image']
-            targets = feed_dict['digit']
+            inputs = feed_dict[configs.dataset.input_name]
+            targets = feed_dict[configs.dataset.target_name]
         if legalize:
             outputs = self.legalized_model(inputs)
         else:
@@ -209,11 +211,13 @@ class SuperQTrainer(Trainer):
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
         if configs.run.device == 'gpu':
-            inputs = feed_dict['image'].cuda(non_blocking=True)
-            targets = feed_dict['digit'].cuda(non_blocking=True)
+            inputs = feed_dict[configs.dataset.input_name].cuda(
+                non_blocking=True)
+            targets = feed_dict[configs.dataset.target_name].cuda(
+                non_blocking=True)
         else:
-            inputs = feed_dict['image']
-            targets = feed_dict['digit']
+            inputs = feed_dict[configs.dataset.input_name]
+            targets = feed_dict[configs.dataset.target_name]
         if legalize:
             outputs = self.legalized_model(inputs)
         else:
@@ -375,11 +379,13 @@ class PruningTrainer(Trainer):
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
         if configs.run.device == 'gpu':
-            inputs = feed_dict['image'].cuda(non_blocking=True)
-            targets = feed_dict['digit'].cuda(non_blocking=True)
+            inputs = feed_dict[configs.dataset.input_name].cuda(
+                non_blocking=True)
+            targets = feed_dict[configs.dataset.target_name].cuda(
+                non_blocking=True)
         else:
-            inputs = feed_dict['image']
-            targets = feed_dict['digit']
+            inputs = feed_dict[configs.dataset.input_name]
+            targets = feed_dict[configs.dataset.target_name]
         if legalize:
             outputs = self.legalized_model(inputs)
         else:

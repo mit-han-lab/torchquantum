@@ -29,7 +29,11 @@ class SuperQFCModel0(tq.QuantumModule):
 
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
-        x = F.avg_pool2d(x, self.arch['down_sample_kernel_size']).view(bsz, -1)
+
+        if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
+            x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+
+        x = x.view(bsz, -1)
 
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
@@ -42,7 +46,9 @@ class SuperQFCModel0(tq.QuantumModule):
         if verbose:
             logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
 
-        x = x.squeeze()
+        if x.dim() > 2:
+            x = x.squeeze()
+
         x = F.log_softmax(x, dim=1)
         return x
 

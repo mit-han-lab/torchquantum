@@ -1,24 +1,29 @@
-'''
+"""
 Description:
 Author: Jiaqi Gu (jqgu@utexas.edu)
 Date: 2021-04-04 13:38:43
 LastEditors: Jiaqi Gu (jqgu@utexas.edu)
 LastEditTime: 2021-04-04 15:16:55
-'''
-import os
-from typing import Any, Callable, Dict, List, Optional, Tuple
+"""
 
+import os
 import numpy as np
 import torch
-from torch.functional import Tensor
+
+from torch import Tensor
 from torchpack.datasets.dataset import Dataset
 from torchvision import transforms
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import download_url
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 
 __all__ = ["Vowel"]
+
+
 class VowelRecognition(VisionDataset):
-    url = "http://archive.ics.uci.edu/ml/machine-learning-databases/undocumented/connectionist-bench/vowel/vowel-context.data"
+    url = "http://archive.ics.uci.edu/ml/machine-learning-databases" \
+          "/undocumented/connectionist-bench/vowel/vowel-context.data"
     filename = "vowel-context.data"
     folder = "vowel"
 
@@ -33,7 +38,7 @@ class VowelRecognition(VisionDataset):
         download: bool = False
     ) -> None:
         root = os.path.join(os.path.expanduser(root), self.folder)
-        if(transform is None):
+        if transform is None:
             transform = transforms.Compose([
                 transforms.ToTensor()
             ])
@@ -52,7 +57,7 @@ class VowelRecognition(VisionDataset):
 
         self.n_features = n_features
         assert 1 <= n_features <= 10, print(
-            f"Only support maximum 13 features, but got{n_features}")
+            f"Only support maximum 10 features, but got{n_features}")
         self.data: Any = []
         self.targets = []
 
@@ -63,23 +68,25 @@ class VowelRecognition(VisionDataset):
         processed_dir = os.path.join(self.root, "processed")
         processed_training_file = os.path.join(processed_dir, "training.pt")
         processed_test_file = os.path.join(processed_dir, "test.pt")
-        if os.path.exists(processed_training_file) and os.path.exists(processed_test_file):
-            with open(os.path.join(self.root, "processed/training.pt"), 'rb') as f:
+        if os.path.exists(processed_training_file) and \
+                os.path.exists(processed_test_file):
+            with open(os.path.join(self.root, "processed/training.pt"),
+                      'rb') as f:
                 data, targets = torch.load(f)
                 if data.shape[-1] == self.n_features:
                     print('Data already processed')
                     return
         data, targets = self._load_dataset()
-        data_train, targets_train, data_test, targets_test = self._split_dataset(
-            data, targets)
+        data_train, targets_train, data_test, targets_test = \
+            self._split_dataset(data, targets)
         data_train, data_test = self._preprocess_dataset(data_train, data_test)
         self._save_dataset(data_train, targets_train,
                            data_test, targets_test, processed_dir)
 
-    def _load_dataset(self) -> Tuple[Tensor, Tensor]:
+    def _load_dataset(self) -> Tuple[torch.Tensor, torch.Tensor]:
         data = []
         targets = []
-        with open(os.path.join(self.root, "raw", self.filename), 'r')as f:
+        with open(os.path.join(self.root, "raw", self.filename), 'r') as f:
             for line in f:
                 line = line.strip().split()[3:]
                 label = int(line[-1])
@@ -91,15 +98,20 @@ class VowelRecognition(VisionDataset):
             targets = torch.LongTensor(targets)
         return data, targets
 
-    def _split_dataset(self, data: Tensor, targets: Tensor) -> Tuple[Tensor, ...]:
+    def _split_dataset(self,
+                       data: Tensor,
+                       targets: Tensor) -> Tuple[Tensor, ...]:
         from sklearn.model_selection import train_test_split
         data_train, data_test, targets_train, targets_test = train_test_split(
             data, targets, train_size=self.train_ratio, random_state=42)
         print(
-            f'training: {data_train.shape[0]} examples, test: {data_test.shape[0]} examples')
+            f'training: {data_train.shape[0]} examples, '
+            f'test: {data_test.shape[0]} examples')
         return data_train, targets_train, data_test, targets_test
 
-    def _preprocess_dataset(self, data_train: Tensor, data_test: Tensor) -> Tuple[Tensor, Tensor]:
+    def _preprocess_dataset(self,
+                            data_train: Tensor,
+                            data_test: Tensor) -> Tuple[Tensor, Tensor]:
         from sklearn.decomposition import PCA
         from sklearn.preprocessing import MinMaxScaler, RobustScaler
         pca = PCA(n_components=self.n_features)
@@ -115,13 +127,16 @@ class VowelRecognition(VisionDataset):
         data_train_reduced = mms.transform(data_train_reduced)
         data_test_reduced = mms.transform(data_test_reduced)
 
-        return torch.from_numpy(data_train_reduced).float(), torch.from_numpy(data_test_reduced).float()
+        return torch.from_numpy(data_train_reduced).float(), \
+            torch.from_numpy(data_test_reduced).float()
 
-    def _save_dataset(self, data_train: Tensor, targets_train: Tensor, data_test: Tensor, targets_test: Tensor, processed_dir: str) -> None:
-        try:
-            os.mkdir(processed_dir)
-        except:
-            pass
+    @staticmethod
+    def _save_dataset(data_train: Tensor,
+                      targets_train: Tensor,
+                      data_test: Tensor,
+                      targets_test: Tensor,
+                      processed_dir: str) -> None:
+        os.makedirs(processed_dir, exist_ok=True)
         processed_training_file = os.path.join(processed_dir, "training.pt")
         processed_test_file = os.path.join(processed_dir, "test.pt")
         with open(processed_training_file, 'wb') as f:
@@ -135,9 +150,9 @@ class VowelRecognition(VisionDataset):
         filename = "training.pt" if train else "test.pt"
         with open(os.path.join(self.root, "processed", filename), 'rb') as f:
             data, targets = torch.load(f)
-            if(isinstance(data, np.ndarray)):
+            if isinstance(data, np.ndarray):
                 data = torch.from_numpy(data)
-            if(isinstance(targets, np.ndarray)):
+            if isinstance(targets, np.ndarray):
                 targets = torch.from_numpy(targets)
         return data, targets
 
@@ -192,7 +207,9 @@ class VowelRecognitionDataset:
 
         if self.split == 'train' or self.split == 'valid':
             train_valid = VowelRecognition(self.root, train=True,
-                                           download=True, transform=transform, n_features=self.resize, train_ratio=1-self.test_ratio)
+                                           download=True, transform=transform,
+                                           n_features=self.resize,
+                                           train_ratio=1-self.test_ratio)
             idx, _ = torch.stack([train_valid.targets == number for number in
                                   self.digits_of_interest]).max(dim=0)
             train_valid.targets = train_valid.targets[idx]
@@ -264,13 +281,20 @@ class Vowel(Dataset):
         })
 
 
-def test():
+def test_vowel():
+    import pdb
+    pdb.set_trace()
     vowel = VowelRecognition(root=".", download=True, n_features=6)
     print(vowel.data.size(), vowel.targets.size())
-    vowel = VowelRecognitionDataset(root=".", split="train", test_ratio=0.3, train_valid_split_ratio=[
-                                    0.9, 0.1], resize=8, binarize=0, binarize_threshold=0, digits_of_interest=(3, 6))
+    vowel = VowelRecognitionDataset(root=".", split="train", test_ratio=0.3,
+                                    train_valid_split_ratio=[0.9, 0.1],
+                                    resize=8,
+                                    binarize=0,
+                                    binarize_threshold=0,
+                                    digits_of_interest=tuple(range(10)))
+                                    # digits_of_interest=(3, 6))
     print(vowel(20))
 
 
 if __name__ == "__main__":
-    test()
+    test_vowel()
