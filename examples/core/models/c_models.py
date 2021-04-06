@@ -132,11 +132,30 @@ class ClassicalFC1(nn.Module):
         return output.squeeze()
 
 
+class ClassicalFC2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(10, 256)
+        self.fc2 = nn.Linear(256, 4)
+
+    def forward(self, x):
+        bsz = x.shape[0]
+        x = x.view(bsz, -1)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+
+        output = F.log_softmax(x, dim=1)
+
+        return output
+
+
 model_dict = {
     'c_conv0': ClassicalConv0,
     'c_conv1': ClassicalConv1,
     'c_conv1_resize4': ClassicalConv1Resize4,
     'c_conv2': ClassicalConv2,
     'c_fc0': ClassicalFC0,
-    'c_fc1': ClassicalFC1
+    'c_fc1': ClassicalFC1,
+    'c_fc2': ClassicalFC2
 }
