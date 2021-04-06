@@ -10,3 +10,6 @@ matplotlib>=3.3.2
 
 pathos>=0.2.7
 tensorflow>=2.4.1
+
+scipy>=1.5.2
+sklearn>=0.24.1
