@@ -8,8 +8,9 @@ if __name__ == '__main__':
     print(args.supernet)
 
     cnt = 0
-    with open(f'logs/super/eval_subnet_tq_ratiorand_'
-              f'insuper_{args.supernet}.txt',
+    with open(
+            f'logs/sfsuper/eval_subnet_noise_x2_opt2_ratio_500insuper_u3cu3_s0'
+            f'.plain.blk8s1_ws1_os1.txt',
               'r') as rfid:
         for line in rfid:
             if 'Accuracy' in line:

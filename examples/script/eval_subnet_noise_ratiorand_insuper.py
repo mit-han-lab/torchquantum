@@ -17,22 +17,22 @@ if __name__ == '__main__':
             'checkpoints/step-18400.pt',
             f'--gpu={args.gpu}',
             '--dataset.split=valid']
-    with open(f'logs/super/eval_subnet_noise_x2_opt2_ratiorand_'
-              f'insuper_{args.supernet}2.txt',
+    with open(f'logs/sfsuper/eval_subnet_noise_x2_opt2_ratio_500'
+              f'insuper_{args.supernet}.txt',
               'w') as \
             wfid:
-        # for blk in range(1, 9):
-        #     for ratio in ['0', '0.25', '0.5', '0.75', '1']:
-        #         exp = f"--model.arch.sample_arch=blk{blk}_ratio{ratio}"
-        #         logger.info(f"running command {pres + [exp]}")
-        #
-        #         subprocess.run(pres + [exp], stderr=wfid)
-
-        for blk in range(7, 9):
-            for rand in range(4):
-                if blk == 7 and rand <= 1:
-                    continue
-                exp = f"--model.arch.sample_arch=super4digit_arbitrary_fc1_blk{blk}_rand{rand}"
+        for blk in range(1, 9):
+            # for ratio in ['0', '0.25', '0.5', '0.75', '1']:
+            for ratio in ['0', '0.3', '0.6', '1']:
+                exp = f"--model.arch.sample_arch=blk{blk}_ratio{ratio}"
                 logger.info(f"running command {pres + [exp]}")
 
                 subprocess.run(pres + [exp], stderr=wfid)
+
+        # for blk in range(1, 9):
+        #     for rand in range(4):
+        #         exp = f"--model.arch.sample_arch=sharefront0_blk{blk}_ran" \
+        #               f"d{rand}"
+        #         logger.info(f"running command {pres + [exp]}")
+        #
+        #         subprocess.run(pres + [exp], stderr=wfid)

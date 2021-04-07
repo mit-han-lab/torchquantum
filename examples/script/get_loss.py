@@ -8,7 +8,7 @@ if __name__ == '__main__':
     print(args.supernet)
 
     cnt = 0
-    with open(f'logs/super/eval_subnet_noise_x2_opt2_ratiorand_'
+    with open(f'logs/sfsuper/eval_subnet_noise_x2_opt2_ratiorand_'
               f'insuper_{args.supernet}.txt',
               'r') as rfid:
         for line in rfid:
