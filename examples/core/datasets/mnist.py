@@ -30,6 +30,7 @@ class MNISTDataset:
                  digits_of_interest,
                  n_test_samples,
                  n_valid_samples,
+                 fashion,
                  ):
         self.root = root
         self.split = split
@@ -43,6 +44,7 @@ class MNISTDataset:
         self.digits_of_interest = digits_of_interest
         self.n_test_samples = n_test_samples
         self.n_valid_samples = n_valid_samples
+        self.fashion = fashion
 
         self.load()
         self.n_instance = len(self.data)
@@ -58,8 +60,12 @@ class MNISTDataset:
         transform = transforms.Compose(tran)
 
         if self.split == 'train' or self.split == 'valid':
-            train_valid = datasets.MNIST(self.root, train=True,
-                                         download=True, transform=transform)
+            if self.fashion:
+                train_valid = datasets.FashionMNIST(
+                    self.root, train=True, download=True, transform=transform)
+            else:
+                train_valid = datasets.MNIST(
+                    self.root, train=True, download=True, transform=transform)
             idx, _ = torch.stack([train_valid.targets == number for number in
                                   self.digits_of_interest]).max(dim=0)
             train_valid.targets = train_valid.targets[idx]
@@ -86,7 +92,12 @@ class MNISTDataset:
                                    f"VALID set.")
 
         else:
-            test = datasets.MNIST(self.root, train=False, transform=transform)
+            if self.fashion:
+                test = datasets.FashionMNIST(self.root,
+                                             train=False, transform=transform)
+            else:
+                test = datasets.MNIST(self.root,
+                                      train=False, transform=transform)
             idx, _ = torch.stack([test.targets == number for number in
                                   self.digits_of_interest]).max(dim=0)
             test.targets = test.targets[idx]
@@ -128,6 +139,7 @@ class MNIST(Dataset):
                  digits_of_interest=tuple(range(10)),
                  n_test_samples=None,
                  n_valid_samples=None,
+                 fashion=False
                  ):
         self.root = root
 
@@ -144,6 +156,7 @@ class MNIST(Dataset):
                 digits_of_interest=digits_of_interest,
                 n_test_samples=n_test_samples,
                 n_valid_samples=n_valid_samples,
+                fashion=fashion
             )
             for split in ['train', 'valid', 'test']
         })
@@ -152,7 +165,7 @@ class MNIST(Dataset):
 if __name__ == '__main__':
     import pdb
     pdb.set_trace()
-    mnist = MNISTDataset(root='../data',
+    mnist = MNISTDataset(root='../fashion_mnist_data',
                          split='train',
                          train_valid_split_ratio=[0.9, 0.1],
                          center_crop=28,
@@ -162,6 +175,8 @@ if __name__ == '__main__':
                          binarize_threshold=0.1307,
                          digits_of_interest=(3, 6),
                          n_test_samples=100,
+                         n_valid_samples=1000,
+                         fashion=True
                          )
     mnist.__getitem__(20)
     print('finish')
