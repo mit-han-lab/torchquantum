@@ -284,17 +284,39 @@ def build_module_description_test():
     tq2qiskit(q_dev, m1, draw=True)
 
 
-def get_q_c_reg_mapping(circ):
+def get_v_c_reg_mapping(circ):
+    """
+    p are physical qubits
+    v are logical qubits
+    c are classical registers
+    want to get v2c
+    """
+
+    p2v = circ._layout.get_physical_bits().copy()
+    for p, v in p2v.items():
+        p2v[p] = v.index
+
     mapping = {
-        'q2c': {},
-        'c2q': {},
+        'p2c': {},
+        'c2p': {},
     }
     for gate in circ.data:
         if gate[0].name == 'measure':
-            mapping['q2c'][gate[1][0].index] = gate[2][0].index
-            mapping['c2q'][gate[2][0].index] = gate[1][0].index
+            mapping['p2c'][gate[1][0].index] = gate[2][0].index
+            mapping['c2p'][gate[2][0].index] = gate[1][0].index
 
-    return mapping
+    mapping2 = {
+        'v2c': {},
+        'c2v': {}
+    }
+
+    for c, p in mapping['c2p'].items():
+        mapping2['c2v'][c] = p2v[p]
+
+    for c, v in mapping2['c2v'].items():
+        mapping2['v2c'][v] = c
+
+    return mapping2
 
 
 def get_cared_configs(conf, mode) -> Config:

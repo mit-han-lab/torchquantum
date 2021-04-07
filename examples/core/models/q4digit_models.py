@@ -84,7 +84,7 @@ class Q4DigitFCModel0(tq.QuantumModule):
 
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, x)
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)

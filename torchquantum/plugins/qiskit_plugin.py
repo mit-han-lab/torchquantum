@@ -222,10 +222,16 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit
 # object
 def qiskit2tq(circ: QuantumCircuit):
+
+    p2v = circ._layout.get_physical_bits().copy()
+    for p, v in p2v.items():
+        p2v[p] = v.index
+
     ops = []
     for gate in circ.data:
         op_name = gate[0].name
         wires = list(map(lambda x: x.index, gate[1]))
+        wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
         init_params = list(map(float, gate[0].params)) if len(
             gate[0].params) > 0 else None

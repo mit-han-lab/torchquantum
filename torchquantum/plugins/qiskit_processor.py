@@ -148,16 +148,18 @@ class QiskitProcessor(object):
                                  q_device,
                                  q_layer_parameterized,
                                  q_layer_fixed,
+                                 q_layer_measure,
                                  x,
-                                 q_c_reg_mapping,
                                  ):
         circ_parameterized, params = tq2qiskit_parameterized(
             q_device, q_layer_parameterized.func_list)
         circ_fixed = tq2qiskit(q_device, q_layer_fixed)
         circ = circ_parameterized + circ_fixed
 
-        if q_c_reg_mapping is not None:
-            for q_reg, c_reg in q_c_reg_mapping['q2c'].items():
+        v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
+
+        if v_c_reg_mapping is not None:
+            for q_reg, c_reg in v_c_reg_mapping['v2c'].items():
                 circ.measure(q_reg, c_reg)
         else:
             circ.measure(list(range(q_device.n_wires)), list(range(
@@ -178,8 +180,8 @@ class QiskitProcessor(object):
     def process_parameterized(self, q_device: tq.QuantumDevice,
                               q_layer_parameterized: tq.QuantumModule,
                               q_layer_fixed: tq.QuantumModule,
+                              q_layer_measure: tq.QuantumModule,
                               x,
-                              q_c_reg_mapping=None,
                               parallel=True):
         """
         separate the conversion, encoder part will be converted to a
@@ -193,7 +195,8 @@ class QiskitProcessor(object):
         JobManager has bugs when submitting job, so use multiprocessing instead
         """
         transpiled_circ, binds_all = self.preprocess_parameterized(
-            q_device, q_layer_parameterized, q_layer_fixed, x, q_c_reg_mapping)
+            q_device, q_layer_parameterized, q_layer_fixed,
+            q_layer_measure, x)
 
         if parallel:
             if hasattr(self.backend.configuration(), 'max_experiments'):
@@ -250,12 +253,13 @@ class QiskitProcessor(object):
         return measured_qiskit
 
     def process(self, q_device: tq.QuantumDevice, q_layer: tq.QuantumModule,
-                x, q_c_reg_mapping=None):
+                q_layer_measure: tq.QuantumModule, x):
         circs = []
         for i, x_single in tqdm(enumerate(x)):
             circ = tq2qiskit(q_device, q_layer, x_single.unsqueeze(0))
-            if q_c_reg_mapping is not None:
-                for q_reg, c_reg in q_c_reg_mapping['q2c'].items():
+            if q_layer_measure.v_c_reg_mapping is not None:
+                for q_reg, c_reg in q_layer_measure.v_c_reg_mapping[
+                        'v2c'].items():
                     circ.measure(q_reg, c_reg)
             else:
                 circ.measure(list(range(q_device.n_wires)), list(range(

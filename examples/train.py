@@ -18,7 +18,7 @@ from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.utils import (build_module_from_op_list,
-                                get_q_c_reg_mapping,
+                                get_v_c_reg_mapping,
                                 get_cared_configs)
 from torchquantum.super_utils import get_named_sample_arch
 
@@ -102,7 +102,7 @@ def main() -> None:
 
     model = builder.make_model()
 
-    state_dict = None
+    state_dict = {}
     solution = None
     score = None
     if configs.ckpt.load_ckpt:
@@ -132,12 +132,12 @@ def main() -> None:
             model.set_sample_arch(solution['arch'])
             score = state_dict['score']
 
-        if 'q_c_reg_mapping' in state_dict.keys():
+        if 'v_c_reg_mapping' in state_dict.keys():
             try:
-                model.measure.set_q_c_reg_mapping(
-                    state_dict['q_c_reg_mapping'])
+                model.measure.set_v_c_reg_mapping(
+                    state_dict['v_c_reg_mapping'])
             except AttributeError:
-                logger.warning(f"Cannot set q_c_reg_mapping.")
+                logger.warning(f"Cannot set v_c_reg_mapping.")
 
         if configs.model.load_op_list:
             assert state_dict['q_layer_op_list'] is not None
@@ -162,14 +162,20 @@ def main() -> None:
                      list(range(model.q_device.n_wires)))
 
         logger.info("Transpiling circuit...")
+
+        if solution is not None:
+            processor.set_layout(solution['layout'])
+            logger.warning(f"Set layout {solution['layout']} for transpile!")
+
         circ_transpiled = processor.transpile(circs=circ)
         q_layer = qiskit2tq(circ=circ_transpiled)
 
-        model.measure.set_q_c_reg_mapping(
-            get_q_c_reg_mapping(circ_transpiled))
+        model.measure.set_v_c_reg_mapping(
+            get_v_c_reg_mapping(circ_transpiled))
         model.q_layer = q_layer
 
-    if getattr(configs.model.arch, 'sample_arch', None) is not None:
+    if getattr(configs.model.arch, 'sample_arch', None) is not None and \
+            not configs.model.transpile_before_run:
         sample_arch = configs.model.arch.sample_arch
         logger.warning(f"Setting sample arch {sample_arch} from config file!")
         if isinstance(sample_arch, str):
@@ -183,7 +189,8 @@ def main() -> None:
     #     model.cuda(),
     #     device_ids=[dist.local_rank()],
     #     find_unused_parameters=True)
-    if getattr(model, 'sample_arch', None) is not None:
+    if getattr(model, 'sample_arch', None) is not None and \
+            not configs.model.transpile_before_run:
         n_params = model.count_sample_params()
         logger.info(f"Number of sampled params: {n_params}")
 

@@ -37,7 +37,7 @@ class SuperQFCModel0(tq.QuantumModule):
 
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, x)
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
@@ -329,7 +329,7 @@ class SuperQFCModel3(tq.QuantumModule):
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, x)
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
@@ -452,7 +452,7 @@ class SuperQFCModel4(tq.QuantumModule):
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, x)
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)

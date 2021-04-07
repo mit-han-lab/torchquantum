@@ -12,7 +12,7 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import (legalize_unitary, build_module_from_op_list,
-                                get_q_c_reg_mapping, get_cared_configs,
+                                get_v_c_reg_mapping, get_cared_configs,
                                 get_success_rate)
 from torchquantum.plugins import tq2qiskit, qiskit2tq, tq2qiskit_parameterized
 from torchquantum.super_utils import get_named_sample_arch
@@ -109,17 +109,18 @@ def main() -> None:
 
     model.load_state_dict(state_dict['model'], strict=False)
 
+    solution = None
     if 'solution' in state_dict.keys():
         solution = state_dict['solution']
         logger.info(f"Evaluate the solution {solution}")
         logger.info(f"Original score: {state_dict['score']}")
         model.set_sample_arch(solution['arch'])
 
-    if 'q_c_reg_mapping' in state_dict.keys():
+    if 'v_c_reg_mapping' in state_dict.keys():
         try:
-            model.measure.set_q_c_reg_mapping(state_dict['q_c_reg_mapping'])
+            model.measure.set_v_c_reg_mapping(state_dict['v_c_reg_mapping'])
         except AttributeError:
-            logger.warning(f"Cannot set q_c_reg_mapping.")
+            logger.warning(f"Cannot set v_c_reg_mapping.")
 
     if configs.model.load_op_list:
         assert state_dict['q_layer_op_list'] is not None
@@ -146,12 +147,16 @@ def main() -> None:
         circ.measure(list(range(model.q_device.n_wires)),
                      list(range(model.q_device.n_wires)))
 
+        if solution is not None:
+            processor.set_layout(solution['layout'])
+            logger.warning(f"Set layout {solution['layout']} for transpile!")
+
         logger.info("Transpiling circuit...")
         circ_transpiled = processor.transpile(circs=circ)
         q_layer = qiskit2tq(circ=circ_transpiled)
 
-        model.measure.set_q_c_reg_mapping(
-            get_q_c_reg_mapping(circ_transpiled))
+        model.measure.set_v_c_reg_mapping(
+            get_v_c_reg_mapping(circ_transpiled))
         model.q_layer = q_layer
 
     if configs.legalization.legalize:
@@ -206,7 +211,7 @@ def main() -> None:
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f'Model Size: {total_params}')
 
-    if hasattr(model, 'sample_arch'):
+    if hasattr(model, 'sample_arch') and not configs.model.load_op_list:
         n_params = model.count_sample_params()
         logger.info(f"Number of sampled params: {n_params}")
 

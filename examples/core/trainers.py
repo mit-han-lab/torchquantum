@@ -168,9 +168,9 @@ class QTrainer(Trainer):
             state_dict['score'] = self.score
 
         try:
-            state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
+            state_dict['v_c_reg_mapping'] = self.model.measure.v_c_reg_mapping
         except AttributeError:
-            logger.warning(f"No q_c_reg_mapping found, will not save it.")
+            logger.warning(f"No v_c_reg_mapping found, will not save it.")
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
@@ -292,9 +292,9 @@ class SuperQTrainer(Trainer):
         if getattr(self.model, 'sample_arch', None) is not None:
             state_dict['sample_arch'] = self.model.sample_arch
         try:
-            state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
+            state_dict['v_c_reg_mapping'] = self.model.measure.v_c_reg_mapping
         except AttributeError:
-            logger.warning(f"No q_c_reg_mapping found, will not save it.")
+            logger.warning(f"No v_c_reg_mapping found, will not save it.")
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
@@ -314,6 +314,8 @@ class PruningTrainer(Trainer):
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.solution = None
+        self.score = None
 
         self._parameters_to_prune = None
         self._target_pruning_amount = None
@@ -465,10 +467,14 @@ class PruningTrainer(Trainer):
             logger.warning(f"No q_layer_op_list or encoder_func_list found, "
                            f"will not save them")
 
+        if self.solution is not None:
+            state_dict['solution'] = self.solution
+            state_dict['score'] = self.score
+
         try:
-            state_dict['q_c_reg_mapping'] = self.model.measure.q_c_reg_mapping
+            state_dict['v_c_reg_mapping'] = self.model.measure.v_c_reg_mapping
         except AttributeError:
-            logger.warning(f"No q_c_reg_mapping found, will not save it.")
+            logger.warning(f"No v_c_reg_mapping found, will not save it.")
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
