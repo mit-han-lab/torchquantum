@@ -215,11 +215,12 @@ def main() -> None:
         output_all = None
         for feed_dict in tqdm.tqdm(dataflow):
             if configs.run.device == 'gpu':
-                inputs = feed_dict['image'].cuda(non_blocking=True)
-                targets = feed_dict['digit'].cuda(non_blocking=True)
+                inputs = feed_dict[configs.dataset.input_name].cuda(non_blocking=True)
+                targets = feed_dict[configs.dataset.target_name].cuda(
+                    non_blocking=True)
             else:
-                inputs = feed_dict['image']
-                targets = feed_dict['digit']
+                inputs = feed_dict[configs.dataset.input_name]
+                targets = feed_dict[configs.dataset.target_name]
 
             outputs = model(inputs,
                             verbose=configs.verbose,

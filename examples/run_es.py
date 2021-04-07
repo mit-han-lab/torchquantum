@@ -55,12 +55,15 @@ class Evaluator(object):
                     output_all = None
                     for feed_dict in dataflow:
                         if configs.run.device == 'gpu':
-                            inputs = feed_dict['image'].cuda(non_blocking=True)
-                            targets = feed_dict['digit'].cuda(
+                            inputs = feed_dict[
+                                configs.dataset.input_name].cuda(
+                                non_blocking=True)
+                            targets = feed_dict[
+                                configs.dataset.target_name].cuda(
                                 non_blocking=True)
                         else:
-                            inputs = feed_dict['image']
-                            targets = feed_dict['digit']
+                            inputs = feed_dict[configs.dataset.input_name]
+                            targets = feed_dict[configs.dataset.target_name]
 
                         outputs = model(
                             inputs, use_qiskit=configs.qiskit.use_qiskit)
@@ -100,8 +103,13 @@ class Evaluator(object):
                     'accuracy': accuracy,
                     'success_rate': success_rate,
                 }
+            if configs.es.score_mode == 'loss_succ':
+                score = loss / success_rate
+            elif configs.es.score_mode == 'acc_succ':
+                score = - accuracy * success_rate
+            else:
+                raise NotImplementedError
 
-            score = loss / success_rate
             scores.append(score)
             logger.info(f"Accuracy: {accuracy:.5f}, Loss: {loss:.5f}, "
                         f"Success Rate: {success_rate: .5f}, "

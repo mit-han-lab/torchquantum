@@ -223,10 +223,12 @@ class QiskitProcessor(object):
             results = p.map(run_job_worker, feed_dicts)
             p.close()
 
-            if isinstance(results[-1], dict):
-                results[-1] = [results[-1]]
-
-            counts = list(itertools.chain(*results))
+            if all(isinstance(result, dict) for result in results):
+                counts = results
+            else:
+                if isinstance(results[-1], dict):
+                    results[-1] = [results[-1]]
+                counts = list(itertools.chain(*results))
         else:
             job = execute(experiments=transpiled_circ,
                           backend=self.backend,
