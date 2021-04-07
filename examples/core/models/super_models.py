@@ -46,6 +46,9 @@ class SuperQFCModel0(tq.QuantumModule):
         if verbose:
             logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
 
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
         if x.dim() > 2:
             x = x.squeeze()
 
