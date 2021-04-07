@@ -13,6 +13,7 @@ es:
   crossover_size: 40
   n_iterations: 40
   est_success_rate: False
+  score_mode: loss_succ
   eval:
     use_noise_model: False
     use_real_qc: False
