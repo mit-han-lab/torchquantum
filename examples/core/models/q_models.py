@@ -4,6 +4,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
+from torchquantum.encoding import encoder_op_list_name_dict
+from torchpack.utils.logging import logger
+
 
 class Quanv0(tq.QuantumModule):
     def __init__(self, n_wires, arch=None):
@@ -1027,7 +1030,7 @@ class QFCModel12(tq.QuantumModule):
 
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, x)
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
@@ -1066,25 +1069,75 @@ class QFCModel13(QFCModel12):
                 self.cu3_layers[k](self.q_device)
 
 
-class QFCRandomModel0(QFCModel12):
-    """model with random gates"""
-    class QLayer(tq.QuantumModule):
-        def __init__(self, arch=None):
-            super().__init__()
-            self.arch = arch
-            self.n_wires = 4
-            op_type_name = arch['op_type_name']
-            op_types = [tq.op_name_dict[name] for name in op_type_name]
+class RandQLayer(tq.QuantumModule):
+    def __init__(self, arch=None):
+        super().__init__()
+        self.arch = arch
+        self.n_wires = arch['n_wires']
+        op_type_name = arch['op_type_name']
+        op_types = [tq.op_name_dict[name] for name in op_type_name]
 
-            self.random_layer = tq.RandomLayer(
-                n_ops=arch['n_random_ops'],
-                wires=list(range(self.n_wires)),
-                op_types=op_types)
+        self.random_layer = tq.RandomLayer(
+            n_ops=arch['n_random_ops'],
+            n_params=arch['n_random_params'],
+            wires=list(range(self.n_wires)),
+            op_types=op_types)
 
-        @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice):
-            self.q_device = q_device
-            self.random_layer(q_device)
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        self.random_layer(q_device)
+
+
+class QFCRandModel0(tq.QuantumModule):
+    def __init__(self, arch):
+        super().__init__()
+        self.arch = arch
+        self.n_wires = arch['n_wires']
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.encoder = tq.GeneralEncoder(
+            encoder_op_list_name_dict[arch['encoder_op_list_name']]
+        )
+        self.q_layer = RandQLayer(arch)
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
+            x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+
+        x = x.view(bsz, -1)
+
+        if use_qiskit:
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
+        else:
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+
+    @property
+    def arch_space(self):
+        space = []
+        for layer in self.q_layer.super_layers_all:
+            space.append(layer.arch_space)
+        # for the number of sampled blocks
+        space.append(list(range(self.q_layer.n_front_share_blocks,
+                                self.q_layer.n_blocks + 1)))
+        return space
 
 
 model_dict = {
@@ -1106,6 +1159,6 @@ model_dict = {
     'q_fc11': QFCModel11,
     'q_fc12': QFCModel12,
     'q_fc13': QFCModel13,
-    'q_fc_rand0': QFCRandomModel0,
+    'q_fc_rand0': QFCRandModel0,
     'q_qsvt0': QSVT0,
 }
