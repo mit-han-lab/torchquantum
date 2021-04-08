@@ -16,7 +16,6 @@ if __name__ == '__main__':
             '--jobs=5',
             '--run-dir']
 
-
     with open(f'logs/nonoise/{args.dataset}.{args.name}.nonoise.txt', 'w') as \
             wfid:
         for space in [f'u3cu3_s0',
@@ -25,8 +24,13 @@ if __name__ == '__main__':
                       f'farhi_s0',
                       f'maxwell_s0']:
 
+            if 'maxwell' in space:
+                n_blk = 4
+            else:
+                n_blk = 8
+
             exp = f'runs/{args.dataset}.{args.name}.train.searched.scratch' \
-                  f'.nonoise.setting0.{space}.plain.blk8s1.1.1'
+                  f'.nonoise.setting0.{space}.plain.blk{n_blk}s1.1.1'
 
             logger.info(f"running command {pres + [exp]}")
             subprocess.call(pres + [exp], stderr=wfid)
