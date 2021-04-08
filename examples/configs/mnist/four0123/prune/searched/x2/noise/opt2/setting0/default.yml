@@ -1,3 +1,5 @@
 prune:
-  target_pruning_amount: 0.5
+  target_pruning_amount: 0.3
   init_pruning_amount: 0.1
+  start_epoch: 0
+  end_epoch: 100
