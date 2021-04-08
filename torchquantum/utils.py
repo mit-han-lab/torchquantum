@@ -245,6 +245,7 @@ def build_module_from_op_list(op_list: List[Dict],
                 params = params % (2 * np.pi)
                 params[params > np.pi] -= 2 * np.pi
                 if all(abs(params) < thres):
+                    n_removed_ops += 1
                     continue
 
         op = tq.op_name_dict[info['name']](
