@@ -54,6 +54,8 @@ class QiskitProcessor(object):
                  seed_simulator=42,
                  optimization_level=None,
                  max_jobs=5,
+                 remove_ops=False,
+                 remove_ops_thres=1e-4,
                  ):
         self.use_real_qc = use_real_qc
         self.noise_model_name = noise_model_name
@@ -76,6 +78,9 @@ class QiskitProcessor(object):
         self.empty_pass_manager = EmptyPassManager()
 
         self.transpiled_circs = None
+
+        self.remove_ops = remove_ops
+        self.remove_ops_thres = remove_ops_thres
 
         self.qiskit_init()
 
@@ -153,7 +158,9 @@ class QiskitProcessor(object):
                                  ):
         circ_parameterized, params = tq2qiskit_parameterized(
             q_device, q_layer_parameterized.func_list)
-        circ_fixed = tq2qiskit(q_device, q_layer_fixed)
+        circ_fixed = tq2qiskit(q_device, q_layer_fixed,
+                               remove_ops=self.remove_ops,
+                               remove_ops_thres=self.remove_ops_thres)
         circ = circ_parameterized + circ_fixed
 
         v_c_reg_mapping = q_layer_measure.v_c_reg_mapping

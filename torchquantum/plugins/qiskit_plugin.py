@@ -18,7 +18,7 @@ __all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq']
 
 # construct a QuantumCircuit object according to the tq module
 def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
-              draw=False):
+              draw=False, remove_ops=False, remove_ops_thres=1e-4):
     # build the module list without changing the statevector of QuantumDevice
     original_wires_per_block = m.wires_per_block
     original_static_mode = m.static_mode
@@ -51,7 +51,40 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
         except AssertionError:
             logger.exception(f"Cannot convert batch model tq module")
 
+    n_removed_ops = 0
+
     for module in module_list:
+        if remove_ops:
+            if module.name in ['RX',
+                               'RY',
+                               'RZ',
+                               'RXX',
+                               'RYY',
+                               'RZZ',
+                               'RZX',
+                               'PhaseShift',
+                               'CRX',
+                               'CRY',
+                               'CRZ',
+                               'U1',
+                               'CU1']:
+                param = module.params[0][0].item()
+                param = param % (2 * np.pi)
+                param = param - 2 * np.pi if param > np.pi else param
+                if abs(param) < remove_ops_thres:
+                    n_removed_ops += 1
+                    continue
+
+            elif module.name in ['U2',
+                                 'U3',
+                                 'CU3']:
+                param = module.params[0].data.cpu().numpy()
+                param = param % (2 * np.pi)
+                param[param > np.pi] -= 2 * np.pi
+                if all(abs(param) < remove_ops_thres):
+                    n_removed_ops += 1
+                    continue
+
         if module.name == 'Hadamard':
             circ.h(*module.wires)
         elif module.name == 'SHadamard':
@@ -148,6 +181,11 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
         import matplotlib.pyplot as plt
         circ.draw()
         plt.show()
+
+    if n_removed_ops > 0:
+        logger.warning(f"Remove {n_removed_ops} operations with small "
+                       f"parameter magnitude.")
+
     return circ
 
 
