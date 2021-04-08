@@ -343,7 +343,8 @@ class PruningTrainer(Trainer):
         self._target_pruning_amount = configs.prune.target_pruning_amount
         self._init_pruning_amount = configs.prune.init_pruning_amount
         self.prune_amount_scheduler = ThresholdScheduler(
-            0, configs.run.n_epochs, self._init_pruning_amount,
+            configs.prune.start_epoch, configs.prune.end_epoch,
+            self._init_pruning_amount,
             self._target_pruning_amount)
         self.prune_amount = self._init_pruning_amount
 
