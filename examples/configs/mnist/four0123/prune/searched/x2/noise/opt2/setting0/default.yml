@@ -1,0 +1,3 @@
+prune:
+  target_pruning_amount: 0.5
+  init_pruning_amount: 0.1

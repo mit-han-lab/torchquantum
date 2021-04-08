@@ -1,0 +1,3 @@
+qiskit:
+  backend_name: ibmqx2
+  noise_model_name: ibmqx2

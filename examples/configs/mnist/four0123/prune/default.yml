@@ -1,0 +1,11 @@
+trainer:
+  name: pruning_trainer
+
+prune:
+  target_pruning_amount: 0.5
+  init_pruning_amount: 0.1
+
+model:
+  transpile_before_run: True
+
+

@@ -1,0 +1,7 @@
+ckpt:
+  load_ckpt: True
+  name: 'checkpoints/max-acc-valid.pt'
+  weight_from_scratch: False
+
+trainer:
+  name: pruning_trainer

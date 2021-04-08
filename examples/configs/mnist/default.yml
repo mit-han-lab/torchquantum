@@ -12,6 +12,7 @@ dataset:
   n_valid_samples: null
   input_name: image
   target_name: digit
+  fashion: False
 
 criterion:
   name: nll
@@ -83,6 +84,7 @@ qiskit:
   seed_simulator: 42
   optimization_level: 0
   est_success_rate: False
+  max_jobs: 1
 
 ckpt:
   load_ckpt: False
