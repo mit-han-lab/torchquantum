@@ -18,6 +18,7 @@ from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.utils import (build_module_from_op_list,
+                                build_module_op_list,
                                 get_v_c_reg_mapping,
                                 get_cared_configs)
 from torchquantum.super_utils import get_named_sample_arch
@@ -184,13 +185,24 @@ def main() -> None:
             logger.warning(f"Decoded sample arch: {sample_arch}")
         model.set_sample_arch(sample_arch)
 
+    if configs.trainer.name == 'pruning_trainer':
+        """
+        in pruning, convert the super layers to module list, otherwise the 
+        pruning ratio is difficulty to set
+        """
+        logger.warning(f"Convert sampled layer to module list layer!")
+        model.q_layer = build_module_from_op_list(
+            build_module_op_list(model.q_layer)
+        )
+
     model.to(device)
     # model = torch.nn.parallel.DistributedDataParallel(
     #     model.cuda(),
     #     device_ids=[dist.local_rank()],
     #     find_unused_parameters=True)
     if getattr(model, 'sample_arch', None) is not None and \
-            not configs.model.transpile_before_run:
+            not configs.model.transpile_before_run and \
+            not configs.trainer.name == 'pruning_trainer':
         n_params = model.count_sample_params()
         logger.info(f"Number of sampled params: {n_params}")
 

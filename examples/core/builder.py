@@ -256,5 +256,7 @@ def make_qiskit_processor():
         seed_simulator=configs.qiskit.seed_simulator,
         optimization_level=configs.qiskit.optimization_level,
         max_jobs=configs.qiskit.max_jobs,
+        remove_ops=configs.prune.eval.remove_ops,
+        remove_ops_thres=configs.prune.eval.remove_ops_thres,
     )
     return processor
