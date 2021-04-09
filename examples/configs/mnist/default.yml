@@ -94,3 +94,8 @@ ckpt:
 verbose: False
 
 get_n_params: False
+
+prune:
+  eval:
+    remove_ops: False
+    remove_ops_thres: null

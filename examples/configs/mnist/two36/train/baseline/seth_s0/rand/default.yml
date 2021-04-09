@@ -1,0 +1,6 @@
+model:
+  name: q_fc_rand0
+  arch:
+    op_type_name: ['zz', 'ry']
+    n_random_ops: null
+
