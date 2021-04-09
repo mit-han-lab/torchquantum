@@ -1,6 +1,7 @@
 import numpy as np
 import random
-
+import itertools
+from torchpack.utils.logging import logger
 
 __all__ = ['SimpleGA', 'EvolutionEngine']
 
@@ -150,6 +151,7 @@ class EvolutionEngine(object):
                  n_available_wires,
                  arch_space,
                  gene_mask=None,
+                 enumerate_layout=False,
                  ):
         self.population_size = population_size
         self.parent_size = parent_size
@@ -176,9 +178,23 @@ class EvolutionEngine(object):
 
         # to constraint the design space in a fine-grained manner
         self.gene_mask = gene_mask
+        if gene_mask is not None and \
+                all(np.array(gene_mask[:n_wires]) == -1) and \
+                all(np.array(gene_mask[n_wires:]) > -1) and enumerate_layout:
+            # enumerate all possible layouts and only need run 1 iteration
+            logger.warning(f"Shift to exhaustive search for best layout, "
+                           f"surpass all evolution configs!")
+            self.population = self.enumerate_layout()
+        else:
+            # initialize with random samples
+            self.population = self.random_sample(self.population_size)
 
-        # initialize with random samples
-        self.population = self.random_sample(self.population_size)
+    def enumerate_layout(self):
+        population = []
+        for layout in itertools.permutations(
+                list(range(self.n_available_wires)), r=self.n_wires):
+            population.append(list(layout) + self.gene_mask[self.n_wires:])
+        return population
 
     def ask(self):
         """return the solutions"""
