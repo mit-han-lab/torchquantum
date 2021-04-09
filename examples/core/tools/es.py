@@ -149,6 +149,7 @@ class EvolutionEngine(object):
                  n_wires,
                  n_available_wires,
                  arch_space,
+                 gene_mask=None,
                  ):
         self.population_size = population_size
         self.parent_size = parent_size
@@ -173,6 +174,9 @@ class EvolutionEngine(object):
         self.best_solution = None
         self.best_score = None
 
+        # to constraint the design space in a fine-grained manner
+        self.gene_mask = gene_mask
+
         # initialize with random samples
         self.population = self.random_sample(self.population_size)
 
@@ -193,6 +197,7 @@ class EvolutionEngine(object):
         k = 0
         while k < self.mutation_size:
             mutated_gene = self.mutate(random.choices(parents)[0])
+            mutated_gene = self.apply_gene_mask(mutated_gene)
             if self.satisfy_constraints(mutated_gene):
                 mutate_population.append(mutated_gene)
                 k += 1
@@ -202,6 +207,7 @@ class EvolutionEngine(object):
         k = 0
         while k < self.crossover_size:
             crossovered_gene = self.crossover(random.sample(parents, 2))
+            crossovered_gene = self.apply_gene_mask(crossovered_gene)
             if self.satisfy_constraints(crossovered_gene):
                 crossover_population.append(crossovered_gene)
                 k += 1
@@ -230,6 +236,15 @@ class EvolutionEngine(object):
         # Different logical qubits map to different physical qubits
         return len(set(gene[:self.n_wires])) == self.n_wires
 
+    def apply_gene_mask(self, sample_gene):
+        masked_gene = sample_gene.copy()
+        if self.gene_mask is not None:
+            for k, gene in enumerate(self.gene_mask):
+                if not gene == -1:
+                    masked_gene[k] = gene
+
+        return masked_gene
+
     def random_sample(self, sample_num):
         population = []
         i = 0
@@ -237,6 +252,7 @@ class EvolutionEngine(object):
             samp_gene = []
             for k in range(self.gene_len):
                 samp_gene.append(random.choices(self.gene_choice[k])[0])
+            samp_gene = self.apply_gene_mask(samp_gene)
             if self.satisfy_constraints(samp_gene):
                 population.append(samp_gene)
                 i += 1

@@ -27,6 +27,7 @@ class Evaluator(object):
                      iter_n=None, population_size=None):
         scores = []
 
+        best_solution = None
         best_solution_accuracy = 0
         best_solution_loss = 0
         best_solution_success_rate = 0
@@ -111,17 +112,20 @@ class Evaluator(object):
                 raise NotImplementedError
 
             scores.append(score)
-            logger.info(f"Accuracy: {accuracy:.5f}, Loss: {loss:.5f}, "
+            logger.info(f"Current solution: {solution}\n"
+                        f"Accuracy: {accuracy:.5f}, Loss: {loss:.5f}, "
                         f"Success Rate: {success_rate: .5f}, "
                         f"Score: {score:.5f}")
 
             if score < best_solution_score:
+                best_solution = solution
                 best_solution_accuracy = accuracy
                 best_solution_success_rate = success_rate
                 best_solution_loss = loss
                 best_solution_score = score
 
             logger.info(f"Best of iteration: "
+                        f"Solution: {best_solution}\n"
                         f"Accuracy: {best_solution_accuracy:.5f}, "
                         f"Loss: {best_solution_loss:.5f}, "
                         f"Success Rate: {best_solution_success_rate: .5f}, "
@@ -254,6 +258,7 @@ def main() -> None:
         n_wires=model.q_device.n_wires,
         n_available_wires=n_available_wires,
         arch_space=model.arch_space,
+        gene_mask=configs.es.gene_mask,
     )
 
     evaluator = Evaluator()
