@@ -1,7 +1,7 @@
 model:
   name: super_qfc0
   arch:
-    n_blocks: 8
+    n_blocks: 4
     n_front_share_blocks: 1
     n_front_share_wires: 1
     n_front_share_ops: 1

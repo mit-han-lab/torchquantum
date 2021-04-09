@@ -14,7 +14,7 @@ if __name__ == '__main__':
             'examples/eval.py',
             f'examples/configs/'
             f'{args.dataset}/{args.name}/eval/x2/real/opt2/300.yml',
-            '--jobs=5',
+            '--jobs=1',
             '--run-dir']
 
     # params = [7, 26, 15, 17]

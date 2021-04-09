@@ -2,4 +2,4 @@ model:
   arch:
     encoder_op_list_name: 10_ryzx
     n_layers_per_block: 2
-    q_layer_name: u3cu3_s0
+    q_layer_name: farhi_s0

@@ -3,7 +3,7 @@ model:
 
 ckpt:
   load_ckpt: True
-  name: 'checkpoints/step-18400.pt'
+  name: 'checkpoints/step-18000.pt'
 
 prune:
   eval:
