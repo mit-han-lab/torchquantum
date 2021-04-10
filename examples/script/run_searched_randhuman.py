@@ -14,14 +14,14 @@ if __name__ == '__main__':
             'examples/eval.py',
             f'examples/configs/'
             f'{args.dataset}/{args.name}/eval/x2/real/opt2/300.yml',
-            '--jobs=1',
+            '--jobs=4',
             '--run-dir']
 
     # params = [7, 26, 15, 17]
 
     with open(f"logs/x2/randhuman/{args.dataset}.{args.name}."
               f"{'-'.join(list(map(str, args.nparams)))}.randhuman.txt",
-              'w') as \
+              'a') as \
             wfid:
         for k, space in enumerate([f'u3cu3_s0',
                                    f'seth_s0',

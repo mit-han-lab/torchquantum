@@ -1,0 +1,4 @@
+model:
+  arch:
+    n_random_params: 126
+

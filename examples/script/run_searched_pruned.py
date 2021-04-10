@@ -21,7 +21,7 @@ if __name__ == '__main__':
     with open(f"logs/x2/pruned/{args.dataset}.{args.name}."
               f"{'-'.join(list(map(str, args.pr)))}.{args.space}."
               f"{args.mode}.pruned.txt",
-              'w') as wfid:
+              'a') as wfid:
         for prune_ratio in args.pr:
             if 'maxwell' in args.space:
                 n_blk = 4

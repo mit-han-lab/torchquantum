@@ -16,13 +16,16 @@ if __name__ == '__main__':
             '--jobs=2',
             '--run-dir']
 
-    with open(f'logs/x2/{args.dataset}.{args.name}.all_space.txt', 'w') as \
+    with open(f'logs/x2/{args.dataset}.{args.name}.all_space3_farhi.txt',
+              'a') as \
             wfid:
-        for space in [f'u3cu3_s0',
-                      f'seth_s0',
-                      f'barren_s0',
+        for space in [
+            # f'u3cu3_s0',
+            #           f'seth_s0',
+            #           f'barren_s0',
                       f'farhi_s0',
-                      f'maxwell_s0']:
+                     # f'maxwell_s0'
+        ]:
             if 'maxwell' in space:
                 n_blk = 4
             else:

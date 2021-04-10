@@ -16,7 +16,7 @@ if __name__ == '__main__':
             '--jobs=5',
             '--run-dir']
 
-    with open(f'logs/nonoise/{args.dataset}.{args.name}.nonoise.txt', 'w') as \
+    with open(f'logs/nonoise/{args.dataset}.{args.name}.nonoise.txt', 'a') as \
             wfid:
         for space in [f'u3cu3_s0',
                       f'seth_s0',

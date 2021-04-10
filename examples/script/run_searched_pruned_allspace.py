@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     with open(f"logs/x2/pruned/{dataset}.{name}."
               f"all_space.pruned.txt",
-              'w') as wfid:
+              'a') as wfid:
         for k, space in enumerate([
                       f'seth_s0',
                       f'barren_s0',
