@@ -1,6 +1,7 @@
 import subprocess
 from torchpack.utils.logging import logger
 import argparse
+import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -25,7 +26,7 @@ if __name__ == '__main__':
                                    f'barren_s0',
                                    f'farhi_s0',
                                    f'maxwell_s0']):
-            for seed in range(4):
+            for seed in range(3):
                 exp = f'runs/{args.dataset}.{args.name}.train.baseline.' \
                       f'{space}.rand.param{args.nparams[k]}.seed{seed}'
 

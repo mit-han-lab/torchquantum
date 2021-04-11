@@ -11,30 +11,31 @@ if __name__ == '__main__':
     # parser.add_argument('--mode', type=str)
     # args = parser.parse_args()
 
-    dataset = 'vowel'
-    name = 'four0516'
+    dataset = 'mnist'
+    name = 'two36'
 
     pres = ['python',
             'examples/eval.py',
             f'examples/configs/'
             f'{dataset}/{name}/eval/x2/real/opt2/pruned/300.yml',
-            '--jobs=1',
+            '--jobs=4',
             '--run-dir']
 
-    ratios_all = [[0.05]]
+    ratios_all = [[0.05, 0.3], [0.1, 0.3], [0.1, 0.2]]
     modes = [
-             # 'ldiff_blkexpand.blk8s1.1.1_diff7_chu10_sta40',
-             'ldiff_blkexpand.blk8s1.1.1_diff7_chu3_sta40',
+             'ldiff.blk8s1.1.1_diff7',
+             'ldiff.blk8s1.1.1_diff7',
+             'ldiff_blkexpand.blk8s1.1.1_diff7_chu10_sta40',
              ]
 
     with open(f"logs/x2/pruned/{dataset}.{name}."
-              f"all_space.pruned.fixed2.txt",
+              f"all_space.pruned.fixed0.txt",
               'a') as wfid:
         for k, space in enumerate([
-            'barren_s0'
-                      # f'seth_s0',
-                      # f'maxwell_s0'
-        ]):
+                      f'seth_s0',
+                      f'barren_s0',
+                      f'farhi_s0',
+                      ]):
             ratios = ratios_all[k]
             mode = modes[k]
             for ratio in ratios:

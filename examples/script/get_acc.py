@@ -9,8 +9,7 @@ if __name__ == '__main__':
 
     cnt = 0
     with open(
-            f'logs/sfsuper/eval_subnet_noise_x2_opt2_ratio_500insuper_u3cu3_s0'
-            f'.plain.blk8s1_ws1_os1.txt',
+            f'logs/quito/fashion.two36.seth_s0.txt',
               'r') as rfid:
         for line in rfid:
             if 'Accuracy' in line:
