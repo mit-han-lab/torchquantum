@@ -152,6 +152,7 @@ class EvolutionEngine(object):
                  arch_space,
                  gene_mask=None,
                  enumerate_layout=False,
+                 random_search=False
                  ):
         self.population_size = population_size
         self.parent_size = parent_size
@@ -175,6 +176,8 @@ class EvolutionEngine(object):
         self.gene_len = len(self.gene_choice)
         self.best_solution = None
         self.best_score = None
+
+        self.random_search = random_search
 
         # to constraint the design space in a fine-grained manner
         self.gene_mask = gene_mask
@@ -208,27 +211,33 @@ class EvolutionEngine(object):
         parents = [self.population[i] for i in sorted_idx]
         self.best_score = scores[sorted_idx[0]]
 
-        # mutation
-        mutate_population = []
-        k = 0
-        while k < self.mutation_size:
-            mutated_gene = self.mutate(random.choices(parents)[0])
-            mutated_gene = self.apply_gene_mask(mutated_gene)
-            if self.satisfy_constraints(mutated_gene):
-                mutate_population.append(mutated_gene)
-                k += 1
+        if self.random_search:
+            new_rand = self.random_sample(self.population_size -
+                                          self.parent_size)
+            self.population = parents + new_rand
+        else:
+            # mutation
+            mutate_population = []
+            k = 0
+            while k < self.mutation_size:
+                mutated_gene = self.mutate(random.choices(parents)[0])
+                mutated_gene = self.apply_gene_mask(mutated_gene)
+                if self.satisfy_constraints(mutated_gene):
+                    mutate_population.append(mutated_gene)
+                    k += 1
 
-        # crossover
-        crossover_population = []
-        k = 0
-        while k < self.crossover_size:
-            crossovered_gene = self.crossover(random.sample(parents, 2))
-            crossovered_gene = self.apply_gene_mask(crossovered_gene)
-            if self.satisfy_constraints(crossovered_gene):
-                crossover_population.append(crossovered_gene)
-                k += 1
+            # crossover
+            crossover_population = []
+            k = 0
+            while k < self.crossover_size:
+                crossovered_gene = self.crossover(random.sample(parents, 2))
+                crossovered_gene = self.apply_gene_mask(crossovered_gene)
+                if self.satisfy_constraints(crossovered_gene):
+                    crossover_population.append(crossovered_gene)
+                    k += 1
 
-        self.population = parents + mutate_population + crossover_population
+            self.population = parents + mutate_population + \
+                crossover_population
 
     def crossover(self, genes):
         crossovered_gene = []

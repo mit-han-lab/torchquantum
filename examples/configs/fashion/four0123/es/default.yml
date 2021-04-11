@@ -6,6 +6,7 @@ ckpt:
   name: 'checkpoints/step-18000.pt'
 
 es:
+  random_search: False
   population_size: 100
   parent_size: 20
   mutation_size: 40

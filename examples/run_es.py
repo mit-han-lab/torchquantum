@@ -259,6 +259,7 @@ def main() -> None:
         n_available_wires=n_available_wires,
         arch_space=model.arch_space,
         gene_mask=configs.es.gene_mask,
+        random_search=configs.es.random_search,
     )
 
     evaluator = Evaluator()
