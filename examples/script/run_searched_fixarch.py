@@ -11,17 +11,19 @@ if __name__ == '__main__':
     # parser.add_argument('--mode', type=str)
     # args = parser.parse_args()
 
-    datasets = ['mnist', 'mnist', 'vowel', 'fashion']
-    names = ['four0123', 'two36', 'four0516', 'four0123']
-    spaces = ['u3cu3_s0', 'farhi_s0', 'maxwell_s0', 'barren_s0']
+    datasets = ['mnist', 'mnist', 'vowel', 'fashion', 'fashion']
+    names = ['four0123', 'two36', 'four0516', 'four0123', 'two36']
+    spaces = ['u3cu3_s0', 'farhi_s0', 'maxwell_s0', 'barren_s0', 'seth_s0']
 
     modes = ['ldiff_blkexpand.blk8s1.1.1_diff7_chu3_sta40',
              'ldiff_blkexpand.blk8s1.1.1_diff7_chu10_sta40',
              'ldiff_blkexpand.blk4s1.1.1_diff7_chu3_sta40',
              'plain.blk8s1.1.1',
+             'plain.blk8s1.1.1',
              ]
 
-    with open(f"logs/x2/ablation/fix_arch.all_space.txt", 'a') as wfid:
+    with open(f"logs/x2/ablation/fix_arch.all_space.newbatch.txt", 'a') as \
+            wfid:
         for dataset, name, space, mode in zip(datasets, names, spaces, modes):
             pres = ['python',
                     'examples/eval.py',

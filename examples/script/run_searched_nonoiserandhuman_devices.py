@@ -21,15 +21,21 @@ if __name__ == '__main__':
             '--jobs=4',
             '--run-dir']
 
-    with open(f"logs/{args.device}/randhuman.seth_s0.{dataset}.{name}."
-              f"{args.nparams}.txt",
-              'a') as \
-            wfid:
-        exp = f'runs/{dataset}.{name}.train.baseline.' \
-              f'{space}.rand.param{args.nparams}'
+    with open(f"logs/{args.device}/nonoise-rand-human.seth_s0.{dataset}"
+              f".{name}.{args.nparams}.txt", 'a') as wfid:
+
+        exp = f'runs/{dataset}.{name}.train.searched.scratch' \
+              f'.nonoise.setting0.{space}.plain.blk8s1.1.1'
 
         logger.info(f"running command {pres + [exp]}")
         subprocess.call(pres + [exp], stderr=wfid)
+
+        for seed in range(4):
+            exp = f'runs/{dataset}.{name}.train.baseline.' \
+                  f'{space}.rand.param{args.nparams}.seed{seed}'
+
+            logger.info(f"running command {pres + [exp]}")
+            subprocess.call(pres + [exp], stderr=wfid)
 
         exp = f'runs/{dataset}.{name}.train.baseline.' \
               f'{space}.human.param{args.nparams}'
