@@ -3,7 +3,7 @@ import torchquantum as tq
 import pathos.multiprocessing as multiprocessing
 import itertools
 
-from qiskit import Aer, execute, IBMQ, transpile
+from qiskit import Aer, execute, IBMQ, transpile, QuantumCircuit
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
@@ -256,6 +256,87 @@ class QiskitProcessor(object):
         measured_qiskit = get_expectations_from_counts(
             counts, n_wires=q_device.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
+
+        return measured_qiskit
+
+    def process_multi_measure(self,
+                              q_device: tq.QuantumDevice,
+                              q_layer: tq.QuantumModule,
+                              q_layer_measure: tq.QuantumModule,):
+        obs_list = q_layer_measure.obs_list
+        v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
+        circ_fixed = tq2qiskit(q_device, q_layer,
+                               remove_ops=self.remove_ops,
+                               remove_ops_thres=self.remove_ops_thres)
+
+        transpiled_circ_fixed = self.transpile(circ_fixed)
+
+        circ_all = []
+
+        for hamil in obs_list:
+            circ_diagonalize = QuantumCircuit(q_device.n_wires,
+                                              q_device.n_wires)
+
+            # diagonalize the measurements
+            for wire, observable in zip(hamil['wires'], hamil['observables']):
+                if observable == 'x':
+                    circ_diagonalize.h(qubit=wire)
+                elif observable == 'y':
+                    circ_diagonalize.z(qubit=wire)
+                    circ_diagonalize.s(qubit=wire)
+                    circ_diagonalize.h(qubit=wire)
+
+            if v_c_reg_mapping is not None:
+                for q_reg, c_reg in v_c_reg_mapping['v2c'].items():
+                    circ_diagonalize.measure(q_reg, c_reg)
+            else:
+                circ_diagonalize.measure(list(range(q_device.n_wires)),
+                                         list(range(q_device.n_wires)))
+
+            transpiled_circ_diagonalize = self.transpile(circ_diagonalize)
+            circ_all.append(transpiled_circ_fixed +
+                            transpiled_circ_diagonalize)
+
+        self.transpiled_circs = circ_all
+
+        if hasattr(self.backend.configuration(), 'max_experiments'):
+            chunk_size = self.backend.configuration().max_experiments
+        else:
+            # using simulator, apply multithreading
+            chunk_size = len(circ_all) // self.max_jobs
+
+        split_circs = [circ_all[i:i + chunk_size] for i in range(
+            0, len(circ_all), chunk_size)]
+
+        qiskit_verbose = self.max_jobs <= 6
+        feed_dicts = []
+        for split_circ in split_circs:
+            feed_dict = {
+                'experiments': split_circ,
+                'backend': self.backend,
+                'pass_manager': self.empty_pass_manager,
+                'shots': self.n_shots,
+                'seed_simulator': self.seed_simulator,
+                'noise_model': self.noise_model,
+            }
+            feed_dicts.append([feed_dict, qiskit_verbose])
+
+        p = multiprocessing.Pool(self.max_jobs)
+        results = p.map(run_job_worker, feed_dicts)
+        p.close()
+
+        if all(isinstance(result, dict) for result in results):
+            counts = results
+        else:
+            if isinstance(results[-1], dict):
+                results[-1] = [results[-1]]
+            counts = list(itertools.chain(*results))
+
+        measured_qiskit = get_expectations_from_counts(
+            counts, n_wires=q_device.n_wires)
+
+        measured_qiskit = torch.tensor(measured_qiskit,
+                                       device=q_device.state.device)
 
         return measured_qiskit
 

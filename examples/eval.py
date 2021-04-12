@@ -239,10 +239,14 @@ def main() -> None:
                 output_all = torch.cat([output_all, outputs], dim=0)
             # if configs.verbose:
             #     logger.info(f"Measured log_softmax: {outputs}")
-            log_acc(output_all, target_all)
+            if not configs.dataset.name == 'vqe':
+                log_acc(output_all, target_all)
 
     logger.info("Final:")
-    log_acc(output_all, target_all)
+    if not configs.dataset.name == 'vqe':
+        log_acc(output_all, target_all)
+    else:
+        logger.info(f"Eigenvalue: {output_all.detach().cpu().numpy()}")
 
 
 if __name__ == '__main__':

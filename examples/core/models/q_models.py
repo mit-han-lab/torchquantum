@@ -1145,8 +1145,8 @@ class QVQEModel0(tq.QuantumModule):
         bsz = x.shape[0]
 
         if use_qiskit:
-            x = self.qiskit_processor.process(
-                self.q_device, self.q_layer, self.measure, x)
+            x = self.qiskit_processor.process_multi_measure(
+                self.q_device, self.q_layer, self.measure)
         else:
             self.q_device.reset_states(bsz=1)
             self.q_layer(self.q_device)
@@ -1154,13 +1154,21 @@ class QVQEModel0(tq.QuantumModule):
 
         hamil_coefficients = torch.tensor([hamil['coefficient'] for hamil in
                                            self.hamil_info['hamil_list']],
-                                          device=x.device)
+                                          device=x.device).double()
 
-        x = torch.cumprod(x, dim=-1)[:, -1]
-        x = torch.dot(x, hamil_coefficients)
+        for k, hamil in enumerate(self.hamil_info['hamil_list']):
+            for wire, observable in zip(hamil['wires'], hamil['observables']):
+                if observable == 'i':
+                    x[k][wire] = 1
+            for wire in range(self.q_device.n_wires):
+                if wire not in hamil['wires']:
+                    x[k][wire] = 1
 
         if verbose:
             logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        x = torch.cumprod(x, dim=-1)[:, -1]
+        x = torch.dot(x, hamil_coefficients)
 
         if x.dim() == 0:
             x = x.unsqueeze(0)
