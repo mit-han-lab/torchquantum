@@ -3,11 +3,13 @@ import torch.nn as nn
 
 from torchpack.utils.config import configs
 from torchpack.utils.typing import Dataset, Optimizer, Scheduler
-from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError, MaxSaver,
+from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError,
+                                 MaxSaver, MinSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
 from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
     NLLError, TrainerRestore
 from torchquantum.plugins import QiskitProcessor
+from torchquantum.vqe_utils import parse_hamiltonian_file
 
 
 __all__ = [
@@ -46,6 +48,11 @@ def make_dataset() -> Dataset:
             binarize_threshold=configs.dataset.binarize_threshold,
             digits_of_interest=configs.dataset.digits_of_interest,
         )
+    elif configs.dataset.name == 'vqe':
+        from .datasets import VQE
+        dataset = VQE(
+            steps_per_epoch=configs.run.steps_per_epoch
+        )
     else:
         raise NotImplementedError(configs.dataset.name)
 
@@ -77,6 +84,11 @@ def make_model() -> nn.Module:
     elif configs.model.name.startswith('q10digit_'):
         from .models.q10digit_models import model_dict
         model = model_dict[configs.model.name](arch=configs.model.arch)
+    elif configs.model.name.startswith('vqe_'):
+        from .models.q_models import model_dict
+        model = model_dict[configs.model.name](
+            arch=configs.model.arch,
+            hamil_info=parse_hamiltonian_file(configs.model.hamil_filename))
     else:
         raise NotImplementedError(configs.model.name)
 
@@ -94,6 +106,12 @@ def make_criterion() -> nn.Module:
     elif configs.criterion.name == 'complex_mae':
         from .criterions import complex_mae
         criterion = complex_mae
+    elif configs.criterion.name == 'minimize':
+        from .criterions import minimize
+        criterion = minimize
+    elif configs.criterion.name == 'maximize':
+        from .criterions import maximize
+        criterion = maximize
     else:
         raise NotImplementedError(configs.criterion.name)
 
@@ -201,6 +219,11 @@ def get_subcallbacks(config):
             subcallbacks.append(
                 NLLError(name=subcallback['name'])
             )
+        elif subcallback['metrics'] == 'MinError':
+            from .callbacks import MinError
+            subcallbacks.append(
+                MinError(name=subcallback['name'])
+            )
         else:
             raise NotImplementedError(subcallback['metrics'])
     return subcallbacks
@@ -231,6 +254,8 @@ def make_callbacks(dataflow, state=None):
             callback = Saver(max_to_keep=config['max_to_keep'])
         elif config['callback'] == 'MaxSaver':
             callback = MaxSaver(config['name'])
+        elif config['callback'] == 'MinSaver':
+            callback = MinSaver(config['name'])
         else:
             raise NotImplementedError(config['callback'])
         callbacks.append(callback)

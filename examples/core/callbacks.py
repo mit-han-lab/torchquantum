@@ -18,7 +18,7 @@ from torchquantum.utils import legalize_unitary
 
 
 __all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError',
-           'TrainerRestore']
+           'TrainerRestore', 'MinError']
 
 
 class LegalInferenceRunner(Callback):
@@ -111,6 +111,35 @@ class NLLError(Callback):
 
         self.size += targets.size(0)
         self.errors += error.item() * targets.size(0)
+
+    def _after_epoch(self) -> None:
+        self.size = dist.allreduce(self.size, reduction='sum')
+        self.errors = dist.allreduce(self.errors, reduction='sum')
+        self.trainer.summary.add_scalar(self.name, self.errors / self.size)
+
+
+class MinError(Callback):
+    def __init__(self,
+                 *,
+                 output_tensor: str = 'outputs',
+                 target_tensor: str = 'targets',
+                 name: str = 'error') -> None:
+        self.output_tensor = output_tensor
+        self.target_tensor = target_tensor
+        self.name = name
+
+    def _before_epoch(self):
+        self.size = 0
+        self.errors = 0
+
+    def _after_step(self, output_dict: Dict[str, Any]) -> None:
+        outputs = output_dict[self.output_tensor]
+        targets = output_dict[self.target_tensor]
+
+        error = outputs.sum()
+
+        self.size += outputs.size(0)
+        self.errors += error.item()
 
     def _after_epoch(self) -> None:
         self.size = dist.allreduce(self.size, reduction='sum')

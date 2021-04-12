@@ -1,10 +1,7 @@
-import functools
 import torch
-import torch.nn as nn
 import torchquantum as tq
 import numpy as np
 
-from torchquantum.macro import F_DTYPE
 from typing import Union, List
 
 
@@ -60,6 +57,56 @@ class MeasureAll(tq.QuantumModule):
             x = x[:, perm]
 
         return x
+
+    def set_v_c_reg_mapping(self, mapping):
+        self.v_c_reg_mapping = mapping
+
+
+class MeasureMultipleTimes(tq.QuantumModule):
+    """
+    obs list:
+    list of dict: example
+    {'wires': [0, 2, 3, 1], 'observables': ['x', 'y', 'z', 'i']
+    }
+    """
+    def __init__(self, obs_list, v_c_reg_mapping=None):
+        super().__init__()
+        self.obs_list = obs_list
+        self.v_c_reg_mapping = v_c_reg_mapping
+
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        res_all = []
+
+        for layer in self.obs_list:
+            # create a new q device for each time of measurement
+            q_device_new = tq.QuantumDevice(n_wires=q_device.n_wires)
+            q_device_new.clone_states(existing_states=q_device.states)
+            q_device_new.state = q_device.state
+
+            observables = []
+            for wire in range(q_device.n_wires):
+                observables.append(tq.I())
+
+            for wire, observable in zip(layer['wires'], layer['observables']):
+                observables[wire] = tq.op_name_dict[observable]()
+
+            res = expval(q_device_new, wires=list(range(q_device.n_wires)),
+                         observables=observables)
+
+            if self.v_c_reg_mapping is not None:
+                c2v_mapping = self.v_c_reg_mapping['c2v']
+                """
+                the measurement is not normal order, need permutation 
+                """
+                perm = []
+                for k in range(res.shape[-1]):
+                    if k in c2v_mapping.keys():
+                        perm.append(c2v_mapping[k])
+                res = res[:, perm]
+            res_all.append(res)
+
+        return torch.cat(res_all)
 
     def set_v_c_reg_mapping(self, mapping):
         self.v_c_reg_mapping = mapping
