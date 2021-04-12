@@ -18,7 +18,10 @@ class VQEDataset:
         return instance
 
     def __len__(self) -> int:
-        return self.steps_per_epoch
+        if self.split == 'train':
+            return self.steps_per_epoch
+        else:
+            return 1
 
 
 class VQE(Dataset):

@@ -1130,7 +1130,7 @@ class QFCRandModel0(tq.QuantumModule):
         return x
 
 
-class QVQEModel0(tq.QuantumModule):
+class QVQERandModel0(tq.QuantumModule):
     def __init__(self, arch, hamil_info):
         super().__init__()
         self.arch = arch
@@ -1196,6 +1196,6 @@ model_dict = {
     'q_fc12': QFCModel12,
     'q_fc13': QFCModel13,
     'q_fc_rand0': QFCRandModel0,
-    'vqe_0': QVQEModel0,
+    'vqe_rand0': QVQERandModel0,
     'q_qsvt0': QSVT0,
 }

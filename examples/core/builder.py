@@ -89,6 +89,11 @@ def make_model() -> nn.Module:
         model = model_dict[configs.model.name](
             arch=configs.model.arch,
             hamil_info=parse_hamiltonian_file(configs.model.hamil_filename))
+    elif configs.model.name.startswith('supervqe'):
+        from .models.super_models import model_dict
+        model = model_dict[configs.model.name](
+            arch=configs.model.arch,
+            hamil_info=parse_hamiltonian_file(configs.model.hamil_filename))
     else:
         raise NotImplementedError(configs.model.name)
 

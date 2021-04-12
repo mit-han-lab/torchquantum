@@ -1,3 +1,4 @@
+import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
 import torch.nn.functional as F
@@ -53,6 +54,71 @@ class SuperQFCModel0(tq.QuantumModule):
             x = x.squeeze()
 
         x = F.log_softmax(x, dim=1)
+        return x
+
+    @property
+    def arch_space(self):
+        space = []
+        for layer in self.q_layer.super_layers_all:
+            space.append(layer.arch_space)
+        # for the number of sampled blocks
+        space.append(list(range(self.q_layer.n_front_share_blocks,
+                                self.q_layer.n_blocks + 1)))
+        return space
+
+
+class SuperVQEModel0(tq.QuantumModule):
+    def __init__(self, arch, hamil_info):
+        super().__init__()
+        self.arch = arch
+        self.hamil_info = hamil_info
+        self.n_wires = arch['n_wires']
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.q_layer = super_layer_name_dict[arch['q_layer_name']](arch)
+        self.measure = tq.MeasureMultipleTimes(
+            obs_list=hamil_info['hamil_list'])
+
+        self.sample_arch = None
+
+    def set_sample_arch(self, sample_arch):
+        self.sample_arch = sample_arch
+        self.q_layer.set_sample_arch(sample_arch)
+
+    def count_sample_params(self):
+        return self.q_layer.count_sample_params()
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if use_qiskit:
+            x = self.qiskit_processor.process_multi_measure(
+                self.q_device, self.q_layer, self.measure)
+        else:
+            self.q_device.reset_states(bsz=1)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
+
+        hamil_coefficients = torch.tensor([hamil['coefficient'] for hamil in
+                                           self.hamil_info['hamil_list']],
+                                          device=x.device)
+
+        for k, hamil in enumerate(self.hamil_info['hamil_list']):
+            for wire, observable in zip(hamil['wires'], hamil['observables']):
+                if observable == 'i':
+                    x[k][wire] = 1
+            for wire in range(self.q_device.n_wires):
+                if wire not in hamil['wires']:
+                    x[k][wire] = 1
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        x = torch.cumprod(x, dim=-1)[:, -1]
+        x = torch.dot(x, hamil_coefficients)
+
+        if x.dim() == 0:
+            x = x.unsqueeze(0)
+
         return x
 
     @property
@@ -482,4 +548,5 @@ model_dict = {
     'super_qfc2': SuperQFCModel2,
     'super_qfc3': SuperQFCModel3,
     'super_qfc4': SuperQFCModel4,
+    'supervqe_0': SuperVQEModel0,
 }
