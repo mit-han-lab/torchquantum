@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     with open(f'logs/{args.device}/{args.dataset}.{args.name}'
               f'.{args.space}.txt',
-              'w') as \
+              'a') as \
             wfid:
         for mode in [f'plain.blk{n_blk}s1.1.1',
                      f'ldiff.blk{n_blk}s1.1.1_diff7',

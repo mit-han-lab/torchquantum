@@ -1,0 +1,8 @@
+ckpt:
+  load_ckpt: True
+
+dataset:
+  split: test
+
+run:
+  steps_per_epoch: 1

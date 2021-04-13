@@ -1,0 +1,4 @@
+model:
+  hamil_filename: './examples/data/vqe/lih_bk/lih_bk.txt'
+  arch:
+    n_wires: 6

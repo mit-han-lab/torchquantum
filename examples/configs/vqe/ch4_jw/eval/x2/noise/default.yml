@@ -1,0 +1,3 @@
+qiskit:
+  noise_model_name: ibmqx2
+  max_jobs: 48

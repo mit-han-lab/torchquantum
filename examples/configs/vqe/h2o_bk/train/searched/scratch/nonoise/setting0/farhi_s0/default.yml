@@ -1,0 +1,6 @@
+model:
+  name: supervqe_0
+  arch:
+    n_layers_per_block: 2
+    q_layer_name: farhi_s0
+

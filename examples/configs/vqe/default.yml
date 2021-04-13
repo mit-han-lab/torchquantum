@@ -19,7 +19,7 @@ trainer:
   name: q_trainer
 
 run:
-  steps_per_epoch: 100
+  steps_per_epoch: 50
   n_epochs: 200
   n_warm_epochs: 0
   bsz: 1
@@ -51,6 +51,10 @@ callbacks:
     name: 'loss/valid'
   - callback: 'Saver'
     max_to_keep: 10
+
+model:
+  transpile_before_run: False
+  load_op_list: False
 
 qiskit:
   use_qiskit: False
