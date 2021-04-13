@@ -8,7 +8,7 @@ from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
-from torchquantum.utils import get_expectations_from_counts
+from torchquantum.utils import get_expectations_from_counts, get_provider
 from .qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
 from torchpack.utils.logging import logger
@@ -121,7 +121,7 @@ class QiskitProcessor(object):
         self.properties = None
 
         IBMQ.load_account()
-        self.provider = IBMQ.get_provider(hub='ibm-q')
+        self.provider = get_provider(self.backend_name)
 
         if self.use_real_qc:
             self.backend = self.provider.get_backend(
@@ -308,7 +308,7 @@ class QiskitProcessor(object):
         split_circs = [circ_all[i:i + chunk_size] for i in range(
             0, len(circ_all), chunk_size)]
 
-        qiskit_verbose = self.max_jobs <= 6
+        qiskit_verbose = self.max_jobs <= 2
         feed_dicts = []
         for split_circ in split_circs:
             feed_dict = {

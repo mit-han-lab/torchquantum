@@ -10,6 +10,7 @@ from torchpack.utils.logging import logger
 from typing import List, Dict, Iterable
 from torchpack.utils.config import Config
 from qiskit.providers.aer.noise.device.parameters import gate_error_values
+from qiskit import IBMQ
 
 
 def pauli_eigs(n):
@@ -408,6 +409,26 @@ def get_success_rate(properties, transpiled_circ):
         success_rate *= gate_success_rate
 
     return success_rate
+
+
+def get_provider(backend_name):
+    if backend_name in ['ibmq_casablanca',
+                        'ibmq_rome',
+                        'ibmq_bogota']:
+        provider = IBMQ.get_provider(hub='ibm-q-research',
+                                     group='mass-inst-tech-1',
+                                     project='main')
+    elif backend_name in ['ibmq_paris',
+                          'ibmq_toronto',
+                          'ibmq_manhattan',
+                          'ibmq_guadalupe']:
+        provider = IBMQ.get_provider(hub='ibm-q-ornl',
+                                     group='anl',
+                                     project='csc428')
+    else:
+        provider = IBMQ.get_provider(hub='ibm-q')
+
+    return provider
 
 
 if __name__ == '__main__':
