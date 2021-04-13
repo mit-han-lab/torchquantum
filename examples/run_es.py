@@ -12,7 +12,8 @@ from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 from core import builder
 from torchquantum.utils import (legalize_unitary, build_module_op_list,
-                                get_cared_configs, get_success_rate)
+                                get_cared_configs, get_success_rate,
+                                get_provider)
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
 from qiskit import IBMQ
 from core.tools import EvolutionEngine
@@ -78,13 +79,17 @@ class Evaluator(object):
                             output_all = torch.cat([output_all, outputs],
                                                    dim=0)
 
-                k = 1
-                _, indices = output_all.topk(k, dim=1)
-                masks = indices.eq(target_all.view(-1, 1).expand_as(indices))
-                size = target_all.shape[0]
-                corrects = masks.sum().item()
-                accuracy = corrects / size
-                loss = F.nll_loss(output_all, target_all).item()
+                if configs.dataset.name == 'vqe':
+                    loss = output_all[0].item()
+                    accuracy = -1
+                else:
+                    k = 1
+                    _, indices = output_all.topk(k, dim=1)
+                    masks = indices.eq(target_all.view(-1, 1).expand_as(indices))
+                    size = target_all.shape[0]
+                    corrects = masks.sum().item()
+                    accuracy = corrects / size
+                    loss = F.nll_loss(output_all, target_all).item()
 
                 if configs.es.est_success_rate:
                     circ_parameterized, params = tq2qiskit_parameterized(
@@ -194,7 +199,8 @@ def main() -> None:
     if configs.qiskit.use_qiskit:
         IBMQ.load_account()
         if configs.run.bsz == 'qiskit_max':
-            configs.run.bsz = IBMQ.get_provider(hub='ibm-q').get_backend(
+            provider = get_provider(configs.qiskit.backend_name)
+            configs.run.bsz = provider.get_backend(
                 configs.qiskit.backend_name).configuration().max_experiments
 
     dataset = builder.make_dataset()
@@ -238,9 +244,15 @@ def main() -> None:
 
     if configs.qiskit.use_qiskit or configs.es.est_success_rate:
         IBMQ.load_account()
-        properties = IBMQ.get_provider(hub='ibm-q').get_backend(
+        provider = get_provider(configs.qiskit.backend_name)
+
+        properties = provider.get_backend(
             configs.qiskit.backend_name).properties()
-        n_available_wires = len(properties.qubits)
+        if configs.qiskit.backend_name == 'ibmq_qasm_simulator':
+            if configs.qiskit.noise_model_name == 'ibmq_16_melbourne':
+                n_available_wires = 15
+        else:
+            n_available_wires = len(properties.qubits)
         qiskit_processor = builder.make_qiskit_processor()
         model.set_qiskit_processor(qiskit_processor)
     else:
@@ -292,8 +304,8 @@ def main() -> None:
         state_dict['model'] = model.state_dict()
         state_dict['solution'] = es_engine.best_solution
         state_dict['score'] = es_engine.best_score
-
-        state_dict['encoder_func_list'] = model.encoder.func_list
+        if not configs.dataset.name == 'vqe':
+            state_dict['encoder_func_list'] = model.encoder.func_list
         state_dict['q_layer_op_list'] = build_module_op_list(model.q_layer)
         io.save(os.path.join(es_dir, 'checkpoints/best_solution.pt'),
                 state_dict)
