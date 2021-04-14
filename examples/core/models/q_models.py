@@ -6,6 +6,8 @@ import numpy as np
 
 from torchquantum.encoding import encoder_op_list_name_dict
 from torchpack.utils.logging import logger
+from examples.core.tools.generate_ansatz_observables import (
+    molecule_name_dict, generate_uccsd)
 
 
 class Quanv0(tq.QuantumModule):
@@ -1167,7 +1169,55 @@ class QVQERandModel0(tq.QuantumModule):
         if verbose:
             logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
 
-        x = torch.cumprod(x, dim=-1)[:, -1]
+        x = torch.cumprod(x, dim=-1)[:, -1].double()
+        x = torch.dot(x, hamil_coefficients)
+
+        if x.dim() == 0:
+            x = x.unsqueeze(0)
+
+        return x
+
+
+class QVQEUCCSDModel0(tq.QuantumModule):
+    def __init__(self, arch, hamil_info):
+        super().__init__()
+        self.arch = arch
+        self.hamil_info = hamil_info
+        self.n_wires = arch['n_wires']
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.molecule_data = molecule_name_dict[hamil_info['name']]
+        self.molecule_data['transform'] = arch['transform']
+        self.q_layer = generate_uccsd(self.molecule_data)
+        self.measure = tq.MeasureMultipleTimes(
+            obs_list=hamil_info['hamil_list'])
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if use_qiskit:
+            x = self.qiskit_processor.process_multi_measure(
+                self.q_device, self.q_layer, self.measure)
+        else:
+            self.q_device.reset_states(bsz=1)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
+
+        hamil_coefficients = torch.tensor([hamil['coefficient'] for hamil in
+                                           self.hamil_info['hamil_list']],
+                                          device=x.device).double()
+
+        for k, hamil in enumerate(self.hamil_info['hamil_list']):
+            for wire, observable in zip(hamil['wires'], hamil['observables']):
+                if observable == 'i':
+                    x[k][wire] = 1
+            for wire in range(self.q_device.n_wires):
+                if wire not in hamil['wires']:
+                    x[k][wire] = 1
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        x = torch.cumprod(x, dim=-1)[:, -1].double()
         x = torch.dot(x, hamil_coefficients)
 
         if x.dim() == 0:
@@ -1197,5 +1247,6 @@ model_dict = {
     'q_fc13': QFCModel13,
     'q_fc_rand0': QFCRandModel0,
     'vqe_rand0': QVQERandModel0,
+    'vqe_uccsd': QVQEUCCSDModel0,
     'q_qsvt0': QSVT0,
 }

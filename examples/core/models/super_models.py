@@ -100,7 +100,7 @@ class SuperVQEModel0(tq.QuantumModule):
 
         hamil_coefficients = torch.tensor([hamil['coefficient'] for hamil in
                                            self.hamil_info['hamil_list']],
-                                          device=x.device)
+                                          device=x.device).double()
 
         for k, hamil in enumerate(self.hamil_info['hamil_list']):
             for wire, observable in zip(hamil['wires'], hamil['observables']):
@@ -113,7 +113,7 @@ class SuperVQEModel0(tq.QuantumModule):
         if verbose:
             logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
 
-        x = torch.cumprod(x, dim=-1)[:, -1]
+        x = torch.cumprod(x, dim=-1)[:, -1].double()
         x = torch.dot(x, hamil_coefficients)
 
         if x.dim() == 0:

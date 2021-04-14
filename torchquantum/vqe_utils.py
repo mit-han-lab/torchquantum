@@ -10,6 +10,7 @@ def parse_hamiltonian_file(filename: str) -> dict:
         for k, line in enumerate(lines):
             if not line.strip():
                 continue
+            line = line.strip()
             hamil = {'wires': [], 'observables': []}
             if k == 0:
                 name, method, n_wires = line.split(' ')
