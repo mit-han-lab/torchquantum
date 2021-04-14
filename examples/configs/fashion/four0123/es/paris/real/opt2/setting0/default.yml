@@ -8,3 +8,6 @@ es:
 
 dataset:
   n_valid_samples: 500
+
+qiskit:
+  n_shots: 2048

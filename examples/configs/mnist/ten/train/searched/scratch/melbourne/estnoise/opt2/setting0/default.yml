@@ -1,0 +1,10 @@
+es:
+  population_size: 100
+  parent_size: 25
+  mutation_size: 50
+  mutation_prob: 0.4
+  crossover_size: 25
+  n_iterations: 100
+
+dataset:
+  n_valid_samples: null

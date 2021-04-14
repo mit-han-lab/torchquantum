@@ -204,7 +204,9 @@ molecule_name_dict = {
 }
 
 if __name__ == '__main__':
-    generate_uccsd(molecule_name_dict['h2'])
+    import pdb
+    pdb.set_trace()
+    generate_uccsd(molecule_name_dict['ch4'])
 # for transform in ['BK', 'JW']:
 #     for name, info in molecule_name_dict.items():
 #         root = './examples/data/vqe/'

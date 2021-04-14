@@ -1,0 +1,5 @@
+model:
+  name: vqe_uccsd
+  arch:
+    transform: JW
+    n_wires: 6

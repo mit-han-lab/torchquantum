@@ -300,7 +300,8 @@ def main() -> None:
 
         # store the model and solution after every iteration
         state_dict = dict()
-        state_dict['model_arch'] = model
+        if not configs.qiskit.use_real_qc:
+            state_dict['model_arch'] = model
         state_dict['model'] = model.state_dict()
         state_dict['solution'] = es_engine.best_solution
         state_dict['score'] = es_engine.best_score
