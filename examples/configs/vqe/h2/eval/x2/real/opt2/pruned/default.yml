@@ -1,5 +1,5 @@
 ckpt:
-  name: 'checkpoints/step-9000.pt'
+  name: 'checkpoints/step-10000.pt'
 
 prune:
   eval:
