@@ -364,7 +364,7 @@ def get_cared_configs(conf, mode) -> Config:
         delattr(conf, 'trainer')
 
     if hasattr(conf, 'qiskit'):
-        qiskit_ignores = ['n_shots',
+        qiskit_ignores = [
                           'seed_simulator',
                           'seed_transpiler',
                           'coupling_map_name',

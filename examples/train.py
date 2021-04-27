@@ -111,16 +111,17 @@ def main() -> None:
         state_dict = io.load(
             os.path.join(args.ckpt_dir, configs.ckpt.name),
             map_location='cpu')
-        model_load = state_dict['model_arch']
+        if getattr(state_dict, 'model_arch', None) is not None:
+            model_load = state_dict['model_arch']
+            for module_load, module in zip(model_load.modules(), model.modules()):
+                if isinstance(module, tq.RandomLayer):
+                    # random layer, need to restore the architecture
+                    module.rebuild_random_layer_from_op_list(
+                        n_ops_in=module_load.n_ops,
+                        wires_in=module_load.wires,
+                        op_list_in=module_load.op_list,
+                    )
 
-        for module_load, module in zip(model_load.modules(), model.modules()):
-            if isinstance(module, tq.RandomLayer):
-                # random layer, need to restore the architecture
-                module.rebuild_random_layer_from_op_list(
-                    n_ops_in=module_load.n_ops,
-                    wires_in=module_load.wires,
-                    op_list_in=module_load.op_list,
-                )
         if not configs.ckpt.weight_from_scratch:
             model.load_state_dict(state_dict['model'], strict=False)
         else:
