@@ -1,0 +1,8 @@
+dataset:
+  center_crop: 24
+  resize: 20
+
+model:
+  arch:
+    down_sample_kernel_size: 2
+    encoder_op_list_name: 10x10_ryzxyzxyzxy
