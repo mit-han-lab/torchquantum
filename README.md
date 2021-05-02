@@ -76,6 +76,7 @@ class QFCModel(nn.Module):
 ```
 
 ## Features
+- Easy construction of parameterized quantum circuits in PyTorch.
 - Support **batch mode** inference and training on CPU/GPU.
 - Support **dynamic computation graph** for easy debugging.
 - Support easy **deployment on real quantum devices** such as IBMQ.
