@@ -96,10 +96,53 @@ class QFCModel(nn.Module):
 - configargparse >= 0.14
 - GPU model training requires NVIDIA GPUs
 
-## Run
-MNIST training with a hybrid classical and quantum network.
+## MNIST Example
+Train a quantum circuit to perform MNIST task and deploy on the real IBM
+Yorktown quantum computer as in [mnist_example.py](./mnist_example.py)
+script:
 ```python
 python mnist_example.py
+```
+
+## Files
+| File      | Description |
+| ----------- | ----------- |
+| devices.py      | QuantumDevice class which stores the statevector |
+| encoding.py   | Encoding layers to encode classical values to quantum domain |
+| functional.py   | Quantum gate functions |
+| operators.py   | Quantum gate classes |
+| layers.py   | Layer templates such as RandomLayer |
+| measure.py   | Measurement of quantum states to get classical values |
+| graph.py   | Quantum gate graph used in static mode |
+| super_layer.py   | Layer templates for SuperCircuits |
+| plugins/qiskit*   | Convertors and processors for easy deployment on IBMQ |
+| examples/| More examples for training QML and VQE models |
+
+## More Examples
+The `examples/` folder contains more examples to train the QML and VQE
+models. Example usage for a QML circuit:
+```python
+# train the circuit with 36 params in the U3+CU3 space
+python examples/train.py examples/configs/mnist/four0123/train/baseline/u3cu3_s0/rand/param36.yml
+
+# evaluate the circuit with torchquantum
+python examples/eval.py examples/configs/mnist/four0123/eval/tq/all.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36
+
+# evaluate the circuit with real IBMQ-Yorktown quantum computer
+python examples/eval.py examples/configs/mnist/four0123/eval/x2/real/opt2/300.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36
+```
+
+Example usage for a VQE circuit:
+```python
+# Train the VQE circuit for h2
+python examples/train.py examples/configs/vqe/h2/train/baseline/u3cu3_s0/human/param12.yml
+
+# evaluate the VQE circuit with torchquantum
+python examples/eval.py examples/configs/vqe/h2/eval/tq/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
+
+# evaluate the VQE circuit with real IBMQ-Yorktown quantum computer
+python examples/eval.py examples/configs/vqe/h2/eval/x2/real/opt2/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
+
 ```
 
 Detailed documentations coming soon.
