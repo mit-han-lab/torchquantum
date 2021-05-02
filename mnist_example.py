@@ -1,27 +1,31 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim.lr_scheduler import CosineAnnealingLR
-import os
+import argparse
 
 import torchquantum as tq
 import torchquantum.functional as tqf
+
 from examples.core.datasets import MNIST
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
-class QFCModel(nn.Module):
+class QFCModel(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.encoder = tq.MultiPhaseEncoder([tqf.rx] * 4 + [tqf.ry] * 4 +
-                                                [tqf.rz] * 4 + [tqf.rx] * 4)
             self.random_layer = tq.RandomLayer(n_ops=50,
                                                wires=list(range(self.n_wires)))
 
+            # gates with trainable parameters
+            self.rx0 = tq.RX(has_params=True, trainable=True)
+            self.ry0 = tq.RY(has_params=True, trainable=True)
+            self.rz0 = tq.RZ(has_params=True, trainable=True)
+            self.crx0 = tq.CRX(has_params=True, trainable=True)
+
         @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice, x):
+        def forward(self, q_device: tq.QuantumDevice):
             """
             1. To convert tq QuantumModule to qiskit or run in the static
             model, need to:
@@ -33,15 +37,29 @@ class QFCModel(nn.Module):
             """
             self.q_device = q_device
 
-            self.encoder(self.q_device, x)
             self.random_layer(self.q_device)
-            tqf.hadamard(self.q_device, wires=1, static=self.static_mode,
+
+            # some trainable gates (instantiated ahead of time)
+            self.rx0(self.q_device, wires=0)
+            self.ry0(self.q_device, wires=1)
+            self.rz0(self.q_device, wires=3)
+            self.crx0(self.q_device, wires=[0, 2])
+
+            # add some more non-parameterized gates (add on-the-fly)
+            tqf.hadamard(self.q_device, wires=3, static=self.static_mode,
                          parent_graph=self.graph)
+            tqf.sx(self.q_device, wires=2, static=self.static_mode,
+                   parent_graph=self.graph)
+            tqf.cnot(self.q_device, wires=[3, 0], static=self.static_mode,
+                     parent_graph=self.graph)
 
     def __init__(self):
         super().__init__()
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.encoder = tq.GeneralEncoder(
+            tq.encoder_op_list_name_dict['4x4_ryzxy'])
+
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
@@ -50,10 +68,11 @@ class QFCModel(nn.Module):
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
         if use_qiskit:
-            x = self.q_layer.qiskit_processor.process(
-                self.q_device, self.q_layer, x)
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
         else:
-            self.q_layer(self.q_device, x)
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
             x = self.measure(self.q_device)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
@@ -102,12 +121,15 @@ def valid_test(dataflow, split, model, device, qiskit=False):
 
 
 def main():
-    # the torchvision has some bugs on downloading MNIST, so download here
-    # manually
-    if not os.path.exists('./mnist_data'):
-        os.system('wget hanlab.mit.edu/files/quantum/torchquantum'
-                  '/mnist_data.tar.gz')
-        os.system('tar -xzvf mnist_data.tar.gz')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--static', action='store_true', help='compute with '
+                                                              'static mode')
+    parser.add_argument('--wires-per-block', type=int, default=2,
+                        help='wires per block int static mode')
+    parser.add_argument('--epochs', type=int, default=30,
+                        help='number of training epochs')
+
+    args = parser.parse_args()
 
     dataset = MNIST(
         root='./mnist_data',
@@ -131,15 +153,14 @@ def main():
 
     model = QFCModel().to(device)
 
-    n_epochs = 30
+    n_epochs = args.epochs
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
-    static_mode = True
-    if static_mode:
-        # optionally to switch to the static mode, which may bring speedup
+    if args.static:
+        # optionally to switch to the static mode, which can bring speedup
         # on training
-        model.q_layer.static_on(wires_per_block=2)
+        model.q_layer.static_on(wires_per_block=args.wires_per_block)
 
     for epoch in range(1, n_epochs + 1):
         # train
@@ -162,19 +183,21 @@ def main():
         # firstly perform simulate
         print(f"\nTest with Qiskit Simulator")
         processor_simulation = QiskitProcessor(use_real_qc=False)
-        model.q_layer.set_qiskit_processor(processor_simulation)
+        model.set_qiskit_processor(processor_simulation)
         valid_test(dataflow, 'test', model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = 'ibmq_santiago'
+        backend_name = 'ibmqx2'
         print(f"\nTest on Real Quantum Computer {backend_name}")
         processor_real_qc = QiskitProcessor(use_real_qc=True,
                                             backend_name=backend_name)
-        model.q_layer.set_qiskit_processor(processor_real_qc)
+        model.set_qiskit_processor(processor_real_qc)
         valid_test(dataflow, 'test', model, device, qiskit=True)
     except ImportError:
-        print("Please install qiskit and create an IBM Q Experience Account "
-              "(it's free!), then try again")
+        print("Please install qiskit, create an IBM Q Experience Account and "
+              "save the account token according to the instruction at "
+              "'https://github.com/Qiskit/qiskit-ibmq-provider', "
+              "then try again.")
 
 
 if __name__ == '__main__':
