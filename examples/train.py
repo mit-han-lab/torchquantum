@@ -176,6 +176,14 @@ def main() -> None:
             get_v_c_reg_mapping(circ_transpiled))
         model.q_layer = q_layer
 
+        if configs.trainer.add_noise:
+            # noise aware training
+            noise_model_tq = tq.NoiseModelTQ(backend=processor.backend)
+            noise_model_tq.is_add_noise = True
+            noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(
+                circ_transpiled)
+            model.set_noise_model_tq(noise_model_tq)
+
     if getattr(configs.model.arch, 'sample_arch', None) is not None and \
             not configs.model.transpile_before_run:
         sample_arch = configs.model.arch.sample_arch
