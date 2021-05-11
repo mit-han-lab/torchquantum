@@ -469,6 +469,18 @@ def get_provider(backend_name):
     return provider
 
 
+def normalize_statevector(states):
+    # make sure the square magnitude of statevector sum to 1
+    # states = states.contiguous()
+    original_shape = states.shape
+    states_reshape = states.reshape(states.shape[0], -1)
+    factors = torch.sqrt(1 / (abs(states_reshape) ** 2).sum(
+        dim=-1)).unsqueeze(-1)
+    states = (states_reshape * factors).reshape(original_shape)
+
+    return states
+
+
 if __name__ == '__main__':
     build_module_description_test()
     switch_little_big_endian_matrix_test()
