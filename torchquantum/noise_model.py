@@ -9,7 +9,7 @@ __all__ = ['NoiseModelTQ']
 
 
 class NoiseModelTQ(object):
-    def __init__(self, backend_name):
+    def __init__(self, backend_name, noise_total_prob=None):
         self.backend_name = backend_name
         provider = get_provider(backend_name=backend_name)
         backend = provider.get_backend(backend_name)
@@ -20,8 +20,30 @@ class NoiseModelTQ(object):
         self.v_c_reg_mapping = None
         self.p_c_reg_mapping = None
         self.p_v_reg_mapping = None
+        self.noise_total_prob = noise_total_prob
 
         self.parsed_dict = self.parse_noise_model_dict(self.noise_model_dict)
+        self.parsed_dict = self.clean_parsed_noise_model_dict(self.parsed_dict)
+
+    @staticmethod
+    def clean_parsed_noise_model_dict(nm_dict):
+        # remove the kraus and id operation in the instructions and probs
+        for operation, operation_info in nm_dict.items():
+            for qubit, qubit_info in operation_info.items():
+                inst_all = []
+                prob_all = []
+                if qubit_info['type'] == 'qerror':
+                    for inst, prob in zip(qubit_info['instructions'],
+                                          qubit_info['probabilities']):
+                        if len(inst) == 1 and inst[0]['name'] in ['id',
+                                                                  'kraus']:
+                            continue
+                        else:
+                            inst_all.append(inst)
+                            prob_all.append(prob)
+                nm_dict[operation][qubit]['instructions'] = inst_all
+                nm_dict[operation][qubit]['probabilities'] = prob_all
+        return nm_dict
 
     @staticmethod
     def parse_noise_model_dict(nm_dict):
@@ -49,6 +71,13 @@ class NoiseModelTQ(object):
 
         return parsed
 
+    def magnify_probs(self, probs):
+        if self.noise_total_prob is not None:
+            factor = self.noise_total_prob / sum(probs)
+            probs = [prob * factor for prob in probs]
+
+        return probs
+
     def sample_noise_op(self, op_in):
         op_name = op_in.name.lower()
         if op_name == 'paulix':
@@ -68,10 +97,19 @@ class NoiseModelTQ(object):
         p_wires = [self.p_v_reg_mapping['v2p'][wire] for wire in wires]
 
         inst_prob = self.parsed_dict[op_name][tuple(p_wires)]
-        inst = inst_prob['instructions']
-        probs = inst_prob['probabilities']
 
-        idx = np.random.choice(list(range(len(inst))), p=probs)
+        inst = inst_prob['instructions']
+        if len(inst) == 0:
+            return []
+
+        probs = inst_prob['probabilities']
+        magnified_probs = self.magnify_probs(probs)
+
+        idx = np.random.choice(list(range(len(inst) + 1)),
+                               p=magnified_probs + [1 - sum(magnified_probs)])
+        if idx == len(inst):
+            return []
+
         instructions = inst[idx]
 
         ops = []

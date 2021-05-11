@@ -181,7 +181,9 @@ def main() -> None:
         if configs.trainer.add_noise:
             # noise-aware training
             noise_model_tq = tq.NoiseModelTQ(
-                backend_name=configs.qiskit.backend_name)
+                backend_name=configs.qiskit.backend_name,
+                noise_total_prob=configs.trainer.noise_total_prob,
+            )
             noise_model_tq.is_add_noise = True
             noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(
                 circ_transpiled)
