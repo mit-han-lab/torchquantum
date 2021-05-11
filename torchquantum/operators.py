@@ -59,6 +59,7 @@ __all__ = [
     'TrainableUnitaryStrict',
     'MultiCNOT',
     'MultiXCNOT',
+    'Reset',
 ]
 
 
@@ -109,6 +110,7 @@ class Operator(tq.QuantumModule):
         'Toffoli',
         'MultiCNOT',
         'MultiXCNOT',
+        'Reset',
     ]
 
     parameterized_ops = [
@@ -866,6 +868,16 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
         return op_matrix
 
 
+class Reset(Operator, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = AnyWires
+    func = staticmethod(tqf.reset)
+
+    @classmethod
+    def _matrix(cls, params):
+        return None
+
+
 op_name_dict = {
     'hadamard': Hadamard,
     'h': Hadamard,
@@ -925,4 +937,5 @@ op_name_dict = {
     'trainableunitarystrict': TrainableUnitaryStrict,
     'multicnot': MultiCNOT,
     'multixcnot': MultiXCNOT,
+    'reset': Reset,
 }
