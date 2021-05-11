@@ -286,17 +286,55 @@ def build_module_description_test():
     tq2qiskit(q_dev, m1, draw=True)
 
 
-def get_v_c_reg_mapping(circ):
+def get_p_v_reg_mapping(circ):
     """
     p are physical qubits
     v are logical qubits
+    """
+    p2v_orig = circ._layout.get_physical_bits().copy()
+    mapping = {
+        'p2v': {},
+        'v2p': {},
+    }
+
+    for p, v in p2v_orig.items():
+        if v.register.name == 'q':
+            mapping['p2v'][p] = v.index
+            mapping['v2p'][v.index] = p
+
+    return mapping
+
+
+def get_p_c_reg_mapping(circ):
+    """
+    p are physical qubits
+    c are classical registers
+    """
+    mapping = {
+        'p2c': {},
+        'c2p': {},
+    }
+    for gate in circ.data:
+        if gate[0].name == 'measure':
+            mapping['p2c'][gate[1][0].index] = gate[2][0].index
+            mapping['c2p'][gate[2][0].index] = gate[1][0].index
+
+    return mapping
+
+
+def get_v_c_reg_mapping(circ):
+    """
+    p are physical qubits, the real fabricated qubits
+    v are logical qubits, also the 'wires' in torchquantum lib
     c are classical registers
     want to get v2c
     """
 
-    p2v = circ._layout.get_physical_bits().copy()
-    for p, v in p2v.items():
-        p2v[p] = v.index
+    p2v_orig = circ._layout.get_physical_bits().copy()
+    p2v = {}
+    for p, v in p2v_orig.items():
+        if v.register.name == 'q':
+            p2v[p] = v.index
 
     mapping = {
         'p2c': {},
