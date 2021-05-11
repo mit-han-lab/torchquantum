@@ -20,6 +20,7 @@ __all__ = [
     'Op2QAllLayer',
     'Op2QButterflyLayer',
     'Op2QDenseLayer',
+    'layer_name_dict',
 ]
 
 
@@ -418,3 +419,52 @@ class Op2QDenseLayer(tq.QuantumModule):
                     wires.reverse()
                 self.ops_all[k](q_device, wires=wires)
                 k += 1
+
+
+class LayerTemplate0(tq.QuantumModule):
+    def __init__(self, arch: dict = None):
+        super().__init__()
+        self.n_wires = arch['n_wires']
+        self.arch = arch
+
+        self.n_blocks = arch.get('n_blocks', None)
+        self.n_layers_per_block = arch.get('n_layers_per_block', None)
+
+        self.layers_all = self.build_layers()
+
+    def build_layers(self):
+        raise NotImplementedError
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        self.q_device = q_device
+        for k in range(len(self.layers_all)):
+            self.layers_all[k](q_device)
+
+
+class U3CU3Layer0(LayerTemplate0):
+    """u3 cu3 blocks"""
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.U3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
+
+layer_name_dict = {
+    'u3cu3_0': U3CU3Layer0,
+}
+
