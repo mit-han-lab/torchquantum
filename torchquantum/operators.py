@@ -253,6 +253,13 @@ class Operator(tq.QuantumModule):
                 self.func(q_device, self.wires, params=self.params,
                           n_wires=self.n_wires, inverse=inverse)
 
+        if self.noise_model_tq is not None and \
+                self.noise_model_tq.is_add_noise:
+            noise_ops = self.noise_model_tq.sample_noise_op(self)
+            if len(noise_ops):
+                for noise_op in noise_ops:
+                    noise_op(q_device)
+
 
 class Observable(Operator, metaclass=ABCMeta):
     def __init__(self,
