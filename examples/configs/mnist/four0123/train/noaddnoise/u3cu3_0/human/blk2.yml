@@ -1,0 +1,4 @@
+model:
+  arch:
+    n_blocks: 2
+  transpile_before_run: True
