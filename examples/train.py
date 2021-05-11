@@ -20,6 +20,8 @@ from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.utils import (build_module_from_op_list,
                                 build_module_op_list,
                                 get_v_c_reg_mapping,
+                                get_p_c_reg_mapping,
+                                get_p_v_reg_mapping,
                                 get_cared_configs)
 from torchquantum.super_utils import get_named_sample_arch
 
@@ -177,10 +179,15 @@ def main() -> None:
         model.q_layer = q_layer
 
         if configs.trainer.add_noise:
-            # noise aware training
-            noise_model_tq = tq.NoiseModelTQ(backend=processor.backend)
+            # noise-aware training
+            noise_model_tq = tq.NoiseModelTQ(
+                backend_name=configs.qiskit.backend_name)
             noise_model_tq.is_add_noise = True
             noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(
+                circ_transpiled)
+            noise_model_tq.p_c_reg_mapping = get_p_c_reg_mapping(
+                circ_transpiled)
+            noise_model_tq.p_v_reg_mapping = get_p_v_reg_mapping(
                 circ_transpiled)
             model.set_noise_model_tq(noise_model_tq)
 
