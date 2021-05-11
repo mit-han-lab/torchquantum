@@ -13,7 +13,7 @@ from qiskit.providers.aer.noise.device.parameters import gate_error_values
 from qiskit import IBMQ
 
 
-def pauli_eigs(n):
+def pauli_eigs(n) -> np.ndarray:
     r"""Eigenvalues for :math:`A^{\o times n}`, where :math:`A` is
     Pauli operator, or shares its eigenvalues.
 
@@ -474,8 +474,16 @@ def normalize_statevector(states):
     # states = states.contiguous()
     original_shape = states.shape
     states_reshape = states.reshape(states.shape[0], -1)
-    factors = torch.sqrt(1 / (abs(states_reshape) ** 2).sum(
-        dim=-1)).unsqueeze(-1)
+
+    # for states with no energy, need to set all zero state as energy 1
+    energy = (abs(states_reshape) ** 2).sum(dim=-1)
+    if energy.min() == 0:
+        for k, val in enumerate(energy):
+            if val == 0:
+                states_reshape[k][0] = 1
+
+    factors = torch.sqrt(1 / ((abs(states_reshape) ** 2).sum(
+        dim=-1))).unsqueeze(-1)
     states = (states_reshape * factors).reshape(original_shape)
 
     return states
