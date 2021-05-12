@@ -56,7 +56,51 @@ class MeasureAll(tq.QuantumModule):
                     perm.append(c2v_mapping[k])
             x = x[:, perm]
 
-        return x
+        if self.noise_model_tq is not None and \
+                self.noise_model_tq.is_add_noise:
+            # add readout error
+            noise_free_0_probs = (x + 1) / 2
+            noise_free_1_probs = 1 - (x + 1) / 2
+
+            p_c_reg_mapping = self.noise_model_tq.p_c_reg_mapping
+            c2p_mapping = p_c_reg_mapping['c2p']
+
+            measure_info = self.noise_model_tq.parsed_dict['measure']
+            noisy_0_to_0_prob_all = []
+            noisy_0_to_1_prob_all = []
+            noisy_1_to_0_prob_all = []
+            noisy_1_to_1_prob_all = []
+
+            for k in range(x.shape[-1]):
+                p_wire = [c2p_mapping[k]]
+                noisy_0_to_0_prob_all.append(measure_info[tuple(p_wire)][
+                                                 'probabilities'][0][0])
+                noisy_0_to_1_prob_all.append(measure_info[tuple(p_wire)][
+                                                 'probabilities'][0][1])
+                noisy_1_to_0_prob_all.append(measure_info[tuple(p_wire)][
+                                                 'probabilities'][1][0])
+                noisy_1_to_1_prob_all.append(measure_info[tuple(p_wire)][
+                                                 'probabilities'][1][1])
+
+            noisy_0_to_0_prob_all = torch.tensor(noisy_0_to_0_prob_all,
+                                                 device=x.device)
+            noisy_0_to_1_prob_all = torch.tensor(noisy_0_to_1_prob_all,
+                                                 device=x.device)
+            noisy_1_to_0_prob_all = torch.tensor(noisy_1_to_0_prob_all,
+                                                 device=x.device)
+            noisy_1_to_1_prob_all = torch.tensor(noisy_1_to_1_prob_all,
+                                                 device=x.device)
+
+            noisy_measured_0 = noise_free_0_probs * noisy_0_to_0_prob_all + \
+                noise_free_1_probs * noisy_1_to_0_prob_all
+
+            noisy_measured_1 = noise_free_0_probs * noisy_0_to_1_prob_all + \
+                noise_free_1_probs * noisy_1_to_1_prob_all
+            noisy_expectation = noisy_measured_0 * 1 + noisy_measured_1 * (-1)
+
+            return noisy_expectation
+        else:
+            return x
 
     def set_v_c_reg_mapping(self, mapping):
         self.v_c_reg_mapping = mapping
