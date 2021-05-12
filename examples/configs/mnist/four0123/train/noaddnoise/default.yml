@@ -1,2 +1,6 @@
 trainer:
   name: q_trainer
+  add_noise: False
+
+model:
+  transpile_before_run: False
