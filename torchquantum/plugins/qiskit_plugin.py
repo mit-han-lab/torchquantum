@@ -261,9 +261,13 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
 # object
 def qiskit2tq(circ: QuantumCircuit):
     if getattr(circ, '_layout', None) is not None:
-        p2v = circ._layout.get_physical_bits().copy()
-        for p, v in p2v.items():
-            p2v[p] = v.index
+        p2v_orig = circ._layout.get_physical_bits().copy()
+        p2v = {}
+        for p, v in p2v_orig.items():
+            if v.register.name == 'q':
+                p2v[p] = v.index
+            else:
+                p2v[p] = f"{v.register.name}.{v.index}"
     else:
         p2v = {}
         for p in range(circ.num_qubits):
