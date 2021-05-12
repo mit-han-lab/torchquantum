@@ -56,6 +56,7 @@ class QiskitProcessor(object):
                  max_jobs=5,
                  remove_ops=False,
                  remove_ops_thres=1e-4,
+                 transpile_with_ancilla=True,
                  ):
         self.use_real_qc = use_real_qc
         self.noise_model_name = noise_model_name
@@ -68,6 +69,7 @@ class QiskitProcessor(object):
         self.seed_simulator = seed_simulator
         self.optimization_level = optimization_level
         self.max_jobs = max_jobs
+        self.transpile_with_ancilla = transpile_with_ancilla
 
         self.backend = None
         self.provider = None
@@ -139,10 +141,20 @@ class QiskitProcessor(object):
         self.initial_layout = layout
 
     def transpile(self, circs):
+        if not self.transpile_with_ancilla:
+            # only use same number of physical qubits as virtual qubits
+            # !! the risk is that the remaining graph is not a connected graph,
+            # need fix this later
+            coupling_map = []
+            for pair in self.coupling_map:
+                if all([p_wire < len(circs.qubits) for p_wire in pair]):
+                    coupling_map.append(pair)
+        else:
+            coupling_map = self.coupling_map
         transpiled_circs = transpile(circuits=circs,
                                      backend=self.backend,
                                      basis_gates=self.basis_gates,
-                                     coupling_map=self.coupling_map,
+                                     coupling_map=coupling_map,
                                      initial_layout=self.initial_layout,
                                      seed_transpiler=self.seed_transpiler,
                                      optimization_level=self.optimization_level
