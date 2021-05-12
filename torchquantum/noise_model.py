@@ -9,10 +9,13 @@ __all__ = ['NoiseModelTQ']
 
 
 class NoiseModelTQ(object):
-    def __init__(self, backend_name, noise_total_prob=None):
-        self.backend_name = backend_name
-        provider = get_provider(backend_name=backend_name)
-        backend = provider.get_backend(backend_name)
+    def __init__(self,
+                 noise_model_name,
+                 n_epochs,
+                 noise_total_prob=None):
+        self.noise_model_name = noise_model_name
+        provider = get_provider(backend_name=noise_model_name)
+        backend = provider.get_backend(noise_model_name)
 
         self.noise_model = NoiseModel.from_backend(backend)
         self.noise_model_dict = self.noise_model.to_dict()
@@ -20,10 +23,16 @@ class NoiseModelTQ(object):
         self.v_c_reg_mapping = None
         self.p_c_reg_mapping = None
         self.p_v_reg_mapping = None
+        self.orig_noise_total_prob = noise_total_prob
         self.noise_total_prob = noise_total_prob
+        self.mode = 'train'
 
         self.parsed_dict = self.parse_noise_model_dict(self.noise_model_dict)
         self.parsed_dict = self.clean_parsed_noise_model_dict(self.parsed_dict)
+        self.n_epochs = n_epochs
+
+    def adjust_noise(self, current_epoch):
+        self.noise_total_prob = self.orig_noise_total_prob
 
     @staticmethod
     def clean_parsed_noise_model_dict(nm_dict):
@@ -72,13 +81,15 @@ class NoiseModelTQ(object):
         return parsed
 
     def magnify_probs(self, probs):
-        if self.noise_total_prob is not None:
-            factor = self.noise_total_prob / sum(probs)
-            probs = [prob * factor for prob in probs]
+        factor = self.noise_total_prob / sum(probs)
+        probs = [prob * factor for prob in probs]
 
         return probs
 
     def sample_noise_op(self, op_in):
+        if not (self.mode == 'train' and self.is_add_noise):
+            return []
+
         op_name = op_in.name.lower()
         if op_name == 'paulix':
             op_name = 'x'
@@ -103,7 +114,11 @@ class NoiseModelTQ(object):
             return []
 
         probs = inst_prob['probabilities']
-        magnified_probs = self.magnify_probs(probs)
+
+        if self.noise_total_prob is not None:
+            magnified_probs = self.magnify_probs(probs)
+        else:
+            magnified_probs = probs
 
         idx = np.random.choice(list(range(len(inst) + 1)),
                                p=magnified_probs + [1 - sum(magnified_probs)])
