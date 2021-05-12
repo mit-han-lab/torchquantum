@@ -41,8 +41,8 @@ class NoiseModelTQ(object):
                         else:
                             inst_all.append(inst)
                             prob_all.append(prob)
-                nm_dict[operation][qubit]['instructions'] = inst_all
-                nm_dict[operation][qubit]['probabilities'] = prob_all
+                    nm_dict[operation][qubit]['instructions'] = inst_all
+                    nm_dict[operation][qubit]['probabilities'] = prob_all
         return nm_dict
 
     @staticmethod
