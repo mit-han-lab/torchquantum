@@ -33,7 +33,8 @@ class QuantumModule(nn.Module):
             module.noise_model_tq = noise_model_tq
 
     def set_qiskit_processor(self, processor):
-        self.qiskit_processor = processor
+        for module in self.modules():
+            module.qiskit_processor = processor
 
     def set_wires_per_block(self, wires_per_block):
         self.wires_per_block = wires_per_block
