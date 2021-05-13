@@ -606,6 +606,10 @@ class QNoiseAwareTrainer(Trainer):
         # set to eval mode, will not add noise
         if self.model.noise_model_tq is not None:
             self.model.noise_model_tq.mode = 'eval'
+        if getattr(self.model, 'nodes', None) is not None:
+            for node in self.model.nodes:
+                if node.noise_model_tq is not None:
+                    node.noise_model_tq.mode = 'eval'
 
     def _after_step(self, output_dict) -> None:
         if configs.legalization.legalize:
