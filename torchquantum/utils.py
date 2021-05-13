@@ -11,6 +11,7 @@ from typing import List, Dict, Iterable
 from torchpack.utils.config import Config
 from qiskit.providers.aer.noise.device.parameters import gate_error_values
 from qiskit import IBMQ
+from qiskit.exceptions import QiskitError
 
 
 def pauli_eigs(n) -> np.ndarray:
@@ -465,7 +466,13 @@ def get_provider(backend_name):
                                      group='anl',
                                      project='csc428')
     else:
-        provider = IBMQ.get_provider(hub='ibm-q')
+        try:
+            provider = IBMQ.get_provider(hub='ibm-q-research',
+                                         group='mass-inst-tech-1',
+                                         project='main')
+        except QiskitError:
+            logger.warning(f"Cannot use MIT backend, roll back to open")
+            provider = IBMQ.get_provider(hub='ibm-q')
 
     return provider
 
