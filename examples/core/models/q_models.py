@@ -1239,7 +1239,6 @@ class QFCModel14(tq.QuantumModule):
         self.q_layer = layer_name_dict[arch['q_layer_name']](arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
 
-
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
 
@@ -1255,6 +1254,37 @@ class QFCModel14(tq.QuantumModule):
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
             x = self.measure(self.q_device)
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+
+
+class QMultiFCModel0(tq.QuantumModule):
+    # multiple nodes, one node contains encoder, q_layer, and measure
+    def __init__(self, arch):
+        super().__init__()
+        self.arch = arch
+        self.n_nodes = arch['n_nodes']
+        self.nodes = tq.build_nodes(arch['node_archs'])
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
+            x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+        x = x.view(bsz, -1)
+
+        for node in self.nodes:
+            x = node(x, use_qiskit=use_qiskit)
 
         if verbose:
             logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
@@ -1293,4 +1323,5 @@ model_dict = {
     'vqe_rand0': QVQERandModel0,
     'vqe_uccsd': QVQEUCCSDModel0,
     'q_qsvt0': QSVT0,
+    'q_multifc0': QMultiFCModel0,
 }

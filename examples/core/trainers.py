@@ -167,10 +167,33 @@ class QTrainer(Trainer):
             state_dict['solution'] = self.solution
             state_dict['score'] = self.score
 
-        try:
-            state_dict['v_c_reg_mapping'] = self.model.measure.v_c_reg_mapping
-        except AttributeError:
-            logger.warning(f"No v_c_reg_mapping found, will not save it.")
+        if getattr(self.model, 'encoder', None) is not None:
+            if getattr(self.model.encoder, 'func_list', None) is not None:
+                state_dict['encoder_func_list'] = self.model.encoder.func_list
+
+        if getattr(self.model, 'q_layer', None) is not None:
+            state_dict['q_layer_op_list'] = build_module_op_list(
+                self.model.q_layer)
+
+        if getattr(self.model, 'measure', None) is not None:
+            if getattr(self.model.measure,
+                       'v_c_reg_mapping', None) is not None:
+                state_dict['v_c_reg_mapping'] = \
+                    self.model.measure.v_c_reg_mapping
+
+        if getattr(self.model, 'nodes', None) is not None:
+            state_dict['encoder_func_list'] = [
+                node.encoder.func_list for node in self.model.nodes]
+            state_dict['q_layer_op_list'] = [
+                build_module_op_list(node.q_layer) for node in
+                self.model.nodes]
+            state_dict['v_c_reg_mapping'] = [
+                node.measure.v_c_reg_mapping for node in self.model.nodes]
+        for attr in ['v_c_reg_mapping', 'encoder_func_list',
+                     'q_layer_op_list']:
+            if state_dict.get(attr, None) is None:
+                logger.warning(f"No {attr} found, will not save it.")
+
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
@@ -598,25 +621,46 @@ class QNoiseAwareTrainer(Trainer):
         state_dict['scheduler'] = self.scheduler.state_dict()
         if getattr(self.model, 'sample_arch', None) is not None:
             state_dict['sample_arch'] = self.model.sample_arch
-        try:
-            state_dict['q_layer_op_list'] = build_module_op_list(
-                self.model.q_layer)
-            state_dict['encoder_func_list'] = self.model.encoder.func_list
-        except AttributeError:
-            logger.warning(f"No q_layer_op_list or encoder_func_list found, "
-                           f"will not save them")
-
-        if getattr(self.model, 'noise_model_tq', None) is not None:
-            state_dict['noise_model_tq'] = self.model.noise_model_tq
 
         if self.solution is not None:
             state_dict['solution'] = self.solution
             state_dict['score'] = self.score
 
-        try:
-            state_dict['v_c_reg_mapping'] = self.model.measure.v_c_reg_mapping
-        except AttributeError:
-            logger.warning(f"No v_c_reg_mapping found, will not save it.")
+        if getattr(self.model, 'encoder', None) is not None:
+            if getattr(self.model.encoder, 'func_list', None) is not None:
+                state_dict['encoder_func_list'] = self.model.encoder.func_list
+
+        if getattr(self.model, 'q_layer', None) is not None:
+            state_dict['q_layer_op_list'] = build_module_op_list(
+                self.model.q_layer)
+
+        if getattr(self.model, 'measure', None) is not None:
+            if getattr(self.model.measure,
+                       'v_c_reg_mapping', None) is not None:
+                state_dict['v_c_reg_mapping'] = \
+                    self.model.measure.v_c_reg_mapping
+
+        if getattr(self.model, 'noise_model_tq', None) is not None:
+            state_dict['noise_model_tq'] = self.model.noise_model_tq
+
+        if getattr(self.model, 'nodes', None) is not None:
+            state_dict['encoder_func_list'] = [
+                node.encoder.func_list for node in self.model.nodes]
+            state_dict['q_layer_op_list'] = [
+                build_module_op_list(node.q_layer) for node in
+                self.model.nodes]
+            state_dict['v_c_reg_mapping'] = [
+                node.measure.v_c_reg_mapping for node in self.model.nodes]
+
+            # one node has one own noise model
+            state_dict['noise_model_tq'] = [
+                node.noise_model_tq for node in self.model.nodes]
+
+        for attr in ['v_c_reg_mapping', 'encoder_func_list',
+                     'q_layer_op_list', 'noise_model_tq']:
+            if state_dict.get(attr, None) is None:
+                logger.warning(f"No {attr} found, will not save it.")
+
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
