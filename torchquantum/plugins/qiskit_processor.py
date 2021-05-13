@@ -129,6 +129,7 @@ class QiskitProcessor(object):
             self.backend = self.provider.get_backend(
                 self.backend_name)
             self.properties = self.backend.properties()
+            self.coupling_map = self.get_coupling_map(self.backend_name)
         else:
             # use simulator
             self.backend = Aer.get_backend('qasm_simulator',
@@ -141,7 +142,7 @@ class QiskitProcessor(object):
         self.initial_layout = layout
 
     def transpile(self, circs):
-        if not self.transpile_with_ancilla:
+        if not self.transpile_with_ancilla and self.coupling_map is not None:
             # only use same number of physical qubits as virtual qubits
             # !! the risk is that the remaining graph is not a connected graph,
             # need fix this later
