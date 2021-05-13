@@ -132,8 +132,8 @@ def main() -> None:
             thres=configs.prune.eval.remove_ops_thres)
         model.q_layer = q_layer
 
-    if state_dict['noise_model_tq'] is not None:
-        # the readout error is always applied
+    if state_dict.get('noise_model_tq', None) is not None:
+        # the readout error is ALSO applied for eval and test
         model.set_noise_model_tq(state_dict['noise_model_tq'])
         model.noise_model_tq.mode = 'test'
 
