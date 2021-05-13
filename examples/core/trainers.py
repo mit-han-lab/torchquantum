@@ -598,6 +598,16 @@ class QNoiseAwareTrainer(Trainer):
         state_dict['scheduler'] = self.scheduler.state_dict()
         if getattr(self.model, 'sample_arch', None) is not None:
             state_dict['sample_arch'] = self.model.sample_arch
+        try:
+            state_dict['q_layer_op_list'] = build_module_op_list(
+                self.model.q_layer)
+            state_dict['encoder_func_list'] = self.model.encoder.func_list
+        except AttributeError:
+            logger.warning(f"No q_layer_op_list or encoder_func_list found, "
+                           f"will not save them")
+
+        if getattr(self.model, 'noise_model_tq', None) is not None:
+            state_dict['noise_model_tq'] = self.model.noise_model_tq
 
         if self.solution is not None:
             state_dict['solution'] = self.solution

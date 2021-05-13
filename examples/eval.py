@@ -132,6 +132,11 @@ def main() -> None:
             thres=configs.prune.eval.remove_ops_thres)
         model.q_layer = q_layer
 
+    if state_dict['noise_model_tq'] is not None:
+        # the readout error is always applied
+        model.set_noise_model_tq(state_dict['noise_model_tq'])
+        model.noise_model_tq.mode = 'test'
+
     if configs.model.transpile_before_run:
         # transpile the q_layer
         logger.warning(f"Transpile the q_layer to basis gate set before "
