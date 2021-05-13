@@ -369,6 +369,7 @@ def get_cared_configs(conf, mode) -> Config:
                'regularization',
                'verbose',
                'get_n_params',
+               'prune',
                ]
 
     if 'super' not in conf.trainer.name:

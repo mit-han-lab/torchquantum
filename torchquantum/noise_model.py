@@ -1,9 +1,11 @@
 import numpy as np
+import torch
 import torchquantum as tq
 
 from torchpack.utils.logging import logger
 from qiskit.providers.aer.noise import NoiseModel
 from torchquantum.utils import get_provider
+
 
 __all__ = ['NoiseModelTQ']
 
@@ -146,3 +148,45 @@ class NoiseModelTQ(object):
             ops.append(op)
 
         return ops
+
+    def apply_readout_error(self, x):
+        # add readout error
+        noise_free_0_probs = (x + 1) / 2
+        noise_free_1_probs = 1 - (x + 1) / 2
+
+        c2p_mapping = self.p_c_reg_mapping['c2p']
+
+        measure_info = self.parsed_dict['measure']
+        noisy_0_to_0_prob_all = []
+        noisy_0_to_1_prob_all = []
+        noisy_1_to_0_prob_all = []
+        noisy_1_to_1_prob_all = []
+
+        for k in range(x.shape[-1]):
+            p_wire = [c2p_mapping[k]]
+            noisy_0_to_0_prob_all.append(measure_info[tuple(p_wire)][
+                                             'probabilities'][0][0])
+            noisy_0_to_1_prob_all.append(measure_info[tuple(p_wire)][
+                                             'probabilities'][0][1])
+            noisy_1_to_0_prob_all.append(measure_info[tuple(p_wire)][
+                                             'probabilities'][1][0])
+            noisy_1_to_1_prob_all.append(measure_info[tuple(p_wire)][
+                                             'probabilities'][1][1])
+
+        noisy_0_to_0_prob_all = torch.tensor(noisy_0_to_0_prob_all,
+                                             device=x.device)
+        noisy_0_to_1_prob_all = torch.tensor(noisy_0_to_1_prob_all,
+                                             device=x.device)
+        noisy_1_to_0_prob_all = torch.tensor(noisy_1_to_0_prob_all,
+                                             device=x.device)
+        noisy_1_to_1_prob_all = torch.tensor(noisy_1_to_1_prob_all,
+                                             device=x.device)
+
+        noisy_measured_0 = noise_free_0_probs * noisy_0_to_0_prob_all + \
+            noise_free_1_probs * noisy_1_to_0_prob_all
+
+        noisy_measured_1 = noise_free_0_probs * noisy_0_to_1_prob_all + \
+            noise_free_1_probs * noisy_1_to_1_prob_all
+        noisy_expectation = noisy_measured_0 * 1 + noisy_measured_1 * (-1)
+
+        return noisy_expectation
