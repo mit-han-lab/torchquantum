@@ -14,7 +14,9 @@ class NoiseModelTQ(object):
     def __init__(self,
                  noise_model_name,
                  n_epochs,
-                 noise_total_prob=None):
+                 noise_total_prob=None,
+                 ignored_ops=('id', 'kraus', 'reset'),
+                 ):
         self.noise_model_name = noise_model_name
         provider = get_provider(backend_name=noise_model_name)
         backend = provider.get_backend(noise_model_name)
@@ -28,17 +30,19 @@ class NoiseModelTQ(object):
         self.orig_noise_total_prob = noise_total_prob
         self.noise_total_prob = noise_total_prob
         self.mode = 'train'
+        self.ignored_ops = ignored_ops
 
         self.parsed_dict = self.parse_noise_model_dict(self.noise_model_dict)
-        self.parsed_dict = self.clean_parsed_noise_model_dict(self.parsed_dict)
+        self.parsed_dict = self.clean_parsed_noise_model_dict(
+            self.parsed_dict, ignored_ops)
         self.n_epochs = n_epochs
 
     def adjust_noise(self, current_epoch):
         self.noise_total_prob = self.orig_noise_total_prob
 
     @staticmethod
-    def clean_parsed_noise_model_dict(nm_dict):
-        # remove the kraus and id operation in the instructions and probs
+    def clean_parsed_noise_model_dict(nm_dict, ignored_ops):
+        # remove the ignored operation in the instructions and probs
         for operation, operation_info in nm_dict.items():
             for qubit, qubit_info in operation_info.items():
                 inst_all = []
@@ -46,8 +50,8 @@ class NoiseModelTQ(object):
                 if qubit_info['type'] == 'qerror':
                     for inst, prob in zip(qubit_info['instructions'],
                                           qubit_info['probabilities']):
-                        if len(inst) == 1 and inst[0]['name'] in ['id',
-                                                                  'kraus']:
+                        if any([inst_one['name'] in ignored_ops for inst_one
+                                in inst]):
                             continue
                         else:
                             inst_all.append(inst)
@@ -142,7 +146,7 @@ class NoiseModelTQ(object):
             elif instruction['name'] == 'reset':
                 op = tq.Reset(wires=v_wires)
             else:
-                # ignore id and kraus operation
+                # ignore operations specified by self.ignored_ops
                 # logger.warning(f"skip noise operation {instruction['name']}")
                 continue
             ops.append(op)

@@ -304,6 +304,7 @@ def make_noise_model_tq():
     noise_model_tq = NoiseModelTQ(
         noise_model_name=configs.qiskit.noise_model_name,
         n_epochs=configs.run.n_epochs,
-        noise_total_prob=configs.trainer.noise_total_prob
+        noise_total_prob=configs.trainer.noise_total_prob,
+        ignored_ops=configs.trainer.ignored_noise_ops,
     )
     return noise_model_tq
