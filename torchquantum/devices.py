@@ -11,6 +11,8 @@ class QuantumDevice(nn.Module):
     def __init__(self, n_wires: int):
         super().__init__()
         # number of qubits
+        # the states are represented in a multi-dimension tensor
+        # from left to right: qubit 0 to n
         self.n_wires = n_wires
 
         _state = torch.zeros(2 ** self.n_wires, dtype=C_DTYPE)

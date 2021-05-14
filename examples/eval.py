@@ -117,20 +117,45 @@ def main() -> None:
         model.set_sample_arch(solution['arch'])
 
     if 'v_c_reg_mapping' in state_dict.keys():
-        try:
-            model.measure.set_v_c_reg_mapping(state_dict['v_c_reg_mapping'])
-        except AttributeError:
-            logger.warning(f"Cannot set v_c_reg_mapping.")
+        if getattr(model, 'q_layer', None) is not None:
+            try:
+                model.measure.set_v_c_reg_mapping(
+                    state_dict['v_c_reg_mapping'])
+            except AttributeError:
+                logger.warning(f"Cannot set v_c_reg_mapping.")
+        elif getattr(model, 'nodes', None) is not None:
+            for k, node in enumerate(model.nodes):
+                node.measure.set_v_c_reg_mapping(
+                    state_dict['v_c_reg_mapping'][k])
 
     if configs.model.load_op_list:
         assert state_dict['q_layer_op_list'] is not None
         logger.warning(f"Loading the op_list, will replace the q_layer in "
                        f"the original model!")
-        q_layer = build_module_from_op_list(
-            op_list=state_dict['q_layer_op_list'],
-            remove_ops=configs.prune.eval.remove_ops,
-            thres=configs.prune.eval.remove_ops_thres)
-        model.q_layer = q_layer
+        if getattr(model, 'q_layer', None) is not None:
+            q_layer = build_module_from_op_list(
+                op_list=state_dict['q_layer_op_list'],
+                remove_ops=configs.prune.eval.remove_ops,
+                thres=configs.prune.eval.remove_ops_thres)
+            model.q_layer = q_layer
+        elif getattr(model, 'nodes', None) is not None:
+            for k, node in enumerate(model.nodes):
+                q_layer = build_module_from_op_list(
+                    op_list=state_dict['q_layer_op_list'][k],
+                    remove_ops=configs.prune.eval.remove_ops,
+                    thres=configs.prune.eval.remove_ops_thres)
+                node.q_layer = q_layer
+
+    if state_dict.get('noise_model_tq', None) is not None:
+        # the readout error is ALSO applied for eval and test so need load
+        # noise_model_tq
+        if getattr(model, 'q_layer', None) is not None:
+            model.set_noise_model_tq(state_dict['noise_model_tq'])
+            model.noise_model_tq.mode = 'test'
+        elif getattr(model, 'nodes', None) is not None:
+            for k, node in enumerate(model.nodes):
+                node.set_noise_model_tq(state_dict['noise_model_tq'][k])
+                node.noise_model_tq.mode = 'test'
 
     if configs.model.transpile_before_run:
         # transpile the q_layer

@@ -56,7 +56,11 @@ class MeasureAll(tq.QuantumModule):
                     perm.append(c2v_mapping[k])
             x = x[:, perm]
 
-        return x
+        if self.noise_model_tq is not None and \
+                self.noise_model_tq.is_add_noise:
+            return self.noise_model_tq.apply_readout_error(x)
+        else:
+            return x
 
     def set_v_c_reg_mapping(self, mapping):
         self.v_c_reg_mapping = mapping

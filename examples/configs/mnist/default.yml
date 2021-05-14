@@ -28,6 +28,7 @@ scheduler:
 
 trainer:
   name: q_trainer
+  add_noise: False
 
 run:
   n_epochs: 200

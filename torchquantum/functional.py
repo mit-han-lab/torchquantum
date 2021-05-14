@@ -8,7 +8,7 @@ from typing import Callable
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from .utils import pauli_eigs, diag
 from torchpack.utils.logging import logger
-
+from torchquantum.utils import normalize_statevector
 
 __all__ = [
     'func_name_dict',
@@ -69,6 +69,7 @@ __all__ = [
     'cx',
     'ccnot',
     'ccx',
+    'reset',
 ]
 
 
@@ -230,6 +231,32 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
             q_device.states = apply_unitary_einsum(state, matrix, wires)
         elif method == 'bmm':
             q_device.states = apply_unitary_bmm(state, matrix, wires)
+
+
+def reset(q_device: tq.QuantumDevice, wires, inverse=False):
+    # reset the target qubits to 0, non-unitary operation
+    state = q_device.states
+
+    wires = [wires] if isinstance(wires, int) else wires
+
+    for wire in wires:
+        devices_dim = wire + 1
+        permute_to = list(range(state.dim()))
+        del permute_to[devices_dim]
+        permute_to += [devices_dim]
+        permute_back = list(np.argsort(permute_to))
+
+        # permute the target wire to the last dim
+        permuted = state.permute(permute_to)
+
+        # reset the state
+        permuted[..., 1] = 0
+
+        # permute back
+        state = state.permute(permute_back)
+
+    # normalize the magnitude of states
+    q_device.states = normalize_statevector(q_device.states)
 
 
 def rx_matrix(params):
@@ -841,4 +868,5 @@ func_name_dict = {
     'cx': cx,
     'ccnot': ccnot,
     'ccx': ccx,
+    'reset': reset,
 }

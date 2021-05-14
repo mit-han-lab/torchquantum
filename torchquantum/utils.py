@@ -11,9 +11,10 @@ from typing import List, Dict, Iterable
 from torchpack.utils.config import Config
 from qiskit.providers.aer.noise.device.parameters import gate_error_values
 from qiskit import IBMQ
+from qiskit.exceptions import QiskitError
 
 
-def pauli_eigs(n):
+def pauli_eigs(n) -> np.ndarray:
     r"""Eigenvalues for :math:`A^{\o times n}`, where :math:`A` is
     Pauli operator, or shares its eigenvalues.
 
@@ -286,17 +287,55 @@ def build_module_description_test():
     tq2qiskit(q_dev, m1, draw=True)
 
 
-def get_v_c_reg_mapping(circ):
+def get_p_v_reg_mapping(circ):
     """
     p are physical qubits
     v are logical qubits
+    """
+    p2v_orig = circ._layout.get_physical_bits().copy()
+    mapping = {
+        'p2v': {},
+        'v2p': {},
+    }
+
+    for p, v in p2v_orig.items():
+        if v.register.name == 'q':
+            mapping['p2v'][p] = v.index
+            mapping['v2p'][v.index] = p
+
+    return mapping
+
+
+def get_p_c_reg_mapping(circ):
+    """
+    p are physical qubits
+    c are classical registers
+    """
+    mapping = {
+        'p2c': {},
+        'c2p': {},
+    }
+    for gate in circ.data:
+        if gate[0].name == 'measure':
+            mapping['p2c'][gate[1][0].index] = gate[2][0].index
+            mapping['c2p'][gate[2][0].index] = gate[1][0].index
+
+    return mapping
+
+
+def get_v_c_reg_mapping(circ):
+    """
+    p are physical qubits, the real fabricated qubits
+    v are logical qubits, also the 'wires' in torchquantum lib
     c are classical registers
     want to get v2c
     """
 
-    p2v = circ._layout.get_physical_bits().copy()
-    for p, v in p2v.items():
-        p2v[p] = v.index
+    p2v_orig = circ._layout.get_physical_bits().copy()
+    p2v = {}
+    for p, v in p2v_orig.items():
+        if v.register.name == 'q':
+            p2v[p] = v.index
 
     mapping = {
         'p2c': {},
@@ -331,6 +370,7 @@ def get_cared_configs(conf, mode) -> Config:
                'regularization',
                'verbose',
                'get_n_params',
+               'prune',
                ]
 
     if 'super' not in conf.trainer.name:
@@ -426,9 +466,35 @@ def get_provider(backend_name):
                                      group='anl',
                                      project='csc428')
     else:
-        provider = IBMQ.get_provider(hub='ibm-q')
+        try:
+            provider = IBMQ.get_provider(hub='ibm-q-research',
+                                         group='mass-inst-tech-1',
+                                         project='main')
+        except QiskitError:
+            logger.warning(f"Cannot use MIT backend, roll back to open")
+            provider = IBMQ.get_provider(hub='ibm-q')
 
     return provider
+
+
+def normalize_statevector(states):
+    # make sure the square magnitude of statevector sum to 1
+    # states = states.contiguous()
+    original_shape = states.shape
+    states_reshape = states.reshape(states.shape[0], -1)
+
+    # for states with no energy, need to set all zero state as energy 1
+    energy = (abs(states_reshape) ** 2).sum(dim=-1)
+    if energy.min() == 0:
+        for k, val in enumerate(energy):
+            if val == 0:
+                states_reshape[k][0] = 1
+
+    factors = torch.sqrt(1 / ((abs(states_reshape) ** 2).sum(
+        dim=-1))).unsqueeze(-1)
+    states = (states_reshape * factors).reshape(original_shape)
+
+    return states
 
 
 if __name__ == '__main__':

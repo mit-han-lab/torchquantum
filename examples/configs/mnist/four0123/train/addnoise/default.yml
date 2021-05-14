@@ -1,0 +1,7 @@
+trainer:
+  name: q_noise_aware_trainer
+  add_noise: True
+  ignored_noise_ops: ['id', 'kraus', 'reset']
+
+model:
+  transpile_before_run: True

@@ -8,6 +8,7 @@ from torchquantum.encoding import encoder_op_list_name_dict
 from torchpack.utils.logging import logger
 from examples.core.tools.generate_ansatz_observables import (
     molecule_name_dict, generate_uccsd)
+from torchquantum.layers import layer_name_dict
 
 
 class Quanv0(tq.QuantumModule):
@@ -1226,6 +1227,78 @@ class QVQEUCCSDModel0(tq.QuantumModule):
         return x
 
 
+class QFCModel14(tq.QuantumModule):
+    def __init__(self, arch):
+        super().__init__()
+        self.arch = arch
+        self.n_wires = arch['n_wires']
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.encoder = tq.GeneralEncoder(
+            encoder_op_list_name_dict[arch['encoder_op_list_name']]
+        )
+        self.q_layer = layer_name_dict[arch['q_layer_name']](arch)
+        self.measure = tq.MeasureAll(tq.PauliZ)
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
+            x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+
+        x = x.view(bsz, -1)
+
+        if use_qiskit:
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
+        else:
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+
+
+class QMultiFCModel0(tq.QuantumModule):
+    # multiple nodes, one node contains encoder, q_layer, and measure
+    def __init__(self, arch):
+        super().__init__()
+        self.arch = arch
+        self.n_nodes = arch['n_nodes']
+        self.nodes = tq.build_nodes(arch['node_archs'])
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
+            x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+        x = x.view(bsz, -1)
+
+        for node in self.nodes:
+            x = node(x, use_qiskit=use_qiskit)
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+
+
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
@@ -1245,8 +1318,10 @@ model_dict = {
     'q_fc11': QFCModel11,
     'q_fc12': QFCModel12,
     'q_fc13': QFCModel13,
+    'q_fc14': QFCModel14,
     'q_fc_rand0': QFCRandModel0,
     'vqe_rand0': QVQERandModel0,
     'vqe_uccsd': QVQEUCCSDModel0,
     'q_qsvt0': QSVT0,
+    'q_multifc0': QMultiFCModel0,
 }

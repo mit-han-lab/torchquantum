@@ -20,6 +20,8 @@ from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.utils import (build_module_from_op_list,
                                 build_module_op_list,
                                 get_v_c_reg_mapping,
+                                get_p_c_reg_mapping,
+                                get_p_v_reg_mapping,
                                 get_cared_configs)
 from torchquantum.super_utils import get_named_sample_arch
 
@@ -154,27 +156,64 @@ def main() -> None:
                        f"training, will replace the q_layer!")
         processor = builder.make_qiskit_processor()
 
-        circ = tq2qiskit(model.q_device, model.q_layer)
+        if getattr(model, 'q_layer', None) is not None:
+            circ = tq2qiskit(model.q_device, model.q_layer)
+            """
+            add measure because the transpile process may permute the wires, 
+            so we need to get the final q reg to c reg mapping 
+            """
+            circ.measure(list(range(model.q_device.n_wires)),
+                         list(range(model.q_device.n_wires)))
+            logger.info("Transpiling circuit...")
 
-        """
-        add measure because the transpile process may permute the wires, 
-        so we need to get the final q reg to c reg mapping 
-        """
-        circ.measure(list(range(model.q_device.n_wires)),
-                     list(range(model.q_device.n_wires)))
+            if solution is not None:
+                processor.set_layout(solution['layout'])
+                logger.warning(f"Set layout {solution['layout']} for transpile!")
 
-        logger.info("Transpiling circuit...")
+            circ_transpiled = processor.transpile(circs=circ)
+            q_layer = qiskit2tq(circ=circ_transpiled)
 
-        if solution is not None:
-            processor.set_layout(solution['layout'])
-            logger.warning(f"Set layout {solution['layout']} for transpile!")
+            model.measure.set_v_c_reg_mapping(
+                get_v_c_reg_mapping(circ_transpiled))
+            model.q_layer = q_layer
 
-        circ_transpiled = processor.transpile(circs=circ)
-        q_layer = qiskit2tq(circ=circ_transpiled)
+            if configs.trainer.add_noise:
+                # noise-aware training
+                noise_model_tq = builder.make_noise_model_tq()
+                noise_model_tq.is_add_noise = True
+                noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(
+                    circ_transpiled)
+                noise_model_tq.p_c_reg_mapping = get_p_c_reg_mapping(
+                    circ_transpiled)
+                noise_model_tq.p_v_reg_mapping = get_p_v_reg_mapping(
+                    circ_transpiled)
+                model.set_noise_model_tq(noise_model_tq)
 
-        model.measure.set_v_c_reg_mapping(
-            get_v_c_reg_mapping(circ_transpiled))
-        model.q_layer = q_layer
+        elif getattr(model, 'nodes', None) is not None:
+            # every node has a noise model because it is possible that
+            # different nodes run on different QC
+            for node in model.nodes:
+                circ = tq2qiskit(node.q_device, node.q_layer)
+                circ.measure(list(range(node.q_device.n_wires)),
+                             list(range(node.q_device.n_wires)))
+                circ_transpiled = processor.transpile(circs=circ)
+                q_layer = qiskit2tq(circ=circ_transpiled)
+
+                node.measure.set_v_c_reg_mapping(
+                    get_v_c_reg_mapping(circ_transpiled))
+                node.q_layer = q_layer
+
+                if configs.trainer.add_noise:
+                    # noise-aware training
+                    noise_model_tq = builder.make_noise_model_tq()
+                    noise_model_tq.is_add_noise = True
+                    noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(
+                        circ_transpiled)
+                    noise_model_tq.p_c_reg_mapping = get_p_c_reg_mapping(
+                        circ_transpiled)
+                    noise_model_tq.p_v_reg_mapping = get_p_v_reg_mapping(
+                        circ_transpiled)
+                    node.set_noise_model_tq(noise_model_tq)
 
     if getattr(configs.model.arch, 'sample_arch', None) is not None and \
             not configs.model.transpile_before_run:

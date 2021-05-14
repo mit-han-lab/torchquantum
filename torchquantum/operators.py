@@ -59,6 +59,7 @@ __all__ = [
     'TrainableUnitaryStrict',
     'MultiCNOT',
     'MultiXCNOT',
+    'Reset',
 ]
 
 
@@ -109,6 +110,7 @@ class Operator(tq.QuantumModule):
         'Toffoli',
         'MultiCNOT',
         'MultiXCNOT',
+        'Reset',
     ]
 
     parameterized_ops = [
@@ -250,6 +252,13 @@ class Operator(tq.QuantumModule):
             else:
                 self.func(q_device, self.wires, params=self.params,
                           n_wires=self.n_wires, inverse=inverse)
+
+        if self.noise_model_tq is not None and \
+                self.noise_model_tq.is_add_noise:
+            noise_ops = self.noise_model_tq.sample_noise_op(self)
+            if len(noise_ops):
+                for noise_op in noise_ops:
+                    noise_op(q_device)
 
 
 class Observable(Operator, metaclass=ABCMeta):
@@ -866,6 +875,16 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
         return op_matrix
 
 
+class Reset(Operator, metaclass=ABCMeta):
+    num_params = 0
+    num_wires = AnyWires
+    func = staticmethod(tqf.reset)
+
+    @classmethod
+    def _matrix(cls, params):
+        return None
+
+
 op_name_dict = {
     'hadamard': Hadamard,
     'h': Hadamard,
@@ -925,4 +944,5 @@ op_name_dict = {
     'trainableunitarystrict': TrainableUnitaryStrict,
     'multicnot': MultiCNOT,
     'multixcnot': MultiXCNOT,
+    'reset': Reset,
 }
