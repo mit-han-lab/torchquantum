@@ -35,8 +35,12 @@ def run_job_worker(data):
             result = job.result()
             counts = result.get_counts()
             break
-        except QiskitError:
-            logger.warning('Job failed, rerun now.')
+        except Exception as e:
+            if "Job was cancelled" in str(e):
+                logger.warning(f"Job is cancelled manually.")
+                return None
+            else:
+                logger.warning(f"Job failed because {e}, rerun now.")
 
     return counts
 
