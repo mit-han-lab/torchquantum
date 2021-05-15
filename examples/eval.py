@@ -16,6 +16,7 @@ from torchquantum.utils import (legalize_unitary, build_module_from_op_list,
                                 get_success_rate)
 from torchquantum.plugins import tq2qiskit, qiskit2tq, tq2qiskit_parameterized
 from torchquantum.super_utils import get_named_sample_arch
+from examples.core.tools.quantize import PACTActivationQuantizer
 
 
 def log_acc(output_all, target_all, k=1):
@@ -128,6 +129,10 @@ def main() -> None:
                 node.measure.set_v_c_reg_mapping(
                     state_dict['v_c_reg_mapping'][k])
 
+    if state_dict.get('q_layer_op_list', None) is not None and not \
+            configs.model.load_op_list:
+        logger.warning(f"the model has op_list but is not loaded!!")
+
     if configs.model.load_op_list:
         assert state_dict['q_layer_op_list'] is not None
         logger.warning(f"Loading the op_list, will replace the q_layer in "
@@ -186,6 +191,46 @@ def main() -> None:
 
     if configs.legalization.legalize:
         legalize_unitary(model)
+
+    if configs.act_quant.add_in_eval:
+        quantizers = []
+        assert getattr(model, 'nodes', None) is not None
+        if getattr(configs.act_quant, 'act_quant_bit', None) is not None:
+            # settings from config file has higher priority
+            act_quant_bit = configs.act_quant.act_quant_bit
+            act_quant_ratio = configs.act_quant.act_quant_ratio
+            logger.warning(f"Get act_quant setting from config file!")
+        elif state_dict.get('act_quant', None) is not None:
+            act_quant_bit = state_dict['act_quant']['act_quant_bit']
+            act_quant_ratio = state_dict['act_quant']['act_quant_ratio']
+            logger.warning(f"Get act_quant setting from ckpt file!")
+        elif getattr(configs.trainer, 'act_quant_bit', None) is not None:
+            # if the act_quant info is not stored in ckpt, use the info from
+            # training config file
+            act_quant_bit = configs.trainer.act_quant_bit
+            act_quant_ratio = configs.trainer.act_quant_ratio
+            logger.warning(f"Get act_quant setting from previous training "
+                           f"config file!")
+        else:
+            raise NotImplementedError('No act_quant info specified!')
+
+        logger.warning(f"act_quant_bit={act_quant_bit}, "
+                       f"act_quant_ratio={act_quant_ratio}")
+
+        for node in model.nodes:
+            quantizer = PACTActivationQuantizer(
+                module=node,
+                precision=act_quant_bit - 1,
+                alpha=1.0,
+                backprop_alpha=False,
+                quant_ratio=act_quant_ratio,
+                device=device,
+            )
+            quantizers.append(quantizer)
+
+        for quantizer in quantizers:
+            quantizer.register_hook()
+
     model.to(device)
     model.eval()
 
