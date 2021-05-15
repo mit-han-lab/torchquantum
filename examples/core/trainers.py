@@ -185,9 +185,11 @@ class QTrainer(Trainer):
         if getattr(self.model, 'nodes', None) is not None:
             state_dict['encoder_func_list'] = [
                 node.encoder.func_list for node in self.model.nodes]
-            state_dict['q_layer_op_list'] = [
-                build_module_op_list(node.q_layer) for node in
-                self.model.nodes]
+            if configs.model.transpile_before_run:
+                # only save op_list if transpile before run
+                state_dict['q_layer_op_list'] = [
+                    build_module_op_list(node.q_layer) for node in
+                    self.model.nodes]
             state_dict['v_c_reg_mapping'] = [
                 node.measure.v_c_reg_mapping for node in self.model.nodes]
         for attr in ['v_c_reg_mapping', 'encoder_func_list',
@@ -690,9 +692,11 @@ class QNoiseAwareTrainer(Trainer):
         if getattr(self.model, 'nodes', None) is not None:
             state_dict['encoder_func_list'] = [
                 node.encoder.func_list for node in self.model.nodes]
-            state_dict['q_layer_op_list'] = [
-                build_module_op_list(node.q_layer) for node in
-                self.model.nodes]
+            if configs.model.transpile_before_run:
+                # only save op_list if transpile before run
+                state_dict['q_layer_op_list'] = [
+                    build_module_op_list(node.q_layer) for node in
+                    self.model.nodes]
             state_dict['v_c_reg_mapping'] = [
                 node.measure.v_c_reg_mapping for node in self.model.nodes]
 
