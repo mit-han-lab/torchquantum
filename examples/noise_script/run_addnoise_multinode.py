@@ -15,11 +15,12 @@ if __name__ == '__main__':
             'examples/eval.py',
             f'examples/configs/'
             f'{args.dataset}/{args.name}/eval/'
-            f'{args.device}/real/opt2/noancilla/300.yml',
+            f'{args.device}/real/opt2/noancilla/300_load_op_list.yml',
             '--jobs=5',
             '--run-dir']
 
-    with open(f'logs/{args.device}/{args.dataset}.{args.name}.multinode.'
+    with open(f'logs/{args.device}/{args.dataset}.'
+              f'{args.name}.addnoise.u3cu3_0.multinode.'
               f'{args.noise}'
               f'.txt',
               'a') as \
