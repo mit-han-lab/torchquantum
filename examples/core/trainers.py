@@ -13,6 +13,7 @@ from torchquantum.prune_utils import (PhaseL1UnstructuredPruningMethod,
                                       ThresholdScheduler)
 from torchpack.utils.logging import logger
 from torchpack.callbacks.writers import TFEventWriter
+from examples.core.tools.quantize import PACTActivationQuantizer
 
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer',
@@ -520,6 +521,36 @@ class QNoiseAwareTrainer(Trainer):
         self.scheduler = scheduler
         self.solution = None
         self.score = None
+        self.quantizers = []
+        self.init_act_quant()
+
+    def init_act_quant(self):
+        device = torch.device('cuda') if configs.run.device == 'gpu' else \
+            torch.device('cpu')
+        if configs.trainer.act_quant:
+            quantizers = []
+            assert getattr(self.model, 'nodes', None) is not None
+            # single Q node
+            for node in self.model.nodes:
+                quantizer = PACTActivationQuantizer(
+                    module=node,
+                    precision=configs.trainer.act_quant_bit - 1,
+                    alpha=1.0,
+                    backprop_alpha=False,
+                    quant_ratio=configs.trainer.act_quant_ratio,
+                    device=device,
+                )
+                quantizers.append(quantizer)
+
+            self.quantizers = quantizers
+
+    def register_act_quant_hook(self):
+        for quantizer in self.quantizers:
+            quantizer.register_hook()
+
+    def remove_act_quant_hook(self):
+        for quantizer in self.quantizers:
+            quantizer.remove_hook()
 
     def _before_epoch(self) -> None:
         self.model.train()
@@ -527,6 +558,7 @@ class QNoiseAwareTrainer(Trainer):
         if self.model.noise_model_tq is not None:
             self.model.noise_model_tq.mode = 'train'
             self.model.noise_model_tq.adjust_noise(self.epoch_num)
+        self.register_act_quant_hook()
 
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
@@ -617,6 +649,8 @@ class QNoiseAwareTrainer(Trainer):
                 legalize_unitary(self.model)
 
     def _state_dict(self) -> Dict[str, Any]:
+        # remove hook otherwise the 'model' cannot be pickled
+        self.remove_act_quant_hook()
         state_dict = dict()
         # need to store model arch because of randomness of random layers
         state_dict['model_arch'] = self.model

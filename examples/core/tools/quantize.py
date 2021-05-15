@@ -12,12 +12,14 @@ from torch import Tensor
 from torch.types import Device
 from torchpack.utils.logging import logger
 
-__all__ = ["PACT_ActivationQuantizer"]
+
+__all__ = ["PACTActivationQuantizer"]
+
 
 # PACT activation: https://arxiv.org/pdf/1805.06085.pdf
 
 
-class PACT_QuantFunc(torch.autograd.Function):
+class PACTQuantFunc(torch.autograd.Function):
     r"""PACT (PArametrized Clipping acTivation) quantization function for activations.
         Implements a :py:class:`torch.autograd.Function` for quantizing activations in :math:`Q` bits using the PACT strategy.
         In forward propagation, the function is defined as
@@ -52,11 +54,11 @@ class PACT_QuantFunc(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx, input, eps, alpha, quant_noise_mask):
-        where_input_clipped = (input < 0) | (input >= alpha)
+        where_input_clipped = (input < -1) | (input > alpha)
         where_input_ltalpha = (input < alpha)
         ctx.save_for_backward(where_input_clipped, where_input_ltalpha)
         upper_thres = alpha.data[0]-eps.data[0]
-        input = input.clamp(0., upper_thres)
+        input = input.clamp(-1, upper_thres)
         input_q = input.div(eps).floor_().mul_(eps)
         if quant_noise_mask is not None:
             return input_q.data.sub_(input.data).masked_fill_(quant_noise_mask, 0).add_(input)
@@ -68,15 +70,19 @@ class PACT_QuantFunc(torch.autograd.Function):
         # see Hubara et al., Section 2.3
         where_input_clipped, where_input_ltalpha = ctx.saved_tensors
         grad_input = grad_output.masked_fill(where_input_clipped, 0)
-        grad_alpha = grad_output.masked_fill(
-            where_input_ltalpha, 0).sum().expand(1)
+        if ctx.needs_input_grad[2]:
+            grad_alpha = grad_output.masked_fill(
+                where_input_ltalpha, 0).sum().expand(1)
+        else:
+            grad_alpha = None
+        # grad_input = grad_output
         return grad_input, None, grad_alpha, None
 
 
-pact_quantize = PACT_QuantFunc.apply
+pact_quantize = PACTQuantFunc.apply
 
 
-class PACT_ActivationQuantizer(torch.nn.Module):
+class PACTActivationQuantizer(torch.nn.Module):
     r"""PACT (PArametrized Clipping acTivation) activation.
     Implements a :py:class:`torch.nn.Module` to implement PACT-style activations. It is meant to replace :py:class:`torch.nn.ReLU`, :py:class:`torch.nn.ReLU6` and
     similar activations in a PACT-quantized network.
@@ -135,7 +141,7 @@ class PACT_ActivationQuantizer(torch.nn.Module):
 
         ## quantization hook
         self.handle = None
-        self.register_hook()
+        # self.register_hook()
 
     def set_static_precision(self, limit_at_32_bits: bool = True, **kwargs) -> None:
         r"""Sets static parameters used only for deployment.
@@ -238,13 +244,15 @@ class PACT_ActivationQuantizer(torch.nn.Module):
         self.handle = self.module.register_forward_hook(quantize_hook)
         return self.handle
 
-    def remove(self) -> None:
+    def remove_hook(self) -> None:
         ## remove the forward hook
         if(self.handle is not None):
             self.handle.remove()
 
 
 if __name__ == "__main__":
+    import pdb
+    pdb.set_trace()
     device = torch.device("cuda")
     class Model(torch.nn.Module):
         def __init__(self) -> None:
@@ -255,11 +263,13 @@ if __name__ == "__main__":
             return y
     model = Model().to(device)
     model.train()
-    quantizer = PACT_ActivationQuantizer(module=model, precision=4, quant_ratio=0.1, device=device)
+    quantizer = PACTActivationQuantizer(module=model, precision=4,
+                                        quant_ratio=0.1, device=device,
+                                        backprop_alpha=False)
     quantizer.set_quant_ratio(0.8)
     torch.manual_seed(10)
     torch.cuda.manual_seed_all(10)
-    x = torch.randn(4,4, device=device)
+    x = torch.randn(4,4, device=device, requires_grad=True)
     y = model(x)
     loss = y.sum()
     loss.backward()
