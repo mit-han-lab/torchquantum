@@ -681,6 +681,12 @@ class QNoiseAwareTrainer(Trainer):
         if getattr(self.model, 'noise_model_tq', None) is not None:
             state_dict['noise_model_tq'] = self.model.noise_model_tq
 
+        if configs.trainer.act_quant:
+            state_dict['act_quant'] = {
+                'act_quant_bit': configs.trainer.act_quant_bit,
+                'act_quant_ratio': configs.trainer.act_quant_ratio,
+            }
+
         if getattr(self.model, 'nodes', None) is not None:
             state_dict['encoder_func_list'] = [
                 node.encoder.func_list for node in self.model.nodes]

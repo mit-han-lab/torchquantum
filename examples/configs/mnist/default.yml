@@ -29,6 +29,7 @@ scheduler:
 trainer:
   name: q_trainer
   add_noise: False
+  act_quant: False
 
 run:
   n_epochs: 200
