@@ -1,0 +1,4 @@
+trainer:
+  act_quant: True
+  act_quant_bit: 4
+  act_quant_ratio: 1
