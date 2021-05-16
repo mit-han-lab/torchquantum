@@ -156,11 +156,21 @@ def main() -> None:
         # noise_model_tq
         if getattr(model, 'q_layer', None) is not None:
             model.set_noise_model_tq(state_dict['noise_model_tq'])
-            model.noise_model_tq.mode = 'test'
+            if getattr(configs, 'add_noise', False):
+                model.noise_model_tq.mode = 'train'
+                model.noise_model_tq.noise_total_prob = \
+                    configs.noise_total_prob
+            else:
+                model.noise_model_tq.mode = 'test'
         elif getattr(model, 'nodes', None) is not None:
             for k, node in enumerate(model.nodes):
                 node.set_noise_model_tq(state_dict['noise_model_tq'][k])
-                node.noise_model_tq.mode = 'test'
+                if getattr(configs, 'add_noise', False):
+                    node.noise_model_tq.mode = 'train'
+                    node.noise_model_tq.noise_total_prob = \
+                        configs.noise_total_prob
+                else:
+                    node.noise_model_tq.mode = 'test'
 
     if configs.model.transpile_before_run:
         # transpile the q_layer
