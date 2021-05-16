@@ -533,14 +533,21 @@ class QNoiseAwareTrainer(Trainer):
             quantizers = []
             assert getattr(self.model, 'nodes', None) is not None
             # single Q node
-            for node in self.model.nodes:
+            for k, node in enumerate(self.model.nodes):
+                # optionally skip the quantization of last layer output
+                if configs.trainer.act_quant_skip_last_node and k == len(
+                        self.model.nodes) - 1:
+                    continue
                 quantizer = PACTActivationQuantizer(
                     module=node,
-                    precision=configs.trainer.act_quant_bit - 1,
+                    precision=getattr(configs.trainer, 'act_quant_bit', None),
+                    level=getattr(configs.trainer, 'act_quant_level', None),
                     alpha=1.0,
                     backprop_alpha=False,
                     quant_ratio=configs.trainer.act_quant_ratio,
                     device=device,
+                    lower_bound=configs.trainer.act_quant_lower_bound,
+                    upper_bound=configs.trainer.act_quant_upper_bound,
                 )
                 quantizers.append(quantizer)
 
@@ -593,18 +600,32 @@ class QNoiseAwareTrainer(Trainer):
                 loss += configs.regularization.unitary_loss_lambda * \
                         unitary_loss
 
+        if configs.trainer.act_quant and configs.trainer.act_quant_loss:
+            mse_all = self.model.mse_all
+            act_quant_loss = sum(mse_all)
+            loss += configs.trainer.act_quant_loss_lambda * act_quant_loss
+
         if loss.requires_grad:
             for k, group in enumerate(self.optimizer.param_groups):
                 self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
             self.summary.add_scalar('loss', loss.item())
             self.summary.add_scalar('nll_loss', nll_loss)
+
+            if configs.trainer.act_quant and configs.trainer.act_quant_loss:
+                self.summary.add_scalar('actqloss', act_quant_loss.item())
+
             if self.model.noise_model_tq is not None:
                 if self.model.noise_model_tq.noise_total_prob is not None:
                     noise_total_prob = \
                         self.model.noise_model_tq.noise_total_prob
                 else:
                     noise_total_prob = -1
-                self.summary.add_scalar('noise_total_prob', noise_total_prob)
+                self.summary.add_scalar('noip', noise_total_prob)
+            if getattr(self.model, 'nodes', None) is not None:
+                noise_total_prob = -1 if self.model.nodes[
+                    0].noise_model_tq.noise_total_prob is None else \
+                    self.model.nodes[0].noise_model_tq.noise_total_prob
+                self.summary.add_scalar('noip', noise_total_prob)
 
             if getattr(self.model, 'sample_arch', None) is not None:
                 for writer in self.summary.writers:
@@ -685,8 +706,13 @@ class QNoiseAwareTrainer(Trainer):
 
         if configs.trainer.act_quant:
             state_dict['act_quant'] = {
-                'act_quant_bit': configs.trainer.act_quant_bit,
-                'act_quant_ratio': configs.trainer.act_quant_ratio,
+                'act_quant_bit': self.quantizers[0].precision,
+                'act_quant_level': self.quantizers[0].level,
+                'act_quant_ratio': self.quantizers[0].quant_ratio,
+                'act_quant_lower_bound': self.quantizers[
+                    0].lower_bound,
+                'act_quant_upper_bound': self.quantizers[
+                    0].upper_bound,
             }
 
         if getattr(self.model, 'nodes', None) is not None:

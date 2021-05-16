@@ -1276,6 +1276,8 @@ class QMultiFCModel0(tq.QuantumModule):
         self.n_nodes = arch['n_nodes']
         self.nodes = tq.build_nodes(arch['node_archs'], act_norm=arch['act_norm'])
         assert arch['n_nodes'] == len(arch['node_archs'])
+        self.mse_all = []
+        self.residual = getattr(arch, 'residual', False)
 
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
@@ -1283,9 +1285,16 @@ class QMultiFCModel0(tq.QuantumModule):
         if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
             x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
         x = x.view(bsz, -1)
+        mse_all = []
 
-        for node in self.nodes:
-            x = node(x, use_qiskit=use_qiskit)
+        for k, node in enumerate(self.nodes):
+            node_out = node(x, use_qiskit=use_qiskit)
+            if self.residual and k > 0:
+                x = x + node_out
+            else:
+                x = node_out
+            mse_all.append(F.mse_loss(node_out, node.x_before_act_quant))
+        self.mse_all = mse_all
 
         if verbose:
             logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")

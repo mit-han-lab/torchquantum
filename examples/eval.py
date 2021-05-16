@@ -209,32 +209,52 @@ def main() -> None:
             # settings from config file has higher priority
             act_quant_bit = configs.act_quant.act_quant_bit
             act_quant_ratio = configs.act_quant.act_quant_ratio
+            act_quant_level = configs.act_quant.act_quant_level
+            act_quant_lower_bound = configs.act_quant.act_quant_lower_bound
+            act_quant_upper_bound = configs.act_quant.act_quant_upper_bound
             logger.warning(f"Get act_quant setting from config file!")
         elif state_dict.get('act_quant', None) is not None:
             act_quant_bit = state_dict['act_quant']['act_quant_bit']
             act_quant_ratio = state_dict['act_quant']['act_quant_ratio']
+            act_quant_level = state_dict['act_quant']['act_quant_level']
+            act_quant_lower_bound = state_dict['act_quant'][
+                'act_quant_lower_bound']
+            act_quant_upper_bound = state_dict['act_quant'][
+                'act_quant_upper_bound']
             logger.warning(f"Get act_quant setting from ckpt file!")
         elif getattr(configs.trainer, 'act_quant_bit', None) is not None:
             # if the act_quant info is not stored in ckpt, use the info from
             # training config file
             act_quant_bit = configs.trainer.act_quant_bit
             act_quant_ratio = configs.trainer.act_quant_ratio
+            act_quant_level = configs.trainer.act_quant_level
+            act_quant_lower_bound = configs.trainer.act_quant_lower_bound
+            act_quant_upper_bound = configs.trainer.act_quant_upper_bound
             logger.warning(f"Get act_quant setting from previous training "
                            f"config file!")
         else:
             raise NotImplementedError('No act_quant info specified!')
 
         logger.warning(f"act_quant_bit={act_quant_bit}, "
-                       f"act_quant_ratio={act_quant_ratio}")
+                       f"act_quant_ratio={act_quant_ratio}, "
+                       f"act_quant_level={act_quant_level}, "
+                       f"act_quant_lower_bound={act_quant_lower_bound}, "
+                       f"act_quant_upper_bound={act_quant_upper_bound}")
 
-        for node in model.nodes:
+        for k, node in enumerate(model.nodes):
+            if configs.trainer.act_quant_skip_last_node and k == len(
+                    model.nodes) - 1:
+                continue
             quantizer = PACTActivationQuantizer(
                 module=node,
-                precision=act_quant_bit - 1,
+                precision=act_quant_bit,
+                level=act_quant_level,
                 alpha=1.0,
                 backprop_alpha=False,
                 quant_ratio=act_quant_ratio,
                 device=device,
+                lower_bound=act_quant_lower_bound,
+                upper_bound=act_quant_upper_bound,
             )
             quantizers.append(quantizer)
 

@@ -53,13 +53,19 @@ class PACTQuantFunc(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, input, eps, alpha, quant_noise_mask):
-        where_input_clipped = (input < -1) | (input > alpha)
-        where_input_ltalpha = (input < alpha)
-        ctx.save_for_backward(where_input_clipped, where_input_ltalpha)
-        upper_thres = alpha.data[0]-eps.data[0]
-        input = input.clamp(-1, upper_thres)
-        input_q = input.div(eps).floor_().mul_(eps)
+    def forward(ctx, input, level, alpha, quant_noise_mask, lower_bound,
+                upper_bound):
+        # where_input_clipped = (input < -1) | (input > alpha)
+        # where_input_ltalpha = (input < alpha)
+        # ctx.save_for_backward(where_input_clipped, where_input_ltalpha)
+        # upper_thres = alpha.data[0]-eps.data[0]
+        input = input.clamp(lower_bound, upper_bound)
+        input -= lower_bound
+        eps = (upper_bound - lower_bound) / (level - 1)
+        input_q = (input / eps).round() * eps + lower_bound
+
+        # input_q = input.div(eps).floor_().mul_(eps)
+
         if quant_noise_mask is not None:
             return input_q.data.sub_(input.data).masked_fill_(quant_noise_mask, 0).add_(input)
         else:
@@ -68,15 +74,15 @@ class PACTQuantFunc(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         # see Hubara et al., Section 2.3
-        where_input_clipped, where_input_ltalpha = ctx.saved_tensors
-        grad_input = grad_output.masked_fill(where_input_clipped, 0)
-        if ctx.needs_input_grad[2]:
-            grad_alpha = grad_output.masked_fill(
-                where_input_ltalpha, 0).sum().expand(1)
-        else:
-            grad_alpha = None
-        # grad_input = grad_output
-        return grad_input, None, grad_alpha, None
+        # where_input_clipped, where_input_ltalpha = ctx.saved_tensors
+        # grad_input = grad_output.masked_fill(where_input_clipped, 0)
+        # if ctx.needs_input_grad[2]:
+        #     grad_alpha = grad_output.masked_fill(
+        #         where_input_ltalpha, 0).sum().expand(1)
+        # else:
+        #     grad_alpha = None
+        grad_input = grad_output
+        return grad_input, None, None, None, None, None
 
 
 pact_quantize = PACTQuantFunc.apply
@@ -95,7 +101,10 @@ class PACTActivationQuantizer(torch.nn.Module):
     - running variance with momentum 0.9
     """
 
-    def __init__(self, module: torch.nn.Module, precision: Optional[float] = 32, alpha: float = 1.0, backprop_alpha: bool = True, statistics_only: bool = False, leaky: Optional[float] = None, quant_ratio: float = 1.0, device: Device = torch.device("cuda")) -> None:
+    def __init__(self, module: torch.nn.Module, precision: Optional[float]=None, level=None, alpha: float = 1.0, backprop_alpha: bool = True,
+                 statistics_only: bool = False, leaky: Optional[float] =
+                 None, quant_ratio: float = 1.0, device: Device =
+                 torch.device("cuda"), lower_bound=-2, upper_bound=2) -> None:
         r"""Constructor. Initializes a :py:class:`torch.nn.Parameter` for :math:`\alpha` and sets
             up the initial value of the `statistics_only` member.
         :param precision: instance defining the current quantization level (default `None`).
@@ -115,6 +124,7 @@ class PACTActivationQuantizer(torch.nn.Module):
         super().__init__()
         self.module = module
         self.precision = precision
+        self.level = level
         self.device = device
         self.alpha = torch.nn.Parameter(torch.tensor(
             (alpha,), device=device), requires_grad=backprop_alpha)
@@ -123,6 +133,8 @@ class PACTActivationQuantizer(torch.nn.Module):
         self.deployment = False
         self.eps_in = None
         self.leaky = leaky
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
 
         # these are only used to gather statistics
         self.max = torch.nn.Parameter(torch.zeros_like(
@@ -237,8 +249,13 @@ class PACTActivationQuantizer(torch.nn.Module):
                         y, dtype=torch.bool).bernoulli_(1-self.quant_ratio)
                 else:
                     quant_noise_mask = None
-                eps = self.alpha/(2.0**(self.precision)-1)
-                return pact_quantize(y, eps, self.alpha + eps, quant_noise_mask)
+                if self.level is not None:
+                    level = self.level
+                else:
+                    level = 2 ** self.precision
+                # eps = self.alpha/(2.0**(self.precision)-1)
+                return pact_quantize(y, level, self.alpha, quant_noise_mask,
+                                     self.lower_bound, self.upper_bound)
 
         # register hook
         self.handle = self.module.register_forward_hook(quantize_hook)
