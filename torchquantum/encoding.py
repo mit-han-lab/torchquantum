@@ -59,10 +59,14 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
         self.q_device = q_device
         self.q_device.reset_states(x.shape[0])
         for info in self.func_list:
+            if tq.op_name_dict[info['func']].num_params > 0:
+                params = x[:, info['input_idx']]
+            else:
+                params = None
             func_name_dict[info['func']](
                 self.q_device,
                 wires=info['wires'],
-                params=x[:, info['input_idx']],
+                params=params,
                 static=self.static_mode,
                 parent_graph=self.graph
             )
@@ -144,6 +148,41 @@ encoder_op_list_name_dict = {
             {'input_idx': [1], 'func': 'ry', 'wires': [1]},
             {'input_idx': [2], 'func': 'ry', 'wires': [2]},
             {'input_idx': [3], 'func': 'ry', 'wires': [3]},
+        ],
+    '4x4_rzsx':
+        [
+            {'input_idx': [0], 'func': 'rz', 'wires': [0]},
+            {'input_idx': None, 'func': 'sx', 'wires': [0]},
+            {'input_idx': [1], 'func': 'rz', 'wires': [1]},
+            {'input_idx': None, 'func': 'sx', 'wires': [1]},
+            {'input_idx': [2], 'func': 'rz', 'wires': [2]},
+            {'input_idx': None, 'func': 'sx', 'wires': [2]},
+            {'input_idx': [3], 'func': 'rz', 'wires': [3]},
+            {'input_idx': None, 'func': 'sx', 'wires': [3]},
+            {'input_idx': [4], 'func': 'rz', 'wires': [0]},
+            {'input_idx': None, 'func': 'sx', 'wires': [0]},
+            {'input_idx': [5], 'func': 'rz', 'wires': [1]},
+            {'input_idx': None, 'func': 'sx', 'wires': [1]},
+            {'input_idx': [6], 'func': 'rz', 'wires': [2]},
+            {'input_idx': None, 'func': 'sx', 'wires': [2]},
+            {'input_idx': [7], 'func': 'rz', 'wires': [3]},
+            {'input_idx': None, 'func': 'sx', 'wires': [3]},
+            {'input_idx': [8], 'func': 'rz', 'wires': [0]},
+            {'input_idx': None, 'func': 'sx', 'wires': [0]},
+            {'input_idx': [9], 'func': 'rz', 'wires': [1]},
+            {'input_idx': None, 'func': 'sx', 'wires': [1]},
+            {'input_idx': [10], 'func': 'rz', 'wires': [2]},
+            {'input_idx': None, 'func': 'sx', 'wires': [2]},
+            {'input_idx': [11], 'func': 'rz', 'wires': [3]},
+            {'input_idx': None, 'func': 'sx', 'wires': [3]},
+            {'input_idx': [12], 'func': 'rz', 'wires': [0]},
+            {'input_idx': None, 'func': 'sx', 'wires': [0]},
+            {'input_idx': [13], 'func': 'rz', 'wires': [1]},
+            {'input_idx': None, 'func': 'sx', 'wires': [1]},
+            {'input_idx': [14], 'func': 'rz', 'wires': [2]},
+            {'input_idx': None, 'func': 'sx', 'wires': [2]},
+            {'input_idx': [15], 'func': 'rz', 'wires': [3]},
+            {'input_idx': None, 'func': 'sx', 'wires': [3]},
         ],
     '4x4_ryzxy':
         [
