@@ -7,7 +7,7 @@ from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError,
                                  MaxSaver, MinSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
 from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
-    NLLError, TrainerRestore
+    NLLError, TrainerRestore, AddNoiseInferenceRunner
 from torchquantum.plugins import QiskitProcessor
 from torchquantum.vqe_utils import parse_hamiltonian_file
 from torchquantum.noise_model import NoiseModelTQ
@@ -259,6 +259,12 @@ def make_callbacks(dataflow, state=None):
                 dataflow=dataflow[config['split']],
                 callbacks=get_subcallbacks(config['subcallbacks']),
                 subnet=config['subnet']
+            )
+        elif config['callback'] == 'AddNoiseInferenceRunner':
+            callback = AddNoiseInferenceRunner(
+                dataflow=dataflow[config['split']],
+                callbacks=get_subcallbacks(config['subcallbacks']),
+                noise_total_prob=config['noise_total_prob']
             )
         elif config['callback'] == 'SaverRestore':
             callback = SaverRestore()
