@@ -21,6 +21,9 @@ class QuantumNode(tq.QuantumModule):
                                              arch['encoder_op_list_name']])
         self.q_layer = layer_name_dict[arch['q_layer_name']](arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
+        self.act_norm = arch.get('act_norm', None)
+        self.x_before_act_quant = None
+        self.x_before_norm = None
 
     def forward(self, x, use_qiskit=False):
         if use_qiskit:
@@ -34,6 +37,17 @@ class QuantumNode(tq.QuantumModule):
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
             x = self.measure(self.q_device)
+
+        self.x_before_norm = x.clone()
+
+        if self.act_norm == 'layer_norm':
+            x = (x - x.mean(-1).unsqueeze(-1)) / x.std(-1).unsqueeze(-1)
+        elif self.act_norm == 'batch_norm':
+            x = (x - x.mean(0).unsqueeze(0)) / x.std(0).unsqueeze(0)
+        elif self.act_norm == 'all_norm':
+            x = (x - x.mean()) / x.std()
+
+        self.x_before_act_quant = x.clone()
 
         return x
 
