@@ -464,7 +464,64 @@ class U3CU3Layer0(LayerTemplate0):
         return layers_all
 
 
+class CU3Layer0(LayerTemplate0):
+    """u3 cu3 blocks"""
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=False))
+        return layers_all
+
+
+class CXRZSXLayer0(LayerTemplate0):
+    """CXRZSX blocks"""
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+
+        layers_all.append(
+            Op1QAllLayer(
+                op=tq.RZ,
+                n_wires=self.n_wires,
+                has_params=True,
+                trainable=True))
+        layers_all.append(
+            Op2QAllLayer(
+                op=tq.CNOT,
+                n_wires=self.n_wires,
+                jump=1,
+                circular=False))
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.SX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+        layers_all.append(
+            Op1QAllLayer(
+                op=tq.RZ,
+                n_wires=self.n_wires,
+                has_params=True,
+                trainable=True))
+        return layers_all
+
+
 layer_name_dict = {
     'u3cu3_0': U3CU3Layer0,
+    'cu3_0': CU3Layer0,
+    'cxrzsx_0': CXRZSXLayer0,
 }
 
