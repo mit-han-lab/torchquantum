@@ -1274,7 +1274,7 @@ class QMultiFCModel0(tq.QuantumModule):
         super().__init__()
         self.arch = arch
         self.n_nodes = arch['n_nodes']
-        self.nodes = tq.build_nodes(arch['node_archs'])
+        self.nodes = tq.build_nodes(arch['node_archs'], act_norm=arch['act_norm'])
         assert arch['n_nodes'] == len(arch['node_archs'])
 
     def forward(self, x, verbose=False, use_qiskit=False):

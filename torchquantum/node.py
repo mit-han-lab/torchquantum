@@ -13,7 +13,7 @@ class QuantumNode(tq.QuantumModule):
     """
     a quantum node contains a q device, encoder, q layer and measure
     """
-    def __init__(self, arch):
+    def __init__(self, arch, act_norm):
         super().__init__()
         self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=arch['n_wires'])
@@ -21,7 +21,7 @@ class QuantumNode(tq.QuantumModule):
                                              arch['encoder_op_list_name']])
         self.q_layer = layer_name_dict[arch['q_layer_name']](arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
-        self.act_norm = arch.get('act_norm', None)
+        self.act_norm = act_norm
         self.x_before_act_quant = None
         self.x_before_norm = None
 
@@ -52,9 +52,9 @@ class QuantumNode(tq.QuantumModule):
         return x
 
 
-def build_nodes(node_archs):
+def build_nodes(node_archs, act_norm=None):
     nodes = tq.QuantumModuleList()
     for node_arch in node_archs:
-        nodes.append(QuantumNode(node_arch))
+        nodes.append(QuantumNode(node_arch, act_norm=act_norm))
 
     return nodes
