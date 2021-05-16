@@ -23,7 +23,7 @@ class NoiseModelTQ(object):
 
         self.noise_model = NoiseModel.from_backend(backend)
         self.noise_model_dict = self.noise_model.to_dict()
-        self.is_add_noise = False
+        self.is_add_noise = True
         self.v_c_reg_mapping = None
         self.p_c_reg_mapping = None
         self.p_v_reg_mapping = None
