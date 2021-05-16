@@ -30,6 +30,9 @@ trainer:
   name: q_trainer
   add_noise: False
   act_quant: False
+  act_quant_skip_last_node: True
+  act_quant_loss: True
+  act_quant_loss_lambda: 10
 
 run:
   n_epochs: 200
