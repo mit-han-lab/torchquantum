@@ -95,7 +95,13 @@ def main() -> None:
     #         pin_memory=True)
 
     for split in dataset:
-        sampler = torch.utils.data.RandomSampler(dataset[split])
+        if split == 'train':
+            sampler = torch.utils.data.RandomSampler(dataset[split])
+        else:
+            # for valid and test, use SequentialSampler to make the train.py
+            # and eval.py results consistent
+            sampler = torch.utils.data.SequentialSampler(dataset[split])
+
         dataflow[split] = torch.utils.data.DataLoader(
             dataset[split],
             batch_size=configs.run.bsz,
