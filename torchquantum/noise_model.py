@@ -13,12 +13,61 @@ __all__ = ['NoiseModelTQ',
            ]
 
 
+def cos_adjust_noise(current_epoch, n_epochs, prob_schedule,
+                     prob_schedule_separator, orig_noise_total_prob):
+    if prob_schedule is None:
+        noise_total_prob = orig_noise_total_prob
+    elif prob_schedule == 'increase':
+        # scale the cos
+        if current_epoch <= prob_schedule_separator:
+            noise_total_prob = orig_noise_total_prob * (
+                    -np.cos(current_epoch / prob_schedule_separator *
+                            np.pi) / 2 + 0.5)
+        else:
+            noise_total_prob = orig_noise_total_prob
+    elif prob_schedule == 'decrease':
+        if current_epoch >= prob_schedule_separator:
+            noise_total_prob = orig_noise_total_prob * (
+                    np.cos((current_epoch - prob_schedule_separator) /
+                           (n_epochs - prob_schedule_separator) *
+                           np.pi) / 2 + 0.5)
+        else:
+            noise_total_prob = orig_noise_total_prob
+    elif prob_schedule == 'increase_decrease':
+        # if current_epoch <= self.prob_schedule_separator:
+        #     self.noise_total_prob = self.orig_noise_total_prob * \
+        #         1 / (1 + np.exp(-(current_epoch - (
+        #             self.prob_schedule_separator / 2)) / 10))
+        # else:
+        #     self.noise_total_prob = self.orig_noise_total_prob * \
+        #         1 / (1 + np.exp((current_epoch - (
+        #             self.n_epochs + self.prob_schedule_separator) / 2) /
+        #                 10))
+        if current_epoch <= prob_schedule_separator:
+            noise_total_prob = orig_noise_total_prob * (
+                    -np.cos(current_epoch / prob_schedule_separator *
+                            np.pi) / 2 + 0.5)
+        else:
+            noise_total_prob = orig_noise_total_prob * (
+                    np.cos((current_epoch - prob_schedule_separator) /
+                           (n_epochs - prob_schedule_separator) *
+                           np.pi) / 2 + 0.5)
+    else:
+        logger.warning(f"Not implemented schedule{prob_schedule}, "
+                       f"will not change prob!")
+        noise_total_prob = orig_noise_total_prob
+
+    return noise_total_prob
+
+
 class NoiseModelTQ(object):
     def __init__(self,
                  noise_model_name,
                  n_epochs,
                  noise_total_prob=None,
                  ignored_ops=('id', 'kraus', 'reset'),
+                 prob_schedule=None,
+                 prob_schedule_separator=None,
                  ):
         self.noise_model_name = noise_model_name
         provider = get_provider(backend_name=noise_model_name)
@@ -39,9 +88,17 @@ class NoiseModelTQ(object):
         self.parsed_dict = self.clean_parsed_noise_model_dict(
             self.parsed_dict, ignored_ops)
         self.n_epochs = n_epochs
+        self.prob_schedule = prob_schedule
+        self.prob_schedule_separator = prob_schedule_separator
 
     def adjust_noise(self, current_epoch):
-        self.noise_total_prob = self.orig_noise_total_prob
+        self.noise_total_prob = cos_adjust_noise(
+            current_epoch=current_epoch,
+            n_epochs=self.n_epochs,
+            prob_schedule=self.prob_schedule,
+            prob_schedule_separator=self.prob_schedule_separator,
+            orig_noise_total_prob=self.orig_noise_total_prob,
+        )
 
     @staticmethod
     def clean_parsed_noise_model_dict(nm_dict, ignored_ops):
@@ -203,15 +260,39 @@ class NoiseModelTQActivation(object):
     """
     add noise to the activations
     """
-    def __init__(self, mean=0., std=1.):
+    def __init__(self,
+                 mean=0.,
+                 std=1.,
+                 n_epochs=200,
+                 prob_schedule=None,
+                 prob_schedule_separator=None,
+                 ):
         self.mean = mean
         self.std = std
         self.is_add_noise = True
         self.mode = 'train'
-        self.noise_total_prob = self.std
+
+        self.orig_std = std
+        self.n_epochs = n_epochs
+        self.prob_schedule = prob_schedule
+        self.prob_schedule_separator = prob_schedule_separator
+
+    @property
+    def noise_total_prob(self):
+        return self.std
+
+    @noise_total_prob.setter
+    def noise_total_prob(self, value):
+        self.std = value
 
     def adjust_noise(self, current_epoch):
-        pass
+        self.std = cos_adjust_noise(
+            current_epoch=current_epoch,
+            n_epochs=self.n_epochs,
+            prob_schedule=self.prob_schedule,
+            prob_schedule_separator=self.prob_schedule_separator,
+            orig_noise_total_prob=self.orig_std
+        )
 
     def sample_noise_op(self, op_in):
         return []
@@ -231,15 +312,39 @@ class NoiseModelTQPhase(object):
     """
     add noise to rotation parameters
     """
-    def __init__(self, mean=0., std=1.):
+    def __init__(self,
+                 mean=0.,
+                 std=1.,
+                 n_epochs=200,
+                 prob_schedule=None,
+                 prob_schedule_separator=None,
+                 ):
         self.mean = mean
         self.std = std
         self.is_add_noise = True
         self.mode = 'train'
-        self.noise_total_prob = self.std
+
+        self.orig_std = std
+        self.n_epochs = n_epochs
+        self.prob_schedule = prob_schedule
+        self.prob_schedule_separator = prob_schedule_separator
+
+    @property
+    def noise_total_prob(self):
+        return self.std
+
+    @noise_total_prob.setter
+    def noise_total_prob(self, value):
+        self.std = value
 
     def adjust_noise(self, current_epoch):
-        pass
+        self.std = cos_adjust_noise(
+            current_epoch=current_epoch,
+            n_epochs=self.n_epochs,
+            prob_schedule=self.prob_schedule,
+            prob_schedule_separator=self.prob_schedule_separator,
+            orig_noise_total_prob=self.orig_std
+        )
 
     def sample_noise_op(self, op_in):
         return []
