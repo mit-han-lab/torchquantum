@@ -572,6 +572,7 @@ class QNoiseAwareTrainer(Trainer):
             for node in self.model.nodes:
                 if node.noise_model_tq is not None:
                     node.noise_model_tq.mode = 'train'
+                    node.noise_model_tq.adjust_noise(self.epoch_num)
 
         self.register_act_quant_hook()
 

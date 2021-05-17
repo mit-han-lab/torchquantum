@@ -314,16 +314,30 @@ def make_noise_model_tq():
             n_epochs=configs.run.n_epochs,
             noise_total_prob=configs.trainer.noise_total_prob,
             ignored_ops=configs.trainer.ignored_noise_ops,
+            prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
+                                  None),
+            prob_schedule_separator=getattr(
+                configs.trainer, 'noise_prob_schedule_separator', None)
         )
     elif configs.trainer.noise_model_tq_name == 'activation':
         noise_model_tq = NoiseModelTQActivation(
             mean=configs.trainer.noise_mean,
             std=configs.trainer.noise_std,
+            n_epochs=configs.run.n_epochs,
+            prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
+                                  None),
+            prob_schedule_separator=getattr(
+                configs.trainer, 'noise_prob_schedule_separator', None),
         )
     elif configs.trainer.noise_model_tq_name == 'phase':
         noise_model_tq = NoiseModelTQPhase(
             mean=configs.trainer.noise_mean,
             std=configs.trainer.noise_std,
+            n_epochs=configs.run.n_epochs,
+            prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
+                                  None),
+            prob_schedule_separator=getattr(
+                configs.trainer, 'noise_prob_schedule_separator', None),
         )
     else:
         raise NotImplementedError(configs.trainer.noise_model_tq_name)
