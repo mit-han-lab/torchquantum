@@ -567,6 +567,12 @@ class QNoiseAwareTrainer(Trainer):
         if self.model.noise_model_tq is not None:
             self.model.noise_model_tq.mode = 'train'
             self.model.noise_model_tq.adjust_noise(self.epoch_num)
+
+        if getattr(self.model, 'nodes', None) is not None:
+            for node in self.model.nodes:
+                if node.noise_model_tq is not None:
+                    node.noise_model_tq.mode = 'train'
+
         self.register_act_quant_hook()
 
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
