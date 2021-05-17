@@ -18,7 +18,7 @@ from torchquantum.utils import legalize_unitary
 
 
 __all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError',
-           'TrainerRestore', 'MinError']
+           'TrainerRestore', 'MinError', 'AddNoiseInferenceRunner']
 
 
 class LegalInferenceRunner(Callback):

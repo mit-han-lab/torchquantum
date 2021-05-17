@@ -2,5 +2,11 @@ trainer:
   name: q_trainer
   add_noise: False
 
+run:
+  n_warm_epochs: 30
+
+scheduler:
+  name: cosine_warm
+
 model:
   transpile_before_run: False

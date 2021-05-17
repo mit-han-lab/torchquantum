@@ -38,6 +38,9 @@ class QuantumNode(tq.QuantumModule):
             self.q_layer(self.q_device)
             x = self.measure(self.q_device)
 
+        if isinstance(self.noise_model_tq, tq.NoiseModelTQActivation):
+            x = self.noise_model_tq.add_noise(x)
+
         self.x_before_norm = x.clone()
 
         if self.act_norm == 'layer_norm':

@@ -2,6 +2,13 @@ trainer:
   name: q_noise_aware_trainer
   add_noise: True
   ignored_noise_ops: ['id', 'kraus', 'reset']
+  noise_model_tq_name: from_qiskit
+
+run:
+  n_warm_epochs: 30
+
+scheduler:
+  name: cosine_warm
 
 model:
   transpile_before_run: True

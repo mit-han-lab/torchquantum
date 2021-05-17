@@ -246,11 +246,16 @@ class Operator(tq.QuantumModule):
                 self.func(q_device, self.wires, n_wires=self.n_wires,
                           inverse=inverse)
         else:
+            if isinstance(self.noise_model_tq, tq.NoiseModelTQPhase):
+                params = self.noise_model_tq.add_noise(self.params)
+            else:
+                params = self.params
+
             if self.n_wires is None:
-                self.func(q_device, self.wires, params=self.params,
+                self.func(q_device, self.wires, params=params,
                           inverse=inverse)
             else:
-                self.func(q_device, self.wires, params=self.params,
+                self.func(q_device, self.wires, params=params,
                           n_wires=self.n_wires, inverse=inverse)
 
         if self.noise_model_tq is not None and \

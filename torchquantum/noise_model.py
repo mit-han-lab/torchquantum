@@ -7,7 +7,10 @@ from qiskit.providers.aer.noise import NoiseModel
 from torchquantum.utils import get_provider
 
 
-__all__ = ['NoiseModelTQ']
+__all__ = ['NoiseModelTQ',
+           'NoiseModelTQActivation',
+           'NoiseModelTQPhase',
+           ]
 
 
 class NoiseModelTQ(object):
@@ -194,3 +197,59 @@ class NoiseModelTQ(object):
         noisy_expectation = noisy_measured_0 * 1 + noisy_measured_1 * (-1)
 
         return noisy_expectation
+
+
+class NoiseModelTQActivation(object):
+    """
+    add noise to the activations
+    """
+    def __init__(self, mean=0., std=1.):
+        self.mean = mean
+        self.std = std
+        self.is_add_noise = True
+        self.mode = 'train'
+        self.noise_total_prob = self.std
+
+    def adjust_noise(self, current_epoch):
+        pass
+
+    def sample_noise_op(self, op_in):
+        return []
+
+    def apply_readout_error(self, x):
+        return x
+
+    def add_noise(self, x):
+        if self.mode == 'train' and self.is_add_noise:
+            x = x + torch.randn(x.shape, device=x.device) * self.std + \
+                self.mean
+
+        return x
+
+
+class NoiseModelTQPhase(object):
+    """
+    add noise to rotation parameters
+    """
+    def __init__(self, mean=0., std=1.):
+        self.mean = mean
+        self.std = std
+        self.is_add_noise = True
+        self.mode = 'train'
+        self.noise_total_prob = self.std
+
+    def adjust_noise(self, current_epoch):
+        pass
+
+    def sample_noise_op(self, op_in):
+        return []
+
+    def apply_readout_error(self, x):
+        return x
+
+    def add_noise(self, phase):
+        if self.mode == 'train' and self.is_add_noise:
+            phase = phase +  torch.randn(phase.shape, device=phase.device) * \
+                       self.std * np.pi + self.mean
+
+        return phase
