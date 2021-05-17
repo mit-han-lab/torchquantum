@@ -13,6 +13,8 @@ scheduler:
 
 model:
   transpile_before_run: True
+  arch:
+    act_norm: layer_norm
 
 
 callbacks:
