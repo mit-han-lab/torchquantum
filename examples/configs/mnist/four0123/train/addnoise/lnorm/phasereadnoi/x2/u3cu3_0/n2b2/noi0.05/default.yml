@@ -1,0 +1,2 @@
+trainer:
+  noise_std: 0.05
