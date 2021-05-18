@@ -10,6 +10,9 @@ from torchquantum.utils import get_provider
 __all__ = ['NoiseModelTQ',
            'NoiseModelTQActivation',
            'NoiseModelTQPhase',
+           'NoiseModelTQReadoutOnly',
+           'NoiseModelTQActivationReadout',
+           'NoiseModelTQPhaseReadout',
            ]
 
 
@@ -60,7 +63,50 @@ def cos_adjust_noise(current_epoch, n_epochs, prob_schedule,
     return noise_total_prob
 
 
+def apply_readout_error_func(x, c2p_mapping, measure_info):
+    # add readout error
+    noise_free_0_probs = (x + 1) / 2
+    noise_free_1_probs = 1 - (x + 1) / 2
+
+    noisy_0_to_0_prob_all = []
+    noisy_0_to_1_prob_all = []
+    noisy_1_to_0_prob_all = []
+    noisy_1_to_1_prob_all = []
+
+    for k in range(x.shape[-1]):
+        p_wire = [c2p_mapping[k]]
+        noisy_0_to_0_prob_all.append(measure_info[tuple(p_wire)][
+                                         'probabilities'][0][0])
+        noisy_0_to_1_prob_all.append(measure_info[tuple(p_wire)][
+                                         'probabilities'][0][1])
+        noisy_1_to_0_prob_all.append(measure_info[tuple(p_wire)][
+                                         'probabilities'][1][0])
+        noisy_1_to_1_prob_all.append(measure_info[tuple(p_wire)][
+                                         'probabilities'][1][1])
+
+    noisy_0_to_0_prob_all = torch.tensor(noisy_0_to_0_prob_all,
+                                         device=x.device)
+    noisy_0_to_1_prob_all = torch.tensor(noisy_0_to_1_prob_all,
+                                         device=x.device)
+    noisy_1_to_0_prob_all = torch.tensor(noisy_1_to_0_prob_all,
+                                         device=x.device)
+    noisy_1_to_1_prob_all = torch.tensor(noisy_1_to_1_prob_all,
+                                         device=x.device)
+
+    noisy_measured_0 = noise_free_0_probs * noisy_0_to_0_prob_all + \
+        noise_free_1_probs * noisy_1_to_0_prob_all
+
+    noisy_measured_1 = noise_free_0_probs * noisy_0_to_1_prob_all + \
+        noise_free_1_probs * noisy_1_to_1_prob_all
+    noisy_expectation = noisy_measured_0 * 1 + noisy_measured_1 * (-1)
+
+    return noisy_expectation
+
+
 class NoiseModelTQ(object):
+    """
+    apply gate insertion and readout
+    """
     def __init__(self,
                  noise_model_name,
                  n_epochs,
@@ -214,46 +260,10 @@ class NoiseModelTQ(object):
         return ops
 
     def apply_readout_error(self, x):
-        # add readout error
-        noise_free_0_probs = (x + 1) / 2
-        noise_free_1_probs = 1 - (x + 1) / 2
-
         c2p_mapping = self.p_c_reg_mapping['c2p']
-
         measure_info = self.parsed_dict['measure']
-        noisy_0_to_0_prob_all = []
-        noisy_0_to_1_prob_all = []
-        noisy_1_to_0_prob_all = []
-        noisy_1_to_1_prob_all = []
 
-        for k in range(x.shape[-1]):
-            p_wire = [c2p_mapping[k]]
-            noisy_0_to_0_prob_all.append(measure_info[tuple(p_wire)][
-                                             'probabilities'][0][0])
-            noisy_0_to_1_prob_all.append(measure_info[tuple(p_wire)][
-                                             'probabilities'][0][1])
-            noisy_1_to_0_prob_all.append(measure_info[tuple(p_wire)][
-                                             'probabilities'][1][0])
-            noisy_1_to_1_prob_all.append(measure_info[tuple(p_wire)][
-                                             'probabilities'][1][1])
-
-        noisy_0_to_0_prob_all = torch.tensor(noisy_0_to_0_prob_all,
-                                             device=x.device)
-        noisy_0_to_1_prob_all = torch.tensor(noisy_0_to_1_prob_all,
-                                             device=x.device)
-        noisy_1_to_0_prob_all = torch.tensor(noisy_1_to_0_prob_all,
-                                             device=x.device)
-        noisy_1_to_1_prob_all = torch.tensor(noisy_1_to_1_prob_all,
-                                             device=x.device)
-
-        noisy_measured_0 = noise_free_0_probs * noisy_0_to_0_prob_all + \
-            noise_free_1_probs * noisy_1_to_0_prob_all
-
-        noisy_measured_1 = noise_free_0_probs * noisy_0_to_1_prob_all + \
-            noise_free_1_probs * noisy_1_to_1_prob_all
-        noisy_expectation = noisy_measured_0 * 1 + noisy_measured_1 * (-1)
-
-        return noisy_expectation
+        return apply_readout_error_func(x, c2p_mapping, measure_info)
 
 
 class NoiseModelTQActivation(object):
@@ -358,3 +368,80 @@ class NoiseModelTQPhase(object):
                        self.std * np.pi + self.mean
 
         return phase
+
+
+class NoiseModelTQReadoutOnly(NoiseModelTQ):
+    def sample_noise_op(self, op_in):
+        return []
+
+
+class NoiseModelTQActivationReadout(NoiseModelTQActivation):
+    def __init__(self,
+                 noise_model_name,
+                 mean=0.,
+                 std=1.,
+                 n_epochs=200,
+                 prob_schedule=None,
+                 prob_schedule_separator=None,
+                 ):
+        super().__init__(
+            mean=mean,
+            std=std,
+            n_epochs=n_epochs,
+            prob_schedule=prob_schedule,
+            prob_schedule_separator=prob_schedule_separator
+        )
+        provider = get_provider(backend_name=noise_model_name)
+        backend = provider.get_backend(noise_model_name)
+
+        self.noise_model = NoiseModel.from_backend(backend)
+        self.noise_model_dict = self.noise_model.to_dict()
+        self.is_add_noise = True
+        self.v_c_reg_mapping = None
+        self.p_c_reg_mapping = None
+        self.p_v_reg_mapping = None
+
+        self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(
+            self.noise_model_dict)
+
+    def apply_readout_error(self, x):
+        c2p_mapping = self.p_c_reg_mapping['c2p']
+        measure_info = self.parsed_dict['measure']
+
+        return apply_readout_error_func(x, c2p_mapping, measure_info)
+
+
+class NoiseModelTQPhaseReadout(NoiseModelTQPhase):
+    def __init__(self,
+                 noise_model_name,
+                 mean=0.,
+                 std=1.,
+                 n_epochs=200,
+                 prob_schedule=None,
+                 prob_schedule_separator=None,
+                 ):
+        super().__init__(
+            mean=mean,
+            std=std,
+            n_epochs=n_epochs,
+            prob_schedule=prob_schedule,
+            prob_schedule_separator=prob_schedule_separator
+        )
+        provider = get_provider(backend_name=noise_model_name)
+        backend = provider.get_backend(noise_model_name)
+
+        self.noise_model = NoiseModel.from_backend(backend)
+        self.noise_model_dict = self.noise_model.to_dict()
+        self.is_add_noise = True
+        self.v_c_reg_mapping = None
+        self.p_c_reg_mapping = None
+        self.p_v_reg_mapping = None
+
+        self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(
+            self.noise_model_dict)
+
+    def apply_readout_error(self, x):
+        c2p_mapping = self.p_c_reg_mapping['c2p']
+        measure_info = self.parsed_dict['measure']
+
+        return apply_readout_error_func(x, c2p_mapping, measure_info)
