@@ -10,8 +10,7 @@ from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
     NLLError, TrainerRestore, AddNoiseInferenceRunner
 from torchquantum.plugins import QiskitProcessor
 from torchquantum.vqe_utils import parse_hamiltonian_file
-from torchquantum.noise_model import (NoiseModelTQ, NoiseModelTQActivation,
-                                      NoiseModelTQPhase)
+from torchquantum.noise_model import *
 
 __all__ = [
     'make_dataset', 'make_model', 'make_criterion', 'make_optimizer',
@@ -308,7 +307,7 @@ def make_qiskit_processor():
 
 
 def make_noise_model_tq():
-    if configs.trainer.noise_model_tq_name == 'from_qiskit':
+    if configs.trainer.noise_model_tq_name == 'from_qiskit_read':
         noise_model_tq = NoiseModelTQ(
             noise_model_name=configs.qiskit.noise_model_name,
             n_epochs=configs.run.n_epochs,
@@ -331,6 +330,37 @@ def make_noise_model_tq():
         )
     elif configs.trainer.noise_model_tq_name == 'phase':
         noise_model_tq = NoiseModelTQPhase(
+            mean=configs.trainer.noise_mean,
+            std=configs.trainer.noise_std,
+            n_epochs=configs.run.n_epochs,
+            prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
+                                  None),
+            prob_schedule_separator=getattr(
+                configs.trainer, 'noise_prob_schedule_separator', None),
+        )
+    elif configs.trainer.noise_model_tq_name == 'only_read':
+        noise_model_tq = NoiseModelTQReadoutOnly(
+            noise_model_name=configs.qiskit.noise_model_name,
+            n_epochs=configs.run.n_epochs,
+            prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
+                                  None),
+            prob_schedule_separator=getattr(
+                configs.trainer, 'noise_prob_schedule_separator', None)
+        )
+    elif configs.trainer.noise_model_tq_name == 'activation_read':
+        noise_model_tq = NoiseModelTQActivationReadout(
+            noise_model_name=configs.qiskit.noise_model_name,
+            mean=configs.trainer.noise_mean,
+            std=configs.trainer.noise_std,
+            n_epochs=configs.run.n_epochs,
+            prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
+                                  None),
+            prob_schedule_separator=getattr(
+                configs.trainer, 'noise_prob_schedule_separator', None),
+        )
+    elif configs.trainer.noise_model_tq_name == 'phase_read':
+        noise_model_tq = NoiseModelTQPhaseReadout(
+            noise_model_name=configs.qiskit.noise_model_name,
             mean=configs.trainer.noise_mean,
             std=configs.trainer.noise_std,
             n_epochs=configs.run.n_epochs,
