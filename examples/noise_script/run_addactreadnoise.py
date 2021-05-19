@@ -8,7 +8,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str)
 
     parser.add_argument('--device', type=str)
-
+    parser.add_argument('--noise', type=str)
     args = parser.parse_args()
 
     pres = ['python',
@@ -21,20 +21,14 @@ if __name__ == '__main__':
             '--run-dir']
 
     with open(f'logs/{args.device}/{args.dataset}.'
-              f'{args.name}.addonlynoise.u3cu3_0'
+              f'{args.name}.addactreadnoise.u3cu3_0.n2b2'
               f'.txt',
               'a') as \
             wfid:
-        for node in ['n2b1',
-                     'n2b2',
-                     'n2b3',
-                     'n2b4',
-                     # 'n3b1',
-                     # 'n3b2',
-                     # 'n4b1',
-                     # 'n4b2'
-                     ]:
+        for noise in [0.01, 0.02, 0.05, 0.1, 0.2, 0.5]:
             exp = f'runs/{args.dataset}.{args.name}.train.addnoise.' \
-                  f'lnorm.readnoi.{args.device}.u3cu3_0.{node}.default'
+                  f'lnorm.actreadnoi.{args.device}.' \
+                  f'u3cu3_0.n2b2.noi{noise}.noquant.default'
+
             logger.info(f"running command {pres + [exp]}")
             subprocess.call(pres + [exp], stderr=wfid)
