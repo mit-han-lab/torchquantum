@@ -60,7 +60,7 @@ class PACTQuantFunc(torch.autograd.Function):
         # ctx.save_for_backward(where_input_clipped, where_input_ltalpha)
         # upper_thres = alpha.data[0]-eps.data[0]
         input = input.clamp(lower_bound, upper_bound)
-        input -= lower_bound
+        input = input - lower_bound
         eps = (upper_bound - lower_bound) / (level - 1)
         input_q = (input / eps).round() * eps + lower_bound
 

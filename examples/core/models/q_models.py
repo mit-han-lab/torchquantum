@@ -3,12 +3,14 @@ import torchquantum.functional as tqf
 import torch
 import torch.nn.functional as F
 import numpy as np
+import os
 
 from torchquantum.encoding import encoder_op_list_name_dict
 from torchpack.utils.logging import logger
 from examples.core.tools.generate_ansatz_observables import (
     molecule_name_dict, generate_uccsd)
 from torchquantum.layers import layer_name_dict
+from torchpack.utils.config import configs
 
 
 class Quanv0(tq.QuantumModule):
@@ -1278,6 +1280,7 @@ class QMultiFCModel0(tq.QuantumModule):
         assert arch['n_nodes'] == len(arch['node_archs'])
         self.mse_all = []
         self.residual = getattr(arch, 'residual', False)
+        self.activations = []
 
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
@@ -1294,10 +1297,27 @@ class QMultiFCModel0(tq.QuantumModule):
             else:
                 x = node_out
             mse_all.append(F.mse_loss(node_out, node.x_before_act_quant))
+            if verbose:
+                acts = {
+                    'x_before_add_noise': node.x_before_add_noise.cpu(
+                        ).detach().data,
+                    'x_before_norm': node.x_before_norm.cpu().detach().data,
+                    'x_before_act_quant': node.x_before_act_quant.cpu().detach(
+                        ).data,
+                    'x_after_act_quant': node_out.cpu().detach().data,
+                }
+                self.activations.append(acts)
+
         self.mse_all = mse_all
 
         if verbose:
-            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+            os.makedirs(os.path.join(configs.run_dir, 'activations'),
+                        exist_ok=True)
+            torch.save(self.activations,
+                       os.path.join(configs.run_dir, 'activations',
+                                    f"{configs.eval_config_dir}.pt"))
+            # logger.info(f"[use_qiskit]={use_qiskit},
+            # expectation:\n {x.data}")
 
         if getattr(self.arch, 'output_len', None) is not None:
             x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)

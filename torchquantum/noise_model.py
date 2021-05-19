@@ -364,7 +364,7 @@ class NoiseModelTQPhase(object):
 
     def add_noise(self, phase):
         if self.mode == 'train' and self.is_add_noise:
-            phase = phase +  torch.randn(phase.shape, device=phase.device) * \
+            phase = phase + torch.randn(phase.shape, device=phase.device) * \
                        self.std * np.pi + self.mean
 
         return phase

@@ -619,7 +619,7 @@ class QNoiseAwareTrainer(Trainer):
             self.summary.add_scalar('nll_loss', nll_loss)
 
             if configs.trainer.act_quant and configs.trainer.act_quant_loss:
-                self.summary.add_scalar('actqloss', act_quant_loss.item())
+                self.summary.add_scalar('qloss', act_quant_loss.item())
 
             if self.model.noise_model_tq is not None:
                 if self.model.noise_model_tq.noise_total_prob is not None:

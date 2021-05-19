@@ -303,3 +303,4 @@ runs/
 /examples/script/plot/vowel.four0516.gen.csv
 /examples/script/plot/vowel.four0516_evo.csv
 /examples/script/plot/vowel.four0516_rand.csv
+/examples/noise_script/plot/ablation/

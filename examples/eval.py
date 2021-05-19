@@ -78,6 +78,11 @@ def main() -> None:
     logger.info(f'Evaluation started: "{args.run_dir}".' + '\n' +
                 f'{print_conf}')
 
+    eval_config_dir = args.config.replace('/', '.').replace(
+        'examples.', '').replace('.yml', '').replace('configs.', '')
+    configs.eval_config_dir = eval_config_dir
+    configs.run_dir = args.run_dir
+
     # if configs.qiskit.use_qiskit:
     #     IBMQ.load_account()
     #     if configs.run.bsz == 'qiskit_max':

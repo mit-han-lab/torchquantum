@@ -22,6 +22,7 @@ class QuantumNode(tq.QuantumModule):
         self.q_layer = layer_name_dict[arch['q_layer_name']](arch)
         self.measure = tq.MeasureAll(tq.PauliZ)
         self.act_norm = act_norm
+        self.x_before_add_noise = None
         self.x_before_act_quant = None
         self.x_before_norm = None
 
@@ -37,6 +38,8 @@ class QuantumNode(tq.QuantumModule):
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
             x = self.measure(self.q_device)
+
+        self.x_before_add_noise = x.clone()
 
         if isinstance(self.noise_model_tq, tq.NoiseModelTQActivation):
             x = self.noise_model_tq.add_noise(x)
