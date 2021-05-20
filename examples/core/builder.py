@@ -302,6 +302,7 @@ def make_qiskit_processor():
         remove_ops=configs.prune.eval.remove_ops,
         remove_ops_thres=configs.prune.eval.remove_ops_thres,
         transpile_with_ancilla=configs.qiskit.transpile_with_ancilla,
+        hub=getattr(configs.qiskit, 'hub', None)
     )
     return processor
 

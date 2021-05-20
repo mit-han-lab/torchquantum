@@ -43,6 +43,9 @@ def main() -> None:
                         help='print ALL configs')
     parser.add_argument('--jobs', type=int, default=None,
                         help='max parallel job on qiskit')
+    parser.add_argument('--hub', type=str, default=None,
+                        help='IBMQ provider')
+
     args, opts = parser.parse_known_args()
 
     configs.load(os.path.join(args.run_dir, 'metainfo', 'configs.yaml'))
@@ -56,6 +59,7 @@ def main() -> None:
         pdb.set_trace()
 
     configs.verbose = args.verbose
+    configs.qiskit.hub = args.hub
 
     if args.gpu is not None:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

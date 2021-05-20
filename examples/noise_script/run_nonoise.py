@@ -8,6 +8,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str)
 
     parser.add_argument('--device', type=str)
+    parser.add_argument('--hub', type=str, default=None)
 
     args = parser.parse_args()
 
@@ -18,6 +19,7 @@ if __name__ == '__main__':
             f'{args.device}/real/opt2/noancilla/300_s18400.yml',
             '--jobs=5',
             '--verbose',
+            f'--hub={args.hub}',
             '--run-dir']
 
     with open(f'logs/{args.device}/{args.dataset}.'

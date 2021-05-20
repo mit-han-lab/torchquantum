@@ -451,13 +451,22 @@ def get_success_rate(properties, transpiled_circ):
     return success_rate
 
 
-def get_provider(backend_name):
+def get_provider(backend_name, hub=None):
+    # mass-inst-tech-1 or MIT-1
     if backend_name in ['ibmq_casablanca',
                         'ibmq_rome',
                         'ibmq_bogota']:
-        provider = IBMQ.get_provider(hub='ibm-q-research',
-                                     group='mass-inst-tech-1',
-                                     project='main')
+        if hub == 'mass' or hub is None:
+            provider = IBMQ.get_provider(hub='ibm-q-research',
+                                         group='mass-inst-tech-1',
+                                         project='main')
+        elif hub == 'mit':
+            provider = IBMQ.get_provider(hub='ibm-q-research',
+                                         group='MIT-1',
+                                         project='main')
+        else:
+            raise ValueError(f"not supported backend {backend_name} in hub "
+                             f"{hub}")
     elif backend_name in ['ibmq_paris',
                           'ibmq_toronto',
                           'ibmq_manhattan',
@@ -466,12 +475,19 @@ def get_provider(backend_name):
                                      group='anl',
                                      project='csc428')
     else:
-        try:
+        if hub == 'mass' or hub is None:
+            try:
+                provider = IBMQ.get_provider(hub='ibm-q-research',
+                                             group='mass-inst-tech-1',
+                                             project='main')
+            except QiskitError:
+                logger.warning(f"Cannot use MIT backend, roll back to open")
+                provider = IBMQ.get_provider(hub='ibm-q')
+        elif hub == 'mit':
             provider = IBMQ.get_provider(hub='ibm-q-research',
-                                         group='mass-inst-tech-1',
+                                         group='MIT-1',
                                          project='main')
-        except QiskitError:
-            logger.warning(f"Cannot use MIT backend, roll back to open")
+        else:
             provider = IBMQ.get_provider(hub='ibm-q')
 
     return provider
