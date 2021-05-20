@@ -198,7 +198,10 @@ class NoiseModelTQ(object):
         if self.factor is not None:
             factor = self.factor
         else:
-            factor = self.noise_total_prob / sum(probs)
+            if self.noise_total_prob is None:
+                factor = 1
+            else:
+                factor = self.noise_total_prob / sum(probs)
         probs = [prob * factor for prob in probs]
 
         return probs
@@ -232,10 +235,7 @@ class NoiseModelTQ(object):
 
         probs = inst_prob['probabilities']
 
-        if self.noise_total_prob is not None:
-            magnified_probs = self.magnify_probs(probs)
-        else:
-            magnified_probs = probs
+        magnified_probs = self.magnify_probs(probs)
 
         idx = np.random.choice(list(range(len(inst) + 1)),
                                p=magnified_probs + [1 - sum(magnified_probs)])
