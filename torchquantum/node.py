@@ -1,3 +1,4 @@
+import torch
 import torchquantum as tq
 
 from torchquantum.encoding import encoder_op_list_name_dict
@@ -25,8 +26,16 @@ class QuantumNode(tq.QuantumModule):
         self.x_before_add_noise = None
         self.x_before_act_quant = None
         self.x_before_norm = None
+        if self.act_norm == 'batch_norm' or \
+                self.act_norm == 'batch_norm_no_last':
+            self.bn = torch.nn.BatchNorm1d(
+                num_features=arch['n_wires'],
+                momentum=None,
+                affine=False,
+                track_running_stats=False
+            )
 
-    def forward(self, x, use_qiskit=False):
+    def forward(self, x, use_qiskit=False, is_last_node=False):
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
                 self.q_device,
@@ -49,9 +58,16 @@ class QuantumNode(tq.QuantumModule):
         if self.act_norm == 'layer_norm':
             x = (x - x.mean(-1).unsqueeze(-1)) / x.std(-1).unsqueeze(-1)
         elif self.act_norm == 'batch_norm':
-            x = (x - x.mean(0).unsqueeze(0)) / x.std(0).unsqueeze(0)
+            x = self.bn(x)
+            # x = (x - x.mean(0).unsqueeze(0)) / x.std(0).unsqueeze(0)
         elif self.act_norm == 'all_norm':
             x = (x - x.mean()) / x.std()
+        elif self.act_norm == 'layer_norm_no_last':
+            if not is_last_node:
+                x = (x - x.mean(-1).unsqueeze(-1)) / x.std(-1).unsqueeze(-1)
+        elif self.act_norm == 'batch_norm_no_last':
+            if not is_last_node:
+                x = self.bn(x)
 
         self.x_before_act_quant = x.clone()
 

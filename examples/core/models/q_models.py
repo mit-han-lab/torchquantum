@@ -1291,7 +1291,9 @@ class QMultiFCModel0(tq.QuantumModule):
         mse_all = []
 
         for k, node in enumerate(self.nodes):
-            node_out = node(x, use_qiskit=use_qiskit)
+            node_out = node(x,
+                            use_qiskit=use_qiskit,
+                            is_last_node=(k == self.n_nodes - 1))
             if self.residual and k > 0:
                 x = x + node_out
             else:
