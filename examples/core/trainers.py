@@ -625,6 +625,8 @@ class QNoiseAwareTrainer(Trainer):
                 if self.model.noise_model_tq.noise_total_prob is not None:
                     noise_total_prob = \
                         self.model.noise_model_tq.noise_total_prob
+                    if isinstance(noise_total_prob, list):
+                        noise_total_prob = noise_total_prob[0]
                 else:
                     noise_total_prob = -1
                 self.summary.add_scalar('noip', noise_total_prob)
@@ -632,6 +634,8 @@ class QNoiseAwareTrainer(Trainer):
                 noise_total_prob = -1 if self.model.nodes[
                     0].noise_model_tq.noise_total_prob is None else \
                     self.model.nodes[0].noise_model_tq.noise_total_prob
+                if isinstance(noise_total_prob, list):
+                    noise_total_prob = noise_total_prob[0]
                 self.summary.add_scalar('noip', noise_total_prob)
 
             if getattr(self.model, 'sample_arch', None) is not None:

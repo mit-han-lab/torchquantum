@@ -114,6 +114,7 @@ class NoiseModelTQ(object):
                  ignored_ops=('id', 'kraus', 'reset'),
                  prob_schedule=None,
                  prob_schedule_separator=None,
+                 factor=None
                  ):
         self.noise_model_name = noise_model_name
         provider = get_provider(backend_name=noise_model_name)
@@ -136,6 +137,7 @@ class NoiseModelTQ(object):
         self.n_epochs = n_epochs
         self.prob_schedule = prob_schedule
         self.prob_schedule_separator = prob_schedule_separator
+        self.factor = factor
 
     def adjust_noise(self, current_epoch):
         self.noise_total_prob = cos_adjust_noise(
@@ -193,7 +195,10 @@ class NoiseModelTQ(object):
         return parsed
 
     def magnify_probs(self, probs):
-        factor = self.noise_total_prob / sum(probs)
+        if self.factor is not None:
+            factor = self.factor
+        else:
+            factor = self.noise_total_prob / sum(probs)
         probs = [prob * factor for prob in probs]
 
         return probs
@@ -271,21 +276,25 @@ class NoiseModelTQActivation(object):
     add noise to the activations
     """
     def __init__(self,
-                 mean=0.,
-                 std=1.,
+                 mean=(0.,),
+                 std=(1.,),
                  n_epochs=200,
                  prob_schedule=None,
                  prob_schedule_separator=None,
+                 after_norm=False,
+                 factor=None
                  ):
         self.mean = mean
         self.std = std
         self.is_add_noise = True
         self.mode = 'train'
+        self.after_norm = after_norm
 
         self.orig_std = std
         self.n_epochs = n_epochs
         self.prob_schedule = prob_schedule
         self.prob_schedule_separator = prob_schedule_separator
+        self.factor = factor
 
     @property
     def noise_total_prob(self):
@@ -310,10 +319,18 @@ class NoiseModelTQActivation(object):
     def apply_readout_error(self, x):
         return x
 
-    def add_noise(self, x):
-        if self.mode == 'train' and self.is_add_noise:
-            x = x + torch.randn(x.shape, device=x.device) * self.std + \
-                self.mean
+    def add_noise(self, x, node_id, is_after_norm=False):
+        if (self.after_norm and is_after_norm) or \
+                (not self.after_norm and not is_after_norm):
+            if self.mode == 'train' and self.is_add_noise:
+                if self.factor is None:
+                    factor = 1
+                else:
+                    factor = self.factor
+
+                x = x + torch.randn(
+                    x.shape, device=x.device) * self.std[node_id] * factor + \
+                    self.mean[node_id]
 
         return x
 
@@ -328,6 +345,7 @@ class NoiseModelTQPhase(object):
                  n_epochs=200,
                  prob_schedule=None,
                  prob_schedule_separator=None,
+                 factor=None
                  ):
         self.mean = mean
         self.std = std
@@ -338,6 +356,7 @@ class NoiseModelTQPhase(object):
         self.n_epochs = n_epochs
         self.prob_schedule = prob_schedule
         self.prob_schedule_separator = prob_schedule_separator
+        self.factor = factor
 
     @property
     def noise_total_prob(self):
@@ -364,8 +383,12 @@ class NoiseModelTQPhase(object):
 
     def add_noise(self, phase):
         if self.mode == 'train' and self.is_add_noise:
+            if self.factor is None:
+                factor = 1
+            else:
+                factor = self.factor
             phase = phase + torch.randn(phase.shape, device=phase.device) * \
-                       self.std * np.pi + self.mean
+                self.std * factor + self.mean
 
         return phase
 
@@ -383,13 +406,17 @@ class NoiseModelTQActivationReadout(NoiseModelTQActivation):
                  n_epochs=200,
                  prob_schedule=None,
                  prob_schedule_separator=None,
+                 after_norm=False,
+                 factor=None
                  ):
         super().__init__(
             mean=mean,
             std=std,
             n_epochs=n_epochs,
             prob_schedule=prob_schedule,
-            prob_schedule_separator=prob_schedule_separator
+            prob_schedule_separator=prob_schedule_separator,
+            after_norm=after_norm,
+            factor=factor,
         )
         provider = get_provider(backend_name=noise_model_name)
         backend = provider.get_backend(noise_model_name)
@@ -419,13 +446,15 @@ class NoiseModelTQPhaseReadout(NoiseModelTQPhase):
                  n_epochs=200,
                  prob_schedule=None,
                  prob_schedule_separator=None,
+                 factor=None
                  ):
         super().__init__(
             mean=mean,
             std=std,
             n_epochs=n_epochs,
             prob_schedule=prob_schedule,
-            prob_schedule_separator=prob_schedule_separator
+            prob_schedule_separator=prob_schedule_separator,
+            factor=factor
         )
         provider = get_provider(backend_name=noise_model_name)
         backend = provider.get_backend(noise_model_name)

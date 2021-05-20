@@ -14,7 +14,7 @@ class QuantumNode(tq.QuantumModule):
     """
     a quantum node contains a q device, encoder, q layer and measure
     """
-    def __init__(self, arch, act_norm):
+    def __init__(self, arch, act_norm, node_id):
         super().__init__()
         self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=arch['n_wires'])
@@ -24,6 +24,7 @@ class QuantumNode(tq.QuantumModule):
         self.measure = tq.MeasureAll(tq.PauliZ)
         self.act_norm = act_norm
         self.x_before_add_noise = None
+        self.x_before_add_noise_second = None
         self.x_before_act_quant = None
         self.x_before_norm = None
         if self.act_norm == 'batch_norm' or \
@@ -34,6 +35,7 @@ class QuantumNode(tq.QuantumModule):
                 affine=False,
                 track_running_stats=False
             )
+        self.node_id = node_id
 
     def forward(self, x, use_qiskit=False, is_last_node=False):
         if use_qiskit:
@@ -51,7 +53,8 @@ class QuantumNode(tq.QuantumModule):
         self.x_before_add_noise = x.clone()
 
         if isinstance(self.noise_model_tq, tq.NoiseModelTQActivation):
-            x = self.noise_model_tq.add_noise(x)
+            x = self.noise_model_tq.add_noise(x, self.node_id,
+                                              is_after_norm=False)
 
         self.x_before_norm = x.clone()
 
@@ -69,6 +72,12 @@ class QuantumNode(tq.QuantumModule):
             if not is_last_node:
                 x = self.bn(x)
 
+        self.x_before_add_noise_second = x.clone()
+
+        if isinstance(self.noise_model_tq, tq.NoiseModelTQActivation):
+            x = self.noise_model_tq.add_noise(x, self.node_id,
+                                              is_after_norm=True)
+
         self.x_before_act_quant = x.clone()
 
         return x
@@ -76,7 +85,8 @@ class QuantumNode(tq.QuantumModule):
 
 def build_nodes(node_archs, act_norm=None):
     nodes = tq.QuantumModuleList()
-    for node_arch in node_archs:
-        nodes.append(QuantumNode(node_arch, act_norm=act_norm))
+    for k, node_arch in enumerate(node_archs):
+        nodes.append(QuantumNode(node_arch, act_norm=act_norm,
+                                 node_id=k))
 
     return nodes

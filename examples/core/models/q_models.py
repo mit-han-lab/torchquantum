@@ -1304,6 +1304,8 @@ class QMultiFCModel0(tq.QuantumModule):
                     'x_before_add_noise': node.x_before_add_noise.cpu(
                         ).detach().data,
                     'x_before_norm': node.x_before_norm.cpu().detach().data,
+                    'x_before_add_noise_second':
+                        node.x_before_add_noise_second.cpu().detach().data,
                     'x_before_act_quant': node.x_before_act_quant.cpu().detach(
                         ).data,
                     'x_after_act_quant': node_out.cpu().detach().data,

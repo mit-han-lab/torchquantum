@@ -317,7 +317,8 @@ def make_noise_model_tq():
             prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
                                   None),
             prob_schedule_separator=getattr(
-                configs.trainer, 'noise_prob_schedule_separator', None)
+                configs.trainer, 'noise_prob_schedule_separator', None),
+            factor=getattr(configs.trainer, 'noise_factor', None)
         )
     elif configs.trainer.noise_model_tq_name == 'activation':
         noise_model_tq = NoiseModelTQActivation(
@@ -328,6 +329,9 @@ def make_noise_model_tq():
                                   None),
             prob_schedule_separator=getattr(
                 configs.trainer, 'noise_prob_schedule_separator', None),
+            after_norm=getattr(configs.trainer, 'noise_after_norm',
+                               False),
+            factor=getattr(configs.trainer, 'noise_factor', None)
         )
     elif configs.trainer.noise_model_tq_name == 'phase':
         noise_model_tq = NoiseModelTQPhase(
@@ -338,6 +342,7 @@ def make_noise_model_tq():
                                   None),
             prob_schedule_separator=getattr(
                 configs.trainer, 'noise_prob_schedule_separator', None),
+            factor=getattr(configs.trainer, 'noise_factor', None)
         )
     elif configs.trainer.noise_model_tq_name == 'only_read':
         noise_model_tq = NoiseModelTQReadoutOnly(
@@ -346,7 +351,8 @@ def make_noise_model_tq():
             prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
                                   None),
             prob_schedule_separator=getattr(
-                configs.trainer, 'noise_prob_schedule_separator', None)
+                configs.trainer, 'noise_prob_schedule_separator', None),
+            factor=getattr(configs.trainer, 'noise_factor', None)
         )
     elif configs.trainer.noise_model_tq_name == 'activation_read':
         noise_model_tq = NoiseModelTQActivationReadout(
@@ -358,6 +364,9 @@ def make_noise_model_tq():
                                   None),
             prob_schedule_separator=getattr(
                 configs.trainer, 'noise_prob_schedule_separator', None),
+            after_norm=getattr(configs.trainer, 'noise_after_norm',
+                               False),
+            factor=getattr(configs.trainer, 'noise_factor', None)
         )
     elif configs.trainer.noise_model_tq_name == 'phase_read':
         noise_model_tq = NoiseModelTQPhaseReadout(
@@ -369,6 +378,7 @@ def make_noise_model_tq():
                                   None),
             prob_schedule_separator=getattr(
                 configs.trainer, 'noise_prob_schedule_separator', None),
+            factor=getattr(configs.trainer, 'noise_factor', None)
         )
     else:
         raise NotImplementedError(configs.trainer.noise_model_tq_name)
