@@ -1,6 +1,7 @@
 trainer:
   noise_model_tq_name: phase_read
   noise_mean: 0
+  noise_std: 1
 
 callbacks:
   - callback: 'InferenceRunner'
