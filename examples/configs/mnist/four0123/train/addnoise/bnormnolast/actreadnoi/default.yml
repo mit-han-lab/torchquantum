@@ -1,6 +1,5 @@
 trainer:
   noise_model_tq_name: activation_read
-  noise_mean: 0
 
 callbacks:
   - callback: 'InferenceRunner'
