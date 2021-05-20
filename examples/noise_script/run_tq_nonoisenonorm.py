@@ -15,12 +15,12 @@ if __name__ == '__main__':
             'examples/eval.py',
             f'examples/configs/'
             f'{args.dataset}/{args.name}/eval/'
-            f'{args.device}/real/opt2/noancilla/300_s18400.yml',
+            f'tq/300_s18400.yml',
             '--jobs=5',
             '--verbose',
             '--run-dir']
 
-    with open(f'logs/{args.device}/{args.dataset}.'
+    with open(f'logs/tq/{args.dataset}.'
               f'{args.name}.nonoise.nonorm.u3cu3_0'
               f'.txt',
               'a') as \

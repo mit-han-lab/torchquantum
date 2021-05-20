@@ -25,14 +25,15 @@ if __name__ == '__main__':
               f'.txt',
               'a') as \
             wfid:
-        for node in ['n2b1',
+        for node in [
+                     'n2b1',
                      'n2b2',
                      'n2b3',
                      'n2b4',
-                     # 'n3b1',
-                     # 'n3b2',
-                     # 'n4b1',
-                     # 'n4b2'
+                     'n3b1',
+                     'n3b2',
+                     'n4b1',
+                     'n4b2'
                      ]:
             exp = f'runs/{args.dataset}.{args.name}.train.noaddnoise.' \
                   f'lnorm.u3cu3_0.{node}.default'

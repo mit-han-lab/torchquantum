@@ -21,7 +21,7 @@ if __name__ == '__main__':
             '--run-dir']
 
     with open(f'logs/{args.device}/{args.dataset}.'
-              f'{args.name}.nonoise.nonorm.u3cu3_0'
+              f'{args.name}.nonoise_lnormnolast.u3cu3_0'
               f'.txt',
               'a') as \
             wfid:
@@ -30,12 +30,14 @@ if __name__ == '__main__':
                      'n2b2',
                      'n2b3',
                      'n2b4',
+                     'n2b5',
+                     'n2b6',
                      'n3b1',
                      'n3b2',
                      'n4b1',
                      'n4b2'
                      ]:
             exp = f'runs/{args.dataset}.{args.name}.train.noaddnoise.' \
-                  f'nonorm.u3cu3_0.{node}.default'
+                  f'lnormnolast.u3cu3_0.{node}.default'
             logger.info(f"running command {pres + [exp]}")
             subprocess.call(pres + [exp], stderr=wfid)

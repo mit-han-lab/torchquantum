@@ -15,18 +15,17 @@ if __name__ == '__main__':
             'examples/eval.py',
             f'examples/configs/'
             f'{args.dataset}/{args.name}/eval/'
-            f'{args.device}/real/opt2/noancilla/300_s18400.yml',
+            f'tq/300_s18400.yml',
             '--jobs=5',
             '--verbose',
             '--run-dir']
 
-    with open(f'logs/{args.device}/{args.dataset}.'
-              f'{args.name}.nonoise.nonorm.u3cu3_0'
+    with open(f'logs/tq/{args.dataset}.'
+              f'{args.name}.nonoise.u3cu3_0'
               f'.txt',
               'a') as \
             wfid:
-        for node in [
-                     'n2b1',
+        for node in ['n2b1',
                      'n2b2',
                      'n2b3',
                      'n2b4',
@@ -36,6 +35,6 @@ if __name__ == '__main__':
                      'n4b2'
                      ]:
             exp = f'runs/{args.dataset}.{args.name}.train.noaddnoise.' \
-                  f'nonorm.u3cu3_0.{node}.default'
+                  f'lnorm.u3cu3_0.{node}.default'
             logger.info(f"running command {pres + [exp]}")
             subprocess.call(pres + [exp], stderr=wfid)

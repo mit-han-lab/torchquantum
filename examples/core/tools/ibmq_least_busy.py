@@ -7,6 +7,7 @@ from qiskit import QuantumCircuit
 # from qiskit.providers.ibmq import least_busy
 from qiskit.providers.ibmq.ibmqbackend import IBMQBackend
 from torchpack.utils.logging import logger
+from torchquantum.utils import get_provider
 
 qc_name_dict = {
     'x2': 'ibmqx2',
@@ -16,6 +17,8 @@ qc_name_dict = {
     'lima': 'ibmq_lima',
     'belem': 'ibmq_belem',
     'quito': 'ibmq_quito',
+    'rome': 'ibmq_rome',
+    'bogota': 'ibmq_bogota'
 }
 
 if __name__ == '__main__':
@@ -29,7 +32,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     IBMQ.load_account()
-    provider = IBMQ.get_provider("ibm-q")
+    provider = get_provider(qc_name_dict[args.name])
 
     if args.name is not None:
         circ = QuantumCircuit(1, 1)
