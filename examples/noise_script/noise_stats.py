@@ -5,6 +5,8 @@ import torch
 
 import matplotlib.pyplot as plt
 import os
+import numpy as np
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -51,10 +53,17 @@ if __name__ == '__main__':
         clean_act['x_layer_norm'] = (clean - clean.mean(-1).unsqueeze(-1)) / \
             clean.std(-1).unsqueeze(-1)
 
+    # separators = np.linspace(-1, 1, 6)
+    separators = [1]
+
     for k, (clean_act, noisy_act) in enumerate(zip(clean_acts, noisy_acts)):
         logger.info(f"Node {k}")
-        for stage in ['x_before_add_noise', 'x_before_act_quant',
-                      'x_all_norm', 'x_batch_norm', 'x_layer_norm']:
+        for stage in ['x_before_add_noise',
+                      'x_before_act_quant',
+                      # 'x_all_norm',
+                      # 'x_batch_norm',
+                      # 'x_layer_norm'
+                      ]:
             logger.info(f"{stage}")
             diff = noisy_act[stage] - clean_act[stage]
             logger.info(f"clean mean {clean_act[stage].mean()}, "
@@ -74,6 +83,19 @@ if __name__ == '__main__':
                 f">0: {diff[clean_act[stage]>0].std()}, "
                 f"<0: {diff[clean_act[stage]<0].std()}"
             )
+
+            for kk in range(len(separators) - 1):
+                idx = (separators[kk] <= clean_act[stage]) * \
+                      (clean_act[stage] < separators[kk + 1])
+                logger.info(
+                    f"Error [{separators[kk], separators[kk + 1]}): \n"
+                    f"Error Per qubit: \n"
+                    f"Error Mean: {diff[idx].mean(0).data.numpy()}, "
+                    f"Error Std: {diff[idx].std(0).data.numpy()}\n"
+                    f"Error ALL: \n"
+                    f"Error Mean: {diff[idx].mean()}, "
+                    f"Error Std: {diff[idx].std()}, "
+                )
 
             diff_abs_percent = diff.abs().mean() / clean_act[stage].abs(
                 ).mean()
@@ -100,6 +122,17 @@ if __name__ == '__main__':
                          bins=50, alpha=0.5, label='>0_all')
                 plt.hist((diff[clean_act[stage]<0]),
                          bins=50, alpha=0.5, label='<0_all')
+
+                for kk in range(len(separators) - 1):
+                    idx = (separators[kk] <= clean_act[stage]) * \
+                          (clean_act[stage] < separators[kk + 1])
+                    if idx.size():
+                        plt.hist((diff[idx]).flatten().numpy(),
+                                 bins=50,
+                                 alpha=0.5,
+                                 label=f'[{separators[kk]:.3f}, '
+                                       f'{separators[kk + 1]:.3f})')
+
                 plt.gca().legend()
                 plt.savefig(
                     f"./examples/noise_script/plot/{args.path}.{args.arch}."

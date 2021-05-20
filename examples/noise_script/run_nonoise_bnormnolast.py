@@ -9,21 +9,24 @@ if __name__ == '__main__':
 
     parser.add_argument('--device', type=str)
     parser.add_argument('--hub', type=str, default=None)
+    parser.add_argument('--valid', action='store_true')
 
     args = parser.parse_args()
+
+    valid = '_valid' if args.valid else ''
 
     pres = ['python',
             'examples/eval.py',
             f'examples/configs/'
             f'{args.dataset}/{args.name}/eval/'
-            f'{args.device}/real/opt2/noancilla/300_s18400.yml',
+            f'{args.device}/real/opt2/noancilla/300_s18400{valid}.yml',
             '--jobs=5',
             '--verbose',
             f'--hub={args.hub}',
             '--run-dir']
 
     with open(f'logs/{args.device}/{args.dataset}.'
-              f'{args.name}.nonoise_bnormnolast.u3cu3_0'
+              f'{args.name}.nonoise_bnormnolast{valid}.u3cu3_0'
               f'.txt',
               'a') as \
             wfid:
