@@ -1,0 +1,23 @@
+trainer:
+  noise_model_tq_name: activation_read
+  noise_mean: 0
+
+callbacks:
+  - callback: 'InferenceRunner'
+    split: 'valid'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'acc/valid'
+      - metrics: 'NLLError'
+        name: 'loss/valid'
+  - callback: 'InferenceRunner'
+    split: 'test'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'acc/test'
+      - metrics: 'NLLError'
+        name: 'loss/test'
+  - callback: 'MaxSaver'
+    name: 'acc/valid'
+  - callback: 'Saver'
+    max_to_keep: 10
