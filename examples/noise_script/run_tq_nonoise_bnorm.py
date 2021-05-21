@@ -27,7 +27,7 @@ if __name__ == '__main__':
             '--run-dir']
 
     with open(f'logs/tq/{args.dataset}.'
-              f'{args.name}.nonoise_bnorm.u3cu3_0'
+              f'{args.name}.nonoise_bnorm{valid}.u3cu3_0'
               f'.txt',
               'a') as \
             wfid:

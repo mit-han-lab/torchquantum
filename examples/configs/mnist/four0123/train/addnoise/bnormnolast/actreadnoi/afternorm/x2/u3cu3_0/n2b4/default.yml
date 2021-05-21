@@ -1,0 +1,18 @@
+model:
+  arch:
+    n_nodes: 2
+    node_archs:
+      - n_wires: 4
+        encoder_op_list_name: 4x4_ryzxy
+        n_blocks: 4
+        n_layers_per_block: 2
+        q_layer_name: u3cu3_0
+      - n_wires: 4
+        encoder_op_list_name: 4_ry
+        n_blocks: 4
+        n_layers_per_block: 2
+        q_layer_name: u3cu3_0
+
+trainer:
+  noise_mean: [0, 0]
+  noise_std: [1.35, 0.25]

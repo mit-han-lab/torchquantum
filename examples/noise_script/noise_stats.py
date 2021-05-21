@@ -17,11 +17,15 @@ if __name__ == '__main__':
     parser.add_argument('--path', type=str)
     parser.add_argument('--arch', type=str)
     parser.add_argument('--device', type=str)
+    parser.add_argument('--valid', action='store_true')
 
     args = parser.parse_args()
     print(args)
 
-    file = "mnist.four0123.eval.device.real.opt2.noancilla.300_s18400.pt"
+    valid = '_valid' if args.valid else ''
+
+    file = f"mnist.four0123.eval.device.real.opt2.noancilla.300_s18400" \
+           f"{valid}.pt"
     if args.pdb:
         import pdb
         pdb.set_trace()
@@ -29,7 +33,7 @@ if __name__ == '__main__':
     if args.clean is None:
         clean_acts = torch.load(
             f"{args.path}.{args.arch}.default/activations/"
-            f"mnist.four0123.eval.tq.300_s18400.pt")
+            f"mnist.four0123.eval.tq.300_s18400{valid}.pt")
         noisy_acts = torch.load(
             f"{args.path}.{args.arch}.default/activations/"
             f"{file.replace('device', args.device)}"

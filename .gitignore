@@ -306,3 +306,5 @@ runs/
 /examples/noise_script/plot/ablation/
 /run/
 /examples/noise_script/plot/run/
+/get.py
+/tmp.txt
