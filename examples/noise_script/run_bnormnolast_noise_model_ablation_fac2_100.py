@@ -36,21 +36,21 @@ if __name__ == '__main__':
 
     with open(f'logs/{args.device}/{args.dataset}.'
               f'{args.name}.bnormnolast{valid}.{args.nm}.nmodelabla.u3cu3_0'
-              f'.txt',
+              f'.fac2_100.txt',
               'a') as \
             wfid:
         for node in [
                      # 'n2b1',
                      'n2b2',
                      # 'n2b3',
-                     'n2b4',
+                     # 'n2b4',
                      # 'n3b1',
                      # 'n3b2',
                      # 'n4b1',
                      # 'n4b2'
-                     'n3b4',
+                     # 'n3b4',
                      ]:
-            for factor in [0.1, 0.5, 1, 1.5, 2]:
+            for factor in [2, 3, 5, 10, 20, 50, 100]:
                 exp = f'runs/{args.dataset}.{args.name}.train.addnoise.' \
                       f'bnormnolast.{path}.{args.device}.u3cu3_0' \
                       f'.{node}.fac{factor}.noquant.default'
