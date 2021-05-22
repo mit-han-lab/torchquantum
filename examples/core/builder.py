@@ -54,6 +54,22 @@ def make_dataset() -> Dataset:
         dataset = VQE(
             steps_per_epoch=configs.run.steps_per_epoch
         )
+    elif configs.dataset.name == 'cifar':
+        from .datasets import CIFAR10
+        dataset = CIFAR10(
+            root=configs.dataset.root,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
+            center_crop=configs.dataset.center_crop,
+            resize=configs.dataset.resize,
+            resize_mode=configs.dataset.resize_mode,
+            binarize=configs.dataset.binarize,
+            binarize_threshold=configs.dataset.binarize_threshold,
+            grayscale=configs.dataset.grayscale,
+            digits_of_interest=configs.dataset.digits_of_interest,
+            n_test_samples=configs.dataset.n_test_samples,
+            n_valid_samples=configs.dataset.n_valid_samples,
+            fashion=configs.dataset.fashion,
+        )
     else:
         raise NotImplementedError(configs.dataset.name)
 
