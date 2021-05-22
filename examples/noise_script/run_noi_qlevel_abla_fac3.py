@@ -46,10 +46,10 @@ if __name__ == '__main__':
     with open(f'logs/{args.device}/{args.dataset}.'
               f'{args.name}.bnormnolast{valid}.'
               f'{args.nm}.noi_qlevel_abla.u3cu3_0.{node_dict[args.device]}'
-              f'.fac0.5-1-1.5-3_ql3-4-5-6.txt',
+              f'.fac3.txt',
               'a') as \
             wfid:
-        for factor in [0.5, 1, 1.5, 3]:
+        for factor in [3]:
             for level in [3, 4, 5, 6]:
                 exp = f'runs/{args.dataset}.{args.name}.train.addnoise.' \
                       f'bnormnolast.{path}.{args.device}.u3cu3_0' \

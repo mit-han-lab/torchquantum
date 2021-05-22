@@ -37,19 +37,19 @@ if __name__ == '__main__':
     node_dict = {
         'santiago': 'n2b6',
         'x2': 'n2b1',
-        'belem': 'n2b3',
-        # 'lima': 'n2b2',
+        'belem': 'n2b4',
+        'lima': 'n2b2',
         'quito': 'n3b5',
-        # 'athens': 'n3b6',
+        'athens': 'n3b6',
     }
 
     with open(f'logs/{args.device}/{args.dataset}.'
               f'{args.name}.bnormnolast{valid}.'
               f'{args.nm}.noi_qlevel_abla.u3cu3_0.{node_dict[args.device]}'
-              f'.fac0.5-1-1.5-3_ql3-4-5-6.txt',
+              f'.txt',
               'a') as \
             wfid:
-        for factor in [0.5, 1, 1.5, 3]:
+        for factor in [0.1, 0.5, 1, 1.5]:
             for level in [3, 4, 5, 6]:
                 exp = f'runs/{args.dataset}.{args.name}.train.addnoise.' \
                       f'bnormnolast.{path}.{args.device}.u3cu3_0' \
