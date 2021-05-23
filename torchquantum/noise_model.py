@@ -114,13 +114,15 @@ class NoiseModelTQ(object):
                  ignored_ops=('id', 'kraus', 'reset'),
                  prob_schedule=None,
                  prob_schedule_separator=None,
-                 factor=None
+                 factor=None,
+                 add_thermal=True,
                  ):
         self.noise_model_name = noise_model_name
         provider = get_provider(backend_name=noise_model_name)
         backend = provider.get_backend(noise_model_name)
 
-        self.noise_model = NoiseModel.from_backend(backend)
+        self.noise_model = NoiseModel.from_backend(
+            backend, thermal_relaxation=add_thermal)
         self.noise_model_dict = self.noise_model.to_dict()
         self.is_add_noise = True
         self.v_c_reg_mapping = None

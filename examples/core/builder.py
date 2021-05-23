@@ -335,7 +335,8 @@ def make_noise_model_tq():
                                   None),
             prob_schedule_separator=getattr(
                 configs.trainer, 'noise_prob_schedule_separator', None),
-            factor=getattr(configs.trainer, 'noise_factor', None)
+            factor=getattr(configs.trainer, 'noise_factor', None),
+            add_thermal=getattr(configs.trainer, 'noise_add_thermal', True)
         )
     elif configs.trainer.noise_model_tq_name == 'activation':
         noise_model_tq = NoiseModelTQActivation(
