@@ -1,0 +1,4 @@
+model:
+  arch:
+    act_norm: batch_norm_no_last
+

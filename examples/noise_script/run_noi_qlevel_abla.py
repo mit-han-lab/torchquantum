@@ -17,16 +17,6 @@ if __name__ == '__main__':
 
     valid = '_valid' if args.valid else ''
 
-    pres = ['python',
-            'examples/eval.py',
-            f'examples/configs/'
-            f'{args.dataset}/{args.name}/eval/'
-            f'{args.device}/real/opt2/noancilla/act_quant/'
-            f'300_loadop_s18400{valid}.yml',
-            '--jobs=5',
-            '--verbose',
-            f'--hub={args.hub}',
-            '--run-dir']
     if args.nm == 'act':
         path = 'actreadnoi.afternorm'
     elif args.nm == 'phase':
@@ -42,6 +32,27 @@ if __name__ == '__main__':
         'quito': 'n3b5',
         # 'athens': 'n3b6',
     }
+
+    last_step_dict = {
+        'mnist': {
+            'four0123': 18400,
+        },
+        'fashion': {
+            'four0123': 18000,
+        }
+    }
+
+    pres = ['python',
+            'examples/eval.py',
+            f'examples/configs/'
+            f'{args.dataset}/{args.name}/eval/'
+            f'{args.device}/real/opt2/noancilla/act_quant/'
+            f'300_loadop_s{last_step_dict[args.dataset][args.name]}'
+            f'{valid}.yml',
+            '--jobs=5',
+            '--verbose',
+            f'--hub={args.hub}',
+            '--run-dir']
 
     with open(f'logs/{args.device}/{args.dataset}.'
               f'{args.name}.bnormnolast{valid}.'
