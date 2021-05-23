@@ -97,14 +97,16 @@ def main() -> None:
     for split in dataset:
         if split == 'train':
             sampler = torch.utils.data.RandomSampler(dataset[split])
+            batch_size = configs.run.bsz
         else:
             # for valid and test, use SequentialSampler to make the train.py
             # and eval.py results consistent
             sampler = torch.utils.data.SequentialSampler(dataset[split])
+            batch_size = getattr(configs.run, 'eval_bsz', configs.run.bsz)
 
         dataflow[split] = torch.utils.data.DataLoader(
             dataset[split],
-            batch_size=configs.run.bsz,
+            batch_size=batch_size,
             sampler=sampler,
             num_workers=configs.run.workers_per_gpu,
             pin_memory=True)
