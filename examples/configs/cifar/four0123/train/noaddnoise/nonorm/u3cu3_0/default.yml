@@ -1,4 +1,5 @@
 model:
   name: q_multifc0
   arch:
-    down_sample_kernel_size: 7
+    down_sample_kernel_size: null
+    fft_remain_size: 4
