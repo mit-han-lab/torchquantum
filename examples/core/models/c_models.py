@@ -39,6 +39,8 @@ class ClassicalConv1(nn.Module):
 
     def forward(self, x):
         x = F.avg_pool2d(x, 6)
+        # x = torch.fft.fft2(x, norm='ortho').abs()[:, :, :4, :4]
+
         x = self.conv1(x)
         x = F.relu(x)
         x = self.conv2(x)

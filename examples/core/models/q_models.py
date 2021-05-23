@@ -1287,6 +1287,13 @@ class QMultiFCModel0(tq.QuantumModule):
 
         if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
             x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+
+        if getattr(self.arch, 'fft_remain_size', None) is not None:
+            x = torch.fft.fft2(x, norm='ortho').abs()[:, :,
+                :self.arch['fft_remain_size'], :self.arch[
+                'fft_remain_size']]
+            x = x.contiguous()
+
         x = x.view(bsz, -1)
         mse_all = []
 
