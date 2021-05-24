@@ -400,8 +400,8 @@ def get_cared_configs(conf, mode) -> Config:
     elif mode == 'es' and hasattr(conf, 'es') and hasattr(conf.es, 'eval'):
         delattr(conf.es, 'eval')
 
-    if not mode == 'train' and hasattr(conf, 'trainer'):
-        delattr(conf, 'trainer')
+    # if not mode == 'train' and hasattr(conf, 'trainer'):
+    #     delattr(conf, 'trainer')
 
     if hasattr(conf, 'qiskit'):
         qiskit_ignores = [
