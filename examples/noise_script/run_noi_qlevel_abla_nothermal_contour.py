@@ -52,10 +52,41 @@ if __name__ == '__main__':
     with open(f'logs/{args.device}/{args.dataset}.'
               f'{args.name}.bnormnolast{valid}.'
               f'{args.nm}.noi_qlevel_abla.u3cu3_0.{node_dict[args.device]}'
-              f'.fac0.1-0.2-0.5-1-1.5-2-5-10_ql3-4-5-6-7-8.nothermal.txt',
+              f'.fac0.0_ql2-3-4-5-6-7-8.nothermal.txt',
               'a') as wfid:
-        for factor in [0.5, 1, 1.5, 2, 5, 10]:
-            for level in [3, 4, 5, 6, 7, 8]:
+        for factor in [
+            0,
+            # 0.1,
+            #            0.2,
+            #            0.5,
+            #            1,
+            #            1.5,
+            #            2,
+            #            5,
+            #            10
+        ]:
+            for level in [2, 3, 4, 5, 6, 7, 8]:
+                if factor == 0.5 and level == 3:
+                    continue
+                exp = f'runs/{args.dataset}.{args.name}.train.addnoise.' \
+                      f'bnormnolast.{path}.nothermal.{args.device}.u3cu3_0' \
+                      f'.{node_dict[args.device]}.fac{factor}.quant' \
+                      f'.l{level}.default'
+                logger.info(f"running command {pres + [exp]}")
+                if not args.print:
+                    subprocess.call(pres + [exp], stderr=wfid)
+        for factor in [
+            # 0,
+            0.1,
+                       0.2,
+                       0.5,
+                       1,
+                       1.5,
+                       2,
+                       5,
+                       10
+        ]:
+            for level in [2]:
                 if factor == 0.5 and level == 3:
                     continue
                 exp = f'runs/{args.dataset}.{args.name}.train.addnoise.' \

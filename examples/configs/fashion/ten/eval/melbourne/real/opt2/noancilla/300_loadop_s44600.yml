@@ -1,0 +1,8 @@
+dataset:
+  n_test_samples: 300
+
+ckpt:
+  name: 'checkpoints/step-44600.pt'
+
+model:
+  load_op_list: True

@@ -6,3 +6,6 @@ ckpt:
 
 dataset:
   split: test
+
+act_quant:
+  add_in_eval: False

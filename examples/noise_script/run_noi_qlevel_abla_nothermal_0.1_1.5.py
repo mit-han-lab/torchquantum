@@ -25,20 +25,25 @@ if __name__ == '__main__':
         'belem': 'n2b3',
         # 'lima': 'n2b2',
         'quito': 'n3b5',
-        # 'athens': 'n3b6',
+        'athens': 'n3b5',
     }
 
     last_step_dict = {
         'mnist': {
             'four0123': 18400,
             'two36': 9000,
+            'ten': 44600,
         },
         'fashion': {
             'four0123': 18000,
             'two36': 9000,
+            'ten': 44600,
         },
         'vowel': {
             'four0516': 10400,
+        },
+        'cifar': {
+            'two68': 7600,
         }
     }
 

@@ -29,9 +29,17 @@ if __name__ == '__main__':
     last_step_dict = {
         'mnist': {
             'four0123': 18400,
+            'two36': 9000,
         },
         'fashion': {
             'four0123': 18000,
+            'two36': 9000,
+        },
+        'vowel': {
+            'four0516': 10400,
+        },
+        'cifar': {
+            'two68': 7600,
         }
     }
 
@@ -42,8 +50,16 @@ if __name__ == '__main__':
               f'.txt',
               'a') as \
             wfid:
-        for setting in ['nonorm', 'bnormnolast']:
-            for device in ['santiago', 'x2', 'belem', 'quito']:
+        for setting in [
+            # 'nonorm',
+            'bnormnolast'
+        ]:
+            for device in [
+                # 'santiago',
+                # 'x2',
+                'belem',
+                # 'quito'
+            ]:
 
                 last_step = last_step_dict[args.dataset][args.name]
                 pres = ['python',

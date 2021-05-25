@@ -308,3 +308,17 @@ runs/
 /examples/noise_script/plot/run/
 /get.py
 /tmp.txt
+/examples/noise_script/plot/contour/
+/examples/noise_script/plot/four/
+/examples/noise_script/plot/None.None.None.node0.x_before_act_quant.error.pdf
+/examples/noise_script/plot/None.None.None.node0.x_before_act_quant.pdf
+/examples/noise_script/plot/None.None.None.node0.x_before_add_noise.error.pdf
+/examples/noise_script/plot/None.None.None.node0.x_before_add_noise.pdf
+/examples/noise_script/plot/None.None.None.node1.x_before_act_quant.error.pdf
+/examples/noise_script/plot/None.None.None.node1.x_before_act_quant.pdf
+/examples/noise_script/plot/None.None.None.node1.x_before_add_noise.error.pdf
+/examples/noise_script/plot/None.None.None.node1.x_before_add_noise.pdf
+/examples/noise_script/plot/None.None.None.node2.x_before_act_quant.error.pdf
+/examples/noise_script/plot/None.None.None.node2.x_before_act_quant.pdf
+/examples/noise_script/plot/None.None.None.node2.x_before_add_noise.error.pdf
+/examples/noise_script/plot/None.None.None.node2.x_before_add_noise.pdf

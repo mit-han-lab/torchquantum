@@ -1,0 +1,9 @@
+dataset:
+  n_valid_samples: 300
+  split: valid
+
+ckpt:
+  name: 'checkpoints/step-7600.pt'
+
+model:
+  load_op_list: True
