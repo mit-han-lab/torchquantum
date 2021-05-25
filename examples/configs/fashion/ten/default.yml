@@ -1,0 +1,10 @@
+dataset:
+  digits_of_interest: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+model:
+  transpile_before_run: False
+  load_op_list: False
+  arch:
+    down_sample_kernel_size: 4
+    encoder_op_list_name: 6x6_ryzxy
+    n_wires: 10

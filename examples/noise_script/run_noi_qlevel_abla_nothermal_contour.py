@@ -20,25 +20,20 @@ if __name__ == '__main__':
     path = 'qiskitreadnoi'
 
     node_dict = {
-        'santiago': 'n2b6',
-        'x2': 'n2b1',
-        'belem': 'n2b3',
+        # 'santiago': 'n2b6',
+        # 'x2': 'n2b1',
+        # 'belem': 'n2b3',
         # 'lima': 'n2b2',
-        'quito': 'n3b5',
-        # 'athens': 'n3b6',
+        # 'quito': 'n3b5',
+        'athens': 'n2b3',
     }
 
     last_step_dict = {
         'mnist': {
             'four0123': 18400,
-            'two36': 9000,
         },
         'fashion': {
             'four0123': 18000,
-            'two36': 9000,
-        },
-        'vowel': {
-            'four0516': 10400,
         }
     }
 
@@ -57,16 +52,12 @@ if __name__ == '__main__':
     with open(f'logs/{args.device}/{args.dataset}.'
               f'{args.name}.bnormnolast{valid}.'
               f'{args.nm}.noi_qlevel_abla.u3cu3_0.{node_dict[args.device]}'
-              f'.fac0.1-0.5-1-1.5_ql3-4-5-6.nothermal.txt',
+              f'.fac0.1-0.2-0.5-1-1.5-2-5-10_ql3-4-5-6-7-8.nothermal.txt',
               'a') as wfid:
-        for factor in [
-                       0.1,
-                       0.5,
-                       1,
-                       1.5]:
-            for level in [3, 4, 5, 6]:
-                # if factor == 1 and level < 5:
-                #     continue
+        for factor in [0.5, 1, 1.5, 2, 5, 10]:
+            for level in [3, 4, 5, 6, 7, 8]:
+                if factor == 0.5 and level == 3:
+                    continue
                 exp = f'runs/{args.dataset}.{args.name}.train.addnoise.' \
                       f'bnormnolast.{path}.nothermal.{args.device}.u3cu3_0' \
                       f'.{node_dict[args.device]}.fac{factor}.quant' \

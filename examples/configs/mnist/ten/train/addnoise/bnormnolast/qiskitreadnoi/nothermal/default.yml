@@ -1,0 +1,2 @@
+trainer:
+  noise_add_thermal: False
