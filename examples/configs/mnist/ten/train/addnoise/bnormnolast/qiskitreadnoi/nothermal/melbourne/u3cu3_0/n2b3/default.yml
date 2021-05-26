@@ -8,7 +8,7 @@ model:
         n_layers_per_block: 2
         q_layer_name: u3cu3_0
       - n_wires: 10
-        encoder_op_list_name: 4_ry
+        encoder_op_list_name: 10_ry
         n_blocks: 3
         n_layers_per_block: 2
         q_layer_name: u3cu3_0

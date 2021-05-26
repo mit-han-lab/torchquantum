@@ -1,0 +1,9 @@
+dataset:
+  n_valid_samples: null
+  split: valid
+
+ckpt:
+  name: 'checkpoints/step-9000.pt'
+
+model:
+  load_op_list: True

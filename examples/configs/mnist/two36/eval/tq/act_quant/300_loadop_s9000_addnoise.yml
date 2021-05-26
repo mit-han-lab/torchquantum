@@ -1,0 +1,11 @@
+dataset:
+  n_test_samples: 300
+
+ckpt:
+  name: 'checkpoints/step-9000.pt'
+
+model:
+  load_op_list: True
+
+add_noise: True
+noise_total_prob: 0.1
