@@ -322,3 +322,6 @@ runs/
 /examples/noise_script/plot/None.None.None.node2.x_before_act_quant.pdf
 /examples/noise_script/plot/None.None.None.node2.x_before_add_noise.error.pdf
 /examples/noise_script/plot/None.None.None.node2.x_before_add_noise.pdf
+/examples/noise_script/plot/cluster/
+/activations/fashion.four0123.eval.santiago.real.opt2.noancilla.act_quant.300_loadop_s18000_valid.pt
+/activations/fashion.four0123.eval.tq.act_quant.300_loadop_s18000_valid.pt

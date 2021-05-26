@@ -519,9 +519,166 @@ class CXRZSXLayer0(LayerTemplate0):
         return layers_all
 
 
+class SethLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+        return layers_all
+
+
+class BarrenLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        layers_all.append(
+            Op1QAllLayer(
+                op=tq.SHadamard,
+                n_wires=self.n_wires,)
+        )
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.CZ,
+                    n_wires=self.n_wires,
+                    jump=1))
+        return layers_all
+
+
+class FarhiLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RXX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
+
+class MaxwellLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.S,
+                    n_wires=self.n_wires))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.CNOT,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.T,
+                    n_wires=self.n_wires))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.SWAP,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.Hadamard,
+                    n_wires=self.n_wires))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.SSWAP,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.U1,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True
+                ))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+
+        return layers_all
+
+
 layer_name_dict = {
     'u3cu3_0': U3CU3Layer0,
     'cu3_0': CU3Layer0,
     'cxrzsx_0': CXRZSXLayer0,
+    'seth_0': SethLayer0,
+    'barren_0': BarrenLayer0,
+    'farhi_0': FarhiLayer0,
+    'maxwell_0': MaxwellLayer0,
 }
 
