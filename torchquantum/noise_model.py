@@ -13,6 +13,7 @@ __all__ = ['NoiseModelTQ',
            'NoiseModelTQReadoutOnly',
            'NoiseModelTQActivationReadout',
            'NoiseModelTQPhaseReadout',
+           'NoiseModelTQQErrorOnly'
            ]
 
 
@@ -229,7 +230,14 @@ class NoiseModelTQ(object):
 
         p_wires = [self.p_v_reg_mapping['v2p'][wire] for wire in wires]
 
-        inst_prob = self.parsed_dict[op_name][tuple(p_wires)]
+        if tuple(p_wires) in self.parsed_dict[op_name].keys():
+            inst_prob = self.parsed_dict[op_name][tuple(p_wires)]
+        else:
+            # not in the real coupling map, so only give a dummy one
+            if len(p_wires) == 1:
+                inst_prob = self.parsed_dict[op_name][(0,)]
+            elif len(p_wires) == 2:
+                inst_prob = self.parsed_dict[op_name][(0, 1)]
 
         inst = inst_prob['instructions']
         if len(inst) == 0:
@@ -398,6 +406,11 @@ class NoiseModelTQPhase(object):
 class NoiseModelTQReadoutOnly(NoiseModelTQ):
     def sample_noise_op(self, op_in):
         return []
+
+
+class NoiseModelTQQErrorOnly(NoiseModelTQ):
+    def apply_readout_error(self, x):
+        return x
 
 
 class NoiseModelTQActivationReadout(NoiseModelTQActivation):

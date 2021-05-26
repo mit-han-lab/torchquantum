@@ -82,7 +82,6 @@ qiskit:
   use_real_qc: False
   backend_name: null
   noise_model_name: null
-  coupling_map_name: null
   basis_gates_name: null
   n_shots: 8192
   initial_layout: null

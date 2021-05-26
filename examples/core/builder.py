@@ -307,7 +307,8 @@ def make_qiskit_processor():
         use_real_qc=configs.qiskit.use_real_qc,
         backend_name=configs.qiskit.backend_name,
         noise_model_name=configs.qiskit.noise_model_name,
-        coupling_map_name=configs.qiskit.noise_model_name,
+        coupling_map_name=getattr(configs.qiskit, 'coupling_map_name',
+                                  configs.qiskit.noise_model_name),
         basis_gates_name=configs.qiskit.noise_model_name,
         n_shots=configs.qiskit.n_shots,
         initial_layout=configs.qiskit.initial_layout,
@@ -326,6 +327,20 @@ def make_qiskit_processor():
 def make_noise_model_tq():
     if configs.trainer.noise_model_tq_name == 'from_qiskit_read':
         noise_model_tq = NoiseModelTQ(
+            noise_model_name=configs.qiskit.noise_model_name,
+            n_epochs=configs.run.n_epochs,
+            noise_total_prob=getattr(configs.trainer, 'noise_total_prob',
+                                     None),
+            ignored_ops=configs.trainer.ignored_noise_ops,
+            prob_schedule=getattr(configs.trainer, 'noise_prob_schedule',
+                                  None),
+            prob_schedule_separator=getattr(
+                configs.trainer, 'noise_prob_schedule_separator', None),
+            factor=getattr(configs.trainer, 'noise_factor', None),
+            add_thermal=getattr(configs.trainer, 'noise_add_thermal', True)
+        )
+    elif configs.trainer.noise_model_tq_name == 'from_qiskit':
+        noise_model_tq = NoiseModelTQQErrorOnly(
             noise_model_name=configs.qiskit.noise_model_name,
             n_epochs=configs.run.n_epochs,
             noise_total_prob=getattr(configs.trainer, 'noise_total_prob',
