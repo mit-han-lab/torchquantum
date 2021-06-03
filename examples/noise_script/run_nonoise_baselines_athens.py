@@ -45,21 +45,21 @@ if __name__ == '__main__':
     }
 
     datasets = [
-        'mnist',
+        # 'mnist',
+        # 'fashion',
+        # 'vowel',
+        # 'mnist',
         'fashion',
-        'vowel',
-        'mnist',
-        'fashion',
-        'cifar',
+        # 'cifar',
     ]
 
     names = [
-        'four0123',
-        'four0123',
-        'four0516',
+        # 'four0123',
+        # 'four0123',
+        # 'four0516',
+        # 'two36',
         'two36',
-        'two36',
-        'two68'
+        # 'two68'
     ]
 
     appen = '' if args.node is None else f".{args.node}"
@@ -70,7 +70,7 @@ if __name__ == '__main__':
               'a') as \
             wfid:
         for setting in [
-            'nonorm',
+            # 'nonorm',
             'bnormnolast'
         ]:
             for dataset, name in zip(datasets, names):
