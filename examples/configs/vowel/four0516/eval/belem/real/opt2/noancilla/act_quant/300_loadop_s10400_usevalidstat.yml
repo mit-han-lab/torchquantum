@@ -1,0 +1,15 @@
+dataset:
+  n_test_samples: 300
+
+ckpt:
+  name: 'checkpoints/step-10400.pt'
+
+model:
+  load_op_list: True
+
+pre_specified_mean: [[-0.0213,  0.0459,  0.1930,  0.1628],
+                     [-0.0213,  0.0459,  0.1930,  0.1628]]
+
+pre_specified_std: [[0.0145, 0.0335, 0.0478, 0.0263],
+                    [0.0145, 0.0335, 0.0478, 0.0263]]
+
