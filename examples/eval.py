@@ -270,6 +270,15 @@ def main() -> None:
         for quantizer in quantizers:
             quantizer.register_hook()
 
+    if getattr(configs, 'pre_specified_mean', None) is not None and \
+            configs.pre_specified_std \
+            is not None:
+        for k, node in enumerate(model.nodes):
+            node.pre_specified_mean_std = {
+                'mean': configs.pre_specified_mean[k],
+                'std': configs.pre_specified_std[k],
+            }
+
     model.to(device)
     model.eval()
 

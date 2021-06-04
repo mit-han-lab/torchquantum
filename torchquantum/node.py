@@ -36,6 +36,7 @@ class QuantumNode(tq.QuantumModule):
                 track_running_stats=False
             )
         self.node_id = node_id
+        self.pre_specified_mean_std = None
 
     def forward(self, x, use_qiskit=False, is_last_node=False):
         if use_qiskit:
@@ -61,7 +62,14 @@ class QuantumNode(tq.QuantumModule):
         if self.act_norm == 'layer_norm':
             x = (x - x.mean(-1).unsqueeze(-1)) / x.std(-1).unsqueeze(-1)
         elif self.act_norm == 'batch_norm':
-            x = self.bn(x)
+            if self.pre_specified_mean_std is None:
+                x = self.bn(x)
+            else:
+                x = (x - torch.tensor(self.pre_specified_mean_std['mean'],
+                                     device=x.device).unsqueeze(0)) / \
+                    torch.tensor(self.pre_specified_mean_std['std'],
+                                 device=x.device).unsqueeze(0)
+
             # x = (x - x.mean(0).unsqueeze(0)) / x.std(0).unsqueeze(0)
         elif self.act_norm == 'all_norm':
             x = (x - x.mean()) / x.std()
@@ -69,8 +77,15 @@ class QuantumNode(tq.QuantumModule):
             if not is_last_node:
                 x = (x - x.mean(-1).unsqueeze(-1)) / x.std(-1).unsqueeze(-1)
         elif self.act_norm == 'batch_norm_no_last':
+
             if not is_last_node:
-                x = self.bn(x)
+                if self.pre_specified_mean_std is None:
+                    x = self.bn(x)
+                else:
+                    x = (x - torch.tensor(self.pre_specified_mean_std['mean'],
+                                          device=x.device).unsqueeze(0)) / \
+                        torch.tensor(self.pre_specified_mean_std['std'],
+                                     device=x.device).unsqueeze(0)
 
         self.x_before_add_noise_second = x.clone()
 
