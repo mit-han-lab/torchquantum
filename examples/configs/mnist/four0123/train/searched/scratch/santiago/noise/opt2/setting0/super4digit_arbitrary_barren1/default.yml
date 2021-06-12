@@ -1,0 +1,5 @@
+model:
+  name: super4digit_arbitrary_barren1
+  arch:
+    n_layers_per_block: 4
+

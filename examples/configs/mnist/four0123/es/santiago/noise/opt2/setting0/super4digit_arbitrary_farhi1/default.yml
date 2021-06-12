@@ -1,0 +1,96 @@
+model:
+  name: super4digit_arbitrary_farhi1
+  arch:
+    n_layers_per_block: 2
+
+scheduler:
+  name: cosine_warm
+
+run:
+  n_warm_epochs: 30
+
+callbacks:
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'smallest'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/smallest_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/smallest_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'middle'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/middle_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/middle_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'largest'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/largest_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/largest_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk1_ratio1'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/blk1_ratio1_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/blk1_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk2_ratio1'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/blk2_ratio1_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/blk2_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk3_ratio1'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/blk3_ratio1_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/blk3_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk4_ratio1'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/blk4_ratio1_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/blk4_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk5_ratio1'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/blk5_ratio1_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/blk5_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk6_ratio1'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/blk6_ratio1_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/blk6_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk7_ratio1'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/blk7_ratio1_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/blk7_ratio1_valid'
+  - callback: 'MaxSaver'
+    name: 'superacc/largest_valid'
+  - callback: 'Saver'
+    max_to_keep: 10
