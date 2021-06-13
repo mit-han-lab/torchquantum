@@ -504,6 +504,92 @@ class SuperU3CU3ArbitraryLayer0(SuperLayerTemplate0):
         return super_layers_all
 
 
+class SuperIBMBasisShareFrontLayer0(SuperLayerTemplate0):
+    """cnot rz sx x share front blocks"""
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.PauliX,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires))
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.SX,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires))
+            super_layers_all.append(
+                Super1QShareFrontLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    n_front_share_wires=self.n_front_share_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super2QAllShareFrontLayer(
+                    op=tq.CNOT,
+                    n_wires=self.n_wires,
+                    n_front_share_ops=self.n_front_share_ops,
+                    jump=1,
+                    circular=True))
+        return super_layers_all
+
+
+class SuperIBMBasisArbitraryLayer0(SuperLayerTemplate0):
+    """cnot rz sx x blocks arbitrary n gates"""
+    def build_super_layers(self):
+        super_layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.PauliX,
+                    n_wires=self.n_wires))
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.SX,
+                    n_wires=self.n_wires))
+            super_layers_all.append(
+                Super1QLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            super_layers_all.append(
+                Super2QAllLayer(
+                    op=tq.CNOT,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+        return super_layers_all
+
+
 class SuperSethArbitraryLayer0(SuperLayerTemplate0):
     """
     zz and ry blocks arbitrary n gates, from Seth Lloyd paper
@@ -873,9 +959,11 @@ super_layer_name_dict = {
     'barren_s0': SuperBarrenShareFrontLayer0,
     'farhi_s0': SuperFarhiShareFrontLayer0,
     'maxwell_s0': SuperMaxwellShareFrontLayer0,
+    'ibmbasis_s0': SuperIBMBasisShareFrontLayer0,
     'u3cu3_a0': SuperU3CU3ArbitraryLayer0,
     'seth_a0': SuperSethArbitraryLayer0,
     'barren_a0': SuperBarrenArbitraryLayer0,
     'farhi_a0': SuperFarhiArbitraryLayer0,
     'maxwell_a0': SuperMaxwellArbitraryLayer0,
+    'ibmbasis_a0': SuperIBMBasisArbitraryLayer0,
 }
