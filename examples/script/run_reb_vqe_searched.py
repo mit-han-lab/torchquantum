@@ -20,16 +20,16 @@ if __name__ == '__main__':
     devices = [
                # 'rome',
                # 'lima',
-        'quito',
-        'x2',
-        'belem',
-        'santiago',
+        # 'quito',
+        # 'x2',
+        # 'belem',
+        # 'santiago',
         'athens'
     ]
     mode = f'plain.blk{n_blk}s1.1.1'
 
     with open(f'logs/reb/topoerror.{setting}.{args.dataset}.{args.name}'
-              f'.{args.space}.txt',
+              f'.{args.space}.athens.txt',
               'a') as \
             wfid:
         for device in devices:

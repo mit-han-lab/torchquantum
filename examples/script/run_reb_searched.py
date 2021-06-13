@@ -22,17 +22,17 @@ if __name__ == '__main__':
 
     devices = [
         # 'rome',
-        #        'lima',
-        'quito',
+               # 'lima',
+        # 'quito',
         # 'x2',
-        'belem',
-        'santiago',
+        # 'belem',
+        # 'santiago',
         'athens'
                ]
     mode = f'ldiff_blkexpand.blk{n_blk}s1.1.1_diff7_chu3_sta40'
 
     with open(f'logs/reb/topoerror.{setting}.{args.dataset}.{args.name}'
-              f'.{args.space}.1.txt',
+              f'.{args.space}.athens.txt',
               'a') as \
             wfid:
         # for mode in [f'plain.blk{n_blk}s1.1.1',

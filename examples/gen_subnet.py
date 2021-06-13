@@ -58,7 +58,7 @@ def main() -> None:
     arch_all.sort(key=lambda x: x[-1])
 
     for arch in arch_all:
-        logger.info(f"blk {arch[-1]} arch: {arch}")
+        print(f"blk {arch[-1]} arch: {arch}")
 
 
 if __name__ == '__main__':
