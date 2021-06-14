@@ -15,8 +15,10 @@ if __name__ == '__main__':
 
     if 'maxwell' in args.space:
         n_blk = 4
+        n_rand = 16
     else:
         n_blk = 8
+        n_rand = 5
 
     split = 'test' if args.test else 'valid'
 
@@ -33,7 +35,7 @@ if __name__ == '__main__':
             ]
     with open(f'logs/reb/eval_subnet_tq_{args.dataset}.{args.name}.{args.space}.{split}.txt', 'a') as \
             wfid:
-        for blk in range(1, 9):
+        for blk in range(1, n_blk + 1):
             for ratio in ['0', '0.3', '0.6', '1']:
                 exp = f'runs/{args.dataset}.{args.name}.train.baseline' \
                       f'.{args.space}.subnet.blk{blk}_ratio{ratio}/'
@@ -42,8 +44,8 @@ if __name__ == '__main__':
                 if not args.print:
                     subprocess.run(pres + [exp], stderr=wfid)
 
-        for blk in range(1, 9):
-            for rand in range(6):
+        for blk in range(1, n_blk + 1):
+            for rand in range(n_rand):
                 exp = f'runs/{args.dataset}.{args.name}.train.baseline' \
                       f'.{args.space}.subnet.blk{blk}_rand{rand}/'
                 logger.info(f"running command {pres + [exp]}")

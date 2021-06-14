@@ -7,6 +7,8 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str)
     parser.add_argument('--name', type=str)
     parser.add_argument('--space', type=str)
+    parser.add_argument('--mode', type=str)
+    parser.add_argument('--nparam', type=int)
     parser.add_argument('--device', type=str)
     parser.add_argument('--print', action='store_true')
     parser.add_argument('--fix', action='store_true')
@@ -33,7 +35,7 @@ if __name__ == '__main__':
 
 
     with open(f'logs/reb/randhuman.{args.dataset}.{args.name}.{args.device}.'
-              f'ibmbasis_a0.txt',
+              f'{args.space}.{args.nparam}.{args.mode}.txt',
               'a') as \
             wfid:
         # for mode in [f'plain.blk{n_blk}s1.1.1',
@@ -41,9 +43,9 @@ if __name__ == '__main__':
         #              f'ldiff_blkexpand.blk{n_blk}s1.1.1_diff7_chu3_sta40',
         #              f'ldiff_blkexpand.blk{n_blk}s1.1.1_diff7_chu10_sta40',]:
         exps = [
-            'runs/mnist.four0123.train.searched.scratch.nonoise.setting0.ibmbasis_a0.ldiff.blk20s1.1.1_diff7/',
-            'runs/mnist.four0123.train.baseline.ibmbasis_a0.rand.param14.seed0/',
-            'runs/mnist.four0123.train.baseline.ibmbasis_a0.human.param14/',
+            f'runs/{args.dataset}.{args.name}.train.searched.scratch.nonoise.setting0.{args.space}.{args.mode}/',
+            f'runs/{args.dataset}.{args.name}.train.baseline.{args.space}.rand.param{args.nparam}.seed0/',
+            f'runs/{args.dataset}.{args.name}.train.baseline.{args.space}.human.param{args.nparam}/',
         ]
         for exp in exps:
             pres = ['python',

@@ -1,0 +1,11 @@
+es:
+  random_search: True
+  population_size: 40
+  parent_size: 10
+  mutation_size: 20
+  mutation_prob: 0.4
+  crossover_size: 10
+  n_iterations: 40
+
+dataset:
+  n_valid_samples: 500
