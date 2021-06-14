@@ -152,7 +152,8 @@ class EvolutionEngine(object):
                  arch_space,
                  gene_mask=None,
                  enumerate_layout=False,
-                 random_search=False
+                 random_search=False,
+                 legalize_layout=False,
                  ):
         self.population_size = population_size
         self.parent_size = parent_size
@@ -178,6 +179,8 @@ class EvolutionEngine(object):
         self.best_score = None
 
         self.random_search = random_search
+
+        self.legalize_layout = legalize_layout
 
         # to constraint the design space in a fine-grained manner
         self.gene_mask = gene_mask
@@ -222,8 +225,9 @@ class EvolutionEngine(object):
             while k < self.mutation_size:
                 mutated_gene = self.mutate(random.choices(parents)[0])
                 mutated_gene = self.apply_gene_mask(mutated_gene)
-                if self.satisfy_constraints(mutated_gene):
-                    mutate_population.append(mutated_gene)
+                satis, legal_gene = self.satisfy_constraints(mutated_gene)
+                if satis:
+                    mutate_population.append(legal_gene)
                     k += 1
 
             # crossover
@@ -232,8 +236,9 @@ class EvolutionEngine(object):
             while k < self.crossover_size:
                 crossovered_gene = self.crossover(random.sample(parents, 2))
                 crossovered_gene = self.apply_gene_mask(crossovered_gene)
-                if self.satisfy_constraints(crossovered_gene):
-                    crossover_population.append(crossovered_gene)
+                satis, legal_gene = self.satisfy_constraints(crossovered_gene)
+                if satis:
+                    crossover_population.append(legal_gene)
                     k += 1
 
             self.population = parents + mutate_population + \
@@ -259,7 +264,28 @@ class EvolutionEngine(object):
 
     def satisfy_constraints(self, gene):
         # Different logical qubits map to different physical qubits
-        return len(set(gene[:self.n_wires])) == self.n_wires
+        if self.legalize_layout:
+            # find the nearest legal layout, replace the repeated qubit with
+            # unused ones
+            unused_qubits = list(range(self.n_wires))
+            current_layout = gene[:self.n_wires]
+            new_layout = []
+            for qubit in current_layout:
+                if qubit in unused_qubits:
+                    unused_qubits.remove(qubit)
+
+            for qubit in current_layout:
+                if qubit not in new_layout:
+                    new_layout.append(qubit)
+                else:
+                    new_layout.append(unused_qubits[0])
+                    del unused_qubits[0]
+
+            legal_gene = new_layout + gene[self.n_wires:]
+
+            return True, legal_gene
+        else:
+            return len(set(gene[:self.n_wires])) == self.n_wires, gene
 
     def apply_gene_mask(self, sample_gene):
         masked_gene = sample_gene.copy()
@@ -278,8 +304,10 @@ class EvolutionEngine(object):
             for k in range(self.gene_len):
                 samp_gene.append(random.choices(self.gene_choice[k])[0])
             samp_gene = self.apply_gene_mask(samp_gene)
-            if self.satisfy_constraints(samp_gene):
-                population.append(samp_gene)
+
+            satis, legal_gene = self.satisfy_constraints(samp_gene)
+            if satis:
+                population.append(legal_gene)
                 i += 1
 
         return population

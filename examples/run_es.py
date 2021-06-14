@@ -272,6 +272,7 @@ def main() -> None:
         arch_space=model.arch_space,
         gene_mask=configs.es.gene_mask,
         random_search=configs.es.random_search,
+        legalize_layout=configs.es.legalize_layout
     )
 
     evaluator = Evaluator()
