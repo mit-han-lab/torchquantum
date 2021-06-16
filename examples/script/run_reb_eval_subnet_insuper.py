@@ -9,6 +9,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--space', type=str)
     parser.add_argument('--mode', type=str)
+    parser.add_argument('--hub', type=str, default=None)
 
     parser.add_argument('--print', action='store_true')
     args = parser.parse_args()
@@ -35,6 +36,7 @@ if __name__ == '__main__':
             '--ckpt.name',
             'checkpoints/step-18400.pt',
             '--dataset.split=valid',
+            f'--hub={args.hub}',
             f'--gpu={args.gpu}']
     with open(f'logs/reb/eval_subnet_tq_insuper_{args.dataset}.{args.name}.{args.space}.{mode}.txt', 'w') as \
             wfid:

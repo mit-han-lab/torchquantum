@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str)
     parser.add_argument('--print', action='store_true')
     parser.add_argument('--fix', action='store_true')
+    parser.add_argument('--hub', type=str, default=None)
 
     args = parser.parse_args()
 
@@ -45,6 +46,7 @@ if __name__ == '__main__':
                     f'examples/configs/'
                     f'{args.dataset}/{args.name}/eval/{device}/real/opt2/300.yml',
                     '--jobs=5',
+                    f'--hub={args.hub}',
                     '--run-dir']
 
             exp = f'runs/{args.dataset}.{args.name}.train.searched.scratch' \

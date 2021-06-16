@@ -9,6 +9,9 @@ model:
     output_remain: 14
     output_len: 2
 
+es:
+  legalize_layout: True
+
 scheduler:
   name: cosine_warm
 

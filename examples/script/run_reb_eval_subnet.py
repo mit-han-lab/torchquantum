@@ -11,6 +11,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--print', action='store_true')
     parser.add_argument('--test', action='store_true')
+    parser.add_argument('--hub', type=str, default=None)
+
     args = parser.parse_args()
 
     if 'maxwell' in args.space:
@@ -31,6 +33,7 @@ if __name__ == '__main__':
             'checkpoints/step-18400.pt',
             f'--dataset.split={split}',
             f'--gpu={args.gpu}',
+            f'--hub={args.hub}',
             f'--run-dir'
             ]
     with open(f'logs/reb/eval_subnet_tq_{args.dataset}.{args.name}.{args.space}.{split}.txt', 'a') as \
