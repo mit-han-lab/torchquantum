@@ -16,6 +16,7 @@ qc_name_dict = {
     'lima': 'ibmq_lima',
     'belem': 'ibmq_belem',
     'quito': 'ibmq_quito',
+    'montreal': 'ibmq_montreal'
 }
 
 if __name__ == '__main__':
@@ -29,7 +30,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     IBMQ.load_account()
-    provider = IBMQ.get_provider("ibm-q")
+
+    if args.name is not None and args.name in ['montreal']:
+        provider = IBMQ.get_provider(hub='ibm-q-ornl', group='anl', project='csc428')
+    else:
+        provider = IBMQ.get_provider("ibm-q")
 
     if args.name is not None:
         circ = QuantumCircuit(1, 1)

@@ -56,6 +56,7 @@ class QiskitProcessor(object):
                  max_jobs=5,
                  remove_ops=False,
                  remove_ops_thres=1e-4,
+                 hub=None,
                  ):
         self.use_real_qc = use_real_qc
         self.noise_model_name = noise_model_name
@@ -69,6 +70,7 @@ class QiskitProcessor(object):
         self.optimization_level = optimization_level
         self.max_jobs = max_jobs
 
+        self.hub = hub
         self.backend = None
         self.provider = None
         self.noise_model = None
@@ -121,7 +123,7 @@ class QiskitProcessor(object):
         self.properties = None
 
         IBMQ.load_account()
-        self.provider = get_provider(self.backend_name)
+        self.provider = get_provider(self.backend_name, hub=self.hub)
 
         if self.use_real_qc:
             self.backend = self.provider.get_backend(
