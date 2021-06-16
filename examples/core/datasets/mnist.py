@@ -31,6 +31,7 @@ class MNISTDataset:
                  n_test_samples,
                  n_valid_samples,
                  fashion,
+                 n_train_samples=None,
                  ):
         self.root = root
         self.split = split
@@ -44,6 +45,7 @@ class MNISTDataset:
         self.digits_of_interest = digits_of_interest
         self.n_test_samples = n_test_samples
         self.n_valid_samples = n_valid_samples
+        self.n_train_samples = n_train_samples
         self.fashion = fashion
 
         self.load()
@@ -77,7 +79,16 @@ class MNISTDataset:
                 train_valid, split, generator=torch.Generator().manual_seed(1))
 
             if self.split == 'train':
-                self.data = train_subset
+                if self.n_train_samples is None:
+                    # use all samples in train set
+                    self.data = train_subset
+                else:
+                    train_subset.indices = train_subset.indices[
+                                           :self.n_train_samples]
+                    self.data = train_subset
+                    logger.warning(f"Only use the front "
+                                   f"{self.n_train_samples} images as "
+                                   f"TRAIN set.")
             else:
                 if self.n_valid_samples is None:
                     # use all samples in valid set
@@ -139,7 +150,8 @@ class MNIST(Dataset):
                  digits_of_interest=tuple(range(10)),
                  n_test_samples=None,
                  n_valid_samples=None,
-                 fashion=False
+                 fashion=False,
+                 n_train_samples=None,
                  ):
         self.root = root
 
@@ -156,7 +168,8 @@ class MNIST(Dataset):
                 digits_of_interest=digits_of_interest,
                 n_test_samples=n_test_samples,
                 n_valid_samples=n_valid_samples,
-                fashion=fashion
+                fashion=fashion,
+                n_train_samples=n_train_samples,
             )
             for split in ['train', 'valid', 'test']
         })
@@ -176,7 +189,8 @@ if __name__ == '__main__':
                          digits_of_interest=(3, 6),
                          n_test_samples=100,
                          n_valid_samples=1000,
-                         fashion=True
+                         fashion=True,
+                         n_train_samples=10000,
                          )
     mnist.__getitem__(20)
     print('finish')

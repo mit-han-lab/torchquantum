@@ -33,6 +33,7 @@ def make_dataset() -> Dataset:
             n_test_samples=configs.dataset.n_test_samples,
             n_valid_samples=configs.dataset.n_valid_samples,
             fashion=configs.dataset.fashion,
+            n_train_samples=getattr(configs.dataset, 'n_train_samples', None)
         )
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
