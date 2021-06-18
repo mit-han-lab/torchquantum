@@ -407,6 +407,8 @@ def get_success_rate(properties, transpiled_circ):
         gate_success_rate = 1 - gate_error_dict[gate[0].name][tuple(
             map(lambda x: x.index, gate[1])
         )]
+        if gate_success_rate == 0:
+            gate_success_rate = 1e-5
         success_rate *= gate_success_rate
 
     return success_rate
@@ -432,7 +434,9 @@ def get_provider(backend_name, hub=None):
     elif backend_name in ['ibmq_paris',
                           'ibmq_toronto',
                           'ibmq_manhattan',
-                          'ibmq_guadalupe']:
+                          'ibmq_guadalupe',
+                          'ibmq_montreal',
+                          ]:
         provider = IBMQ.get_provider(hub='ibm-q-ornl',
                                      group='anl',
                                      project='csc428')
@@ -453,6 +457,44 @@ def get_provider(backend_name, hub=None):
             provider = IBMQ.get_provider(hub='ibm-q')
 
     return provider
+
+
+def get_circ_stats(circ):
+    depth = circ.depth()
+    width = circ.width()
+    size = circ.size()
+    n_single_gates = 0
+    n_two_gates = 0
+    n_three_more_gates = 0
+    n_gates_dict = {}
+    n_measure = 0
+
+    for gate in circ.data:
+        op_name = gate[0].name
+        wires = list(map(lambda x: x.index, gate[1]))
+        if op_name in n_gates_dict.keys():
+            n_gates_dict[op_name] += 1
+        else:
+            n_gates_dict[op_name] = 1
+
+        if op_name == 'measure':
+            n_measure += 1
+        elif len(wires) == 1:
+            n_single_gates += 1
+        elif len(wires) == 2:
+            n_two_gates += 1
+        else:
+            n_three_more_gates += 1
+
+    return {
+        'depth': depth,
+        'size': size,
+        'width': width,
+        'n_single_gates': n_single_gates,
+        'n_two_gates': n_two_gates,
+        'n_three_more_gates': n_three_more_gates,
+        'n_gates_dict': n_gates_dict
+    }
 
 
 if __name__ == '__main__':

@@ -8,7 +8,8 @@ from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
-from torchquantum.utils import get_expectations_from_counts, get_provider
+from torchquantum.utils import (get_expectations_from_counts, get_provider,
+                                get_circ_stats)
 from .qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
 from torchpack.utils.logging import logger
@@ -35,8 +36,12 @@ def run_job_worker(data):
             result = job.result()
             counts = result.get_counts()
             break
-        except QiskitError:
-            logger.warning('Job failed, rerun now.')
+        except Exception as e:
+            if "Job was cancelled" in str(e):
+                logger.warning(f"Job is cancelled manually.")
+                return None
+            else:
+                logger.warning(f"Job failed because {e}, rerun now.")
 
     return counts
 
@@ -174,7 +179,9 @@ class QiskitProcessor(object):
             circ.measure(list(range(q_device.n_wires)), list(range(
                 q_device.n_wires)))
 
+        logger.info(f'Before transpile: {get_circ_stats(circ)}')
         transpiled_circ = self.transpile(circ)
+        logger.info(f'After transpile: {get_circ_stats(transpiled_circ)}')
         self.transpiled_circs = [transpiled_circ]
         # construct the parameter_binds
         binds_all = []
