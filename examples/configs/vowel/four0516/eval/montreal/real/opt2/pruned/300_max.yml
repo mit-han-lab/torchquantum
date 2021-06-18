@@ -1,0 +1,5 @@
+ckpt:
+  name: 'checkpoints/max-acc-valid.pt'
+
+dataset:
+  n_test_samples: 300

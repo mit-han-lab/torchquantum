@@ -1,0 +1,14 @@
+dataset:
+  n_test_samples: null
+  split: valid
+
+model:
+  arch:
+    sample_arch: [4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2]
+
+qiskit:
+  initial_layout: [0, 1, 2, 3]
+
+ckpt:
+  load_ckpt: True
+  name: 'checkpoints/step-18000.pt'

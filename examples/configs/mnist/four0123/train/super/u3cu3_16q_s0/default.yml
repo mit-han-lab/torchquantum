@@ -1,0 +1,31 @@
+model:
+  name: super_qfc5
+  arch:
+    down_sample_kernel_size: 6
+    encoder_op_list_name: 16_ry
+    n_layers_per_block: 2
+    q_layer_name: u3cu3_s0
+    n_wires: 16
+    output_remain: 16
+    output_len: 4
+
+scheduler:
+  name: cosine_warm
+
+run:
+  n_warm_epochs: 30
+  bsz: 64
+
+callbacks:
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'largest'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/largest_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/largest_valid'
+  - callback: 'MaxSaver'
+    name: 'superacc/largest_valid'
+  - callback: 'Saver'
+    max_to_keep: 10

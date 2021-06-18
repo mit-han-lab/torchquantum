@@ -1,0 +1,52 @@
+model:
+  name: super_qfc5
+  arch:
+    down_sample_kernel_size: 5
+    encoder_op_list_name: 25_ryrz
+    n_layers_per_block: 2
+    q_layer_name: u3cu3_s0
+    n_wires: 21
+    output_remain: 20
+    output_len: 4
+es:
+  legalize_layout: True
+  population_size: 30
+  parent_size: 10
+  mutation_size: 10
+  mutation_prob: 0.4
+  crossover_size: 10
+  n_iterations: 40
+
+run:
+  bsz: 400
+  n_warm_epochs: 10
+  n_epochs: 50
+
+dataset:
+  center_crop: 25
+  n_valid_samples: 500
+
+scheduler:
+  name: cosine_warm
+
+#run:
+#  n_warm_epochs: 30
+#  bsz: 32
+
+callbacks:
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'largest'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'superacc/largest_valid'
+      - metrics: 'NLLError'
+        name: 'superloss/largest_valid'
+  - callback: 'MaxSaver'
+    name: 'superacc/largest_valid'
+  - callback: 'Saver'
+    max_to_keep: 10
+
+ckpt:
+  name: 'checkpoints/step-40750.pt'
+

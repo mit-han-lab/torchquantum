@@ -1,0 +1,7 @@
+model:
+  arch:
+    n_blocks: 1
+    n_front_share_blocks: 1
+    n_front_share_wires: 1
+    n_front_share_ops: 1
+

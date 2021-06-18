@@ -20,7 +20,26 @@ if __name__ == '__main__':
         n_rand = 16
     else:
         n_blk = 8
-        n_rand = 5
+        n_rand = 6
+
+    last_step_dict = {
+        'mnist': {
+            'four0123': 18400,
+            'two36': 9000,
+            'ten': 44600,
+        },
+        'fashion': {
+            'four0123': 18000,
+            'two36': 9000,
+            'ten': 44600,
+        },
+        'vowel': {
+            'four0516': 10400,
+        },
+        'cifar': {
+            'two68': 7600,
+        }
+    }
 
     split = 'test' if args.test else 'valid'
 
@@ -30,7 +49,7 @@ if __name__ == '__main__':
             'examples/eval.py',
             f'examples/configs/{args.dataset}/{args.name}/eval/tq/all.yml',
             '--ckpt.name',
-            'checkpoints/step-18400.pt',
+            f'checkpoints/step-{last_step_dict[args.dataset][args.name]}.pt',
             f'--dataset.split={split}',
             f'--gpu={args.gpu}',
             f'--hub={args.hub}',

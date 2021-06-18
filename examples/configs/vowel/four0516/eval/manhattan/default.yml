@@ -1,0 +1,7 @@
+qiskit:
+  use_qiskit: True
+  backend_name: ibmq_manhattan
+
+model:
+  arch:
+    n_wires: 21
