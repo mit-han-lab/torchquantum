@@ -1,0 +1,3 @@
+qiskit:
+  noise_model_name: ibmq_santiago
+  max_jobs: 48

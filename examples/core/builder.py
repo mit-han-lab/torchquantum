@@ -289,6 +289,8 @@ def make_qiskit_processor():
         max_jobs=configs.qiskit.max_jobs,
         remove_ops=configs.prune.eval.remove_ops,
         remove_ops_thres=configs.prune.eval.remove_ops_thres,
-        hub=getattr(configs.qiskit, 'hub', None)
+        hub=getattr(configs.qiskit, 'hub', None),
+        layout_method=getattr(configs.qiskit, 'layout_method', None),
+        routing_method=getattr(configs.qiskit, 'routing_method', None),
     )
     return processor

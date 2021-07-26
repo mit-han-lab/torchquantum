@@ -47,6 +47,7 @@ if __name__ == '__main__':
                     f'examples/configs/'
                     f'{args.dataset}/{args.name}/eval/{args.device}/real/opt2/300.yml',
                     '--jobs=5',
+                    '--gpu=6',
                     f'--hub={args.hub}',
                     '--run-dir']
 

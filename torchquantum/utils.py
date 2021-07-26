@@ -419,7 +419,8 @@ def get_provider(backend_name, hub=None):
     # mass-inst-tech-1 or MIT-1
     if backend_name in ['ibmq_casablanca',
                         'ibmq_rome',
-                        'ibmq_bogota']:
+                        'ibmq_bogota',
+                        'ibmq_jakarta']:
         if hub == 'mass' or hub is None:
             provider = IBMQ.get_provider(hub='ibm-q-research',
                                          group='mass-inst-tech-1',

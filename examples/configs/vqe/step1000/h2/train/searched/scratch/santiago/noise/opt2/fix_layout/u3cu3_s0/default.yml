@@ -1,0 +1,19 @@
+es:
+  gene_mask: [0, 1,
+              -1, -1,
+              -1, -1,
+              -1, -1,
+              -1, -1,
+              -1, -1,
+              -1, -1,
+              -1, -1,
+              -1, -1,
+              -1]
+
+
+model:
+  name: supervqe_0
+  arch:
+    n_layers_per_block: 2
+    q_layer_name: u3cu3_s0
+

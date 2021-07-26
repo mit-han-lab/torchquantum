@@ -1,0 +1,3 @@
+qiskit:
+  backend_name: ibmq_montreal
+  n_shots: 2048

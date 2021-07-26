@@ -62,6 +62,8 @@ class QiskitProcessor(object):
                  remove_ops=False,
                  remove_ops_thres=1e-4,
                  hub=None,
+                 layout_method=None,
+                 routing_method=None
                  ):
         self.use_real_qc = use_real_qc
         self.noise_model_name = noise_model_name
@@ -74,6 +76,8 @@ class QiskitProcessor(object):
         self.seed_simulator = seed_simulator
         self.optimization_level = optimization_level
         self.max_jobs = max_jobs
+        self.layout_method = layout_method
+        self.routing_method = routing_method
 
         self.hub = hub
         self.backend = None
@@ -146,14 +150,17 @@ class QiskitProcessor(object):
         self.initial_layout = layout
 
     def transpile(self, circs):
-        transpiled_circs = transpile(circuits=circs,
-                                     backend=self.backend,
-                                     basis_gates=self.basis_gates,
-                                     coupling_map=self.coupling_map,
-                                     initial_layout=self.initial_layout,
-                                     seed_transpiler=self.seed_transpiler,
-                                     optimization_level=self.optimization_level
-                                     )
+        transpiled_circs = transpile(
+            circuits=circs,
+            backend=self.backend,
+            basis_gates=self.basis_gates,
+            coupling_map=self.coupling_map,
+            initial_layout=self.initial_layout,
+            seed_transpiler=self.seed_transpiler,
+            optimization_level=self.optimization_level,
+            layout_method=self.layout_method,
+            routing_method=self.routing_method,
+            )
         return transpiled_circs
 
     def preprocess_parameterized(self,

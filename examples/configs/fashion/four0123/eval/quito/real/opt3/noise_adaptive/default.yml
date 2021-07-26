@@ -1,0 +1,3 @@
+qiskit:
+  layout_method: noise_adaptive
+#  routing_method: sabre

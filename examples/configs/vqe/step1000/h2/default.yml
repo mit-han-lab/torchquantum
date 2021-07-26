@@ -1,0 +1,4 @@
+model:
+  hamil_filename: './examples/data/vqe/h2/h2.txt'
+  arch:
+    n_wires: 2

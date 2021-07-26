@@ -1,0 +1,10 @@
+qiskit:
+  use_qiskit: False
+  noise_model_name: ibmq_16_melbourne
+  max_jobs: 48
+
+es:
+  est_success_rate: True
+  score_mode: vqe_loss_succ
+  legalize_layout: True
+
