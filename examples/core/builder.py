@@ -70,6 +70,9 @@ def make_dataset() -> Dataset:
             n_valid_samples=configs.dataset.n_valid_samples,
             fashion=configs.dataset.fashion,
         )
+    elif configs.dataset.name == 'simple2class':
+        from .datasets import Simple2Class
+        dataset = Simple2Class()
     else:
         raise NotImplementedError(configs.dataset.name)
 
@@ -202,7 +205,13 @@ def make_trainer(model: nn.Module,
                  optimizer: Optimizer,
                  scheduler: Scheduler
                  ):
-    if configs.trainer.name == 'q_trainer':
+    if configs.trainer.name == 'params_shift_trainer':
+        from .trainers import ParamsShiftTrainer
+        trainer = ParamsShiftTrainer(model=model,
+                           criterion=criterion,
+                           optimizer=optimizer,
+                           scheduler=scheduler)
+    elif configs.trainer.name == 'q_trainer':
         from .trainers import QTrainer
         trainer = QTrainer(model=model,
                            criterion=criterion,
@@ -318,8 +327,8 @@ def make_qiskit_processor():
         max_jobs=configs.qiskit.max_jobs,
         remove_ops=configs.prune.eval.remove_ops,
         remove_ops_thres=configs.prune.eval.remove_ops_thres,
-        transpile_with_ancilla=configs.qiskit.transpile_with_ancilla,
-        hub=getattr(configs.qiskit, 'hub', None)
+        # transpile_with_ancilla=configs.qiskit.transpile_with_ancilla,
+        # hub=getattr(configs.qiskit, 'hub', None)
     )
     return processor
 

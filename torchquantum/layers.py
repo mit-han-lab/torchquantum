@@ -21,6 +21,7 @@ __all__ = [
     'Op2QButterflyLayer',
     'Op2QDenseLayer',
     'layer_name_dict',
+    'CXLayer',
 ]
 
 
@@ -300,6 +301,18 @@ class SimpleQLayer(tq.QuantumModule):
         self.gate3(q_dev, wires=1)
         tqf.x(q_dev, wires=2, static=self.static_mode,
               parent_graph=self.graph)
+
+class CXLayer(tq.QuantumModule):
+    def __init__(self, n_wires):
+        super().__init__()
+        self.n_wires = n_wires
+
+    @tq.static_support
+    def forward(self, q_dev):
+        self.q_device = q_dev
+        tqf.cnot(q_dev, wires=[0, 1], static=self.static_mode,
+              parent_graph=self.graph)
+
 
 
 class Op1QAllLayer(tq.QuantumModule):
@@ -671,6 +684,20 @@ class MaxwellLayer0(LayerTemplate0):
 
         return layers_all
 
+class RYRYCXLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(CXLayer(n_wires=self.n_wires))
+        return layers_all
+
+
 
 layer_name_dict = {
     'u3cu3_0': U3CU3Layer0,
@@ -680,5 +707,6 @@ layer_name_dict = {
     'barren_0': BarrenLayer0,
     'farhi_0': FarhiLayer0,
     'maxwell_0': MaxwellLayer0,
+    'ryrycx': RYRYCXLayer0,
 }
 

@@ -1,0 +1,4 @@
+trainer:
+  noise_factor: null
+  noise_total_prob: 0.005
+

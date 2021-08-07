@@ -243,6 +243,10 @@ def main() -> None:
             build_module_op_list(model.q_layer)
         )
 
+    from torchquantum.plugins import QiskitProcessor
+    processor = QiskitProcessor(use_real_qc=configs.qiskit.use_real_qc, backend_name=configs.qiskit.backend_name)
+    model.set_qiskit_processor(processor)
+
     model.to(device)
     # model = torch.nn.parallel.DistributedDataParallel(
     #     model.cuda(),

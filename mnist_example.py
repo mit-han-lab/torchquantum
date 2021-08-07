@@ -126,7 +126,7 @@ def main():
                                                               'static mode')
     parser.add_argument('--wires-per-block', type=int, default=2,
                         help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='number of training epochs')
 
     args = parser.parse_args()

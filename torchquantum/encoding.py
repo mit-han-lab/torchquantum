@@ -142,6 +142,15 @@ class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
 
 
 encoder_op_list_name_dict = {
+    '1x1_ry':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+        ],
+    '2x1_ryry':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+        ],
     '4_ry':
         [
             {'input_idx': [0], 'func': 'ry', 'wires': [0]},
