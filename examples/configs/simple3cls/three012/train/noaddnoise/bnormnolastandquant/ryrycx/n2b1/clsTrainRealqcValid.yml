@@ -1,0 +1,18 @@
+model:
+  arch:
+    n_nodes: 2
+    node_archs:
+      - n_wires: 3
+        encoder_op_list_name: 3x1_ryryry
+        n_blocks: 1
+        n_layers_per_block: 2
+        q_layer_name: ryryrycxcxcx
+      - n_wires: 3
+        encoder_op_list_name: 3x1_ryryry
+        n_blocks: 1
+        n_layers_per_block: 2
+        q_layer_name: ryryrycxcxcx
+
+qiskit:
+  use_qiskit_train: False
+  use_qiskit_valid: True

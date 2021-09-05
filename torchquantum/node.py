@@ -3,6 +3,7 @@ import torchquantum as tq
 
 from torchquantum.encoding import encoder_op_list_name_dict
 from torchquantum.layers import layer_name_dict
+import numpy as np
 
 
 __all__ = ['QuantumNode',
@@ -29,6 +30,8 @@ class QuantumNode(tq.QuantumModule):
         self.x_before_norm = None
         self.circuit_in = None
         self.circuit_out = None
+        self.cool_down = [0] * len(list(self.q_layer.parameters()))
+        self.triger_cd = [0] * len(list(self.q_layer.parameters()))
         if self.act_norm == 'batch_norm' or \
                 self.act_norm == 'batch_norm_no_last':
             self.bn = torch.nn.BatchNorm1d(
@@ -160,13 +163,16 @@ class QuantumNode(tq.QuantumModule):
                 self.circuit_out = x
 
                 self.grad_qlayer = []
-                for param in self.q_layer.parameters():
-                    param.copy_(param + np.pi * 0.5)
-                    out1 = self.run_circuit(inputs)
-                    param.copy_(param - np.pi)
-                    out2 = self.run_circuit(inputs)
-                    param.copy_(param + np.pi * 0.5)
-                    self.grad_qlayer.append(0.5 * (out1 - out2))
+                for i, param in enumerate(self.q_layer.parameters()):
+                    if self.cool_down[i] == 0:
+                        param.copy_(param + np.pi * 0.5)
+                        out1 = self.run_circuit(inputs)
+                        param.copy_(param - np.pi)
+                        out2 = self.run_circuit(inputs)
+                        param.copy_(param + np.pi * 0.5)
+                        self.grad_qlayer.append(0.5 * (out1 - out2))
+                    else:
+                        self.grad_qlayer.append(None)
                 
                 self.grad_encoder = []
                 if not is_first_node:

@@ -470,7 +470,8 @@ def get_provider(backend_name, hub=None):
     elif backend_name in ['ibmq_paris',
                           'ibmq_toronto',
                           'ibmq_manhattan',
-                          'ibmq_guadalupe']:
+                          'ibmq_guadalupe',
+                          'ibmq_montreal']:
         provider = IBMQ.get_provider(hub='ibm-q-ornl',
                                      group='anl',
                                      project='csc428')

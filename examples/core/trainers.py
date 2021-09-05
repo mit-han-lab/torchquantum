@@ -216,20 +216,62 @@ class ParamsShiftTrainer(Trainer):
         self.solution = None
         self.score = None
         self.is_training = False
+        self.quantizers = []
+        self.init_act_quant()
 
+    def init_act_quant(self):
+        device = torch.device('cuda') if configs.run.device == 'gpu' else \
+            torch.device('cpu')
+        if configs.trainer.act_quant:
+            quantizers = []
+            assert getattr(self.model, 'nodes', None) is not None
+            # single Q node
+            for k, node in enumerate(self.model.nodes):
+                # optionally skip the quantization of last layer output
+                if configs.trainer.act_quant_skip_last_node and k == len(
+                        self.model.nodes) - 1:
+                    continue
+                quantizer = PACTActivationQuantizer(
+                    module=node,
+                    precision=getattr(configs.trainer, 'act_quant_bit', None),
+                    level=getattr(configs.trainer, 'act_quant_level', None),
+                    alpha=1.0,
+                    backprop_alpha=False,
+                    quant_ratio=configs.trainer.act_quant_ratio,
+                    device=device,
+                    lower_bound=configs.trainer.act_quant_lower_bound,
+                    upper_bound=configs.trainer.act_quant_upper_bound,
+                )
+                quantizers.append(quantizer)
+
+            self.quantizers = quantizers
+
+    def register_act_quant_hook(self):
+        for quantizer in self.quantizers:
+            quantizer.register_hook()
+
+    def remove_act_quant_hook(self):
+        for quantizer in self.quantizers:
+            quantizer.remove_hook()
+
+    def set_use_qiskit(self, configs):
+        self.use_qiskit_train = configs.qiskit.use_qiskit_train
+        self.use_qiskit_valid = configs.qiskit.use_qiskit_valid
+    
     def _before_epoch(self) -> None:
         self.model.train()
         self.is_training = True
+        self.register_act_quant_hook()
 
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
         if self.is_training:
-            output_dict = self._run_params_shift_step(feed_dict)
+            output_dict = self._run_params_shift_step(feed_dict, use_qiskit=self.use_qiskit_train)
         else:
-            output_dict = self._run_step(feed_dict, legalize=legalize)
+            output_dict = self._run_step(feed_dict, legalize=legalize, use_qiskit=self.use_qiskit_valid)
         return output_dict
 
-    def _run_params_shift_step(self, feed_dict: Dict[str, Any]) -> Dict[
+    def _run_params_shift_step(self, feed_dict: Dict[str, Any], use_qiskit=False) -> Dict[
             str, Any]:
         if configs.run.device == 'gpu':
             inputs = feed_dict[configs.dataset.input_name].cuda(
@@ -247,7 +289,7 @@ class ParamsShiftTrainer(Trainer):
         # for param in self.model.parameters():
         #     print(param.grad)
 
-        outputs = self.model.shift_and_run(inputs)
+        outputs = self.model.shift_and_run(inputs, verbose=False, use_qiskit=use_qiskit)
         loss = self.criterion(outputs, targets)
         nll_loss = loss.item()
 
@@ -266,7 +308,7 @@ class ParamsShiftTrainer(Trainer):
         return {'outputs': outputs, 'targets': targets}
 
 
-    def _run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
+    def _run_step(self, feed_dict: Dict[str, Any], legalize=False, use_qiskit=False) -> Dict[
             str, Any]:
         if configs.run.device == 'gpu':
             inputs = feed_dict[configs.dataset.input_name].cuda(
@@ -279,7 +321,7 @@ class ParamsShiftTrainer(Trainer):
         if legalize:
             outputs = self.legalized_model(inputs)
         else:
-            outputs = self.model(inputs)
+            outputs = self.model(inputs, legalize, use_qiskit)
         loss = self.criterion(outputs, targets)
         nll_loss = loss.item()
         unitary_loss = 0
@@ -335,9 +377,10 @@ class ParamsShiftTrainer(Trainer):
                 legalize_unitary(self.model)
 
     def _state_dict(self) -> Dict[str, Any]:
+        self.remove_act_quant_hook()
         state_dict = dict()
         # need to store model arch because of randomness of random layers
-        state_dict['model_arch'] = self.model
+        # state_dict['model_arch'] = self.model
         state_dict['model'] = self.model.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
@@ -361,7 +404,18 @@ class ParamsShiftTrainer(Trainer):
                        'v_c_reg_mapping', None) is not None:
                 state_dict['v_c_reg_mapping'] = \
                     self.model.measure.v_c_reg_mapping
-
+        
+        if configs.trainer.act_quant:
+            state_dict['act_quant'] = {
+                'act_quant_bit': self.quantizers[0].precision,
+                'act_quant_level': self.quantizers[0].level,
+                'act_quant_ratio': self.quantizers[0].quant_ratio,
+                'act_quant_lower_bound': self.quantizers[
+                    0].lower_bound,
+                'act_quant_upper_bound': self.quantizers[
+                    0].upper_bound,
+            }
+        
         if getattr(self.model, 'nodes', None) is not None:
             state_dict['encoder_func_list'] = [
                 node.encoder.func_list for node in self.model.nodes]

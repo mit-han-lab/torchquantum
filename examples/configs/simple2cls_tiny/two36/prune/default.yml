@@ -1,0 +1,6 @@
+trainer:
+  name: pruning_trainer
+
+model:
+  transpile_before_run: False
+

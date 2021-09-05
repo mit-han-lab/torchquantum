@@ -7,7 +7,7 @@ from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError,
                                  MaxSaver, MinSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
 from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
-    NLLError, TrainerRestore, AddNoiseInferenceRunner
+    NLLError, TrainerRestore, AddNoiseInferenceRunner, GradRestore
 from torchquantum.plugins import QiskitProcessor
 from torchquantum.vqe_utils import parse_hamiltonian_file
 from torchquantum.noise_model import *
@@ -34,6 +34,22 @@ def make_dataset() -> Dataset:
             n_test_samples=configs.dataset.n_test_samples,
             n_valid_samples=configs.dataset.n_valid_samples,
             fashion=configs.dataset.fashion,
+        )
+    elif configs.dataset.name == 'mnist_front500':
+        from .datasets import MNIST_FRONT500
+        dataset = MNIST_FRONT500(
+            root=configs.dataset.root,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
+            center_crop=configs.dataset.center_crop,
+            resize=configs.dataset.resize,
+            resize_mode=configs.dataset.resize_mode,
+            binarize=configs.dataset.binarize,
+            binarize_threshold=configs.dataset.binarize_threshold,
+            digits_of_interest=configs.dataset.digits_of_interest,
+            n_test_samples=configs.dataset.n_test_samples,
+            n_valid_samples=configs.dataset.n_valid_samples,
+            fashion=configs.dataset.fashion,
+            front_size=configs.dataset.front_size,
         )
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
@@ -73,6 +89,15 @@ def make_dataset() -> Dataset:
     elif configs.dataset.name == 'simple2class':
         from .datasets import Simple2Class
         dataset = Simple2Class()
+    elif configs.dataset.name == 'simple3class':
+        from .datasets import Simple3Class
+        dataset = Simple3Class()
+    elif configs.dataset.name == 'simple2class_tiny':
+        from .datasets import Simple2Class_Tiny
+        dataset = Simple2Class_Tiny()
+    elif configs.dataset.name == 'simple2class_tiny2':
+        from .datasets import Simple2Class_Tiny2
+        dataset = Simple2Class_Tiny2()
     else:
         raise NotImplementedError(configs.dataset.name)
 
@@ -299,6 +324,8 @@ def make_callbacks(dataflow, state=None):
             callback = MaxSaver(config['name'])
         elif config['callback'] == 'MinSaver':
             callback = MinSaver(config['name'])
+        elif config['callback'] == 'GradRestore':
+            callback = GradRestore()
         else:
             raise NotImplementedError(config['callback'])
         callbacks.append(callback)

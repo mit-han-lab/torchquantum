@@ -388,18 +388,27 @@ class QiskitProcessor(object):
                     results[-1] = [results[-1]]
                 counts = list(itertools.chain(*results))
         else:
-            job = execute(experiments=transpiled_circs,
-                          backend=self.backend,
-                          pass_manager=self.empty_pass_manager,
-                          shots=self.n_shots,
-                          seed_simulator=self.seed_simulator,
-                          noise_model=self.noise_model,
-                          parameter_binds=binds_all
-                          )
-            job_monitor(job, interval=1)
-
-            result = job.result()
-            counts = result.get_counts()
+            chunk_size = 75 // len(binds_all)
+            split_circs = [transpiled_circs[i:i + chunk_size] for i in range(0, len(transpiled_circs), chunk_size)]
+            counts = []
+            for circ in split_circs:
+                while True:
+                    try:
+                        job = execute(experiments=circ,
+                                    backend=self.backend,
+                                    pass_manager=self.empty_pass_manager,
+                                    shots=self.n_shots,
+                                    seed_simulator=self.seed_simulator,
+                                    noise_model=self.noise_model,
+                                    parameter_binds=binds_all
+                                    )
+                        job_monitor(job, interval=1)
+                        result = job.result()#qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
+                        counts = counts + result.get_counts()
+                        break
+                    except QiskitError as e:
+                        logger.warning('Job failed, rerun now.')
+                        print(e.message)
 
         measured_qiskit = get_expectations_from_counts(
             counts, n_wires=q_device.n_wires)

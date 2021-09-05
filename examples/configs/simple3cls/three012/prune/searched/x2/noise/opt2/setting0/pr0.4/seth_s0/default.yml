@@ -1,0 +1,8 @@
+model:
+  name: super_qfc0
+  arch:
+    down_sample_kernel_size: 6
+    encoder_op_list_name: 4x4_ryzxy
+    n_layers_per_block: 2
+    q_layer_name: seth_s0
+

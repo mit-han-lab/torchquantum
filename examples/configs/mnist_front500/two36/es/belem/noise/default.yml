@@ -1,0 +1,7 @@
+qiskit:
+  use_qiskit: True
+  noise_model_name: ibmq_belem
+  max_jobs: 48
+
+es:
+  est_success_rate: False

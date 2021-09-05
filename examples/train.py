@@ -243,15 +243,13 @@ def main() -> None:
             build_module_op_list(model.q_layer)
         )
 
-    from torchquantum.plugins import QiskitProcessor
-    processor = QiskitProcessor(use_real_qc=configs.qiskit.use_real_qc, backend_name=configs.qiskit.backend_name)
-    model.set_qiskit_processor(processor)
+    if configs.qiskit.use_qiskit_train or configs.qiskit.use_qiskit_valid:
+        from torchquantum.plugins import QiskitProcessor
+        processor = QiskitProcessor(use_real_qc=configs.qiskit.use_real_qc, n_shots=configs.qiskit.n_shots, backend_name=configs.qiskit.backend_name)
+        model.set_qiskit_processor(processor)
 
     model.to(device)
-    # model = torch.nn.parallel.DistributedDataParallel(
-    #     model.cuda(),
-    #     device_ids=[dist.local_rank()],
-    #     find_unused_parameters=True)
+    
     if getattr(model, 'sample_arch', None) is not None and \
             not configs.model.transpile_before_run and \
             not configs.trainer.name == 'pruning_trainer':
@@ -278,6 +276,13 @@ def main() -> None:
     # trainer state_dict will be loaded in a callback
     callbacks = builder.make_callbacks(dataflow, state_dict)
 
+    # with torch.no_grad():
+    #     for param in model.nodes[0].parameters():
+    #         param.copy_(torch.tensor(np.pi/2))
+    #     for param in model.nodes[1].parameters():
+    #         param.copy_(torch.tensor(-np.pi/2))
+    
+    trainer.set_use_qiskit(configs)
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.run.n_epochs,

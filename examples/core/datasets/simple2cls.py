@@ -23,7 +23,7 @@ class Classification2Dataset(torch.utils.data.Dataset):
         return {'data': self.data[idx], 'target': self.target[idx]}
 
     def __len__(self):
-        return len(self.target)
+        return len(self.target) - 1
 
 class Simple2Class(Dataset):
     def __init__(self):

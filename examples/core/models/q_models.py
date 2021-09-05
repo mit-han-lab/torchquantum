@@ -1281,6 +1281,8 @@ class QMultiFCModel0(tq.QuantumModule):
         self.mse_all = []
         self.residual = getattr(arch, 'residual', False)
         self.activations = []
+        self.count1 = 0
+        self.count2 = 0
 
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
@@ -1339,6 +1341,98 @@ class QMultiFCModel0(tq.QuantumModule):
         x = F.log_softmax(x, dim=1)
         return x
 
+    def shift_and_run(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
+            x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+
+        if getattr(self.arch, 'fft_remain_size', None) is not None:
+            x = torch.fft.fft2(x, norm='ortho').abs()[:, :,
+                :self.arch['fft_remain_size'], :self.arch[
+                'fft_remain_size']]
+            x = x.contiguous()
+
+        x = x.view(bsz, -1)
+        mse_all = []
+        
+        for k, node in enumerate(self.nodes):
+            node_out = node.shift_and_run(x,
+                            use_qiskit=use_qiskit,
+                            is_last_node=(k == self.n_nodes - 1),
+                            is_first_node=(k == 0))
+            x = node_out
+            mse_all.append(F.mse_loss(node_out, node.x_before_act_quant))
+            if verbose:
+                acts = {
+                    'x_before_add_noise': node.x_before_add_noise.cpu(
+                        ).detach().data,
+                    'x_before_norm': node.x_before_norm.cpu().detach().data,
+                    'x_before_add_noise_second':
+                        node.x_before_add_noise_second.cpu().detach().data,
+                    'x_before_act_quant': node.x_before_act_quant.cpu().detach(
+                        ).data,
+                    'x_after_act_quant': node_out.cpu().detach().data,
+                }
+                self.activations.append(acts)
+
+        self.mse_all = mse_all
+
+        if verbose:
+            os.makedirs(os.path.join(configs.run_dir, 'activations'),
+                        exist_ok=True)
+            torch.save(self.activations,
+                       os.path.join(configs.run_dir, 'activations',
+                                    f"{configs.eval_config_dir}.pt"))
+            # logger.info(f"[use_qiskit]={use_qiskit},
+            # expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+    
+    def backprop_grad(self):
+        for k, node in reversed(list(enumerate(self.nodes))):
+            grad_output = node.circuit_out.grad
+            for i, param in enumerate(node.q_layer.parameters()):
+                if node.cool_down[i] == 0:
+                    param.grad = torch.sum(node.grad_qlayer[i] * grad_output).to(dtype=torch.float32).view(param.shape)
+                    if (np.abs(param.grad.item()) < 1e-2):
+                        node.triger_cd[i] += 1
+                        if (node.triger_cd[i] == 3):
+                            node.cool_down[i] = 0 #5
+                            node.triger_cd[i] = 0
+                    else:
+                        node.triger_cd[i] = 0
+                else:
+                    param.grad = torch.tensor(0.).to(dtype=torch.float32, device=param.device).view(param.shape)
+                    self.count1 = self.count1 + 1
+                    node.cool_down[i] -= 1
+                self.count2 = self.count2 + 1
+
+                # if (np.abs(param.grad.item()) < 3e-2):
+                #     param.grad = torch.tensor(0.).to(dtype=torch.float32, device=param.device).view(param.shape)
+                #     self.count1 = self.count1 + 1
+
+            
+            inputs_grad2loss = None
+            for input_grad in node.grad_encoder:
+                input_grad2loss = torch.sum(input_grad * grad_output, dim=1).view(-1, 1)
+                if inputs_grad2loss == None:
+                    inputs_grad2loss = input_grad2loss
+                else:
+                    inputs_grad2loss = torch.cat((inputs_grad2loss, input_grad2loss), 1)
+            
+            if k != 0:
+                node.circuit_in.backward(inputs_grad2loss)
+        # logger.info(str(self.count1) + '/' + str(self.count2))
+
+
 
 class QMultiFCModel1(tq.QuantumModule):
     # multiple nodes, one node contains encoder, q_layer, and measure
@@ -1352,7 +1446,7 @@ class QMultiFCModel1(tq.QuantumModule):
         self.residual = getattr(arch, 'residual', False)
         self.activations = []
 
-    def forward(self, x, verbose=False, use_qiskit=True):
+    def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
 
         x = 2 * torch.arcsin(torch.sqrt(x.sum(dim=1) - 2 * x[:,0] * x[:,1]))
@@ -1401,7 +1495,7 @@ class QMultiFCModel1(tq.QuantumModule):
         x = F.log_softmax(x, dim=1)
         return x
 
-    def shift_and_run(self, x, verbose=False, use_qiskit=True):
+    def shift_and_run(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
 
         x = 2 * torch.arcsin(torch.sqrt(x.sum(dim=1) - 2 * x[:,0] * x[:,1]))
@@ -1466,6 +1560,135 @@ class QMultiFCModel1(tq.QuantumModule):
                 node.circuit_in.backward(inputs_grad2loss)
 
 
+class QMultiFCModel2(tq.QuantumModule):
+    # multiple nodes, one node contains encoder, q_layer, and measure
+    def __init__(self, arch):
+        super().__init__()
+        self.arch = arch
+        self.n_nodes = arch['n_nodes']
+        self.nodes = tq.build_nodes(arch['node_archs'], act_norm=arch['act_norm'])
+        assert arch['n_nodes'] == len(arch['node_archs'])
+        self.mse_all = []
+        self.residual = getattr(arch, 'residual', False)
+        self.activations = []
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        x = x.view(bsz, -1)
+        mse_all = []
+
+        for k, node in enumerate(self.nodes):
+            if k == 0:
+                x = x * np.pi
+            else:
+                x = x
+            node_out = node(x,
+                            use_qiskit=use_qiskit,
+                            is_last_node=(k == self.n_nodes - 1))
+            if self.residual and k > 0:
+                x = x + node_out
+            else:
+                x = node_out
+            mse_all.append(F.mse_loss(node_out, node.x_before_act_quant))
+            if verbose:
+                acts = {
+                    'x_before_add_noise': node.x_before_add_noise.cpu(
+                        ).detach().data,
+                    'x_before_norm': node.x_before_norm.cpu().detach().data,
+                    'x_before_add_noise_second':
+                        node.x_before_add_noise_second.cpu().detach().data,
+                    'x_before_act_quant': node.x_before_act_quant.cpu().detach(
+                        ).data,
+                    'x_after_act_quant': node_out.cpu().detach().data,
+                }
+                self.activations.append(acts)
+
+        self.mse_all = mse_all
+
+        if verbose:
+            os.makedirs(os.path.join(configs.run_dir, 'activations'),
+                        exist_ok=True)
+            torch.save(self.activations,
+                       os.path.join(configs.run_dir, 'activations',
+                                    f"{configs.eval_config_dir}.pt"))
+            # logger.info(f"[use_qiskit]={use_qiskit},
+            # expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+
+    def shift_and_run(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        x = x.view(bsz, -1)
+        mse_all = []
+
+        for k, node in enumerate(self.nodes):
+            node_out = node.shift_and_run(x,
+                            use_qiskit=use_qiskit,
+                            is_last_node=(k == self.n_nodes - 1),
+                            is_first_node=(k == 0))
+            x = node_out
+            mse_all.append(F.mse_loss(node_out, node.x_before_act_quant))
+            if verbose:
+                acts = {
+                    'x_before_add_noise': node.x_before_add_noise.cpu(
+                        ).detach().data,
+                    'x_before_norm': node.x_before_norm.cpu().detach().data,
+                    'x_before_add_noise_second':
+                        node.x_before_add_noise_second.cpu().detach().data,
+                    'x_before_act_quant': node.x_before_act_quant.cpu().detach(
+                        ).data,
+                    'x_after_act_quant': node_out.cpu().detach().data,
+                }
+                self.activations.append(acts)
+
+        self.mse_all = mse_all
+
+        if verbose:
+            os.makedirs(os.path.join(configs.run_dir, 'activations'),
+                        exist_ok=True)
+            torch.save(self.activations,
+                       os.path.join(configs.run_dir, 'activations',
+                                    f"{configs.eval_config_dir}.pt"))
+            # logger.info(f"[use_qiskit]={use_qiskit},
+            # expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-1)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+    
+    def backprop_grad(self):
+        for k, node in reversed(list(enumerate(self.nodes))):
+            grad_output = node.circuit_out.grad
+            for i, param in enumerate(node.q_layer.parameters()):
+                param.grad = torch.sum(node.grad_qlayer[i] * grad_output).to(dtype=torch.float32).view([1, 1])
+            
+            inputs_grad2loss = None
+            for input_grad in node.grad_encoder:
+                input_grad2loss = torch.sum(input_grad * grad_output, dim=1).view(-1, 1)
+                if inputs_grad2loss == None:
+                    inputs_grad2loss = input_grad2loss
+                else:
+                    inputs_grad2loss = torch.cat((inputs_grad2loss, input_grad2loss), 1)
+            
+            if k != 0:
+                node.circuit_in.backward(inputs_grad2loss)
+
+
+
 model_dict = {
     'q_quanv0': QuanvModel0,
     'q_quanv1': QuanvModel1,
@@ -1492,4 +1715,5 @@ model_dict = {
     'q_qsvt0': QSVT0,
     'q_multifc0': QMultiFCModel0,
     'q_multifc1': QMultiFCModel1,
+    'q_multifc2': QMultiFCModel2,
 }

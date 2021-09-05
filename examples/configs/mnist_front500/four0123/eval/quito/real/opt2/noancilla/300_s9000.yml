@@ -1,0 +1,5 @@
+dataset:
+  n_test_samples: 300
+
+ckpt:
+  name: 'checkpoints/step-9000.pt'

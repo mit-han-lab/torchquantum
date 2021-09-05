@@ -1,0 +1,11 @@
+run:
+  bsz: 10000
+
+ckpt:
+  load_ckpt: True
+
+dataset:
+  split: test
+
+act_quant:
+  add_in_eval: False
