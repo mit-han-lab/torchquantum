@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import os
+import random
 
 from torchquantum.encoding import encoder_op_list_name_dict
 from torchpack.utils.logging import logger
@@ -1341,7 +1342,7 @@ class QMultiFCModel0(tq.QuantumModule):
         x = F.log_softmax(x, dim=1)
         return x
 
-    def shift_and_run(self, x, verbose=False, use_qiskit=False):
+    def shift_and_run(self, x, global_step, total_step, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
 
         if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
@@ -1357,6 +1358,11 @@ class QMultiFCModel0(tq.QuantumModule):
         mse_all = []
         
         for k, node in enumerate(self.nodes):
+            node.shift_this_step[:] = True
+            if global_step > total_step / 3:
+                n_params = len(list(node.parameters()))
+                idx = torch.randperm(n_params)[:int((1. * global_step / total_step - 0.5) * n_params)]
+                node.shift_this_step[idx] = False
             node_out = node.shift_and_run(x,
                             use_qiskit=use_qiskit,
                             is_last_node=(k == self.n_nodes - 1),
@@ -1400,25 +1406,15 @@ class QMultiFCModel0(tq.QuantumModule):
         for k, node in reversed(list(enumerate(self.nodes))):
             grad_output = node.circuit_out.grad
             for i, param in enumerate(node.q_layer.parameters()):
-                if node.cool_down[i] == 0:
+                if node.shift_this_step[i]:
                     param.grad = torch.sum(node.grad_qlayer[i] * grad_output).to(dtype=torch.float32).view(param.shape)
-                    if (np.abs(param.grad.item()) < 1e-2):
-                        node.triger_cd[i] += 1
-                        if (node.triger_cd[i] == 3):
-                            node.cool_down[i] = 0 #5
-                            node.triger_cd[i] = 0
-                    else:
-                        node.triger_cd[i] = 0
                 else:
-                    param.grad = torch.tensor(0.).to(dtype=torch.float32, device=param.device).view(param.shape)
                     self.count1 = self.count1 + 1
-                    node.cool_down[i] -= 1
-                self.count2 = self.count2 + 1
-
-                # if (np.abs(param.grad.item()) < 3e-2):
+                    param.grad = torch.tensor(0.).to(dtype=torch.float32, device=param.device).view(param.shape)
+                # if (np.abs(param.grad.item()) < 0):
                 #     param.grad = torch.tensor(0.).to(dtype=torch.float32, device=param.device).view(param.shape)
                 #     self.count1 = self.count1 + 1
-
+                self.count2 = self.count2 + 1
             
             inputs_grad2loss = None
             for input_grad in node.grad_encoder:
@@ -1430,7 +1426,7 @@ class QMultiFCModel0(tq.QuantumModule):
             
             if k != 0:
                 node.circuit_in.backward(inputs_grad2loss)
-        # logger.info(str(self.count1) + '/' + str(self.count2))
+        logger.info(str(self.count1) + '/' + str(self.count2))
 
 
 

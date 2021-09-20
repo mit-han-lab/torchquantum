@@ -30,6 +30,7 @@ class QuantumNode(tq.QuantumModule):
         self.x_before_norm = None
         self.circuit_in = None
         self.circuit_out = None
+        self.shift_this_step = np.array([True] * len(list(self.q_layer.parameters())))
         self.cool_down = [0] * len(list(self.q_layer.parameters()))
         self.triger_cd = [0] * len(list(self.q_layer.parameters()))
         if self.act_norm == 'batch_norm' or \
@@ -125,18 +126,22 @@ class QuantumNode(tq.QuantumModule):
                     self.measure,
                     inputs,
                     shift_encoder=False,
-                    parallel=False)
-                results = x.reshape(1 + 2 * len(list(self.q_layer.parameters())), bsz, self.arch['n_wires'])
+                    parallel=False,
+                    shift_this_step=self.shift_this_step)
+                results = x.reshape(1 + 2 * np.sum(self.shift_this_step), bsz, self.arch['n_wires'])
                 self.circuit_out = results[0, :, :].clone()
 
                 cnt = 0
                 self.grad_qlayer = []
-                for named_param in self.q_layer.named_parameters():
-                    cnt = cnt + 1
-                    out1 = results[cnt,:,:]
-                    cnt = cnt + 1
-                    out2 = results[cnt,:,:]
-                    self.grad_qlayer.append(0.5 * (out1 - out2))
+                for i, named_param in enumerate(self.q_layer.named_parameters()):
+                    if self.shift_this_step[i]:
+                        cnt = cnt + 1
+                        out1 = results[cnt,:,:]
+                        cnt = cnt + 1
+                        out2 = results[cnt,:,:]
+                        self.grad_qlayer.append(0.5 * (out1 - out2))
+                    else:
+                        self.grad_qlayer.append(None)
                 
                 self.grad_encoder = []
                 if not is_first_node:
@@ -164,7 +169,7 @@ class QuantumNode(tq.QuantumModule):
 
                 self.grad_qlayer = []
                 for i, param in enumerate(self.q_layer.parameters()):
-                    if self.cool_down[i] == 0:
+                    if self.shift_this_step[i]:
                         param.copy_(param + np.pi * 0.5)
                         out1 = self.run_circuit(inputs)
                         param.copy_(param - np.pi)

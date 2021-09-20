@@ -76,10 +76,12 @@ class MNISTDataset:
             targets_list = []
             data_list = []
             num_mix = 1
+            fold = 2
             for number in self.digits_of_interest:
                 idx = (train_valid.targets == number)
                 targets_list.append(train_valid.targets[idx][:num_samples_one_class])
-                data_list.append(train_valid.data[idx][:num_samples_one_class, :, :])
+                # data_list.append(train_valid.data[idx][:num_samples_one_class, :, :].float().to(dtype=torch.uint8))
+                data_list.append(torch.mean(train_valid.data[idx][:fold * num_samples_one_class, :, :].view(fold, num_samples_one_class, 28, 28).float(), dim=0).to(dtype=torch.uint8))
             train_valid.targets = torch.cat(targets_list, dim=0)
             train_valid.data = torch.cat(data_list, dim=0)
 

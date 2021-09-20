@@ -289,7 +289,8 @@ class ParamsShiftTrainer(Trainer):
         # for param in self.model.parameters():
         #     print(param.grad)
 
-        outputs = self.model.shift_and_run(inputs, verbose=False, use_qiskit=use_qiskit)
+        outputs = self.model.shift_and_run(inputs, self.global_step,
+            self.steps_per_epoch * self.num_epochs, verbose=False, use_qiskit=use_qiskit)
         loss = self.criterion(outputs, targets)
         nll_loss = loss.item()
 
@@ -304,6 +305,9 @@ class ParamsShiftTrainer(Trainer):
         # for param in self.model.parameters():
         #     print(param.grad)
         self.optimizer.step()
+        # with torch.no_grad():
+        #     for param in self.model.parameters():
+        #         param.copy_(param - param.grad * 1.0)
 
         return {'outputs': outputs, 'targets': targets}
 

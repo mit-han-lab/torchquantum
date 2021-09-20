@@ -74,6 +74,8 @@ callbacks:
         name: 'loss/test'
   - callback: 'MaxSaver'
     name: 'acc/valid'
+  - callback: 'MaxSaver'
+    name: 'acc/test'
   - callback: 'Saver'
     max_to_keep: 10
   - callback: 'GradRestore'

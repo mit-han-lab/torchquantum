@@ -267,7 +267,8 @@ class QiskitProcessor(object):
                                  q_layer_fixed,
                                  q_layer_measure,
                                  x,
-                                 shift_encoder):
+                                 shift_encoder,
+                                 shift_this_step):
         circ_parameterized, params = tq2qiskit_parameterized(
             q_device, q_layer_parameterized.func_list)
         circ_fixed_list = []
@@ -278,15 +279,16 @@ class QiskitProcessor(object):
 
         # not shift encoder ==> shift fixed layer
         if not shift_encoder:
-            for named_param in q_layer_fixed.named_parameters():
-                param = named_param[-1]
-                param.copy_(param + np.pi*0.5)
-                circ_fixed = tq2qiskit(q_device, q_layer_fixed, remove_ops=self.remove_ops, remove_ops_thres=self.remove_ops_thres)
-                circ_fixed_list.append(circ_fixed)
-                param.copy_(param - np.pi)
-                circ_fixed = tq2qiskit(q_device, q_layer_fixed, remove_ops=self.remove_ops, remove_ops_thres=self.remove_ops_thres)
-                circ_fixed_list.append(circ_fixed)
-                param.copy_(param + np.pi*0.5)
+            for i, named_param in enumerate(q_layer_fixed.named_parameters()):
+                if shift_this_step[i]:
+                    param = named_param[-1]
+                    param.copy_(param + np.pi*0.5)
+                    circ_fixed = tq2qiskit(q_device, q_layer_fixed, remove_ops=self.remove_ops, remove_ops_thres=self.remove_ops_thres)
+                    circ_fixed_list.append(circ_fixed)
+                    param.copy_(param - np.pi)
+                    circ_fixed = tq2qiskit(q_device, q_layer_fixed, remove_ops=self.remove_ops, remove_ops_thres=self.remove_ops_thres)
+                    circ_fixed_list.append(circ_fixed)
+                    param.copy_(param + np.pi*0.5)
         
         self.transpiled_circs = []
         for circ_fixed in circ_fixed_list:
@@ -337,7 +339,8 @@ class QiskitProcessor(object):
                               q_layer_measure: tq.QuantumModule,
                               x,
                               shift_encoder=False,
-                              parallel=True):
+                              parallel=True,
+                              shift_this_step=None):
         """
         separate the conversion, encoder part will be converted to a
         parameterized Qiskit QuantumCircuit. The remaining part will be a
@@ -351,7 +354,7 @@ class QiskitProcessor(object):
         """
         transpiled_circs, binds_all = self.preprocess_parameterized_and_shift(
             q_device, q_layer_parameterized, q_layer_fixed,
-            q_layer_measure, x, shift_encoder)
+            q_layer_measure, x, shift_encoder, shift_this_step)
         
         if parallel:
             if hasattr(self.backend.configuration(), 'max_experiments'):
