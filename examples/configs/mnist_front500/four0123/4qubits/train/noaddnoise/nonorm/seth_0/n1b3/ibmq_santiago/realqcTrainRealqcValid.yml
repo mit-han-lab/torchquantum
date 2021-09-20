@@ -11,3 +11,5 @@ model:
 qiskit:
   use_qiskit_train: True
   use_qiskit_valid: True
+  backend_name: ibmq_santiago
+  noise_model_name: ibmq_santiago

@@ -1359,10 +1359,10 @@ class QMultiFCModel0(tq.QuantumModule):
         
         for k, node in enumerate(self.nodes):
             node.shift_this_step[:] = True
-            if global_step > total_step / 3:
-                n_params = len(list(node.parameters()))
-                idx = torch.randperm(n_params)[:int((1. * global_step / total_step - 0.5) * n_params)]
-                node.shift_this_step[idx] = False
+            # if global_step > total_step / 3:
+            #     n_params = len(list(node.parameters()))
+            #     idx = torch.randperm(n_params)[:int((1. * global_step / total_step - 0.5) * n_params)]
+            #     node.shift_this_step[idx] = False
             node_out = node.shift_and_run(x,
                             use_qiskit=use_qiskit,
                             is_last_node=(k == self.n_nodes - 1),
