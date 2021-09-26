@@ -1,0 +1,13 @@
+model:
+  arch:
+    sampling_method: phase_based_sampling
+    accumulation_window_size: 3
+    sampling_ratio: 0.7
+    sampling_window_size: 3
+
+qiskit:
+  use_qiskit_train: False
+  use_qiskit_valid: False
+  backend_name: ibmq_lima
+  noise_model_name: ibmq_lima
+            

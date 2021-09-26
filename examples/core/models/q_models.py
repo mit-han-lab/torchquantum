@@ -1285,7 +1285,39 @@ class QMultiFCModel0(tq.QuantumModule):
         self.count1 = 0
         self.count2 = 0
         self.num_forwards = 0
-        self.use_random_sample = arch['use_random_sample']
+        self.n_params = len(list(self.nodes[0].parameters()))
+        self.last_abs_grad = torch.zeros(self.n_params)
+        self.sampling_method = arch['sampling_method']
+        if self.sampling_method == 'random_sampling':
+            self.sampling_ratio = arch['sampling_ratio']
+        elif self.sampling_method == 'perlayer_sampling':
+            self.n_qubits = arch['node_archs'][0]['n_wires']
+            self.n_layers = arch['node_archs'][0]['n_layers_per_block'] * arch['node_archs'][0]['n_blocks']
+            self.n_sampling_layers = arch['n_sampling_layers']
+            self.colums = np.arange(self.n_sampling_layers)
+        elif self.sampling_method == 'perqubit_sampling':
+            self.n_qubits = arch['node_archs'][0]['n_wires']
+            self.n_layers = arch['node_archs'][0]['n_layers_per_block'] * arch['node_archs'][0]['n_blocks']
+            self.n_sampling_qubits = arch['n_sampling_qubits']
+            self.rows = np.arange(self.n_sampling_qubits)
+        elif self.sampling_method == 'gradient_based_sampling':
+            self.accumulation_window_size = arch['accumulation_window_size']
+            self.sampling_window_size = arch['sampling_window_size']
+            self.sampling_ratio = arch['sampling_ratio']
+            self.sum_abs_grad = torch.tensor([0.01] * self.n_params)
+            self.is_accumulation = True
+            self.accumulation_steps = 0
+            self.sampling_steps = 0
+        elif self.sampling_method == 'phase_based_sampling':
+            self.accumulation_window_size = arch['accumulation_window_size']
+            self.sampling_window_size = arch['sampling_window_size']
+            self.sampling_ratio = arch['sampling_ratio']
+            self.last_abs_param = torch.zeros(self.n_params)
+            self.is_accumulation = True
+            self.accumulation_steps = 0
+            self.sampling_steps = 0
+        else:
+            logger.info('Not use any sampling')
 
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
@@ -1361,10 +1393,66 @@ class QMultiFCModel0(tq.QuantumModule):
         
         for k, node in enumerate(self.nodes):
             node.shift_this_step[:] = True
-            if self.use_random_sample and global_step > total_step / 5:
-                n_params = len(list(node.parameters()))
-                idx = torch.randperm(n_params)[:int((1. * global_step / total_step - 0.25) * n_params)]
-                node.shift_this_step[idx] = False
+            if self.sampling_method == 'random_sampling':
+                node.shift_this_step[:] = False
+                idx = torch.randperm(self.n_params)[:int(self.sampling_ratio * self.n_params)]
+                node.shift_this_step[idx] = True
+            elif self.sampling_method == 'perlayer_sampling':
+                node.shift_this_step[:] = False
+                idxs = torch.range(0, self.n_params-1, dtype=int).view(self.n_qubits, self.n_layers)
+                sampled_colums = self.colums
+                for colum in sampled_colums:
+                    node.shift_this_step[idxs[:, colum]] = True
+                self.colums += self.n_sampling_layers
+                self.colums %= self.n_layers
+            elif self.sampling_method == 'perqubit_sampling':
+                node.shift_this_step[:] = False
+                idxs = torch.range(0, self.n_params-1, dtype=int).view(self.n_qubits, self.n_layers)
+                sampled_rows = self.rows
+                for row in sampled_rows:
+                    node.shift_this_step[idxs[row]] = True
+                self.rows += self.n_sampling_qubits
+                self.rows %= self.n_qubits
+            elif self.sampling_method == 'gradient_based_sampling':
+                if self.is_accumulation:
+                    self.accumulation_steps += 1
+                    self.sum_abs_grad = self.sum_abs_grad + self.last_abs_grad
+                    node.shift_this_step[:] = True
+                    if self.accumulation_steps == self.accumulation_window_size:
+                        self.is_accumulation = False
+                        self.accumulation_steps = 0
+                        self.sum_abs_grad = torch.tensor([0.01] * self.n_params)
+                else:
+                    self.sampling_steps += 1
+                    node.shift_this_step[:] = False
+                    idx = torch.multinomial(self.sum_abs_grad, int(self.sampling_ratio * self.n_params))
+                    node.shift_this_step[idx] = True
+                    if self.sampling_steps == self.sampling_window_size:
+                        self.is_accumulation = True
+                        self.sampling_steps = 0
+            elif self.sampling_method == 'phase_based_sampling':
+                if self.is_accumulation:
+                    self.accumulation_steps += 1
+                    node.shift_this_step[:] = True
+                    if self.accumulation_steps == self.accumulation_window_size:
+                        self.is_accumulation = False
+                        self.accumulation_steps = 0
+                else:
+                    self.sampling_steps += 1
+                    node.shift_this_step[:] = False
+                    for i, param in enumerate(self.parameters()):
+                        param_item = param.item()
+                        while param_item > np.pi:
+                            param_item -= 2 * np.pi
+                        while param_item < - np.pi:
+                            param_item += 2 * np.pi
+                        self.last_abs_param[i] = 0.01 + np.abs(param_item)
+                    idx = torch.multinomial(self.last_abs_param, int(self.sampling_ratio * self.n_params))
+                    node.shift_this_step[idx] = True
+                    if self.sampling_steps == self.sampling_window_size:
+                        self.is_accumulation = True
+                        self.sampling_steps = 0
+            
             self.num_forwards += 1 + 2 * np.sum(node.shift_this_step)
             node_out = node.shift_and_run(x,
                             use_qiskit=use_qiskit,
@@ -1414,6 +1502,7 @@ class QMultiFCModel0(tq.QuantumModule):
                 else:
                     self.count1 = self.count1 + 1
                     param.grad = torch.tensor(0.).to(dtype=torch.float32, device=param.device).view(param.shape)
+                self.last_abs_grad[i] = np.abs(param.grad.item())
                 # if (np.abs(param.grad.item()) < 0):
                 #     param.grad = torch.tensor(0.).to(dtype=torch.float32, device=param.device).view(param.shape)
                 #     self.count1 = self.count1 + 1

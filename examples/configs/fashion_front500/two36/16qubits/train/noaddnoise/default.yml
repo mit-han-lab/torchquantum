@@ -1,0 +1,12 @@
+trainer:
+  name: params_shift_trainer
+  add_noise: False
+
+run:
+  n_warm_epochs: 0
+
+scheduler:
+  name: cosine_warm
+
+model:
+  transpile_before_run: False

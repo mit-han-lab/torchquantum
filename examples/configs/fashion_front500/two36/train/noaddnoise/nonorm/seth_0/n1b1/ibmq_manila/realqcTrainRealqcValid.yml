@@ -1,0 +1,18 @@
+model:
+  arch:
+    n_nodes: 1
+    node_archs:
+      - n_wires: 4
+        encoder_op_list_name: 4x4_ryzxy
+        n_blocks: 1
+        n_layers_per_block: 2
+        q_layer_name: seth_0
+
+trainer:
+  act_quant: False
+
+qiskit:
+  use_qiskit_train: True
+  use_qiskit_valid: True
+  backend_name: ibmq_manila
+  noise_model_name: ibmq_manila

@@ -216,7 +216,7 @@ def make_scheduler(optimizer: Optimizer) -> Scheduler:
             optimizer,
             first_cycle_steps=configs.run.n_epochs,
             max_lr=configs.optimizer.lr,
-            min_lr=0,
+            min_lr=configs.optimizer.min_lr,
             warmup_steps=configs.run.n_warm_epochs,
         )
     else:

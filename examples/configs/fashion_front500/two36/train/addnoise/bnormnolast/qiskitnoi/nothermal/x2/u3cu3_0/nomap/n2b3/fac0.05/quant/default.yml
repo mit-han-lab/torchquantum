@@ -1,0 +1,3 @@
+trainer:
+  act_quant: True
+  act_quant_ratio: 1

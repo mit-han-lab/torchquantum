@@ -1,0 +1,18 @@
+dataset:
+  digits_of_interest: [0, 1, 2, 3]
+
+model:
+  transpile_before_run: False
+  load_op_list: False
+  arch:
+    n_wires: 8
+    output_len: 2
+
+
+run:
+  n_epochs: 20
+  n_warm_epochs: 0
+  bsz: 50
+  eval_bsz: 75
+  workers_per_gpu: 8
+  device: gpu

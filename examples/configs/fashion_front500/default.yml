@@ -1,0 +1,110 @@
+dataset:
+  name: mnist_front500
+  root: 'examples/data'
+  train_valid_split_ratio: [0.95, 0.05]
+  center_crop: 24
+  resize: 28
+  resize_mode: bilinear
+  binarize: False
+  binarize_threshold: 0.1307
+  digits_of_interest: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  n_test_samples: 300
+  n_valid_samples: null
+  input_name: image
+  target_name: digit
+  fashion: False
+
+criterion:
+  name: nll
+
+optimizer:
+  name: adam
+  lr: 3e-1
+  weight_decay: 1.0e-4
+  lambda_lr: 1.e-2
+  min_lr: 3.0e-2
+
+scheduler:
+  name: constant
+
+trainer:
+  name: q_trainer
+  add_noise: False
+  act_quant: False
+  act_quant_skip_last_node: True
+  act_quant_loss: True
+  act_quant_loss_lambda: 10
+
+run:
+  n_epochs: 10
+  n_warm_epochs: 0
+  bsz: 64
+  eval_bsz: 75
+  workers_per_gpu: 8
+  device: gpu
+
+debug:
+  pdb: False
+  set_seed: True
+  seed: 42
+
+regularization:
+  unitary_loss: False
+  unitary_loss_lambda_trainable: False
+  unitary_loss_lambda: 0
+
+legalization:
+  legalize: False
+  epoch_interval: 9999999999
+  step_interval: 9999999999
+
+callbacks:
+  - callback: 'InferenceRunner'
+    split: 'valid'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'acc/valid'
+      - metrics: 'NLLError'
+        name: 'loss/valid'
+  - callback: 'InferenceRunner'
+    split: 'test'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'acc/test'
+      - metrics: 'NLLError'
+        name: 'loss/test'
+  - callback: 'MaxSaver'
+    name: 'acc/valid'
+  - callback: 'MaxSaver'
+    name: 'acc/test'
+  - callback: 'Saver'
+    max_to_keep: 10
+  - callback: 'GradRestore'
+
+qiskit:
+  use_qiskit: True
+  use_real_qc: True
+  backend_name: ibmq_santiago
+  noise_model_name: ibmq_santiago
+  basis_gates_name: null
+  n_shots: 1024
+  initial_layout: null
+  seed_transpiler: 42
+  seed_simulator: 42
+  optimization_level: 0d
+  est_success_rate: False
+  max_jobs: 1
+
+ckpt:
+  load_ckpt: False
+  load_trainer: False
+  name: 'checkpoints/max-acc-valid.pt'
+
+verbose: False
+
+get_n_params: False
+
+prune:
+  eval:
+    remove_ops: False
+    remove_ops_thres: null
