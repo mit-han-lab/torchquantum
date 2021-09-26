@@ -216,6 +216,7 @@ class ParamsShiftTrainer(Trainer):
         self.solution = None
         self.score = None
         self.is_training = False
+        self.save_global_step = 0
         self.quantizers = []
         self.init_act_quant()
 
@@ -374,6 +375,11 @@ class ParamsShiftTrainer(Trainer):
         if configs.legalization.legalize:
             if self.epoch_num % configs.legalization.epoch_interval == 0:
                 legalize_unitary(self.model)
+        self.save_global_step = self.global_step
+        self.global_step = int(self.model.num_forwards)
+    
+    def _trigger_epoch(self) -> None:
+        self.global_step = self.save_global_step
 
     def _after_step(self, output_dict) -> None:
         if configs.legalization.legalize:

@@ -3,7 +3,7 @@ model:
     use_random_sample: True
 
 qiskit:
-  use_qiskit_train: False
-  use_qiskit_valid: False
+  use_qiskit_train: True
+  use_qiskit_valid: True
   backend_name: ibmq_lima
   noise_model_name: ibmq_lima

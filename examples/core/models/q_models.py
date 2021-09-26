@@ -1284,6 +1284,8 @@ class QMultiFCModel0(tq.QuantumModule):
         self.activations = []
         self.count1 = 0
         self.count2 = 0
+        self.num_forwards = 0
+        self.use_random_sample = arch['use_random_sample']
 
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
@@ -1359,10 +1361,11 @@ class QMultiFCModel0(tq.QuantumModule):
         
         for k, node in enumerate(self.nodes):
             node.shift_this_step[:] = True
-            # if global_step > total_step / 3:
-            #     n_params = len(list(node.parameters()))
-            #     idx = torch.randperm(n_params)[:int((1. * global_step / total_step - 0.5) * n_params)]
-            #     node.shift_this_step[idx] = False
+            if self.use_random_sample and global_step > total_step / 5:
+                n_params = len(list(node.parameters()))
+                idx = torch.randperm(n_params)[:int((1. * global_step / total_step - 0.25) * n_params)]
+                node.shift_this_step[idx] = False
+            self.num_forwards += 1 + 2 * np.sum(node.shift_this_step)
             node_out = node.shift_and_run(x,
                             use_qiskit=use_qiskit,
                             is_last_node=(k == self.n_nodes - 1),

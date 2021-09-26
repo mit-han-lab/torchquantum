@@ -14,6 +14,7 @@ from tqdm import tqdm
 from torchpack.utils.logging import logger
 from qiskit.transpiler import PassManager
 import numpy as np
+import simplejson
 
 
 class EmptyPassManager(PassManager):
@@ -409,7 +410,7 @@ class QiskitProcessor(object):
                         result = job.result()#qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
                         counts = counts + result.get_counts()
                         break
-                    except QiskitError as e:
+                    except (QiskitError, simplejson.errors.JSONDecodeError) as e:
                         logger.warning('Job failed, rerun now.')
                         print(e.message)
 
