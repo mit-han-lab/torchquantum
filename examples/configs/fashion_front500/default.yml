@@ -23,6 +23,8 @@ optimizer:
   weight_decay: 1.0e-4
   lambda_lr: 1.e-2
   min_lr: 3.0e-2
+  momentum: 0.5
+  nesterov: 0
 
 scheduler:
   name: constant
@@ -34,14 +36,6 @@ trainer:
   act_quant_skip_last_node: True
   act_quant_loss: True
   act_quant_loss_lambda: 10
-
-run:
-  n_epochs: 10
-  n_warm_epochs: 0
-  bsz: 64
-  eval_bsz: 75
-  workers_per_gpu: 8
-  device: gpu
 
 debug:
   pdb: False

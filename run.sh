@@ -1,7 +1,6 @@
 python3 examples/train.py examples/configs/fashion_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_lima/clsTrainClsValid.yml --gpu=0
 python3 examples/train.py examples/configs/fashion_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_lima/clsTrainClsValid_grad_2_0.3_3.yml --gpu=1
 python3 examples/train.py examples/configs/fashion_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_lima/clsTrainClsValid_grad_1_0.7_3.yml --gpu=2
-python3 examples/train.py examples/configs/fashion_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_lima/clsTrainClsValid_grad_2_0.3_3.yml --gpu=3
 python3 examples/train.py examples/configs/fashion_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_lima/clsTrainClsValid_grad_1_0.5_2.yml --gpu=4
 python3 examples/train.py examples/configs/fashion_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_lima/clsTrainClsValid_grad_1_0.3_2.yml --gpu=5
 python3 examples/train.py examples/configs/fashion_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_lima/clsTrainClsValid_phase_1_0.3_5.yml --gpu=6

@@ -1,6 +1,6 @@
 dataset:
   digits_of_interest: [0, 1, 2, 3]
-  front_size: 100
+  front_size: 200
 
 model:
   transpile_before_run: False
@@ -11,7 +11,7 @@ model:
 
 
 run:
-  n_epochs: 20
+  n_epochs: 10
   n_warm_epochs: 0
   bsz: 50
   eval_bsz: 75

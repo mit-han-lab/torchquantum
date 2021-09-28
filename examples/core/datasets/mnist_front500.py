@@ -76,7 +76,7 @@ class MNISTDataset:
             targets_list = []
             data_list = []
             num_mix = 1
-            fold = 2
+            fold = 1
             for number in self.digits_of_interest:
                 idx = (train_valid.targets == number)
                 targets_list.append(train_valid.targets[idx][:num_samples_one_class])

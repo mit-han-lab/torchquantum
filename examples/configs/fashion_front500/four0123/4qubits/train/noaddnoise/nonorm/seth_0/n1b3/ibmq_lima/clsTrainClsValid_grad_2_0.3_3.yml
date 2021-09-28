@@ -10,4 +10,3 @@ qiskit:
   use_qiskit_valid: False
   backend_name: ibmq_lima
   noise_model_name: ibmq_lima
-            

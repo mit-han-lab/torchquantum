@@ -1,0 +1,18 @@
+model:
+  arch:
+    n_nodes: 1
+    node_archs:
+      - n_wires: 8
+        encoder_op_list_name: 8x2_ryz
+        n_blocks: 3
+        n_layers_per_block: 2
+        q_layer_name: seth_0
+
+trainer:
+  act_quant: False
+
+qiskit:
+  use_qiskit_train: False
+  use_qiskit_valid: False
+  backend_name: ibmq_bogota
+  noise_model_name: ibmq_bogota

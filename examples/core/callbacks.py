@@ -223,4 +223,5 @@ class GradRestore(Callback):
             for i, param in enumerate(node.q_layer.parameters()):
                 self.trainer.summary.add_scalar('grad/grad_'+str(i), float(param.grad))
                 self.trainer.summary.add_scalar('param/param_'+str(i), float(param))
+                # self.trainer.summary.writers[1].add_histogram('histogram/grad', float(param.grad))
 

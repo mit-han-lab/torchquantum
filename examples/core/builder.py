@@ -65,6 +65,18 @@ def make_dataset() -> Dataset:
             binarize_threshold=configs.dataset.binarize_threshold,
             digits_of_interest=configs.dataset.digits_of_interest,
         )
+    elif configs.dataset.name == 'vowel_front':
+        from .datasets import Vowel_Front
+        dataset = Vowel_Front(
+            root=configs.dataset.root,
+            test_ratio=configs.dataset.test_ratio,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
+            resize=configs.dataset.resize,
+            binarize=configs.dataset.binarize,
+            binarize_threshold=configs.dataset.binarize_threshold,
+            digits_of_interest=configs.dataset.digits_of_interest,
+            front_size=configs.dataset.front_size,
+        )
     elif configs.dataset.name == 'vqe':
         from .datasets import VQE
         dataset = VQE(

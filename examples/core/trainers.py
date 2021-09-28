@@ -14,7 +14,7 @@ from torchquantum.prune_utils import (PhaseL1UnstructuredPruningMethod,
 from torchpack.utils.logging import logger
 from torchpack.callbacks.writers import TFEventWriter
 from .tools.quantize import PACTActivationQuantizer
-
+from torchpack.train.exception import StopTraining
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer', 'ParamsShiftTrainer',
            'PruningTrainer', 'QNoiseAwareTrainer']
@@ -219,6 +219,9 @@ class ParamsShiftTrainer(Trainer):
         self.save_global_step = 0
         self.quantizers = []
         self.init_act_quant()
+        self.max_acc = 0
+        self.max_acc_epoch = 0
+        self.global_epoch = 0
 
     def init_act_quant(self):
         device = torch.device('cuda') if configs.run.device == 'gpu' else \
@@ -448,6 +451,14 @@ class ParamsShiftTrainer(Trainer):
         self.optimizer.load_state_dict(state_dict['optimizer'])
         self.scheduler.load_state_dict(state_dict['scheduler'])
 
+    def update_accuracy(self, name, accuracy):
+        self.global_epoch += 1
+        if name == 'acc/test':
+            if accuracy > self.max_acc:
+                self.max_acc = accuracy
+                self.max_acc_epoch = self.global_epoch
+            elif self.global_epoch - self.max_acc_epoch >= 3:
+                raise StopTraining('Early stop at epoch{0}, num inferences = {1}'.format(self.global_epoch, self.global_step))
 
 class SuperQTrainer(Trainer):
     def __init__(self, *, model: nn.Module, criterion: Callable,

@@ -10,7 +10,7 @@ model:
 
 
 run:
-  n_epochs: 20
+  n_epochs: 15
   n_warm_epochs: 0
   bsz: 50
   eval_bsz: 75

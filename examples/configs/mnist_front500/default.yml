@@ -23,6 +23,8 @@ optimizer:
   weight_decay: 1.0e-4
   lambda_lr: 1.e-2
   min_lr: 3.0e-2
+  # momentum: 0.8
+  # nesterov: 0
 
 scheduler:
   name: constant

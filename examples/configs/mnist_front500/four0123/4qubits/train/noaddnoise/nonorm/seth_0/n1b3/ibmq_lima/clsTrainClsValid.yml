@@ -1,6 +1,6 @@
 model:
   arch:
-    use_random_sample: False
+    sampling_method: None
 
 qiskit:
   use_qiskit_train: False

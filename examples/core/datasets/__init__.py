@@ -8,3 +8,4 @@ from .simple3cls import *
 from .simple2cls_tiny import *
 from .simple2cls_tiny2 import *
 from .mnist_front500 import *
+from .vowel_front import *
