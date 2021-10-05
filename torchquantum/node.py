@@ -4,6 +4,7 @@ import torchquantum as tq
 from torchquantum.encoding import encoder_op_list_name_dict
 from torchquantum.layers import layer_name_dict
 import numpy as np
+import datetime
 
 
 __all__ = ['QuantumNode',
@@ -115,11 +116,12 @@ class QuantumNode(tq.QuantumModule):
         import numpy as np
         self.circuit_in = x
         self.circuit_out = None
+        time_spent = datetime.timedelta()
         if use_qiskit:
             with torch.no_grad():
                 bsz = x.shape[0]
                 inputs = x
-                x = self.qiskit_processor.process_parameterized_and_shift(
+                x, time_spent_list = self.qiskit_processor.process_parameterized_and_shift(
                     self.q_device,
                     self.encoder,
                     self.q_layer,
@@ -128,6 +130,8 @@ class QuantumNode(tq.QuantumModule):
                     shift_encoder=False,
                     parallel=False,
                     shift_this_step=self.shift_this_step)
+                for ts in time_spent_list:
+                    time_spent = time_spent + ts
                 results = x.reshape(1 + 2 * np.sum(self.shift_this_step), bsz, self.arch['n_wires'])
                 self.circuit_out = results[0, :, :].clone()
 
@@ -145,7 +149,7 @@ class QuantumNode(tq.QuantumModule):
                 
                 self.grad_encoder = []
                 if not is_first_node:
-                    x = self.qiskit_processor.process_parameterized_and_shift(
+                    x, time_spent_list = self.qiskit_processor.process_parameterized_and_shift(
                         self.q_device,
                         self.encoder,
                         self.q_layer,
@@ -153,6 +157,8 @@ class QuantumNode(tq.QuantumModule):
                         inputs,
                         shift_encoder=True,
                         parallel=False)
+                    for ts in time_spent_list:
+                        time_spent = time_spent + ts
                     results = x.reshape(2 * inputs.shape[1], bsz, self.arch['n_wires'])
                     cnt = 0
                     while cnt < 2 * inputs.shape[1]:
@@ -235,7 +241,7 @@ class QuantumNode(tq.QuantumModule):
 
         self.x_before_act_quant = x.clone()
 
-        return x
+        return x, time_spent
 
 
 def build_nodes(node_archs, act_norm=None):

@@ -1,5 +1,6 @@
 dataset:
   digits_of_interest: [0, 5, 1, 6]
+  front_size: 100
 
 model:
   transpile_before_run: False

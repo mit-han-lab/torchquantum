@@ -1,12 +1,6 @@
 model:
   arch:
-    n_nodes: 1
-    node_archs:
-      - n_wires: 4
-        encoder_op_list_name: 4x4_ryzxy
-        n_blocks: 3
-        n_layers_per_block: 2
-        q_layer_name: seth_0
+    sampling_method: None
 
 qiskit:
   use_qiskit_train: False

@@ -1,5 +1,6 @@
 dataset:
   digits_of_interest: [0, 1, 2, 3]
+  front_size: 100
 
 model:
   transpile_before_run: False
@@ -7,7 +8,6 @@ model:
   arch:
     n_wires: 4
     output_len: 1
-
 
 run:
   n_epochs: 15

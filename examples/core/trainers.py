@@ -222,6 +222,21 @@ class ParamsShiftTrainer(Trainer):
         self.max_acc = 0
         self.max_acc_epoch = 0
         self.global_epoch = 0
+        self.work_from_step = 0
+        self.grad_dict = None
+        self.processor_list = []
+        self.profile_shots = False
+        self.per_steps = 100
+        self.record = dict()
+
+    def load_grad(self, stop_step, grad_dict):
+        self.work_from_step = stop_step
+        self.grad_dict = grad_dict
+
+    def set_processor_list(self, processor_list):
+        self.processor_list = processor_list
+        self.profile_shots = True
+        self.per_steps = 25
 
     def init_act_quant(self):
         device = torch.device('cuda') if configs.run.device == 'gpu' else \
@@ -269,6 +284,20 @@ class ParamsShiftTrainer(Trainer):
 
     def run_step(self, feed_dict: Dict[str, Any], legalize=False) -> Dict[
             str, Any]:
+        if self.profile_shots and self.global_step % self.per_steps == 0 and self.is_training:
+            self.record[self.global_step] = {}
+            for i in range(4):
+                for shots, processor in self.processor_list:
+                    self.model.set_qiskit_processor(processor)
+                    self.record[self.global_step][i] = self._get_grad(feed_dict, use_qiskit=True)
+            output_dict = self._run_params_shift_step(feed_dict, use_qiskit=False)
+            grad_list = []
+            for param in self.model.parameters():
+                grad_list.append(param.grad.item())
+            self.record[self.global_step]['classical'] = grad_list
+
+            return output_dict
+        
         if self.is_training:
             output_dict = self._run_params_shift_step(feed_dict, use_qiskit=self.use_qiskit_train)
         else:
@@ -293,8 +322,64 @@ class ParamsShiftTrainer(Trainer):
         # for param in self.model.parameters():
         #     print(param.grad)
 
-        outputs = self.model.shift_and_run(inputs, self.global_step,
-            self.steps_per_epoch * self.num_epochs, verbose=False, use_qiskit=use_qiskit)
+        outputs = None
+        if self.global_step > self.work_from_step:
+            outputs = self.model.shift_and_run(inputs, self.global_step,
+                self.steps_per_epoch * self.num_epochs, verbose=False, use_qiskit=use_qiskit)
+        else:
+            logger.info('global_step {0}, skip parameters shift.'.format(self.global_step))
+            outputs = self.model(inputs, False, use_qiskit=use_qiskit)
+        loss = self.criterion(outputs, targets)
+        nll_loss = loss.item()
+
+        for k, group in enumerate(self.optimizer.param_groups):
+            self.summary.add_scalar(f'lr/lr_group{k}', group['lr'])
+        self.summary.add_scalar('loss', loss.item())
+        self.summary.add_scalar('nll_loss', nll_loss)
+
+        if self.global_step > self.work_from_step:
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.model.backprop_grad()
+        else:
+            logger.info('global_step {0}, load grad from tensorboard file!'.format(self.global_step))
+            for i, param in enumerate(self.model.parameters()):
+                param.grad = torch.tensor(self.grad_dict[self.global_step][i]).to(dtype=torch.float32, device=param.device).view(param.shape)
+        # for param in self.model.parameters():
+        #     print(param.grad)
+        self.optimizer.step()
+        # with torch.no_grad():
+        #     for param in self.model.parameters():
+        #         param.copy_(param - param.grad * 1.0)
+
+        return {'outputs': outputs, 'targets': targets}
+
+
+    def _get_grad(self, feed_dict: Dict[str, Any], use_qiskit=False) -> Dict[
+            str, Any]:
+        if configs.run.device == 'gpu':
+            inputs = feed_dict[configs.dataset.input_name].cuda(
+                non_blocking=True)
+            targets = feed_dict[configs.dataset.target_name].cuda(
+                non_blocking=True)
+        else:
+            inputs = feed_dict[configs.dataset.input_name]
+            targets = feed_dict[configs.dataset.target_name]
+        
+        # outputs = self.model(inputs)
+        # loss = self.criterion(outputs, targets)
+        # self.optimizer.zero_grad()
+        # loss.backward()
+        # for param in self.model.parameters():
+        #     print(param.grad)
+
+        outputs = None
+        if self.global_step > self.work_from_step:
+            outputs = self.model.shift_and_run(inputs, self.global_step,
+                self.steps_per_epoch * self.num_epochs, verbose=False, use_qiskit=use_qiskit)
+        else:
+            logger.info('global_step {0}, skip parameters shift.'.format(self.global_step))
+            outputs = self.model(inputs, False, use_qiskit)
         loss = self.criterion(outputs, targets)
         nll_loss = loss.item()
 
@@ -305,15 +390,22 @@ class ParamsShiftTrainer(Trainer):
 
         self.optimizer.zero_grad()
         loss.backward()
-        self.model.backprop_grad()
-        # for param in self.model.parameters():
-        #     print(param.grad)
-        self.optimizer.step()
+        if self.global_step > self.work_from_step:
+            self.model.backprop_grad()
+        else:
+            logger.info('global_step {0}, load grad from tensorboard file!'.format(self.global_step))
+            for i, param in enumerate(self.model.parameters()):
+                param.grad = torch.tensor(self.grad_dict[self.global_step][i]).to(dtype=torch.float32, device=param.device).view(param.shape)
+        grad_list = []
+        for param in self.model.parameters():
+            grad_list.append(param.grad.item())
+        # self.optimizer.step()
         # with torch.no_grad():
         #     for param in self.model.parameters():
         #         param.copy_(param - param.grad * 1.0)
 
-        return {'outputs': outputs, 'targets': targets}
+        return grad_list
+
 
 
     def _run_step(self, feed_dict: Dict[str, Any], legalize=False, use_qiskit=False) -> Dict[
@@ -452,13 +544,13 @@ class ParamsShiftTrainer(Trainer):
         self.scheduler.load_state_dict(state_dict['scheduler'])
 
     def update_accuracy(self, name, accuracy):
-        self.global_epoch += 1
         if name == 'acc/test':
+            self.global_epoch += 1
             if accuracy > self.max_acc:
                 self.max_acc = accuracy
                 self.max_acc_epoch = self.global_epoch
-            elif self.global_epoch - self.max_acc_epoch >= 3:
-                raise StopTraining('Early stop at epoch{0}, num inferences = {1}'.format(self.global_epoch, self.global_step))
+            elif self.global_epoch - self.max_acc_epoch >= 50:
+                raise StopTraining('Early stop at epoch{0}, num inferences = {1}, global_step={2}'.format(self.global_epoch, self.global_step, self.save_global_step))
 
 class SuperQTrainer(Trainer):
     def __init__(self, *, model: nn.Module, criterion: Callable,

@@ -15,7 +15,7 @@ from torchpack.utils.logging import logger
 from qiskit.transpiler import PassManager
 import numpy as np
 import simplejson
-
+import datetime
 
 class EmptyPassManager(PassManager):
     def run(
@@ -357,6 +357,8 @@ class QiskitProcessor(object):
             q_device, q_layer_parameterized, q_layer_fixed,
             q_layer_measure, x, shift_encoder, shift_this_step)
         
+        time_spent_list = []
+
         if parallel:
             if hasattr(self.backend.configuration(), 'max_experiments'):
                 chunk_size = self.backend.configuration().max_experiments
@@ -395,6 +397,8 @@ class QiskitProcessor(object):
             chunk_size = 75 // len(binds_all)
             split_circs = [transpiled_circs[i:i + chunk_size] for i in range(0, len(transpiled_circs), chunk_size)]
             counts = []
+            total_time_spent = datetime.timedelta()
+            total_cont = 0
             for circ in split_circs:
                 while True:
                     try:
@@ -409,6 +413,13 @@ class QiskitProcessor(object):
                         job_monitor(job, interval=1)
                         result = job.result()#qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
                         counts = counts + result.get_counts()
+                        time_per_step = job.time_per_step()
+                        time_spent = time_per_step['COMPLETED'] - time_per_step['RUNNING'] + time_per_step['QUEUED'] - job.time_per_step()['CREATING']
+                        time_spent_list.append(time_spent)
+                        print(time_spent)
+                        total_time_spent += time_spent
+                        total_cont += 1
+                        print(total_time_spent / total_cont)
                         break
                     except (QiskitError, simplejson.errors.JSONDecodeError) as e:
                         logger.warning('Job failed, rerun now.')
@@ -418,7 +429,7 @@ class QiskitProcessor(object):
             counts, n_wires=q_device.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
-        return measured_qiskit
+        return measured_qiskit, time_spent_list
 
 
     def process_multi_measure(self,

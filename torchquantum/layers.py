@@ -407,6 +407,36 @@ class Op2QAllLayer(tq.QuantumModule):
                 wires.reverse()
             self.ops_all[k](q_device, wires=wires)
 
+class Op2QFit32Layer(tq.QuantumModule):
+    def __init__(self, op, n_wires: int, has_params=False, trainable=False,
+                 wire_reverse=False, jump=1, circular=False):
+        super().__init__()
+        self.n_wires = n_wires
+        self.jump = jump
+        self.circular = circular
+        self.op = op
+        self.ops_all = tq.QuantumModuleList()
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        # if circular:
+        #     n_ops = n_wires
+        # else:
+        #     n_ops = n_wires - jump
+        n_ops = 32
+        for k in range(n_ops):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    @tq.static_support
+    def forward(self, q_device):
+        for k in range(len(self.ops_all)):
+            wires = [k % self.n_wires, (k + self.jump) % self.n_wires]
+            if self.wire_reverse:
+                wires.reverse()
+            self.ops_all[k](q_device, wires=wires)
+
 
 class Op2QButterflyLayer(tq.QuantumModule):
     """pattern: [0, 5], [1, 4], [2, 3]
@@ -583,6 +613,66 @@ class SethLayer0(LayerTemplate0):
                     has_params=True,
                     trainable=True))
         return layers_all
+
+
+class SethLayer1(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
+class SethLayer2(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QFit32Layer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
+
+class RZZLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
+
 
 class BarrenLayer0(LayerTemplate0):
     def build_layers(self):
@@ -780,6 +870,9 @@ layer_name_dict = {
     'cu3_0': CU3Layer0,
     'cxrzsx_0': CXRZSXLayer0,
     'seth_0': SethLayer0,
+    'seth_1': SethLayer1,
+    'seth_2': SethLayer2,
+    'rzz_0': RZZLayer0,
     'barren_0': BarrenLayer0,
     'farhi_0': FarhiLayer0,
     'maxwell_0': MaxwellLayer0,

@@ -24,6 +24,7 @@ from torchquantum.utils import (build_module_from_op_list,
                                 get_p_v_reg_mapping,
                                 get_cared_configs)
 from torchquantum.super_utils import get_named_sample_arch
+from tensorflow.python.summary.summary_iterator import summary_iterator
 
 
 def main() -> None:
@@ -38,6 +39,8 @@ def main() -> None:
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
     parser.add_argument('--print-configs', action='store_true',
                         help='print ALL configs')
+    parser.add_argument('--loadGlobalStep', type=str, default=None)
+    parser.add_argument('--loadDir', metavar='DIR', help='load tensorboard directory')
     args, opts = parser.parse_known_args()
 
     configs.load(args.config, recursive=True)
@@ -282,6 +285,23 @@ def main() -> None:
     #     for param in model.nodes[1].parameters():
     #         param.copy_(torch.tensor(-np.pi/2))
     
+    if args.loadGlobalStep is not None:
+        path = args.loadDir
+        stopStep = int(args.loadGlobalStep)
+        grad_dict = {}
+        for i in range(1, stopStep + 1):
+            grad_dict[i] = {}
+        for summary in summary_iterator(path):
+            if (len(summary.summary.value)) == 0:
+                continue
+            tag = summary.summary.value[0].tag
+            value = summary.summary.value[0].simple_value
+            if tag[:10] == 'grad/grad_' and 1 <= summary.step <= stopStep:
+                param_id = int(tag[10:])
+                grad_dict[summary.step][param_id] = value
+                # logger.info('grad_{0}={1}, step={2}'.format(param_id, value, summary.step))
+        trainer.load_grad(stopStep, grad_dict)
+
     trainer.set_use_qiskit(configs)
     trainer.train_with_defaults(
         dataflow['train'],

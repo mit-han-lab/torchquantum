@@ -4,6 +4,6 @@ model:
     node_archs:
       - n_wires: 4
         encoder_op_list_name: 10_ryzx
-        n_blocks: 4
+        n_blocks: 2
         n_layers_per_block: 2
-        q_layer_name: barren_0
+        q_layer_name: farhi_0
