@@ -1,6 +1,0 @@
-model:
-  arch:
-    act_norm: null
-
-trainer:
-  act_quant: False

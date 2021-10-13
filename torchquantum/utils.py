@@ -453,7 +453,7 @@ def get_success_rate(properties, transpiled_circ):
 
 def get_provider(backend_name, hub=None):
     # mass-inst-tech-1 or MIT-1
-    if backend_name in ['ibmq_rome', 'ibmq_jakarta']:
+    if backend_name in ['ibmq_rome']:
         if hub == 'mass' or hub is None:
             provider = IBMQ.get_provider(hub='ibm-q-research',
                                          group='mass-inst-tech-1',
@@ -473,7 +473,9 @@ def get_provider(backend_name, hub=None):
                           'ibmq_bogota',
                           'ibmq_belem',
                           'ibmq_casablanca',
-                          'ibmq_sydney']:
+                          'ibmq_sydney',
+                          'ibmq_jakarta',
+                          'ibmq_brooklyn']:
         provider = IBMQ.get_provider(hub='ibm-q-ornl',
                                      group='anl',
                                      project='csc428')

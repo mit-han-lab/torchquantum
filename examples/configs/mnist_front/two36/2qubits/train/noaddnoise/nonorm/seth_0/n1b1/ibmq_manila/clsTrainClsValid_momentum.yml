@@ -1,0 +1,18 @@
+model:
+  arch:
+    sampling_method: None
+  
+qiskit:
+  use_qiskit_train: False
+  use_qiskit_valid: False
+  backend_name: ibmq_manila
+  noise_model_name: ibmq_manila
+
+optimizer:
+  name: sgd
+  lr: 3e-1
+  weight_decay: 1.0e-4
+  lambda_lr: 1.e-2
+  min_lr: 3.0e-2
+  momentum: 0.8
+  nesterov: 0

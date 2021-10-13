@@ -237,6 +237,25 @@ encoder_op_list_name_dict = {
             {'input_idx': [14], 'func': 'ry', 'wires': [2]},
             {'input_idx': [15], 'func': 'ry', 'wires': [3]}
         ],
+    '2x8_ryzxyzxyz':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [2], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [3], 'func': 'rz', 'wires': [1]},
+            {'input_idx': [4], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [5], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [6], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [7], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [8], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [9], 'func': 'rz', 'wires': [1]},
+            {'input_idx': [10], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [11], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [12], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [13], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [14], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [15], 'func': 'rz', 'wires': [1]}
+        ],
     '10_ryzx':
         [
             {'input_idx': [0], 'func': 'ry', 'wires': [0]},

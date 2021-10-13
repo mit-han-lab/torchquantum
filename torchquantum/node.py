@@ -169,6 +169,7 @@ class QuantumNode(tq.QuantumModule):
                         self.grad_encoder.append(0.5 * (out1 - out2))
         else:
             with torch.no_grad():
+                time1 = datetime.datetime.now()
                 inputs = x
                 x = self.run_circuit(inputs)
                 self.circuit_out = x
@@ -194,6 +195,12 @@ class QuantumNode(tq.QuantumModule):
                         out2 = self.run_circuit(inputs)
                         inputs[:, input_id] += np.pi * 0.5
                         self.grad_encoder.append(0.5 * (out1 - out2))
+                
+                time2 = datetime.datetime.now()
+                print('one step:')
+                print(time2 -time1)
+                print('run one circuit:')
+                print((time2 -time1) / (1 + 2 * np.sum(self.shift_this_step)))
 
         x = self.circuit_out
         self.x_before_add_noise = x.clone()

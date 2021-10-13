@@ -1,5 +1,0 @@
-dataset:
-  n_test_samples: 30
-
-model:
-  load_op_list: True

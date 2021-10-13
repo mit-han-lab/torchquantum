@@ -1,0 +1,9 @@
+model:
+  arch:
+    sampling_method: None
+
+qiskit:
+  use_qiskit_train: False
+  use_qiskit_valid: True
+  backend_name: ibm_lagos
+  noise_model_name: ibm_lagos

@@ -24,7 +24,6 @@ from torchquantum.utils import (build_module_from_op_list,
                                 get_p_v_reg_mapping,
                                 get_cared_configs)
 from torchquantum.super_utils import get_named_sample_arch
-from tensorflow.python.summary.summary_iterator import summary_iterator
 
 
 def main() -> None:
@@ -39,8 +38,6 @@ def main() -> None:
     parser.add_argument('--gpu', type=str, help='gpu ids', default=None)
     parser.add_argument('--print-configs', action='store_true',
                         help='print ALL configs')
-    parser.add_argument('--loadGlobalStep', type=str, default=None)
-    parser.add_argument('--loadDir', metavar='DIR', help='load tensorboard directory')
     args, opts = parser.parse_known_args()
 
     configs.load(args.config, recursive=True)
@@ -246,13 +243,11 @@ def main() -> None:
             build_module_op_list(model.q_layer)
         )
 
-    if configs.qiskit.use_qiskit_train or configs.qiskit.use_qiskit_valid:
-        from torchquantum.plugins import QiskitProcessor
-        processor = QiskitProcessor(use_real_qc=configs.qiskit.use_real_qc, n_shots=configs.qiskit.n_shots, backend_name=configs.qiskit.backend_name)
-        model.set_qiskit_processor(processor)
-
     model.to(device)
-    
+    # model = torch.nn.parallel.DistributedDataParallel(
+    #     model.cuda(),
+    #     device_ids=[dist.local_rank()],
+    #     find_unused_parameters=True)
     if getattr(model, 'sample_arch', None) is not None and \
             not configs.model.transpile_before_run and \
             not configs.trainer.name == 'pruning_trainer':
@@ -279,30 +274,6 @@ def main() -> None:
     # trainer state_dict will be loaded in a callback
     callbacks = builder.make_callbacks(dataflow, state_dict)
 
-    # with torch.no_grad():
-    #     for param in model.nodes[0].parameters():
-    #         param.copy_(torch.tensor(np.pi/2))
-    #     for param in model.nodes[1].parameters():
-    #         param.copy_(torch.tensor(-np.pi/2))
-    
-    if args.loadGlobalStep is not None:
-        path = args.loadDir
-        stopStep = int(args.loadGlobalStep)
-        grad_dict = {}
-        for i in range(1, stopStep + 1):
-            grad_dict[i] = {}
-        for summary in summary_iterator(path):
-            if (len(summary.summary.value)) == 0:
-                continue
-            tag = summary.summary.value[0].tag
-            value = summary.summary.value[0].simple_value
-            if tag[:10] == 'grad/grad_' and 1 <= summary.step <= stopStep:
-                param_id = int(tag[10:])
-                grad_dict[summary.step][param_id] = value
-                # logger.info('grad_{0}={1}, step={2}'.format(param_id, value, summary.step))
-        trainer.load_grad(stopStep, grad_dict)
-
-    trainer.set_use_qiskit(configs)
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.run.n_epochs,

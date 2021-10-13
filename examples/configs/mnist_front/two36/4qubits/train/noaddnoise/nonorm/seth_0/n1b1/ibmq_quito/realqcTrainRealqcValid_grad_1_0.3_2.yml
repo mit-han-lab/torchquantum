@@ -1,0 +1,12 @@
+model:
+  arch:
+    sampling_method: gradient_based_sampling
+    accumulation_window_size: 1
+    sampling_ratio: 0.3
+    sampling_window_size: 2
+
+qiskit:
+  use_qiskit_train: True
+  use_qiskit_valid: True
+  backend_name: ibmq_quito
+  noise_model_name: ibmq_quito

@@ -9,9 +9,14 @@ import csv
 # path_list = ['mnist_front500.two36.4qubits.train.noaddnoise.nonorm.seth_0.n1b1.ibmq_santiago.realqcTrainRealqcValid_2/tensorboard',
 # 'mnist_front500.two36.4qubits.train.noaddnoise.nonorm.seth_0.n1b1.ibmq_santiago.realqcTrainRealqcValid/tensorboard',
 # 'mnist_front500.two36.4qubits.train.noaddnoise.nonorm.seth_0.n1b1.ibmq_santiago.clsTrainRealqcValid/tensorboard']
-path_list = ['vowel_front.four0516.4qubits.train.noaddnoise.nonorm.barren_0.n1b3.ibmq_lima.realqcTrainRealqcValid_grad_1_0.5_2/tensorboard',
-'vowel_front.four0516.4qubits.train.noaddnoise.nonorm.barren_0.n1b3.ibmq_lima.realqcTrainRealqcValid/tensorboard',
-'vowel_front.four0516.4qubits.train.noaddnoise.nonorm.barren_0.n1b3.ibmq_lima.clsTrainRealqcValid/tensorboard']
+# path_list = ['vowel_front.four0516.4qubits.train.noaddnoise.nonorm.barren_0.n1b3.ibmq_lima.realqcTrainRealqcValid_grad_1_0.5_2/tensorboard',
+# 'vowel_front.four0516.4qubits.train.noaddnoise.nonorm.barren_0.n1b3.ibmq_lima.realqcTrainRealqcValid/tensorboard',
+# 'vowel_front.four0516.4qubits.train.noaddnoise.nonorm.barren_0.n1b3.ibmq_lima.clsTrainRealqcValid/tensorboard']
+# path_list = ['mnist_front500.four0123.4qubits.train.noaddnoise.nonorm.seth_0.n1b3.ibmq_manila.realqcTrainRealqcValid_grad_1_0.3_2/tensorboard',
+# 'mnist_front500.four0123.4qubits.train.noaddnoise.nonorm.seth_0.n1b3.ibmq_manila.realqcTrainRealqcValid/tensorboard',
+# 'mnist_front500.four0123.4qubits.train.noaddnoise.nonorm.seth_0.n1b3.ibmq_manila.clsTrainRealqcValid/tensorboard']
+path_list = ['mnist_front500.four0123.4qubits.train.noaddnoise.nonorm.seth_0.n1b3.ibmq_manila.realqcTrainRealqcValid/tensorboard',
+'mnist_front500.four0123.4qubits.train.noaddnoise.nonorm.seth_0.n1b3.ibmq_manila.clsTrainClsValid/tensorboard']
 value_list = []
 for path in path_list:
     list_step = []
@@ -35,8 +40,8 @@ max_len = 0
 for list in value_list:
     max_len = max(max_len, len(list))
 
-head = ['realqcTrainRealqcValid_grad_1_0.5_2 #inference', 'realqcTrainRealqcValid_grad_1_0.5_2 accu', 'realqcTrainRealqcValid #inference', 'realqcTrainRealqcValid accu', 'clsTrainRealqcValid #inference', 'clsTrainRealqcValid accu']
-with open('vowel0516_lima.csv', 'w') as f:
+head = ['realqcTrainRealqcValid #inference', 'realqcTrainRealqcValid accu', 'clsTrainClsValid #inference', 'clsTrainClsValid accu']
+with open('fashion0123_manila.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerow(head)
     for i in range(max_len):
@@ -46,8 +51,7 @@ with open('vowel0516_lima.csv', 'w') as f:
                 row.append(list[i])
             else:
                 row.append('')
-        row[0] *= 50
+        row[0] *= 50 * 49
         row[2] *= 50
-        row[4] *= 50
         writer.writerow(row)
 
