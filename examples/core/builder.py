@@ -318,7 +318,7 @@ def make_qiskit_processor():
         max_jobs=configs.qiskit.max_jobs,
         remove_ops=configs.prune.eval.remove_ops,
         remove_ops_thres=configs.prune.eval.remove_ops_thres,
-        transpile_with_ancilla=configs.qiskit.transpile_with_ancilla,
+        transpile_with_ancilla=getattr(configs.qiskit, 'transpile_with_ancilla', True),
         hub=getattr(configs.qiskit, 'hub', None)
     )
     return processor
