@@ -286,6 +286,7 @@ crashlytics-build.properties
 fabric.properties
 /examples/data/
 runs/
+es_runs/
 /profilings/
 /mnist_data/
 /examples/script/plot/fashion.four0123.gen.csv
