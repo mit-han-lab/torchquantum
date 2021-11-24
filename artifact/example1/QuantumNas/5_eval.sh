@@ -1,0 +1,1 @@
+python examples/eval.py examples/configs/mnist/four0123/eval/lima/real/opt2/300.yml --run-dir=runs/mnist.four0123.prune.searched.lima.noise.opt2.setting0.pr0.1.u3cu3_s0.plain.blk8s1.1.1/  --jobs=4

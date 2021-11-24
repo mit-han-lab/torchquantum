@@ -1,0 +1,1 @@
+python examples/train.py examples/configs/mnist/four0123/prune/searched/lima/noise/opt2/setting0/pr0.1/u3cu3_s0/plain/blk8s1.1.1.yml --ckpt-dir=runs/mnist.four0123.train.searched.scratch.lima.noise.opt2.setting0.u3cu3_s0.plain.blk8s1.1.1/ --gpu=0
