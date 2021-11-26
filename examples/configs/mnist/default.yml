@@ -35,7 +35,7 @@ trainer:
   act_quant_loss_lambda: 10
 
 run:
-  n_epochs: 200
+  n_epochs: 50
   n_warm_epochs: 0
   bsz: 256
   workers_per_gpu: 8

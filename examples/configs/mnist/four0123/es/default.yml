@@ -12,7 +12,7 @@ es:
   mutation_size: 40
   mutation_prob: 0.5
   crossover_size: 40
-  n_iterations: 40
+  n_iterations: 10
   est_success_rate: False
   score_mode: loss_succ
   gene_mask: null
