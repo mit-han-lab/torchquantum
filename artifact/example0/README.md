@@ -4,7 +4,7 @@ Here we show an example to solve an MNIST-0123 task.
 
 The target device is IBMQ_Quito, and circuit design space is U3+CU3. 
 
-Here is a colab [link](https://colab.research.google.com/drive/1JF_z-pbnmuC0T8nWh7CgsKuy6zJKq3g5?usp=sharing) that runs the example in folder `artifact/example0/QuantumNas/'. As colab has time limitation, we have reduced number of training epochs to 50(originally 2000) and number of search iterations to 10(originally 40). The whole process takes about 5 hours and the accuracy evaluated on IBMQ_Quito is about 58%. If using original settings(#training epochs=50, #search iterations=40), the accuracy will be above 70%.
+Here is a colab [link](https://colab.research.google.com/drive/1JF_z-pbnmuC0T8nWh7CgsKuy6zJKq3g5?usp=sharing) that runs the example in folder `artifact/example0/QuantumNas/'. As colab has time limitation, we have reduced number of training epochs to 50(originally 200) and number of search iterations to 10(originally 40). The whole process takes about 5 hours and the accuracy evaluated on IBMQ_Quito is about 58%. If using original settings(#training epochs=200, #search iterations=40), the accuracy will be above 70%.
 
 If you are not using colab, you can follow the instructions below to install and run on your own computers.
 
