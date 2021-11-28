@@ -2,7 +2,7 @@
 
 Here we show an example to solve an MNIST-0123 task.
 
-The target device is IBMQ_Quito, and circuit design space is U3+CU3. 
+The target device is IBMQ_Lima, and circuit design space is U3+CU3. 
 
 
 ## Installation

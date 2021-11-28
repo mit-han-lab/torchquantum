@@ -1,6 +1,6 @@
 # Use QuantumNas to train, search, train from scratch, prune, and eval step by step
 
-Here we show an example to solve an MNIST-0123 task.
+Here we show an example to solve an Fashion-36 task.
 
 The target device is IBMQ_Quito, and circuit design space is U3+CU3. 
 
