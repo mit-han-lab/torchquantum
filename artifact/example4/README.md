@@ -4,6 +4,9 @@ Here we show an example to solve an Fashion-36 task.
 
 The target device is IBMQ_Quito, and circuit design space is RZZ+RY. 
 
+Here is a colab [link](https://colab.research.google.com/drive/1zureaKU9pj-qWGW5hkB8VW4Nb5g9E7IC?usp=sharing) that runs the example in folder `artifact/example0/QuantumNas/'.
+
+If you are not using colab, you can follow the instructions below to install and run on your own computers.
 
 ## Installation
 ```bash
