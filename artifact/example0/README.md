@@ -4,7 +4,7 @@ Here we show an example to solve an MNIST-0123 task.
 
 The target device is IBMQ_Quito, and circuit design space is U3+CU3. 
 
-Here is a colab [link](https://colab.research.google.com/drive/1ROSiS2WlopY84LB6sFAViiZ-W-Mlyy_8?usp=sharing) that runs the example in folder `artifact/example0/QuantumNas/'.
+<mark>Here is a colab [link](https://colab.research.google.com/drive/1ROSiS2WlopY84LB6sFAViiZ-W-Mlyy_8?usp=sharing) that runs the example in folder `artifact/example0/QuantumNas/`.</mark>
 
 If you are not using colab, you can follow the instructions below to install and run on your own computers.
 
