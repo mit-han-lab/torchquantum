@@ -1,0 +1,7 @@
+qiskit:
+  use_qiskit: False
+  noise_model_name: ibmq_quito
+  max_jobs: 1
+
+es:
+  est_success_rate: True

@@ -1,0 +1,1 @@
+python examples/eval.py examples/configs/fashion/two36/eval/lima/real/opt2/300.yml --run-dir=runs/fashion.two36.train.baseline.seth_s0.human.param36/ --jobs=4

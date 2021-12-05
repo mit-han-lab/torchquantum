@@ -34,27 +34,27 @@ IBMQ.save_account('0238b0afc0dc515fe7987b02706791d1719cb89b68befedc125eded0607e6
 
 ## Train a super circuit
 ```bash
-bash artifact/example0/QuantumNas/1_train_supercircuit.sh
+bash artifact/example3/QuantumNas/1_train_supercircuit.sh
 ```
 
 ## Evolutionary search
 ```bash
-bash artifact/example0/QuantumNas/2_search.sh
+bash artifact/example3/QuantumNas/2_search.sh
 ```
 
 ## Train the searched sub circuit from scratch
 ```bash
-bash artifact/example0/QuantumNas/3_train_subcircuit.sh
+bash artifact/example3/QuantumNas/3_train_subcircuit.sh
 ```
 
 ## Iterative pruning
 ```bash
-bash artifact/example0/QuantumNas/4_prune.sh
+bash artifact/example3/QuantumNas/4_prune.sh
 ```
 
 ## Evaluate on real QC
 ```bash
-bash artifact/example0/QuantumNas/5_eval.sh
+bash artifact/example3/QuantumNas/5_eval.sh
 ```
 
 # Train and evaluate a human designed circuit
@@ -62,10 +62,10 @@ bash artifact/example0/QuantumNas/5_eval.sh
 
 ## Train
 ```bash
-bash artifact/example0/human/1_train.sh
+bash artifact/example3/human/1_train.sh
 ```
 
 ## Eval
 ```bash
-bash artifact/example0/human/2_eval.sh
+bash artifact/example3/human/2_eval.sh
 ```

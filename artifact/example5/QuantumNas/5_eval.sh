@@ -1,0 +1,1 @@
+python examples/eval.py examples/configs/fashion/two36/eval/lima/real/opt2/pruned/300.yml --run-dir=runs/fashion.two36.prune.searched.lima.noise.opt2.setting0.pr0.1.seth_s0.plain.blk8s1.1.1/  --jobs=4

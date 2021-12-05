@@ -1,0 +1,1 @@
+python examples/train.py examples/configs/fashion/two36/train/searched/scratch/quito/noise/opt2/setting0/seth_s0/plain/blk8s1.1.1.yml --ckpt-dir=es_runs/fashion.two36.es.quito.noise.opt2.setting0.seth_s0.plain.blk8s1.1.1/
