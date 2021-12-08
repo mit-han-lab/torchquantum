@@ -1,3 +1,7 @@
+<p align="center">
+<img src="https://github.com/mit-han-lab/pytorch-quantum/blob/master/torchquantum_logo.jpg" alt="Torchquantum Logo" width="450">
+</p>
+
 # torchquantum
 A PyTorch-centric hybrid classical-quantum dynamic neural networks framework.
 
