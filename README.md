@@ -27,8 +27,8 @@ A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 
 ## Installation
 ```bash
-git clone https://github.com/Hanrui-Wang/pytorch-quantum.git
-cd pytorch-quantum
+git clone https://github.com/mit-han-lab/torchquantum.git
+cd torchquantum
 pip install --editable .
 ```
 
