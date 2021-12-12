@@ -4,15 +4,16 @@ The table shows the expected results for these examples.
 
 | examples id |   machine  |    task    | design space | expected accuracy |
 |:-----------:|:----------:|:----------:|:------------:|:-----------------:|
-|      2      | IBMQ_Quito | MNIST-0123 |    U3+CU3    |        71%        |
+|      2      | IBMQ_Quito | MNIST-0123 |    U3+CU3    |        74%        |
 |      3      |  IBMQ_Lima | MNIST-0123 |    U3+CU3    |       55.3%       |
-|      4      | IBMQ_Quito | FASHION-36 |    U3+CU3    |        88%        |
+|      4      | IBMQ_Quito | FASHION-36 |    U3+CU3    |        90%        |
 |      5      |  IBMQ_Lima | FASHION-36 |    U3+CU3    |       88.7%       |
-|      6      | IBMQ_Quito | FASHION-36 |    RZZ+RY    |       87.7%       |
-|      7      |  IBMQ_Lima | FASHION-36 |    RZZ+RY    |       88.7%       |
+|      6      | IBMQ_Quito | FASHION-36 |    ZZ+RY     |        89%        |
+|      7      |  IBMQ_Lima | FASHION-36 |    ZZ+RY     |       88.7%       |
 
 For example, if you want to run example2, you only need to follow the instructions below.
 
+However, if you want to run any other experiments, you can refer to our colab [link](https://colab.research.google.com/drive/1WJDzqC6Zt11uQF_j9yiAs36uDs-Uzm1d?usp=sharing) for general experiments.
 
 ## Installation
 ```bash
