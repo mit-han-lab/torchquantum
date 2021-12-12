@@ -53,7 +53,7 @@ def main() -> None:
         torch.manual_seed(configs.debug.seed)
         np.random.seed(configs.debug.seed)
 
-    if configs.run.device == 'gpu':
+    if configs.run.device == 'gpu' and torch.cuda.is_available():
         device = torch.device('cuda')
     elif configs.run.device == 'cpu':
         device = torch.device('cpu')
