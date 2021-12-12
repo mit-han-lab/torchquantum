@@ -57,6 +57,7 @@ def main() -> None:
         if torch.cuda.is_available():
             device = torch.device('cuda')
         else:
+            configs.run.device = 'cpu'
             device = torch.device('cpu')
     elif configs.run.device == 'cpu':
         device = torch.device('cpu')
