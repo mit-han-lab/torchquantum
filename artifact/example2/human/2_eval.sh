@@ -1,1 +1,1 @@
-python examples/eval.py examples/configs/fashion/two36/eval/quito/real/opt2/300.yml --run-dir=runs/fashion.two36.train.baseline.u3cu3_s0.human.param36/ --jobs=4
+python examples/eval.py examples/configs/mnist/four0123/eval/quito/real/opt2/300.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.human.param36/ --jobs=4

@@ -131,6 +131,10 @@ def main():
 
     args = parser.parse_args()
 
+    # save token
+    from qiskit import IBMQ
+    IBMQ.save_account('0238b0afc0dc515fe7987b02706791d1719cb89b68befedc125eded0607e6e9e9f26d3eed482f66fdc45fdfceca3aab2edb9519d96b39e9c78040194b86e7858', overwrite=True)
+    
     dataset = MNIST(
         root='./mnist_data',
         train_valid_split_ratio=[0.9, 0.1],
@@ -187,7 +191,7 @@ def main():
         valid_test(dataflow, 'test', model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = 'ibmqx2'
+        backend_name = 'ibmq_lima'
         print(f"\nTest on Real Quantum Computer {backend_name}")
         processor_real_qc = QiskitProcessor(use_real_qc=True,
                                             backend_name=backend_name)

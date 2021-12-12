@@ -2,9 +2,9 @@
 
 Here we show an example to solve an Fashion-36 task.
 
-The target device is IBMQ_Lima, and circuit design space is RZZ+RY. 
+The target device is IBMQ_Lima, and circuit design space is U3+CU3. 
 
-<mark>Here is a colab [link](https://colab.research.google.com/drive/1cOS87lFJlYxxl81sWhbNbpFEqtpdsJnc?usp=sharing) that runs the example in folder `artifact/example5/QuantumNas/`.</mark>
+<mark>Here is a colab [link](https://colab.research.google.com/drive/1kIGZzdt3ro19gDQJ52eJ6KA_edU1GEEf?usp=sharing) that runs the example in folder `artifact/example5/quantumnas/`.</mark>
 
 If you are not using colab, you can follow the instructions below to install and run on your own computers.
 
@@ -37,27 +37,27 @@ IBMQ.save_account('0238b0afc0dc515fe7987b02706791d1719cb89b68befedc125eded0607e6
 
 ## Train a super circuit
 ```bash
-bash artifact/example5/QuantumNas/1_train_supercircuit.sh
+bash artifact/example5/quantumnas/1_train_supercircuit.sh
 ```
 
 ## Evolutionary search
 ```bash
-bash artifact/example5/QuantumNas/2_search.sh
+bash artifact/example5/quantumnas/2_search.sh
 ```
 
 ## Train the searched sub circuit from scratch
 ```bash
-bash artifact/example5/QuantumNas/3_train_subcircuit.sh
+bash artifact/example5/quantumnas/3_train_subcircuit.sh
 ```
 
 ## Iterative pruning
 ```bash
-bash artifact/example5/QuantumNas/4_prune.sh
+bash artifact/example5/quantumnas/4_prune.sh
 ```
 
 ## Evaluate on real QC
 ```bash
-bash artifact/example5/QuantumNas/5_eval.sh
+bash artifact/example5/quantumnas/5_eval.sh
 ```
 
 # Train and evaluate a human designed circuit
