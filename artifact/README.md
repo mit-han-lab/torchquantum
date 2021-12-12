@@ -4,12 +4,12 @@ The table shows the expected results for these examples.
 
 | examples id |   machine  |    task    | design space | expected accuracy |
 |:-----------:|:----------:|:----------:|:------------:|:-----------------:|
-|      0      | IBMQ_Quito | MNIST-0123 |    U3+CU3    |        71%        |
-|      1      |  IBMQ_Lima | MNIST-0123 |    U3+CU3    |       55.3%       |
-|      2      | IBMQ_Quito | FASHION-36 |    U3+CU3    |        88%        |
-|      3      |  IBMQ_Lima | FASHION-36 |    U3+CU3    |       88.7%       |
-|      4      | IBMQ_Quito | FASHION-36 |    RZZ+RY    |       87.7%       |
-|      5      |  IBMQ_Lima | FASHION-36 |    RZZ+RY    |       88.7%       |
+|      2      | IBMQ_Quito | MNIST-0123 |    U3+CU3    |        71%        |
+|      3      |  IBMQ_Lima | MNIST-0123 |    U3+CU3    |       55.3%       |
+|      4      | IBMQ_Quito | FASHION-36 |    U3+CU3    |        88%        |
+|      5      |  IBMQ_Lima | FASHION-36 |    U3+CU3    |       88.7%       |
+|      6      | IBMQ_Quito | FASHION-36 |    RZZ+RY    |       87.7%       |
+|      7      |  IBMQ_Lima | FASHION-36 |    RZZ+RY    |       88.7%       |
 
 For example, if you want to run example2, you only need to follow the instructions below.
 
