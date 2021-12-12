@@ -1,1 +1,1 @@
-python mnist_example.py
+python3 artifact/example1/mnist_example.py
