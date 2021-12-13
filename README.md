@@ -14,6 +14,7 @@
 
 
 # torchquantum
+
 A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/Hanrui-Wang/pytorch-quantum/blob/master/LICENSE)
@@ -31,6 +32,10 @@ git clone https://github.com/mit-han-lab/torchquantum.git
 cd torchquantum
 pip install --editable .
 ```
+
+## Brief Intro Video
+[![Watch the video](https://hanlab.mit.edu/projects/qmlsys/assets/torchquantum_intro.png)](https://qmlsys.mit.edu/assets/torchquantum_intro.mp4)
+
 
 ## Usage
 Construct quantum NN models as simple as constructing a normal pytorch model.
