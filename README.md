@@ -33,10 +33,10 @@ cd torchquantum
 pip install --editable .
 ```
 
-## Brief Intro Video
+<!-- ## Brief Intro Video
 [![Watch the video](https://hanlab.mit.edu/projects/qmlsys/assets/torchquantum_intro.png)](https://qmlsys.mit.edu/assets/torchquantum_intro.mp4)
 
-
+ -->
 ## Usage
 Construct quantum NN models as simple as constructing a normal pytorch model.
 ```python
