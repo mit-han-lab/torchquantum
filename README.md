@@ -13,11 +13,11 @@
 ```
 
 
-# torchquantum
+# TorchQuantum
 
 A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/Hanrui-Wang/pytorch-quantum/blob/master/LICENSE)
+[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 
 ## News
 - Colab examples are available in the [artifact](./artifact) folder.
