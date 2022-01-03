@@ -235,11 +235,12 @@ if __name__ == '__main__':
     import pdb
     pdb.set_trace()
     # generate_uccsd(molecule_name_dict['ch4'])
-for transform in ['BK', 'JW']:
-    for name, info in molecule_name_dict.items():
-        root = './examples/data/vqe/'
-        info['transform'] = transform
-        os.makedirs(os.path.join(root, f"{name}_{transform.lower()}"),
-                    exist_ok=True)
 
-        write_observable(info, root)
+# for transform in ['BK', 'JW']:
+#     for name, info in molecule_name_dict.items():
+#         root = './examples/data/vqe/'
+#         info['transform'] = transform
+#         os.makedirs(os.path.join(root, f"{name}_{transform.lower()}"),
+#                     exist_ok=True)
+#
+#         write_observable(info, root)
