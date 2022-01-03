@@ -110,7 +110,7 @@ def main() -> None:
 
         dataflow[split] = torch.utils.data.DataLoader(
             dataset[split],
-            batch_size=batch_size,
+            batch_size=configs.run.bsz,
             sampler=sampler,
             num_workers=configs.run.workers_per_gpu,
             pin_memory=True)

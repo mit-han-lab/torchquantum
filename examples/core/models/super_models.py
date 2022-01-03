@@ -67,6 +67,68 @@ class SuperQFCModel0(tq.QuantumModule):
         return space
 
 
+class SuperQFCModel5(tq.QuantumModule):
+    def __init__(self, arch):
+        super().__init__()
+        self.arch = arch
+        self.n_wires = arch['n_wires']
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.encoder = tq.GeneralEncoder(
+            encoder_op_list_name_dict[arch['encoder_op_list_name']]
+        )
+        self.q_layer = super_layer_name_dict[arch['q_layer_name']](arch)
+        self.measure = tq.MeasureAll(tq.PauliZ)
+        self.sample_arch = None
+
+    def set_sample_arch(self, sample_arch):
+        self.sample_arch = sample_arch
+        self.q_layer.set_sample_arch(sample_arch)
+
+    def count_sample_params(self):
+        return self.q_layer.count_sample_params()
+
+    def forward(self, x, verbose=False, use_qiskit=False):
+        bsz = x.shape[0]
+
+        if getattr(self.arch, 'down_sample_kernel_size', None) is not None:
+            x = F.avg_pool2d(x, self.arch['down_sample_kernel_size'])
+
+        x = x.view(bsz, -1)
+
+        if use_qiskit:
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, self.measure, x)
+        else:
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
+
+        if verbose:
+            logger.info(f"[use_qiskit]={use_qiskit}, expectation:\n {x.data}")
+
+        if getattr(self.arch, 'output_remain', None) is not None:
+            x = x[:, :self.arch.output_remain]
+
+        if getattr(self.arch, 'output_len', None) is not None:
+            x = x.reshape(bsz, -1, self.arch.output_len).sum(-2)
+
+        if x.dim() > 2:
+            x = x.squeeze()
+
+        x = F.log_softmax(x, dim=1)
+        return x
+
+    @property
+    def arch_space(self):
+        space = []
+        for layer in self.q_layer.super_layers_all:
+            space.append(layer.arch_space)
+        # for the number of sampled blocks
+        space.append(list(range(self.q_layer.n_front_share_blocks,
+                                self.q_layer.n_blocks + 1)))
+        return space
+
+
 class SuperVQEModel0(tq.QuantumModule):
     def __init__(self, arch, hamil_info):
         super().__init__()
@@ -548,5 +610,6 @@ model_dict = {
     'super_qfc2': SuperQFCModel2,
     'super_qfc3': SuperQFCModel3,
     'super_qfc4': SuperQFCModel4,
+    'super_qfc5': SuperQFCModel5,
     'supervqe_0': SuperVQEModel0,
 }

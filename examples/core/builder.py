@@ -34,6 +34,7 @@ def make_dataset() -> Dataset:
             n_test_samples=configs.dataset.n_test_samples,
             n_valid_samples=configs.dataset.n_valid_samples,
             fashion=configs.dataset.fashion,
+            n_train_samples=getattr(configs.dataset, 'n_train_samples', None)
         )
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
@@ -319,7 +320,9 @@ def make_qiskit_processor():
         remove_ops=configs.prune.eval.remove_ops,
         remove_ops_thres=configs.prune.eval.remove_ops_thres,
         transpile_with_ancilla=getattr(configs.qiskit, 'transpile_with_ancilla', True),
-        hub=getattr(configs.qiskit, 'hub', None)
+        hub=getattr(configs.qiskit, 'hub', None),
+        layout_method=getattr(configs.qiskit, 'layout_method', None),
+        routing_method=getattr(configs.qiskit, 'routing_method', None),
     )
     return processor
 

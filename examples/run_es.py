@@ -92,10 +92,14 @@ class Evaluator(object):
                     loss = F.nll_loss(output_all, target_all).item()
 
                 if configs.es.est_success_rate:
-                    circ_parameterized, params = tq2qiskit_parameterized(
-                        model.q_device, model.encoder.func_list)
                     circ_fixed = tq2qiskit(model.q_device, model.q_layer)
-                    circ = circ_parameterized + circ_fixed
+                    if configs.dataset.name == 'vqe':
+                        circ = circ_fixed
+                    else:
+                        circ_parameterized, params = tq2qiskit_parameterized(
+                            model.q_device, model.encoder.func_list)
+                        circ = circ_parameterized + circ_fixed
+
                     transpiled_circ = model.qiskit_processor.transpile(circ)
 
                     success_rate = get_success_rate(
@@ -111,6 +115,8 @@ class Evaluator(object):
                 }
             if configs.es.score_mode == 'loss_succ':
                 score = loss / success_rate
+            elif configs.es.score_mode == 'vqe_loss_succ':
+                score = loss * success_rate
             elif configs.es.score_mode == 'acc_succ':
                 score = - accuracy * success_rate
             else:
@@ -272,6 +278,7 @@ def main() -> None:
         arch_space=model.arch_space,
         gene_mask=configs.es.gene_mask,
         random_search=configs.es.random_search,
+        legalize_layout=getattr(configs.es, 'legalize_layout', False)
     )
 
     evaluator = Evaluator()

@@ -15,6 +15,8 @@ from qiskit.chemistry.components.initial_states import HartreeFock
 from torchquantum.plugins.qiskit_processor import QiskitProcessor
 from torchquantum.plugins import qiskit2tq
 
+from torchpack.utils.config import configs
+
 processor = QiskitProcessor(
     use_real_qc=False,
     backend_name=None,
@@ -105,6 +107,10 @@ def generate_uccsd(molecule_data):
 
     #randlist = np.random.rand(uccsd_ansatz.num_parameters) # ansatz parameters
     #uccsd_ansatz_circuit = uccsd_ansatz.construct_circuit(randlist)
+    if getattr(configs.model.arch, 'n_truncate_ops', None) is not None:
+        # only take the front n_truncate_ops, otherwise cannot run on real QC
+        q_layer.ops = q_layer.ops[:configs.model.arch.n_truncate_ops]
+
     return q_layer
 
 def molecule_data2str(md):
@@ -191,7 +197,27 @@ ch4_molecule = {
 'active_orbitals' : 4
 }
 
-# generate_uccsd(h2_molecule)
+beh2_molecule = {
+    'name' : 'BeH2',
+    'basis' : 'sto-3g',
+    'transform' : 'BK',
+    'electrons' : 8,
+    'geometry' : [('Be', (0., 0., 0.)), ('H', (0., 0., -1.7)), ('H', (0., 0., 1.7))],
+    'active_orbitals' : 7
+}
+
+ch4new_molecule = {
+    'name' : 'CH4NEW',
+    'basis' : 'sto-3g',
+    'transform' : 'BK',
+    'electrons' : 10,
+    'geometry' : [('C', (0, 0, 0)), ('H', (0.5541, 0.7996, 0.4965)),
+                  ('H', (0.6833, -0.8134, -0.2536)), ('H', (-0.7782, -0.3735, 0.6692)),
+                  ('H', (-0.4593, 0.3874, -0.9121))],
+    'active_orbitals' : 6
+}
+
+#generate_uccsd(h2_molecule)
 #generate_uccsd(h2o_molecule)
 #generate_uccsd(lih_molecule)
 #generate_uccsd(ch4_molecule)
@@ -200,18 +226,20 @@ molecule_name_dict = {
     'h2': h2_molecule,
     'h2o': h2o_molecule,
     'lih': lih_molecule,
-    'ch4': ch4_molecule
+    'ch4': ch4_molecule,
+    'beh2': beh2_molecule,
+    'ch4new': ch4new_molecule,
 }
 
 if __name__ == '__main__':
     import pdb
     pdb.set_trace()
-    generate_uccsd(molecule_name_dict['ch4'])
-# for transform in ['BK', 'JW']:
-#     for name, info in molecule_name_dict.items():
-#         root = './examples/data/vqe/'
-#         info['transform'] = transform
-#         os.makedirs(os.path.join(root, f"{name}_{transform.lower()}"),
-#                     exist_ok=True)
-#
-#         write_observable(info, root)
+    # generate_uccsd(molecule_name_dict['ch4'])
+for transform in ['BK', 'JW']:
+    for name, info in molecule_name_dict.items():
+        root = './examples/data/vqe/'
+        info['transform'] = transform
+        os.makedirs(os.path.join(root, f"{name}_{transform.lower()}"),
+                    exist_ok=True)
+
+        write_observable(info, root)
