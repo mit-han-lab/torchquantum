@@ -1,0 +1,7 @@
+model:
+  name: super_qfc0
+  arch:
+    encoder_op_list_name: 10_ryzx
+    n_layers_per_block: 6
+    q_layer_name: ibmbasis_a0
+

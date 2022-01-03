@@ -1,0 +1,126 @@
+model:
+  name: supervqe_0
+  arch:
+    n_layers_per_block: 4
+    q_layer_name: barren_s0
+
+scheduler:
+  name: cosine_warm
+
+run:
+  n_warm_epochs: 15
+
+callbacks:
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'smallest'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/smallest_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'middle'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/middle_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'largest'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/largest_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk1_ratio1'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk1_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk2_ratio1'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk2_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk3_ratio1'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk3_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk4_ratio1'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk4_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk5_ratio1'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk5_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk6_ratio1'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk6_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'blk7_ratio1'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk7_ratio1_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk1_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk1_rand2_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk2_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk2_rand2_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk3_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk3_rand2_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk4_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk4_rand2_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk5_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk5_rand2_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk6_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk6_rand2_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk7_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk7_rand2_valid'
+  - callback: 'SubnetInferenceRunner'
+    split: 'valid'
+    subnet: 'sharefront0_blk8_rand2'
+    subcallbacks:
+      - metrics: 'MinError'
+        name: 'superloss/blk8_rand2_valid'
+  - callback: 'MinSaver'
+    name: 'superloss/largest_valid'
+  - callback: 'Saver'
+    max_to_keep: 10
+

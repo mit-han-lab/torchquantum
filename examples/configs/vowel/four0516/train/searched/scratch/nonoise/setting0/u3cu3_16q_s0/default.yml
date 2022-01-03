@@ -1,0 +1,42 @@
+model:
+  name: super_qfc5
+  arch:
+    encoder_op_list_name: 10_ry
+    n_layers_per_block: 2
+    q_layer_name: u3cu3_s0
+    n_wires: 16
+    output_remain: 16
+    output_len: 4
+
+#es:
+#  legalize_layout: True
+#  population_size: 40
+#  parent_size: 10
+#  mutation_size: 20
+#  mutation_prob: 0.4
+#  crossover_size: 10
+#  n_iterations: 40
+#
+#scheduler:
+#  name: cosine_warm
+
+#run:
+#  n_warm_epochs: 30
+#  bsz: 64
+
+#callbacks:
+#  - callback: 'SubnetInferenceRunner'
+#    split: 'valid'
+#    subnet: 'largest'
+#    subcallbacks:
+#      - metrics: 'CategoricalAccuracy'
+#        name: 'superacc/largest_valid'
+#      - metrics: 'NLLError'
+#        name: 'superloss/largest_valid'
+#  - callback: 'MaxSaver'
+#    name: 'superacc/largest_valid'
+#  - callback: 'Saver'
+#    max_to_keep: 10
+#
+#ckpt:
+#  name: 'checkpoints/step-35800.pt'

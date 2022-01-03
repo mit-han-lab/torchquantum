@@ -1,0 +1,4 @@
+qiskit:
+  backend_name: ibmq_16_melbourne
+  n_shots: 2048
+

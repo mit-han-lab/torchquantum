@@ -1,0 +1,15 @@
+es:
+  gene_mask: [-1, -1, -1, -1,
+              4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              1 ]
+
+model:
+  name: super_qfc0
+  arch:
+    encoder_op_list_name: 10_ryzx
+    n_layers_per_block: 11
+    q_layer_name: maxwell_s0
+

@@ -1,0 +1,3 @@
+dataset:
+  n_valid_samples: 500
+  split: valid

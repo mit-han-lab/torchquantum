@@ -1,0 +1,20 @@
+dataset:
+  n_test_samples: null
+
+model:
+  load_op_list: True
+
+ckpt:
+  load_ckpt: True
+  name: 'checkpoints/step-18400.pt'
+
+prune:
+  eval:
+    remove_ops: True
+    remove_ops_thres: 1.0e-3
+
+qiskit:
+  backend_name: ibmqx2
+  noise_model_name: ibmqx2
+  optimization_level: 2
+  initial_layout: [3, 4, 2, 1]

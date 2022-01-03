@@ -1,0 +1,11 @@
+model:
+  load_op_list: True
+
+ckpt:
+  load_ckpt: True
+  name: 'checkpoints/step-18000.pt'
+
+prune:
+  eval:
+    remove_ops: True
+    remove_ops_thres: 1.0e-3

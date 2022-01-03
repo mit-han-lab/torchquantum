@@ -1,0 +1,15 @@
+model:
+  name: super_qfc5
+  arch:
+    down_sample_kernel_size: 6
+    encoder_op_list_name: 16_ry
+    n_layers_per_block: 2
+    q_layer_name: u3cu3_s0
+    n_wires: 16
+    output_remain: 16
+    output_len: 4
+
+#run:
+#  bsz: 64
+
+

@@ -1,0 +1,3 @@
+qiskit:
+  layout_method: sabre
+  routing_method: sabre

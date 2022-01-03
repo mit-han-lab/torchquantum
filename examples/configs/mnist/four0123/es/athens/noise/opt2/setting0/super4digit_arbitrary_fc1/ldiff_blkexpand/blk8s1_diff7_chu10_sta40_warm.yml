@@ -1,0 +1,15 @@
+model:
+  arch:
+    n_blocks: 8
+    n_front_share_blocks: 1
+  sampler:
+    strategy:
+      n_diffs: 7
+      n_chunks: 10
+      n_stages: 40
+
+scheduler:
+  name: cosine_warm
+
+run:
+  n_warm_epochs: 30
