@@ -187,7 +187,7 @@ def main():
         valid_test(dataflow, 'test', model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = 'ibmqx2'
+        backend_name = 'ibmq_quito'
         print(f"\nTest on Real Quantum Computer {backend_name}")
         processor_real_qc = QiskitProcessor(use_real_qc=True,
                                             backend_name=backend_name)
