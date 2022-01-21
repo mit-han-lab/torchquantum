@@ -2,9 +2,9 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'TorchQuantum'
+copyright = '2021, Hanrui Wang'
+author = 'Hanrui Wang'
 
 release = '0.1'
 version = '0.1.0'
