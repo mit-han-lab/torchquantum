@@ -142,6 +142,27 @@ class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
 
 
 encoder_op_list_name_dict = {
+    '1x1_ry':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+        ],
+    '2x1_ryry':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+        ],
+    '3x1_ryryry':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [2], 'func': 'ry', 'wires': [2]},
+        ],
+    '3x1_rxrxrx':
+        [
+            {'input_idx': [0], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [1], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [2], 'func': 'rx', 'wires': [2]},
+        ],
     '4_ry':
         [
             {'input_idx': [0], 'func': 'ry', 'wires': [0]},
@@ -240,6 +261,25 @@ encoder_op_list_name_dict = {
             {'input_idx': [13], 'func': 'ry', 'wires': [13]},
             {'input_idx': [14], 'func': 'ry', 'wires': [14]},
             {'input_idx': [15], 'func': 'rz', 'wires': [0]}
+        ],
+    '2x8_ryzxyzxyz':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [2], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [3], 'func': 'rz', 'wires': [1]},
+            {'input_idx': [4], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [5], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [6], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [7], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [8], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [9], 'func': 'rz', 'wires': [1]},
+            {'input_idx': [10], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [11], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [12], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [13], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [14], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [15], 'func': 'rz', 'wires': [1]}
         ],
     '10_ryzx':
         [
@@ -609,5 +649,43 @@ encoder_op_list_name_dict = {
             {'input_idx': [61], 'func': 'ry', 'wires': [1]},
             {'input_idx': [62], 'func': 'ry', 'wires': [2]},
             {'input_idx': [63], 'func': 'ry', 'wires': [3]},
+        ],
+    '8x2_ryz':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [2], 'func': 'ry', 'wires': [2]},
+            {'input_idx': [3], 'func': 'ry', 'wires': [3]},
+            {'input_idx': [4], 'func': 'ry', 'wires': [4]},
+            {'input_idx': [5], 'func': 'ry', 'wires': [5]},
+            {'input_idx': [6], 'func': 'ry', 'wires': [6]},
+            {'input_idx': [7], 'func': 'ry', 'wires': [7]},
+            {'input_idx': [8], 'func': 'rz', 'wires': [0]},
+            {'input_idx': [9], 'func': 'rz', 'wires': [1]},
+            {'input_idx': [10], 'func': 'rz', 'wires': [2]},
+            {'input_idx': [11], 'func': 'rz', 'wires': [3]},
+            {'input_idx': [12], 'func': 'rz', 'wires': [4]},
+            {'input_idx': [13], 'func': 'rz', 'wires': [5]},
+            {'input_idx': [14], 'func': 'rz', 'wires': [6]},
+            {'input_idx': [15], 'func': 'rz', 'wires': [7]},
+        ],
+    '16x1_ry':
+        [
+            {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+            {'input_idx': [2], 'func': 'ry', 'wires': [2]},
+            {'input_idx': [3], 'func': 'ry', 'wires': [3]},
+            {'input_idx': [4], 'func': 'ry', 'wires': [4]},
+            {'input_idx': [5], 'func': 'ry', 'wires': [5]},
+            {'input_idx': [6], 'func': 'ry', 'wires': [6]},
+            {'input_idx': [7], 'func': 'ry', 'wires': [7]},
+            {'input_idx': [8], 'func': 'ry', 'wires': [8]},
+            {'input_idx': [9], 'func': 'ry', 'wires': [9]},
+            {'input_idx': [10], 'func': 'ry', 'wires': [10]},
+            {'input_idx': [11], 'func': 'ry', 'wires': [11]},
+            {'input_idx': [12], 'func': 'ry', 'wires': [12]},
+            {'input_idx': [13], 'func': 'ry', 'wires': [13]},
+            {'input_idx': [14], 'func': 'ry', 'wires': [14]},
+            {'input_idx': [15], 'func': 'ry', 'wires': [15]},
         ],
 }

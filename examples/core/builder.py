@@ -7,7 +7,7 @@ from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError,
                                  MaxSaver, MinSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
 from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
-    NLLError, TrainerRestore, AddNoiseInferenceRunner
+    NLLError, TrainerRestore, AddNoiseInferenceRunner, GradRestore
 from torchquantum.plugins import QiskitProcessor
 from torchquantum.vqe_utils import parse_hamiltonian_file
 from torchquantum.noise_model import *
@@ -36,6 +36,22 @@ def make_dataset() -> Dataset:
             fashion=configs.dataset.fashion,
             n_train_samples=getattr(configs.dataset, 'n_train_samples', None)
         )
+    elif configs.dataset.name == 'mnist_front500':
+        from .datasets import MNIST_FRONT500
+        dataset = MNIST_FRONT500(
+            root=configs.dataset.root,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
+            center_crop=configs.dataset.center_crop,
+            resize=configs.dataset.resize,
+            resize_mode=configs.dataset.resize_mode,
+            binarize=configs.dataset.binarize,
+            binarize_threshold=configs.dataset.binarize_threshold,
+            digits_of_interest=configs.dataset.digits_of_interest,
+            n_test_samples=configs.dataset.n_test_samples,
+            n_valid_samples=configs.dataset.n_valid_samples,
+            fashion=configs.dataset.fashion,
+            front_size=configs.dataset.front_size,
+        )
     elif configs.dataset.name == 'layer_regression':
         from .datasets import LayerRegression
         dataset = LayerRegression()
@@ -49,6 +65,18 @@ def make_dataset() -> Dataset:
             binarize=configs.dataset.binarize,
             binarize_threshold=configs.dataset.binarize_threshold,
             digits_of_interest=configs.dataset.digits_of_interest,
+        )
+    elif configs.dataset.name == 'vowel_front':
+        from .datasets import Vowel_Front
+        dataset = Vowel_Front(
+            root=configs.dataset.root,
+            test_ratio=configs.dataset.test_ratio,
+            train_valid_split_ratio=configs.dataset.train_valid_split_ratio,
+            resize=configs.dataset.resize,
+            binarize=configs.dataset.binarize,
+            binarize_threshold=configs.dataset.binarize_threshold,
+            digits_of_interest=configs.dataset.digits_of_interest,
+            front_size=configs.dataset.front_size,
         )
     elif configs.dataset.name == 'vqe':
         from .datasets import VQE
@@ -71,6 +99,18 @@ def make_dataset() -> Dataset:
             n_valid_samples=configs.dataset.n_valid_samples,
             fashion=configs.dataset.fashion,
         )
+    elif configs.dataset.name == 'simple2class':
+        from .datasets import Simple2Class
+        dataset = Simple2Class()
+    elif configs.dataset.name == 'simple3class':
+        from .datasets import Simple3Class
+        dataset = Simple3Class()
+    elif configs.dataset.name == 'simple2class_tiny':
+        from .datasets import Simple2Class_Tiny
+        dataset = Simple2Class_Tiny()
+    elif configs.dataset.name == 'simple2class_tiny2':
+        from .datasets import Simple2Class_Tiny2
+        dataset = Simple2Class_Tiny2()
     else:
         raise NotImplementedError(configs.dataset.name)
 
@@ -189,7 +229,7 @@ def make_scheduler(optimizer: Optimizer) -> Scheduler:
             optimizer,
             first_cycle_steps=configs.run.n_epochs,
             max_lr=configs.optimizer.lr,
-            min_lr=0,
+            min_lr=configs.optimizer.min_lr,
             warmup_steps=configs.run.n_warm_epochs,
         )
     else:
@@ -203,7 +243,13 @@ def make_trainer(model: nn.Module,
                  optimizer: Optimizer,
                  scheduler: Scheduler
                  ):
-    if configs.trainer.name == 'q_trainer':
+    if configs.trainer.name == 'params_shift_trainer':
+        from .trainers import ParamsShiftTrainer
+        trainer = ParamsShiftTrainer(model=model,
+                           criterion=criterion,
+                           optimizer=optimizer,
+                           scheduler=scheduler)
+    elif configs.trainer.name == 'q_trainer':
         from .trainers import QTrainer
         trainer = QTrainer(model=model,
                            criterion=criterion,
@@ -291,6 +337,8 @@ def make_callbacks(dataflow, state=None):
             callback = MaxSaver(config['name'])
         elif config['callback'] == 'MinSaver':
             callback = MinSaver(config['name'])
+        elif config['callback'] == 'GradRestore':
+            callback = GradRestore()
         else:
             raise NotImplementedError(config['callback'])
         callbacks.append(callback)

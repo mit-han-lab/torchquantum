@@ -18,7 +18,7 @@ from torchquantum.utils import legalize_unitary
 
 
 __all__ = ['LegalInferenceRunner', 'SubnetInferenceRunner', 'NLLError',
-           'TrainerRestore', 'MinError', 'AddNoiseInferenceRunner']
+           'TrainerRestore', 'MinError', 'AddNoiseInferenceRunner', 'GradRestore']
 
 
 class LegalInferenceRunner(Callback):
@@ -202,3 +202,26 @@ class TrainerRestore(Callback):
 
     def _before_train(self) -> None:
         self.trainer.load_state_dict(self.state)
+
+
+class GradRestore(Callback):
+    """
+    A callback that restore the all the gradients among all the steps.
+    """
+    def __init__(self) -> None:
+        self.trainer = None
+        pass
+
+    def _set_trainer(self, trainer: Trainer) -> None:
+        self.trainer = trainer
+
+    def _trigger_step(self) -> None:
+        self._trigger()
+
+    def _trigger(self) -> None:
+        for node in self.trainer.model.nodes:
+            for i, param in enumerate(node.q_layer.parameters()):
+                self.trainer.summary.add_scalar('grad/grad_'+str(i), float(param.grad))
+                self.trainer.summary.add_scalar('param/param_'+str(i), float(param))
+                # self.trainer.summary.writers[1].add_histogram('histogram/grad', float(param.grad))
+
