@@ -96,6 +96,8 @@ class QFCModel(nn.Module):
     return x
 
 ```
+## Tutorials
+- [Opening](https://www.dropbox.com/s/35xtw31myhidiq2/TorchQuantum-tutorial1-Opening.mp4?dl=0)
 
 ## Features
 - Easy construction of parameterized quantum circuits in PyTorch.
