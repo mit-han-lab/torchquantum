@@ -9,7 +9,7 @@ import datetime
 
 from torchquantum.encoding import encoder_op_list_name_dict
 from torchpack.utils.logging import logger
-from ..tools.generate_ansatz_observables import (
+from examples.core.tools.generate_ansatz_observables import (
     molecule_name_dict, generate_uccsd)
 from torchquantum.layers import layer_name_dict
 from torchpack.utils.config import configs

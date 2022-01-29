@@ -38,9 +38,12 @@ def run_job_worker(data):
             result = job.result()
             counts = result.get_counts()
             break
-        except QiskitError as e:
-            logger.warning('Job failed, rerun now.')
-            print(e.message)
+        except Exception as e:
+            if "Job was cancelled" in str(e):
+                logger.warning(f"Job is cancelled manually.")
+                return None
+            else:
+                logger.warning(f"Job failed because {e}, rerun now.")
 
     return counts
 
@@ -76,6 +79,7 @@ class QiskitProcessor(object):
         self.seed_simulator = seed_simulator
         self.optimization_level = optimization_level
         self.max_jobs = max_jobs
+        self.transpile_with_ancilla = transpile_with_ancilla
 
         self.layout_method = layout_method
         self.routing_method = routing_method
@@ -111,7 +115,15 @@ class QiskitProcessor(object):
             backend = self.provider.get_backend(name)
             coupling_map = backend.configuration().coupling_map
         else:
-            coupling_map = None
+            if name == 'four_all':
+                coupling_map = [[0, 1], [1, 0],
+                                [0, 2], [2, 0],
+                                [0, 3], [3, 0],
+                                [1, 2], [2, 1],
+                                [1, 3], [3, 1],
+                                [2, 3], [3, 2]]
+            else:
+                coupling_map = None
 
         return coupling_map
 
@@ -133,12 +145,13 @@ class QiskitProcessor(object):
         self.properties = None
 
         IBMQ.load_account()
-        self.provider = get_provider(self.backend_name)
+        self.provider = get_provider(self.backend_name, hub=self.hub)
 
         if self.use_real_qc:
             self.backend = self.provider.get_backend(
                 self.backend_name)
             self.properties = self.backend.properties()
+            self.coupling_map = self.get_coupling_map(self.backend_name)
         else:
             # use simulator
             self.backend = Aer.get_backend('qasm_simulator',
@@ -151,10 +164,20 @@ class QiskitProcessor(object):
         self.initial_layout = layout
 
     def transpile(self, circs):
+        if not self.transpile_with_ancilla and self.coupling_map is not None:
+            # only use same number of physical qubits as virtual qubits
+            # !! the risk is that the remaining graph is not a connected graph,
+            # need fix this later
+            coupling_map = []
+            for pair in self.coupling_map:
+                if all([p_wire < len(circs.qubits) for p_wire in pair]):
+                    coupling_map.append(pair)
+        else:
+            coupling_map = self.coupling_map
         transpiled_circs = transpile(circuits=circs,
                                      backend=self.backend,
                                      basis_gates=self.basis_gates,
-                                     coupling_map=self.coupling_map,
+                                     coupling_map=coupling_map,
                                      initial_layout=self.initial_layout,
                                      seed_transpiler=self.seed_transpiler,
                                      optimization_level=self.optimization_level
@@ -218,7 +241,7 @@ class QiskitProcessor(object):
         transpiled_circ, binds_all = self.preprocess_parameterized(
             q_device, q_layer_parameterized, q_layer_fixed,
             q_layer_measure, x)
-        parallel = False
+
         if parallel:
             if hasattr(self.backend.configuration(), 'max_experiments'):
                 chunk_size = self.backend.configuration().max_experiments

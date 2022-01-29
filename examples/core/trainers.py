@@ -13,7 +13,7 @@ from torchquantum.prune_utils import (PhaseL1UnstructuredPruningMethod,
                                       ThresholdScheduler)
 from torchpack.utils.logging import logger
 from torchpack.callbacks.writers import TFEventWriter
-from .tools.quantize import PACTActivationQuantizer
+from examples.core.tools.quantize import PACTActivationQuantizer
 from torchpack.train.exception import StopTraining
 
 __all__ = ['QTrainer', 'LayerRegressionTrainer', 'SuperQTrainer', 'ParamsShiftTrainer',

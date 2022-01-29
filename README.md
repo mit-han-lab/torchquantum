@@ -156,9 +156,18 @@ python examples/eval.py examples/configs/mnist/four0123/eval/tq/all.yml --run-di
 # evaluate the circuit with real IBMQ-Yorktown quantum computer
 python examples/eval.py examples/configs/mnist/four0123/eval/x2/real/opt2/300.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36
 ```
-For MNIST-0123 dataset
-```bash
-python3 examples/train.py examples/configs/mnist_front500/four0123/4qubits/train/noaddnoise/nonorm/seth_0/n1b3/ibmq_manila/realqcTrainRealqcValid.yml --gpu=5
+
+Example usage for a VQE circuit:
+```python
+# Train the VQE circuit for h2
+python examples/train.py examples/configs/vqe/h2/train/baseline/u3cu3_s0/human/param12.yml
+
+# evaluate the VQE circuit with torchquantum
+python examples/eval.py examples/configs/vqe/h2/eval/tq/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
+
+# evaluate the VQE circuit with real IBMQ-Yorktown quantum computer
+python examples/eval.py examples/configs/vqe/h2/eval/x2/real/opt2/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
+
 ```
 
 Detailed documentations coming soon.
