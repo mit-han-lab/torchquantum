@@ -7,7 +7,7 @@ from torchpack.callbacks import (InferenceRunner, MeanAbsoluteError,
                                  MaxSaver, MinSaver,
                                  Saver, SaverRestore, CategoricalAccuracy)
 from .callbacks import LegalInferenceRunner, SubnetInferenceRunner, \
-    NLLError, TrainerRestore, AddNoiseInferenceRunner
+    NLLError, TrainerRestore, AddNoiseInferenceRunner, GradRestore
 from torchquantum.plugins import QiskitProcessor
 from torchquantum.vqe_utils import parse_hamiltonian_file
 from torchquantum.noise_model import *
@@ -71,6 +71,12 @@ def make_dataset() -> Dataset:
             n_valid_samples=configs.dataset.n_valid_samples,
             fashion=configs.dataset.fashion,
         )
+    elif configs.dataset.name == 'simple2class':
+        from .datasets import Simple2Class
+        dataset = Simple2Class()
+    elif configs.dataset.name == 'simple3class':
+        from .datasets import Simple3Class
+        dataset = Simple3Class()
     else:
         raise NotImplementedError(configs.dataset.name)
 
@@ -189,7 +195,7 @@ def make_scheduler(optimizer: Optimizer) -> Scheduler:
             optimizer,
             first_cycle_steps=configs.run.n_epochs,
             max_lr=configs.optimizer.lr,
-            min_lr=0,
+            min_lr=configs.optimizer.min_lr,
             warmup_steps=configs.run.n_warm_epochs,
         )
     else:
@@ -203,7 +209,13 @@ def make_trainer(model: nn.Module,
                  optimizer: Optimizer,
                  scheduler: Scheduler
                  ):
-    if configs.trainer.name == 'q_trainer':
+    if configs.trainer.name == 'params_shift_trainer':
+        from .trainers import ParamsShiftTrainer
+        trainer = ParamsShiftTrainer(model=model,
+                           criterion=criterion,
+                           optimizer=optimizer,
+                           scheduler=scheduler)
+    elif configs.trainer.name == 'q_trainer':
         from .trainers import QTrainer
         trainer = QTrainer(model=model,
                            criterion=criterion,
@@ -291,6 +303,8 @@ def make_callbacks(dataflow, state=None):
             callback = MaxSaver(config['name'])
         elif config['callback'] == 'MinSaver':
             callback = MinSaver(config['name'])
+        elif config['callback'] == 'GradRestore':
+            callback = GradRestore()
         else:
             raise NotImplementedError(config['callback'])
         callbacks.append(callback)

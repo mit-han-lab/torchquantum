@@ -6,7 +6,6 @@ from torchquantum.macro import C_DTYPE
 
 __all__ = ['QuantumDevice']
 
-
 class QuantumDevice(nn.Module):
     def __init__(self, n_wires: int):
         super().__init__()

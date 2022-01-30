@@ -21,6 +21,9 @@ __all__ = [
     'Op2QButterflyLayer',
     'Op2QDenseLayer',
     'layer_name_dict',
+    'CXLayer',
+    'CXCXCXLayer',
+    'SWAPSWAPLayer',
 ]
 
 
@@ -301,6 +304,48 @@ class SimpleQLayer(tq.QuantumModule):
         tqf.x(q_dev, wires=2, static=self.static_mode,
               parent_graph=self.graph)
 
+class CXLayer(tq.QuantumModule):
+    def __init__(self, n_wires):
+        super().__init__()
+        self.n_wires = n_wires
+
+    @tq.static_support
+    def forward(self, q_dev):
+        self.q_device = q_dev
+        tqf.cnot(q_dev, wires=[0, 1], static=self.static_mode,
+              parent_graph=self.graph)
+
+
+class CXCXCXLayer(tq.QuantumModule):
+    def __init__(self, n_wires):
+        super().__init__()
+        self.n_wires = n_wires
+
+    @tq.static_support
+    def forward(self, q_dev):
+        self.q_device = q_dev
+        tqf.cnot(q_dev, wires=[0, 1], static=self.static_mode,
+              parent_graph=self.graph)
+        tqf.cnot(q_dev, wires=[1, 2], static=self.static_mode,
+              parent_graph=self.graph)
+        tqf.cnot(q_dev, wires=[2, 0], static=self.static_mode,
+              parent_graph=self.graph)
+
+
+
+class SWAPSWAPLayer(tq.QuantumModule):
+    def __init__(self, n_wires):
+        super().__init__()
+        self.n_wires = n_wires
+
+    @tq.static_support
+    def forward(self, q_dev):
+        self.q_device = q_dev
+        tqf.swap(q_dev, wires=[0, 1], static=self.static_mode,
+              parent_graph=self.graph)
+        tqf.swap(q_dev, wires=[1, 2], static=self.static_mode,
+              parent_graph=self.graph)
+
 
 class Op1QAllLayer(tq.QuantumModule):
     def __init__(self, op, n_wires: int, has_params=False, trainable=False):
@@ -358,6 +403,36 @@ class Op2QAllLayer(tq.QuantumModule):
     def forward(self, q_device):
         for k in range(len(self.ops_all)):
             wires = [k, (k + self.jump) % self.n_wires]
+            if self.wire_reverse:
+                wires.reverse()
+            self.ops_all[k](q_device, wires=wires)
+
+class Op2QFit32Layer(tq.QuantumModule):
+    def __init__(self, op, n_wires: int, has_params=False, trainable=False,
+                 wire_reverse=False, jump=1, circular=False):
+        super().__init__()
+        self.n_wires = n_wires
+        self.jump = jump
+        self.circular = circular
+        self.op = op
+        self.ops_all = tq.QuantumModuleList()
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        # if circular:
+        #     n_ops = n_wires
+        # else:
+        #     n_ops = n_wires - jump
+        n_ops = 32
+        for k in range(n_ops):
+            self.ops_all.append(op(has_params=has_params,
+                                   trainable=trainable))
+
+    @tq.static_support
+    def forward(self, q_device):
+        for k in range(len(self.ops_all)):
+            wires = [k % self.n_wires, (k + self.jump) % self.n_wires]
             if self.wire_reverse:
                 wires.reverse()
             self.ops_all[k](q_device, wires=wires)
@@ -508,8 +583,8 @@ class CXRZSXLayer0(LayerTemplate0):
                 Op1QAllLayer(
                     op=tq.SX,
                     n_wires=self.n_wires,
-                    has_params=True,
-                    trainable=True))
+                    has_params=False,
+                    trainable=False))
         layers_all.append(
             Op1QAllLayer(
                 op=tq.RZ,
@@ -538,6 +613,65 @@ class SethLayer0(LayerTemplate0):
                     has_params=True,
                     trainable=True))
         return layers_all
+
+
+class SethLayer1(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
+class SethLayer2(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QFit32Layer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
+
+class RZZLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.RZZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    jump=1,
+                    circular=True))
+        return layers_all
+
 
 
 class BarrenLayer0(LayerTemplate0):
@@ -671,14 +805,81 @@ class MaxwellLayer0(LayerTemplate0):
 
         return layers_all
 
+class RYRYCXLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(CXLayer(n_wires=self.n_wires))
+        return layers_all
+
+class RYRYRYCXCXCXLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(CXCXCXLayer(n_wires=self.n_wires))
+        return layers_all
+
+class RYRYRYLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+        return layers_all
+    
+class RYRYRYSWAPSWAPLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(SWAPSWAPLayer(n_wires=self.n_wires))
+        return layers_all
+
+class SWAPSWAPLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(SWAPSWAPLayer(n_wires=self.n_wires))
+        return layers_all
+
+
 
 layer_name_dict = {
     'u3cu3_0': U3CU3Layer0,
     'cu3_0': CU3Layer0,
     'cxrzsx_0': CXRZSXLayer0,
     'seth_0': SethLayer0,
+    'seth_1': SethLayer1,
+    'seth_2': SethLayer2,
+    'rzz_0': RZZLayer0,
     'barren_0': BarrenLayer0,
     'farhi_0': FarhiLayer0,
     'maxwell_0': MaxwellLayer0,
+    'ryrycx': RYRYCXLayer0,
+    'ryryrycxcxcx': RYRYRYCXCXCXLayer0,
+    'ryryry': RYRYRYLayer0,
+    'swapswap': SWAPSWAPLayer0, 
+    'ryryryswapswap': RYRYRYSWAPSWAPLayer0,
 }
 
