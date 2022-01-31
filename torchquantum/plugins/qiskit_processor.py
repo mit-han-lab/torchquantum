@@ -15,7 +15,6 @@ from tqdm import tqdm
 from torchpack.utils.logging import logger
 from qiskit.transpiler import PassManager
 import numpy as np
-import simplejson
 import datetime
 
 class EmptyPassManager(PassManager):
