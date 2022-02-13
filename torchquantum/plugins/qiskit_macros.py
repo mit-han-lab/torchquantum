@@ -26,3 +26,5 @@ IBMQ_NAMES = ['ibmq_santiago', 'ibmq_athens', 'ibmq_belem',
               'simulator_statevector',
               'ibmq_qasm_simulator',
               ]
+
+IBMQ_PNAMES = ['FakeQuito', 'FakeArmonk', 'FakeBogota']
