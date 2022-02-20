@@ -20,6 +20,7 @@ A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 
 ## News
+- Refactoring the ```examples``` folder, see the ```allconfigs``` branch for previous ```example``` folder.
 - Colab examples are available in the [artifact](./artifact) folder.
 - Our recent paper ["QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits"](https://arxiv.org/abs/2107.10845) is accepted to HPCA 2022. We are working on updating the repo to add more examples soon!
 - Add a simple [example script](./mnist_example.py) using quantum gates to do MNIST 
