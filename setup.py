@@ -4,7 +4,7 @@ setup(name='torchquantum',
       version='0.1.0',
       description='A PyTorch-centric hybrid classical-quantum dynamic '
                   'neural networks framework.',
-      url='https://github.com/Hanrui-Wang/pytorch-quantum',
+      url='https://github.com/mit-han-lab/torchquantum',
       author='Hanrui Wang',
       author_email='hanruiwang.hw@gmail.com',
       license='MIT',
@@ -23,3 +23,24 @@ setup(name='torchquantum',
       python_requires='>=3',
       include_package_data=True,
       packages=find_packages())
+
+
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
+print('hello world!')
