@@ -1,5 +1,0 @@
-qiskit:
-  backend_name: ibmq_quito
-  noise_model_name: ibmq_quito
-  coupling_map_name: ibmq_quito
-  basis_gates_name: ibmq_quito

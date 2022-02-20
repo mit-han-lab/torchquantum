@@ -1,5 +1,0 @@
-trainer:
-  act_quant: True
-  act_quant_bit: null
-  act_quant_level: 5
-  act_quant_ratio: 1

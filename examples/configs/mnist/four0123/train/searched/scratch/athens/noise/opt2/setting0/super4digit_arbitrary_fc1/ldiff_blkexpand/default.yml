@@ -1,5 +1,0 @@
-model:
-  sampler:
-    strategy:
-      name: ldiff_blkexpand
-

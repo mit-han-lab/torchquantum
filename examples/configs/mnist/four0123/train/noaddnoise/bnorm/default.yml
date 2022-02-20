@@ -1,4 +1,0 @@
-model:
-  arch:
-    act_norm: batch_norm
-

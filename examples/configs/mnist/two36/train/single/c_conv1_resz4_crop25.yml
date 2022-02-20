@@ -1,6 +1,0 @@
-model:
-  name: c_conv1_resize4
-
-dataset:
-  resize: 4
-  center_crop: 25

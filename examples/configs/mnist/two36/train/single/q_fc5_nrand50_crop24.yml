@@ -1,7 +1,0 @@
-model:
-  name: q_fc5
-  arch:
-    n_random_ops: [50]
-
-dataset:
-  center_crop: 24

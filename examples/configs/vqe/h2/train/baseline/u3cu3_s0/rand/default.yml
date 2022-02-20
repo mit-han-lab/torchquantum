@@ -1,6 +1,0 @@
-model:
-  name: vqe_rand0
-  arch:
-    op_type_name: ['u3', 'cu3']
-    n_random_ops: null
-

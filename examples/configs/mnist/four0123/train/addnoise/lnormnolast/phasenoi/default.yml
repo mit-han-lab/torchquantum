@@ -1,3 +1,0 @@
-trainer:
-  noise_model_tq_name: phase
-  noise_mean: 0

@@ -1,5 +1,0 @@
-model:
-  name: vqe_uccsd
-  arch:
-    transform: BK
-    n_wires: 4

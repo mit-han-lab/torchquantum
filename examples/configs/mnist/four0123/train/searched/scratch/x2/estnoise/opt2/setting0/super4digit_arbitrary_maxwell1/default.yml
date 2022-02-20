@@ -1,4 +1,0 @@
-model:
-  name: super4digit_arbitrary_maxwell1
-  arch:
-    n_layers_per_block: 11

@@ -1,5 +1,0 @@
-model:
-  sampler:
-    strategy:
-      name: limit_diff_expanding
-

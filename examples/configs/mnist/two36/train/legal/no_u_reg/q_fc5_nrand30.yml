@@ -1,4 +1,0 @@
-model:
-  name: q_fc5
-  n_random_ops: [30]
-

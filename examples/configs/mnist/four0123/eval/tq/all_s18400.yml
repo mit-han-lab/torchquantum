@@ -1,5 +1,0 @@
-dataset:
-  n_test_samples: null
-
-ckpt:
-  name: 'checkpoints/step-18400.pt'

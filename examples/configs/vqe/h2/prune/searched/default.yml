@@ -1,4 +1,0 @@
-ckpt:
-  load_ckpt: True
-  name: 'checkpoints/min-loss-valid.pt'
-  weight_from_scratch: False

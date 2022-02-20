@@ -1,8 +1,0 @@
-prune:
-  target_pruning_amount: 0.1
-  init_pruning_amount: 0.05
-  start_epoch: 0
-  end_epoch: 100
-
-optimizer:
-  lr: 2e-3

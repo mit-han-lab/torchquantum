@@ -1,3 +1,0 @@
-qiskit:
-  initial_layout: [0, 1, 2, 3]
-  transpile_with_ancilla: False

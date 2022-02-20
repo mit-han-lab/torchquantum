@@ -1,8 +1,0 @@
-model:
-  name: q_fc5
-
-run:
-  bsz: 900
-
-dataset:
-  n_test_samples: 100

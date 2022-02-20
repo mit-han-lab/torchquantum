@@ -1,3 +1,0 @@
-trainer:
-  noise_prob_schedule: increase
-  noise_prob_schedule_separator: 100

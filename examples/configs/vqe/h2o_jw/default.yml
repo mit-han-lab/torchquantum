@@ -1,4 +1,0 @@
-model:
-  hamil_filename: './examples/data/vqe/h2o_jw/h2o_jw.txt'
-  arch:
-    n_wires: 6

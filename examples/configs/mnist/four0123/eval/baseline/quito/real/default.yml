@@ -1,5 +1,0 @@
-qiskit:
-  use_real_qc: True
-
-run:
-  bsz: qiskit_max

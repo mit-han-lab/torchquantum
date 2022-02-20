@@ -1,3 +1,0 @@
-qiskit:
-  noise_model_name: ibmq_manhattan
-  max_jobs: 48

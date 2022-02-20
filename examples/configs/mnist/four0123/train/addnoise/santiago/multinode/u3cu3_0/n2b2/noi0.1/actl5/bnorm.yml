@@ -1,7 +1,0 @@
-model:
-  arch:
-    act_norm: batch_norm
-
-trainer:
-  act_quant_upper_bound: 2
-  act_quant_lower_bound: -2

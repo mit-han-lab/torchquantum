@@ -1,5 +1,0 @@
-model:
-  name: q_fc4
-
-run:
-  bsz: 16

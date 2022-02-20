@@ -1,4 +1,0 @@
-model:
-  name: q_fc1
-run:
-  bsz: 64

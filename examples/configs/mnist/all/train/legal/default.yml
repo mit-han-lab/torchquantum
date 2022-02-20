@@ -1,4 +1,0 @@
-legalization:
-  legalize: True
-  epoch_interval: 10
-  step_interval: 100000000

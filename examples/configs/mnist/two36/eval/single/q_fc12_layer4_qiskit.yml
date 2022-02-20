@@ -1,8 +1,0 @@
-model:
-  name: q_fc12
-  arch:
-    n_blocks: 4
-
-qiskit:
-  use_qiskit: True
-  use_real_qc: False

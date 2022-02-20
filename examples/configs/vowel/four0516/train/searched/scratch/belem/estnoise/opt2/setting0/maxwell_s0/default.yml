@@ -1,7 +1,0 @@
-model:
-  name: super_qfc0
-  arch:
-    encoder_op_list_name: 10_ryzx
-    n_layers_per_block: 11
-    q_layer_name: maxwell_s0
-

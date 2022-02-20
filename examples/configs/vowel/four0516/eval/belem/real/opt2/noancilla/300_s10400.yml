@@ -1,5 +1,0 @@
-dataset:
-  n_test_samples: 300
-
-ckpt:
-  name: 'checkpoints/step-10400.pt'

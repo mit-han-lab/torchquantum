@@ -1,5 +1,0 @@
-model:
-  name: q_fc2
-
-run:
-  bsz: 1

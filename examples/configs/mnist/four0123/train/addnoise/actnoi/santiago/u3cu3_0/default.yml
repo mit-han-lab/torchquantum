@@ -1,5 +1,0 @@
-model:
-  name: q_multifc0
-  arch:
-    down_sample_kernel_size: 6
-    act_norm: layer_norm

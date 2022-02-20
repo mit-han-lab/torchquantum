@@ -1,4 +1,0 @@
-model:
-  arch:
-    n_blocks: 8
-    n_front_share_blocks: 1

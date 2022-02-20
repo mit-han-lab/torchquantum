@@ -1,7 +1,0 @@
-model:
-  arch:
-    act_norm: layer_norm
-
-trainer:
-  act_quant_upper_bound: 1.5
-  act_quant_lower_bound: -1.5

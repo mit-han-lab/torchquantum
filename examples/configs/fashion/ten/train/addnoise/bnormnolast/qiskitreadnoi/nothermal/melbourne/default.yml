@@ -1,5 +1,0 @@
-qiskit:
-  noise_model_name: ibmq_16_melbourne
-  optimization_level: 2
-  initial_layout: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  transpile_with_ancilla: False

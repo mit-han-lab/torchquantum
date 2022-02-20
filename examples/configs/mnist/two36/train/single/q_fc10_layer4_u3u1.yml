@@ -1,6 +1,0 @@
-model:
-  name: q_fc10
-  arch:
-    n_blocks: 4
-    encoder:
-      name: u3u1

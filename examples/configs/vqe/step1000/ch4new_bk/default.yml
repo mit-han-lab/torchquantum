@@ -1,4 +1,0 @@
-model:
-  hamil_filename: './examples/data/vqe/ch4new_bk/ch4new_bk.txt'
-  arch:
-    n_wires: 10

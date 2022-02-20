@@ -1,3 +1,0 @@
-qiskit:
-  use_qiskit: True
-  backend_name: ibmqx2

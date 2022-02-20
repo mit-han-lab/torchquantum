@@ -1,8 +1,0 @@
-model:
-  name: q_fc5_resize4
-  arch:
-    n_random_ops: [ 50 ]
-
-dataset:
-  center_crop: 24
-  resize: 4

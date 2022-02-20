@@ -1,6 +1,0 @@
-model:
-  name: supervqe_0
-  arch:
-    n_layers_per_block: 11
-    q_layer_name: maxwell_s0
-

@@ -1,6 +1,0 @@
-dataset:
-  n_valid_samples: 300
-  split: valid
-
-ckpt:
-  name: 'checkpoints/step-44600.pt'

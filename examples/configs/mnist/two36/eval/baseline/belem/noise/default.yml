@@ -1,7 +1,0 @@
-qiskit:
-  noise_model_name: ibmq_lima
-  coupling_map_name: ibmq_lima
-  basis_gates_name: ibmq_lima
-
-run:
-  bsz: 10000

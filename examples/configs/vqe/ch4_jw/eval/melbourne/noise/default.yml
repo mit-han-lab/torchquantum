@@ -1,3 +1,0 @@
-qiskit:
-  noise_model_name: ibmq_16_melbourne
-  max_jobs: 48

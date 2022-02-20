@@ -1,3 +1,0 @@
-model:
-  arch:
-    n_truncate_ops: 200

@@ -1,3 +1,0 @@
-model:
-  arch:
-    op_type_name: ['u3', 'ry']

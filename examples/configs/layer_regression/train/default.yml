@@ -1,5 +1,0 @@
-model:
-  name: layer_regression
-
-criterion:
-  name: complex_mae

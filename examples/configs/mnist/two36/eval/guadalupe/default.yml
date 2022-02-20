@@ -1,7 +1,0 @@
-qiskit:
-  use_qiskit: True
-  backend_name: ibmq_guadalupe
-
-model:
-  arch:
-    n_wires: 16

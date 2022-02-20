@@ -1,6 +1,0 @@
-ckpt:
-  load_ckpt: True
-  name: 'checkpoints/best_solution.pt'
-
-trainer:
-  name: q_trainer

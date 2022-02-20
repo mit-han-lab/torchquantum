@@ -1,4 +1,0 @@
-model:
-  name: q_fc9
-  arch:
-    n_blocks: 4

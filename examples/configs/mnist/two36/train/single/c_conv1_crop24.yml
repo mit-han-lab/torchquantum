@@ -1,5 +1,0 @@
-model:
-  name: c_conv1
-
-dataset:
-  center_crop: 24

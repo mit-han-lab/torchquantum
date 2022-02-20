@@ -1,8 +1,0 @@
-qiskit:
-  use_qiskit: True
-  backend_name: ibmq_qasm_simulator
-  noise_model_name: ibmq_manhattan
-  max_jobs: 48
-
-es:
-  est_success_rate: False

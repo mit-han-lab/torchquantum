@@ -1,4 +1,0 @@
-model:
-  name: c_conv2
-run:
-  bsz: 64

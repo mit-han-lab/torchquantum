@@ -1,3 +1,0 @@
-trainer:
-  noise_model_tq_name: activation
-  noise_mean: 0

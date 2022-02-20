@@ -1,6 +1,0 @@
-model:
-  name: vqe_rand0
-  arch:
-    op_type_name: ['shadamard', 'rx', 'ry', 'rz', 'cz']
-    n_random_ops: null
-

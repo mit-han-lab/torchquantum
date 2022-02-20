@@ -1,4 +1,0 @@
-model:
-  hamil_filename: './examples/data/vqe/beh2_bk/beh2_bk.txt'
-  arch:
-    n_wires: 14

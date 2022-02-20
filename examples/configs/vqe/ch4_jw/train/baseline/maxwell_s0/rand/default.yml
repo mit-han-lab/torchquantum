@@ -1,7 +1,0 @@
-model:
-  name: vqe_rand0
-  arch:
-    op_type_name: ['rx', 'ry', 'rz', 's', 't', 'h', 'u1', 'cnot',
-                   'swap', 'sswap', 'cu3']
-    n_random_ops: null
-

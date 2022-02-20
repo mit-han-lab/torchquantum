@@ -1,5 +1,0 @@
-qiskit:
-  use_qiskit: False
-
-run:
-  bsz: 10000
