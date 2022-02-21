@@ -8,6 +8,8 @@ from typing import Any
 class QuantizeFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor) -> Any:
+        # should be round so that the changes would be small, values close to
+        # 2pi should go to 2pi
         return x.round()
 
     @staticmethod
