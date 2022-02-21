@@ -24,6 +24,7 @@ __all__ = [
     'CXLayer',
     'CXCXCXLayer',
     'SWAPSWAPLayer',
+    'RXYZCXLayer0',
 ]
 
 
@@ -643,6 +644,7 @@ class SethLayer1(LayerTemplate0):
                     circular=True))
         return layers_all
 
+
 class SethLayer2(LayerTemplate0):
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -671,7 +673,6 @@ class RZZLayer0(LayerTemplate0):
                     jump=1,
                     circular=True))
         return layers_all
-
 
 
 class BarrenLayer0(LayerTemplate0):
@@ -805,6 +806,7 @@ class MaxwellLayer0(LayerTemplate0):
 
         return layers_all
 
+
 class RYRYCXLayer0(LayerTemplate0):
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -817,6 +819,7 @@ class RYRYCXLayer0(LayerTemplate0):
                     trainable=True))
             layers_all.append(CXLayer(n_wires=self.n_wires))
         return layers_all
+
 
 class RYRYRYCXCXCXLayer0(LayerTemplate0):
     def build_layers(self):
@@ -831,6 +834,7 @@ class RYRYRYCXCXCXLayer0(LayerTemplate0):
             layers_all.append(CXCXCXLayer(n_wires=self.n_wires))
         return layers_all
 
+
 class RYRYRYLayer0(LayerTemplate0):
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -842,7 +846,8 @@ class RYRYRYLayer0(LayerTemplate0):
                     has_params=True,
                     trainable=True))
         return layers_all
-    
+
+
 class RYRYRYSWAPSWAPLayer0(LayerTemplate0):
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -856,6 +861,7 @@ class RYRYRYSWAPSWAPLayer0(LayerTemplate0):
             layers_all.append(SWAPSWAPLayer(n_wires=self.n_wires))
         return layers_all
 
+
 class SWAPSWAPLayer0(LayerTemplate0):
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -863,6 +869,36 @@ class SWAPSWAPLayer0(LayerTemplate0):
             layers_all.append(SWAPSWAPLayer(n_wires=self.n_wires))
         return layers_all
 
+
+class RXYZCXLayer0(LayerTemplate0):
+    def build_layers(self):
+        layers_all = tq.QuantumModuleList()
+        for k in range(self.arch['n_blocks']):
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RX,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RY,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op1QAllLayer(
+                    op=tq.RZ,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True))
+            layers_all.append(
+                Op2QAllLayer(
+                    op=tq.CNOT,
+                    n_wires=self.n_wires,
+                    jump=1,
+                    circular=True))
+        return layers_all
 
 
 layer_name_dict = {
@@ -881,5 +917,5 @@ layer_name_dict = {
     'ryryry': RYRYRYLayer0,
     'swapswap': SWAPSWAPLayer0, 
     'ryryryswapswap': RYRYRYSWAPSWAPLayer0,
+    'rxyzcx_0': RXYZCXLayer0
 }
-
