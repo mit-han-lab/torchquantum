@@ -9,6 +9,8 @@ import torchquantum.functional as tqf
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+import random
+import numpy as np
 # need to make sure all the gates are RX RY RZ and parameters are 0, pi/2,
 # pi, 3pi/2 four types
 
@@ -86,9 +88,16 @@ def valid_test(dataflow, split, model, device, qiskit=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=20,
                         help='number of training epochs')
     parser.add_argument('--pdb', action='store_true', help='pdb')
+    parser.add_argument('--finetune', action='store_true',
+                        help='quantization aware finetuning')
+
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
     args = parser.parse_args()
 
@@ -100,7 +109,6 @@ def main():
         root='./mnist_data',
         train_valid_split_ratio=[0.9, 0.1],
         digits_of_interest=[3, 6],
-        n_test_samples=75,
     )
     dataflow = dict()
 
@@ -134,12 +142,30 @@ def main():
 
     model.eval()
     # test
+    print(f"Test with floating point model:")
     valid_test(dataflow, 'test', model, device, qiskit=False)
 
-    # perform quantization
-    clifford_quantizer = CliffordQuantizer()
-    model = clifford_quantizer.quantize(model)
+    model.train()
+    for module in model.modules():
+        module.clifford_quantization = True
 
+    # perform quantization-aware finetuning
+    if args.finetune:
+        optimizer = optim.Adam(model.parameters(), lr=5e-3)
+        scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
+        for epoch in range(1, n_epochs + 1):
+            # train
+            print(f"Finetuning Epoch {epoch}:")
+            train(dataflow, model, device, optimizer)
+            print(optimizer.param_groups[0]['lr'])
+
+            # valid
+            valid_test(dataflow, 'valid', model, device)
+            scheduler.step()
+
+    model.eval()
+
+    print(f"Test with clifford quantized model:")
     valid_test(dataflow, 'test', model, device, qiskit=False)
 
     # # run on Qiskit simulator and real Quantum Computers

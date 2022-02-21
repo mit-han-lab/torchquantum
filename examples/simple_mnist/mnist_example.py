@@ -9,6 +9,8 @@ import torchquantum.functional as tqf
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+import random
+import numpy as np
 
 class QFCModel(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
@@ -130,6 +132,11 @@ def main():
                         help='number of training epochs')
 
     args = parser.parse_args()
+
+    seed = 0
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
     dataset = MNIST(
         root='./mnist_data',

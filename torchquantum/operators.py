@@ -6,6 +6,7 @@ import numpy as np
 
 from enum import IntEnum
 from torchquantum.functional import mat_dict
+from torchquantum.quantization.clifford_quantization import CliffordQuantizer
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE
 from torchpack.utils.logging import logger
@@ -167,6 +168,7 @@ class Operator(tq.QuantumModule):
         # for static mode
         self.static_matrix = None
         self.inverse = False
+        self.clifford_quantization = False
 
         try:
             assert not (trainable and not has_params)
@@ -251,6 +253,8 @@ class Operator(tq.QuantumModule):
             else:
                 params = self.params
 
+            if self.clifford_quantization:
+                params = CliffordQuantizer.quantize_sse(params)
             if self.n_wires is None:
                 self.func(q_device, self.wires, params=params,
                           inverse=inverse)

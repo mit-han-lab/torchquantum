@@ -2,22 +2,31 @@ import torch
 import torchquantum as tq
 import numpy as np
 
+from typing import Any
+
+
+class QuantizeFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: Any, x: torch.Tensor) -> Any:
+        return x.round()
+
+    @staticmethod
+    def backward(ctx: Any, grad_output: Any) -> Any:
+        grad_input = grad_output.clone()
+        mean, std = grad_input.mean(), grad_input.std()
+        return grad_input.clamp_(mean - 3 * std, mean + 3 * std)
+
 
 class CliffordQuantizer(object):
     def __init__(self):
         pass
 
-    def quantize(self, model: torch.nn.Module):
-        with torch.no_grad():
-            for module in model.modules():
-                if isinstance(module, (tq.RX, tq.RY, tq.RZ)):
-                    param = module.params[0][0].item()
-                    # now the param is from 0 to 2*pi
-                    param = param % (2 * np.pi)
-                    # print(f'before {param}')
-                    param = np.pi / 2 * np.floor(param / (np.pi / 2))
-                    # print(f'after {param}')
-                    module.params[0][0] = param
-        return model
-
-
+    # straight-through estimator
+    @staticmethod
+    def quantize_sse(params):
+        param = params[0][0]
+        param = param % (2 * np.pi)
+        param = np.pi / 2 * QuantizeFunction.apply(param /
+                                                   (np.pi / 2))
+        params = param.unsqueeze(0).unsqueeze(0)
+        return params
