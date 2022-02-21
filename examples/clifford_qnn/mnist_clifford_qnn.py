@@ -9,50 +9,13 @@ import torchquantum.functional as tqf
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+# need to make sure all the gates are RX RY RZ and parameters are 0, pi/2,
+# pi, 3pi/2 four types
+
+from torchquantum.layers import RXYZCXLayer0
+from torchquantum.quantization import CliffordQuantizer
 
 class QFCModel(tq.QuantumModule):
-    class QLayer(tq.QuantumModule):
-        def __init__(self):
-            super().__init__()
-            self.n_wires = 4
-            self.random_layer = tq.RandomLayer(n_ops=50,
-                                               wires=list(range(self.n_wires)))
-
-            # gates with trainable parameters
-            self.rx0 = tq.RX(has_params=True, trainable=True)
-            self.ry0 = tq.RY(has_params=True, trainable=True)
-            self.rz0 = tq.RZ(has_params=True, trainable=True)
-            self.crx0 = tq.CRX(has_params=True, trainable=True)
-
-        @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice):
-            """
-            1. To convert tq QuantumModule to qiskit or run in the static
-            model, need to:
-                (1) add @tq.static_support before the forward
-                (2) make sure to add
-                    static=self.static_mode and
-                    parent_graph=self.graph
-                    to all the tqf functions, such as tqf.hadamard below
-            """
-            self.q_device = q_device
-
-            self.random_layer(self.q_device)
-
-            # some trainable gates (instantiated ahead of time)
-            self.rx0(self.q_device, wires=0)
-            self.ry0(self.q_device, wires=1)
-            self.rz0(self.q_device, wires=3)
-            self.crx0(self.q_device, wires=[0, 2])
-
-            # add some more non-parameterized gates (add on-the-fly)
-            tqf.hadamard(self.q_device, wires=3, static=self.static_mode,
-                         parent_graph=self.graph)
-            tqf.sx(self.q_device, wires=2, static=self.static_mode,
-                   parent_graph=self.graph)
-            tqf.cnot(self.q_device, wires=[3, 0], static=self.static_mode,
-                     parent_graph=self.graph)
-
     def __init__(self):
         super().__init__()
         self.n_wires = 4
@@ -60,7 +23,8 @@ class QFCModel(tq.QuantumModule):
         self.encoder = tq.GeneralEncoder(
             tq.encoder_op_list_name_dict['4x4_ryzxy'])
 
-        self.q_layer = self.QLayer()
+        self.q_layer = RXYZCXLayer0({'n_wires': 4,
+                                     'n_blocks': 4})
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
@@ -122,14 +86,15 @@ def valid_test(dataflow, split, model, device, qiskit=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--static', action='store_true', help='compute with '
-                                                              'static mode')
-    parser.add_argument('--wires-per-block', type=int, default=2,
-                        help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='number of training epochs')
+    parser.add_argument('--pdb', action='store_true', help='pdb')
 
     args = parser.parse_args()
+
+    if args.pdb:
+        import pdb
+        pdb.set_trace()
 
     dataset = MNIST(
         root='./mnist_data',
@@ -157,11 +122,6 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
-    if args.static:
-        # optionally to switch to the static mode, which can bring speedup
-        # on training
-        model.q_layer.static_on(wires_per_block=args.wires_per_block)
-
     for epoch in range(1, n_epochs + 1):
         # train
         print(f"Epoch {epoch}:")
@@ -172,32 +132,39 @@ def main():
         valid_test(dataflow, 'valid', model, device)
         scheduler.step()
 
+    model.eval()
     # test
     valid_test(dataflow, 'test', model, device, qiskit=False)
 
-    # run on Qiskit simulator and real Quantum Computers
-    try:
-        from qiskit import IBMQ
-        from torchquantum.plugins import QiskitProcessor
+    # perform quantization
+    clifford_quantizer = CliffordQuantizer()
+    model = clifford_quantizer.quantize(model)
 
-        # firstly perform simulate
-        print(f"\nTest with Qiskit Simulator")
-        processor_simulation = QiskitProcessor(use_real_qc=False)
-        model.set_qiskit_processor(processor_simulation)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
+    valid_test(dataflow, 'test', model, device, qiskit=False)
 
-        # then try to run on REAL QC
-        backend_name = 'ibmq_quito'
-        print(f"\nTest on Real Quantum Computer {backend_name}")
-        processor_real_qc = QiskitProcessor(use_real_qc=True,
-                                            backend_name=backend_name)
-        model.set_qiskit_processor(processor_real_qc)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
-    except ImportError:
-        print("Please install qiskit, create an IBM Q Experience Account and "
-              "save the account token according to the instruction at "
-              "'https://github.com/Qiskit/qiskit-ibmq-provider', "
-              "then try again.")
+    # # run on Qiskit simulator and real Quantum Computers
+    # try:
+    #     from qiskit import IBMQ
+    #     from torchquantum.plugins import QiskitProcessor
+    #
+    #     # firstly perform simulate
+    #     print(f"\nTest with Qiskit Simulator")
+    #     processor_simulation = QiskitProcessor(use_real_qc=False)
+    #     model.set_qiskit_processor(processor_simulation)
+    #     valid_test(dataflow, 'test', model, device, qiskit=True)
+    #
+    #     # then try to run on REAL QC
+    #     backend_name = 'ibmq_quito'
+    #     print(f"\nTest on Real Quantum Computer {backend_name}")
+    #     processor_real_qc = QiskitProcessor(use_real_qc=True,
+    #                                         backend_name=backend_name)
+    #     model.set_qiskit_processor(processor_real_qc)
+    #     valid_test(dataflow, 'test', model, device, qiskit=True)
+    # except ImportError:
+    #     print("Please install qiskit, create an IBM Q Experience Account and "
+    #           "save the account token according to the instruction at "
+    #           "'https://github.com/Qiskit/qiskit-ibmq-provider', "
+    #           "then try again.")
 
 
 if __name__ == '__main__':
