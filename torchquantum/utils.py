@@ -173,7 +173,7 @@ def find_global_phase(mat1, mat2, threshold):
         for j in range(mat1.shape[1]):
             # find a numerical stable global phase
             if np.abs(mat1[i][j]) > threshold and \
-                    np.abs(mat1[i][j]) > threshold:
+                    np.abs(mat2[i][j]) > threshold:
                 return mat2[i][j] / mat1[i][j]
     return None
 
