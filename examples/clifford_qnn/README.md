@@ -7,6 +7,7 @@ The advantange of using Clifford QNN is that the simulation of Clifford circuits
 
 ### TODOs
 - [ ] Clifford encoder
+- [ ] Improve quantization aware finetuning accuracy 
 
 ### Train the model in floating and then perform static quantization:
 
