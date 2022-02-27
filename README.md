@@ -13,9 +13,9 @@
 ```
 
 
-# TorchQuantum
+# TorchQuantum 
 
-A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
+A PyTorch-based hybrid classical-quantum dynamic neural networks framework. [(paper)](https://arxiv.org/abs/2107.10845)
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 
