@@ -13,13 +13,14 @@
 ```
 
 
-# TorchQuantum
+# TorchQuantum 
 
-A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
+A PyTorch-based hybrid classical-quantum dynamic neural networks framework. [(paper)](https://arxiv.org/abs/2107.10845)
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 
 ## News
+- New website: [qmlsys.mit.edu](qmlsys.mit.edu)
 - Refactoring the ```examples``` folder, see the ```allconfigs``` branch for previous ```example``` folder.
 - Colab examples are available in the [artifact](./artifact) folder.
 - Our recent paper ["QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits"](https://arxiv.org/abs/2107.10845) is accepted to HPCA 2022. We are working on updating the repo to add more examples soon!
