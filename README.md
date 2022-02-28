@@ -23,8 +23,8 @@ A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 [![Website](https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu)](https://qmlsys.mit.edu)
 
 ## News
-- Welcome to contribute! Please contact us or post in the [forum](qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
-- Qmlsys website goes online: [qmlsys.mit.edu](qmlsys.mit.edu)
+- Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
+- Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
 
 [comment]: <> (- Refactoring the ```examples``` folder, see the ```allconfigs``` branch for previous ```example``` folder.)
 
