@@ -15,7 +15,7 @@
 
 # TorchQuantum 
 
-A PyTorch-based hybrid classical-quantum dynamic neural networks framework. [(paper)](https://arxiv.org/abs/2107.10845)
+A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 [![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum.readthedocs.io)
@@ -23,13 +23,20 @@ A PyTorch-based hybrid classical-quantum dynamic neural networks framework. [(pa
 [![Website](https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu)](https://qmlsys.mit.edu)
 
 ## News
-- New website: [qmlsys.mit.edu](qmlsys.mit.edu)
-- Refactoring the ```examples``` folder, see the ```allconfigs``` branch for previous ```example``` folder.
-- Colab examples are available in the [artifact](./artifact) folder.
-- Our recent paper ["QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits"](https://arxiv.org/abs/2107.10845) is accepted to HPCA 2022. We are working on updating the repo to add more examples soon!
-- Add a simple [example script](./mnist_example.py) using quantum gates to do MNIST 
-  classification.
-- v0.0.1 available. Feedbacks are highly welcomed!
+- Welcome to contribute! Please contact us or post in the [forum](qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
+- Qmlsys website goes online: [qmlsys.mit.edu](qmlsys.mit.edu)
+
+[comment]: <> (- Refactoring the ```examples``` folder, see the ```allconfigs``` branch for previous ```example``` folder.)
+
+[comment]: <> (- Colab examples are available in the [artifact]&#40;./artifact&#41; folder.)
+
+[comment]: <> (- Our recent paper ["QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits"]&#40;https://arxiv.org/abs/2107.10845&#41; is accepted to HPCA 2022. We are working on updating the repo to add more examples soon!)
+
+[comment]: <> (- Add a simple [example script]&#40;./mnist_example.py&#41; using quantum gates to do MNIST )
+
+[comment]: <> (classification.)
+
+[comment]: <> (- v0.0.1 available. Feedbacks are highly welcomed!)
 
 ## Installation
 ```bash
@@ -38,6 +45,11 @@ cd torchquantum
 pip install --editable .
 python fix_qiskit_parameterization.py
 ```
+
+## Papers using TorchQuantum
+- [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
+- [DAC'22] [RobustQNN: Noise-Aware Training for Robust Quantum Neural Networks](https://arxiv.org/abs/2110.11331)
+- [DAC'22] [On-Chip QNN: Towards Efficient On-Chip Training of Quantum Neural Networks](examples/param_shift_onchip_training)
 
 <!-- ## Brief Intro Video
 [![Watch the video](https://hanlab.mit.edu/projects/qmlsys/assets/torchquantum_intro.png)](https://qmlsys.mit.edu/assets/torchquantum_intro.mp4)
@@ -102,8 +114,10 @@ class QFCModel(nn.Module):
     return x
 
 ```
-## Tutorials
-- [Opening](https://www.dropbox.com/s/35xtw31myhidiq2/TorchQuantum-tutorial1-Opening.mp4?dl=0)
+
+[comment]: <> (## Tutorials)
+
+[comment]: <> (- [Opening]&#40;https://www.dropbox.com/s/35xtw31myhidiq2/TorchQuantum-tutorial1-Opening.mp4?dl=0&#41;)
 
 ## Features
 - Easy construction of parameterized quantum circuits in PyTorch.
@@ -132,6 +146,7 @@ Train a quantum circuit to perform MNIST task and deploy on the real IBM
 Yorktown quantum computer as in [mnist_example.py](./mnist_example.py)
 script:
 ```python
+cd examples/simple_mnist
 python mnist_example.py
 ```
 
@@ -149,50 +164,75 @@ python mnist_example.py
 | plugins/qiskit*   | Convertors and processors for easy deployment on IBMQ |
 | examples/| More examples for training QML and VQE models |
 
-## More Examples
-The `examples/` folder contains more examples to train the QML and VQE
-models. Example usage for a QML circuit:
-```python
-# train the circuit with 36 params in the U3+CU3 space
-python examples/train.py examples/configs/mnist/four0123/train/baseline/u3cu3_s0/rand/param36.yml
+[comment]: <> (## More Examples)
 
-# evaluate the circuit with torchquantum
-python examples/eval.py examples/configs/mnist/four0123/eval/tq/all.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36
+[comment]: <> (The `examples/` folder contains more examples to train the QML and VQE)
 
-# evaluate the circuit with real IBMQ-Yorktown quantum computer
-python examples/eval.py examples/configs/mnist/four0123/eval/x2/real/opt2/300.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36
-```
+[comment]: <> (models. Example usage for a QML circuit:)
 
-Example usage for a VQE circuit:
-```python
-# Train the VQE circuit for h2
-python examples/train.py examples/configs/vqe/h2/train/baseline/u3cu3_s0/human/param12.yml
+[comment]: <> (```python)
 
-# evaluate the VQE circuit with torchquantum
-python examples/eval.py examples/configs/vqe/h2/eval/tq/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
+[comment]: <> (# train the circuit with 36 params in the U3+CU3 space)
 
-# evaluate the VQE circuit with real IBMQ-Yorktown quantum computer
-python examples/eval.py examples/configs/vqe/h2/eval/x2/real/opt2/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
+[comment]: <> (python examples/train.py examples/configs/mnist/four0123/train/baseline/u3cu3_s0/rand/param36.yml)
 
-```
+[comment]: <> (# evaluate the circuit with torchquantum)
 
-Detailed documentations coming soon.
+[comment]: <> (python examples/eval.py examples/configs/mnist/four0123/eval/tq/all.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36)
 
-## QuantumNAS
-Quantum noise is the key challenge in Noisy Intermediate-Scale Quantum (NISQ) computers. Previous work for mitigating noise has primarily focused on gate-level or pulse-level noise-adaptive compilation. However, limited research efforts have explored a higher level of optimization by making the quantum circuits themselves resilient to noise. We propose QuantumNAS, a comprehensive framework for noise-adaptive co-search of the variational circuit and qubit mapping. Variational quantum circuits are a promising approach for constructing QML and quantum simulation. However, finding the best variational circuit and its optimal parameters is challenging due to the large design space and parameter training cost. We propose to decouple the circuit search and parameter training by introducing a novel SuperCircuit. The SuperCircuit is constructed with multiple layers of pre-defined parameterized gates and trained by iteratively sampling and updating the parameter subsets (SubCircuits) of it. It provides an accurate estimation of SubCircuits performance trained from scratch. Then we perform an evolutionary co-search of SubCircuit and its qubit mapping. The SubCircuit performance is estimated with parameters inherited from SuperCircuit and simulated with real device noise models. Finally, we perform iterative gate pruning and finetuning to remove redundant gates. Extensively evaluated with 12 QML and VQE benchmarks on 10 quantum comput, QuantumNAS significantly outperforms baselines. For QML, QuantumNAS is the first to demonstrate over 95% 2-class, 85% 4-class, and 32% 10-class classification accuracy on real QC. It also achieves the lowest eigenvalue for VQE tasks on H2, H2O, LiH, CH4, BeH2 compared with UCCSD. We also open-source torchquantum for fast training of parameterized quantum circuits to facilitate future research.
-<p align="center">
-<img src="https://hanruiwang.me/project_pages/quantumnas/assets/teaser.jpg" alt="torchquantum teaser" width="550">
-</p>
+[comment]: <> (# evaluate the circuit with real IBMQ-Yorktown quantum computer)
 
-QuantumNAS Framework overview:
-<p align="center">
-<img src="https://hanruiwang.me/project_pages/quantumnas/assets/overview.jpg" alt="torchquantum overview" width="1000">
-</p>
+[comment]: <> (python examples/eval.py examples/configs/mnist/four0123/eval/x2/real/opt2/300.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36)
 
-QuantumNAS models achieve higher robustness and accuracy than other baseline models:
-<p align="center">
-<img src="https://hanruiwang.me/project_pages/quantumnas/assets/results.jpg" alt="torchquantum results" width="550">
-</p>
+[comment]: <> (```)
+
+[comment]: <> (Example usage for a VQE circuit:)
+
+[comment]: <> (```python)
+
+[comment]: <> (# Train the VQE circuit for h2)
+
+[comment]: <> (python examples/train.py examples/configs/vqe/h2/train/baseline/u3cu3_s0/human/param12.yml)
+
+[comment]: <> (# evaluate the VQE circuit with torchquantum)
+
+[comment]: <> (python examples/eval.py examples/configs/vqe/h2/eval/tq/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/)
+
+[comment]: <> (# evaluate the VQE circuit with real IBMQ-Yorktown quantum computer)
+
+[comment]: <> (python examples/eval.py examples/configs/vqe/h2/eval/x2/real/opt2/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/)
+
+[comment]: <> (```)
+
+[comment]: <> (Detailed documentations coming soon.)
+
+[comment]: <> (## QuantumNAS)
+
+[comment]: <> (Quantum noise is the key challenge in Noisy Intermediate-Scale Quantum &#40;NISQ&#41; computers. Previous work for mitigating noise has primarily focused on gate-level or pulse-level noise-adaptive compilation. However, limited research efforts have explored a higher level of optimization by making the quantum circuits themselves resilient to noise. We propose QuantumNAS, a comprehensive framework for noise-adaptive co-search of the variational circuit and qubit mapping. Variational quantum circuits are a promising approach for constructing QML and quantum simulation. However, finding the best variational circuit and its optimal parameters is challenging due to the large design space and parameter training cost. We propose to decouple the circuit search and parameter training by introducing a novel SuperCircuit. The SuperCircuit is constructed with multiple layers of pre-defined parameterized gates and trained by iteratively sampling and updating the parameter subsets &#40;SubCircuits&#41; of it. It provides an accurate estimation of SubCircuits performance trained from scratch. Then we perform an evolutionary co-search of SubCircuit and its qubit mapping. The SubCircuit performance is estimated with parameters inherited from SuperCircuit and simulated with real device noise models. Finally, we perform iterative gate pruning and finetuning to remove redundant gates. Extensively evaluated with 12 QML and VQE benchmarks on 10 quantum comput, QuantumNAS significantly outperforms baselines. For QML, QuantumNAS is the first to demonstrate over 95% 2-class, 85% 4-class, and 32% 10-class classification accuracy on real QC. It also achieves the lowest eigenvalue for VQE tasks on H2, H2O, LiH, CH4, BeH2 compared with UCCSD. We also open-source torchquantum for fast training of parameterized quantum circuits to facilitate future research.)
+
+[comment]: <> (<p align="center">)
+
+[comment]: <> (<img src="https://hanruiwang.me/project_pages/quantumnas/assets/teaser.jpg" alt="torchquantum teaser" width="550">)
+
+[comment]: <> (</p>)
+
+[comment]: <> (QuantumNAS Framework overview:)
+
+[comment]: <> (<p align="center">)
+
+[comment]: <> (<img src="https://hanruiwang.me/project_pages/quantumnas/assets/overview.jpg" alt="torchquantum overview" width="1000">)
+
+[comment]: <> (</p>)
+
+[comment]: <> (QuantumNAS models achieve higher robustness and accuracy than other baseline models:)
+
+[comment]: <> (<p align="center">)
+
+[comment]: <> (<img src="https://hanruiwang.me/project_pages/quantumnas/assets/results.jpg" alt="torchquantum results" width="550">)
+
+[comment]: <> (</p>)
 
 ## Contact
-Hanrui Wang (hanrui@mit.edu)
+TorchQuantum [Forum](qmlsys.hanruiwang.me)
+
+Hanrui Wang [hanrui@mit.edu](mailto:hanrui@mit.edu)
