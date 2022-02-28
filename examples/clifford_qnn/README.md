@@ -1,5 +1,7 @@
 ## Clifford QNN for MNIST-2 classification
 
+Authors: Hanrui Wang, Gokul Subramanian Ravi
+
 The model contains 16 encoder gates (4RY, 4RZ, 4RZ, 4RY) to encoder 16 pixels on 4 qubits. The encoder part is still non-clifford. The trainable part contains 
 5 blocks. In each block, we have 4 RX, 4 RY, 4 RZ and then 4 CNOT with ring connections.
 
