@@ -1,4 +1,6 @@
 ## On-chip Training of Quantum Neural Networks with parameter shift
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=default"></script>
+
 
 Authors: Zirui Li, Hanrui Wang
 
@@ -7,7 +9,7 @@ Use Colab to run this example: [![](https://colab.research.google.com/assets/col
 
 [comment]: <> (#%% md)
 
-###Outline
+### Outline
 1. Introduction to Parameters Shift Rules.
 2. Build the model and define the function.
 3. Train the model.
@@ -16,18 +18,18 @@ Use Colab to run this example: [![](https://colab.research.google.com/assets/col
 
 [comment]: <> (#%% md)
 
-##Introduction to Parameters Shift Rules
+## Introduction to Parameters Shift Rules
 
 In this tutorial, you can learn parameters shift rules and how to use parameters shift rules to calculate gradients and use the gradient to train the model.
 
-###Back Propagation
+### Back Propagation
 
 Previously, our quantum model was based on qiskit and pytorch. Once we did an inference of the model, pytorch will automatically build a computaion graph. We can calculate the gradients of each node in the computational graph in a reversed order based on the chain rule. This is called back propagation.
 <div align="center">
 <img src="https://github.com/mit-han-lab/torchquantum/blob/master/figs/bp.png?raw=true" alt="conv-full-layer" width="300">
 </div>
 
-###Parameters Shift Rules
+### Parameters Shift Rules
 
 As we all know, when executing a quantum circuit on real quantum machine, we can not observe the quantum state, so we can not use back propagation to calculate gradients when our circuits run on real quantum machine. Parameters shift rules offer us a technique to calculate gradients only by doing inference. For a circuit function $f(\theta)$, we can calculate $f'(\theta)$ by shifting $\theta$ twice and minus one result by the other and multiply with a factor. The figure below describes the workflow of how to calculate the gradient of a parameter in a 4-qubit circuit.
 
