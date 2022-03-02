@@ -51,10 +51,6 @@ python fix_qiskit_parameterization.py
 - [DAC'22] [RobustQNN: Noise-Aware Training for Robust Quantum Neural Networks](https://arxiv.org/abs/2110.11331)
 - [DAC'22] [On-Chip QNN: Towards Efficient On-Chip Training of Quantum Neural Networks](examples/param_shift_onchip_training)
 
-<!-- ## Brief Intro Video
-[![Watch the video](https://hanlab.mit.edu/projects/qmlsys/assets/torchquantum_intro.png)](https://qmlsys.mit.edu/assets/torchquantum_intro.mp4)
-
- -->
 ## Usage
 Construct quantum NN models as simple as constructing a normal pytorch model.
 ```python
