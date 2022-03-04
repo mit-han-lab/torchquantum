@@ -139,7 +139,7 @@ class QFCModel(nn.Module):
 
 ## MNIST Example
 Train a quantum circuit to perform MNIST task and deploy on the real IBM
-Yorktown quantum computer as in [mnist_example.py](./mnist_example.py)
+Quito quantum computer as in [mnist_example.py](./mnist_example.py)
 script:
 ```python
 cd examples/simple_mnist
