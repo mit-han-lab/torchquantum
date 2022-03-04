@@ -5,7 +5,7 @@ from torchquantum.functional import func_name_dict
 from typing import Iterable
 from torchquantum.macro import C_DTYPE
 from abc import ABCMeta
-
+from qiskit import QuantumCircuit
 
 class Encoder(tq.QuantumModule):
     def __init__(self):
@@ -70,6 +70,35 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
                 static=self.static_mode,
                 parent_graph=self.graph
             )
+
+    def to_qiskit(self, n_wires, x):
+        # assuming the x is in batch mode
+        bsz = x.shape[0]
+
+        circs = []
+        for k in range(bsz):
+            circ = QuantumCircuit(n_wires)
+            for info in self.func_list:
+                if info['func'] == 'rx':
+                    circ.rx(x[k][info['input_idx'][0]].item(), *info['wires'])
+                elif info['func'] == 'ry':
+                    circ.ry(x[k][info['input_idx'][0]].item(), *info['wires'])
+                elif info['func'] == 'rz':
+                    circ.rz(x[k][info['input_idx'][0]].item(), *info['wires'])
+                elif info['func'] == 'rxx':
+                    circ.rxx(x[k][info['input_idx'][0]].item(), *info['wires'])
+                elif info['func'] == 'ryy':
+                    circ.ryy(x[k][info['input_idx'][0]].item(), *info['wires'])
+                elif info['func'] == 'rzz':
+                    circ.rzz(x[k][info['input_idx'][0]].item(), *info['wires'])
+                elif info['func'] == 'rzx':
+                    circ.rzx(x[k][info['input_idx'][0]].item(), *info['wires'])
+                else:
+                    raise NotImplementedError(info['func'])
+            circs.append(circ)
+
+        return circs
+
 
 
 class PhaseEncoder(Encoder, metaclass=ABCMeta):
