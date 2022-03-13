@@ -449,10 +449,10 @@ class QiskitProcessor(object):
                         time_per_step = job.time_per_step()
                         time_spent = time_per_step['COMPLETED'] - time_per_step['RUNNING'] + time_per_step['QUEUED'] - job.time_per_step()['CREATING']
                         time_spent_list.append(time_spent)
-                        print(time_spent)
+                        # print(time_spent)
                         total_time_spent += time_spent
                         total_cont += 1
-                        print(total_time_spent / total_cont)
+                        # print(total_time_spent / total_cont)
                         break
                     except (QiskitError, simplejson.errors.JSONDecodeError) as e:
                         logger.warning('Job failed, rerun now.')
