@@ -1271,7 +1271,7 @@ class QMultiFCModel0(tq.QuantumModule):
             self.is_accumulation = True
             self.accumulation_steps = 0
             self.pruning_steps = 0
-        elif self.pruning_method == 'phase_based_sampling':
+        elif self.pruning_method == 'phase_based_pruning':
             self.accumulation_window_size = arch['accumulation_window_size']
             self.pruning_window_size = arch['pruning_window_size']
             self.sampling_ratio = 1 - arch['pruning_ratio']
@@ -1280,7 +1280,7 @@ class QMultiFCModel0(tq.QuantumModule):
             self.accumulation_steps = 0
             self.pruning_steps = 0
         else:
-            logger.info('Not use any sampling')
+            logger.info('Not use any pruning')
 
     def forward(self, x, verbose=False, use_qiskit=False):
         bsz = x.shape[0]
@@ -1330,11 +1330,11 @@ class QMultiFCModel0(tq.QuantumModule):
         
         for k, node in enumerate(self.nodes):
             node.shift_this_step[:] = True
-            if self.pruning_method == 'random_sampling':
+            if self.pruning_method == 'random_pruning':
                 node.shift_this_step[:] = False
                 idx = torch.randperm(self.n_params)[:int(self.sampling_ratio * self.n_params)]
                 node.shift_this_step[idx] = True
-            elif self.pruning_method == 'perlayer_sampling':
+            elif self.pruning_method == 'perlayer_pruning':
                 node.shift_this_step[:] = False
                 idxs = torch.range(0, self.n_params-1, dtype=int).view(self.n_qubits, self.n_layers)
                 sampled_colums = self.colums
@@ -1342,7 +1342,7 @@ class QMultiFCModel0(tq.QuantumModule):
                     node.shift_this_step[idxs[:, colum]] = True
                 self.colums += self.n_sampling_layers
                 self.colums %= self.n_layers
-            elif self.pruning_method == 'perqubit_sampling':
+            elif self.pruning_method == 'perqubit_pruning':
                 node.shift_this_step[:] = False
                 idxs = torch.range(0, self.n_params-1, dtype=int).view(self.n_qubits, self.n_layers)
                 sampled_rows = self.rows
@@ -1350,7 +1350,7 @@ class QMultiFCModel0(tq.QuantumModule):
                     node.shift_this_step[idxs[row]] = True
                 self.rows += self.n_sampling_qubits
                 self.rows %= self.n_qubits
-            elif self.pruning_method == 'gradient_based_sampling':
+            elif self.pruning_method == 'gradient_based_pruning':
                 if self.is_accumulation:
                     self.accumulation_steps += 1
                     self.sum_abs_grad = self.sum_abs_grad + self.last_abs_grad
@@ -1385,7 +1385,7 @@ class QMultiFCModel0(tq.QuantumModule):
                     if self.pruning_steps == self.pruning_window_size:
                         self.is_accumulation = True
                         self.pruning_steps = 0
-            elif self.pruning_method == 'phase_based_sampling':
+            elif self.pruning_method == 'phase_based_pruning':
                 if self.is_accumulation:
                     self.accumulation_steps += 1
                     node.shift_this_step[:] = True
