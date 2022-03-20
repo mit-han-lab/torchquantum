@@ -39,7 +39,6 @@ debug:
   set_seed: True
   seed: 42
 
-
 callbacks:
   - callback: 'InferenceRunner'
     split: 'valid'
@@ -61,10 +60,10 @@ callbacks:
     max_to_keep: 10
 
 qiskit:
-  use_qiskit: False
+  use_qiskit: True
   use_real_qc: False
-  use_qiskit_train: False
-  use_qiskit_valid: False
+  use_qiskit_train: True
+  use_qiskit_valid: True
   backend_name: null
   noise_model_name: null
   basis_gates_name: null

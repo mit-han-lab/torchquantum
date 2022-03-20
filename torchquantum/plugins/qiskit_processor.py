@@ -446,15 +446,15 @@ class QiskitProcessor(object):
                         job_monitor(job, interval=1)
                         result = job.result()#qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
                         counts = counts + result.get_counts()
-                        time_per_step = job.time_per_step()
-                        time_spent = time_per_step['COMPLETED'] - time_per_step['RUNNING'] + time_per_step['QUEUED'] - job.time_per_step()['CREATING']
-                        time_spent_list.append(time_spent)
+                        # time_per_step = job.time_per_step()
+                        # time_spent = time_per_step['COMPLETED'] - time_per_step['RUNNING'] + time_per_step['QUEUED'] - job.time_per_step()['CREATING']
+                        # time_spent_list.append(time_spent)
                         # print(time_spent)
-                        total_time_spent += time_spent
-                        total_cont += 1
+                        # total_time_spent += time_spent
+                        # total_cont += 1
                         # print(total_time_spent / total_cont)
                         break
-                    except (QiskitError, simplejson.errors.JSONDecodeError) as e:
+                    except (QiskitError) as e:
                         logger.warning('Job failed, rerun now.')
                         print(e.message)
 
