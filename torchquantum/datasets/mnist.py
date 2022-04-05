@@ -31,7 +31,8 @@ class MNISTDataset:
                  n_test_samples,
                  n_valid_samples,
                  fashion,
-                 n_train_samples=None,
+                 n_train_samples,
+                 same_n_samples_each_class=False,
                  ):
         self.root = root
         self.split = split
@@ -48,8 +49,34 @@ class MNISTDataset:
         self.n_train_samples = n_train_samples
         self.fashion = fashion
 
+        self.n_digits = len(digits_of_interest)
+
+        self.same_n_samples_each_class = same_n_samples_each_class
+
         self.load()
         self.n_instance = len(self.data)
+
+    def _get_indices(self, subset, n_samples):
+        sample_ctr = {}
+        sample_quota = {}
+        indices = []
+        n_samples_each_class = n_samples // self.n_digits
+
+        for digit_of_interest in self.digits_of_interest:
+            sample_ctr[digit_of_interest] = 0
+            if digit_of_interest == self.digits_of_interest[-1]:
+                sample_quota[digit_of_interest] = \
+                    n_samples - (self.n_digits - 1) * n_samples_each_class
+            else:
+                sample_quota[digit_of_interest] = n_samples_each_class
+
+        for idx in subset.indices:
+            digit = subset.dataset[idx][1]
+            if sample_ctr[digit] < sample_quota[digit]:
+                indices.append(idx)
+                sample_ctr[digit] += 1
+
+        return indices
 
     def load(self):
         tran = [transforms.ToTensor(),
@@ -83,7 +110,12 @@ class MNISTDataset:
                     # use all samples in train set
                     self.data = train_subset
                 else:
-                    train_subset.indices = train_subset.indices[
+                    if self.same_n_samples_each_class:
+                        train_subset.indices = self._get_indices(
+                            train_subset,
+                            self.n_train_samples)
+                    else:
+                        train_subset.indices = train_subset.indices[
                                            :self.n_train_samples]
                     self.data = train_subset
                     logger.warning(f"Only use the front "
@@ -95,7 +127,12 @@ class MNISTDataset:
                     self.data = valid_subset
                 else:
                     # use a subset of valid set, useful to speedup evo search
-                    valid_subset.indices = valid_subset.indices[
+                    if self.same_n_samples_each_class:
+                        valid_subset.indices = self._get_indices(
+                            valid_subset,
+                            self.n_valid_samples)
+                    else:
+                        valid_subset.indices = valid_subset.indices[
                                            :self.n_valid_samples]
                     self.data = valid_subset
                     logger.warning(f"Only use the front "
@@ -118,8 +155,32 @@ class MNISTDataset:
                 self.data = test
             else:
                 # use a subset as test set
-                test.targets = test.targets[:self.n_test_samples]
-                test.data = test.data[:self.n_test_samples]
+                if self.same_n_samples_each_class:
+                    sample_ctr = {}
+                    sample_quota = {}
+                    indices = []
+                    n_samples_each_class = self.n_test_samples // self.n_digits
+
+                    for digit_of_interest in self.digits_of_interest:
+                        sample_ctr[digit_of_interest] = 0
+                        if digit_of_interest == self.digits_of_interest[-1]:
+                            sample_quota[digit_of_interest] = \
+                                self.n_test_samples - (self.n_digits - 1) * n_samples_each_class
+                        else:
+                            sample_quota[digit_of_interest] = n_samples_each_class
+
+                    for idx, target in enumerate(test.targets):
+                        digit = target.item()
+                        if sample_ctr[digit] < sample_quota[digit]:
+                            indices.append(idx)
+                            sample_ctr[digit] += 1
+
+                    test.targets = test.targets[indices]
+                    test.data = test.data[indices]
+                else:
+                    test.targets = test.targets[:self.n_test_samples]
+                    test.data = test.data[:self.n_test_samples]
+
                 self.data = test
                 logger.warning(f"Only use the front {self.n_test_samples} "
                                f"images as TEST set.")
