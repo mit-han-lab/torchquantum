@@ -132,7 +132,7 @@ class QFCModel(nn.Module):
 - [x] Support conversion from torchquantum to qiskit
 
 ## Dependencies
-- Python >= 3.7
+- 3.9 >= Python >= 3.7 (Python 3.10 may have the `concurrent` package issue for Qiskit)
 - PyTorch >= 1.8.0 
 - configargparse >= 0.14
 - GPU model training requires NVIDIA GPUs
