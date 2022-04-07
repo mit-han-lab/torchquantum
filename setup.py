@@ -24,24 +24,3 @@ setup(name='torchquantum',
       python_requires='>=3',
       include_package_data=True,
       packages=find_packages())
-
-
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
-print('hello world!')
