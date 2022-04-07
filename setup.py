@@ -19,6 +19,7 @@ setup(name='torchquantum',
             'qiskit>=0.32.0',
             'matplotlib>=3.3.2',
             'pathos>=0.2.7',
+            'pylatexenc>=2.10'
       ],
       python_requires='>=3',
       include_package_data=True,
