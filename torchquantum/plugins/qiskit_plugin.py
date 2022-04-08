@@ -13,7 +13,8 @@ from torchquantum.utils import (switch_little_big_endian_matrix,
 from typing import Iterable
 
 
-__all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq']
+__all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq',
+           'tq2qiskit_measurement']
 
 
 # construct a QuantumCircuit object according to the tq module
@@ -41,7 +42,8 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
     if original_static_mode:
         m.static_on(wires_per_block=original_wires_per_block)
 
-    circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+    # circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+    circ = QuantumCircuit(q_device.n_wires)
 
     for module in module_list:
         try:
@@ -189,12 +191,26 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
     return circ
 
 
+def tq2qiskit_measurement(q_device: tq.QuantumDevice, q_layer_measure):
+    circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+    v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
+
+    if v_c_reg_mapping is not None:
+        for q_reg, c_reg in v_c_reg_mapping['v2c'].items():
+            circ.measure(q_reg, c_reg)
+    else:
+        circ.measure(list(range(q_device.n_wires)), list(range(
+            q_device.n_wires)))
+    return circ
+
+
 def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
     """
     construct parameterized qiskit QuantumCircuit,
     useful in the classical-quantum encoder
     """
-    circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+    # circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+    circ = QuantumCircuit(q_device.n_wires)
 
     params = {}
     for info in func_list:
