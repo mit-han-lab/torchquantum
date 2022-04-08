@@ -47,14 +47,16 @@ class QuantumNode(tq.QuantumModule):
         self.grad_qlayer = None
         self.grad_encoder = None
 
-    def forward(self, x, use_qiskit=False, is_last_node=False):
+    def forward(self, x, use_qiskit=False, is_last_node=False, parallel=True):
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
                 self.q_device,
                 self.encoder,
                 self.q_layer,
                 self.measure,
-                x)
+                x,
+                parallel=parallel
+            )
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
@@ -112,7 +114,7 @@ class QuantumNode(tq.QuantumModule):
         x = self.measure(self.q_device)
         return x
 
-    def shift_and_run(self, x, use_qiskit=False, is_last_node=False, is_first_node=False):
+    def shift_and_run(self, x, use_qiskit=False, is_last_node=False, is_first_node=False, parallel=True):
         import numpy as np
         self.circuit_in = x
         self.circuit_out = None
@@ -128,7 +130,7 @@ class QuantumNode(tq.QuantumModule):
                     self.measure,
                     inputs,
                     shift_encoder=False,
-                    parallel=False,
+                    parallel=parallel,
                     shift_this_step=self.shift_this_step)
                 for ts in time_spent_list:
                     time_spent = time_spent + ts
@@ -156,7 +158,7 @@ class QuantumNode(tq.QuantumModule):
                         self.measure,
                         inputs,
                         shift_encoder=True,
-                        parallel=False)
+                        parallel=parallel)
                     for ts in time_spent_list:
                         time_spent = time_spent + ts
                     results = x.reshape(2 * inputs.shape[1], bsz, self.arch['n_wires'])
