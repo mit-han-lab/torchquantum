@@ -219,7 +219,7 @@ class QiskitProcessor(object):
                               q_layer_fixed: tq.QuantumModule,
                               q_layer_measure: tq.QuantumModule,
                               x,
-                              parallel=False):
+                              parallel=True):
         """
         separate the conversion, encoder part will be converted to a
         parameterized Qiskit QuantumCircuit. The remaining part will be a
