@@ -229,6 +229,6 @@ python mnist_example.py
 [comment]: <> (</p>)
 
 ## Contact
-TorchQuantum [Forum](qmlsys.hanruiwang.me)
+TorchQuantum [Forum](https://qmlsys.hanruiwang.me)
 
 Hanrui Wang [hanrui@mit.edu](mailto:hanrui@mit.edu)
