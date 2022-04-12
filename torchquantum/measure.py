@@ -70,8 +70,11 @@ class MeasureMultipleTimes(tq.QuantumModule):
     """
     obs list:
     list of dict: example
+    [{'wires': [0, 2, 3, 1], 'observables': ['x', 'y', 'z', 'i']
+    },
     {'wires': [0, 2, 3, 1], 'observables': ['x', 'y', 'z', 'i']
-    }
+    },
+    ]
     """
     def __init__(self, obs_list, v_c_reg_mapping=None):
         super().__init__()
@@ -114,3 +117,33 @@ class MeasureMultipleTimes(tq.QuantumModule):
 
     def set_v_c_reg_mapping(self, mapping):
         self.v_c_reg_mapping = mapping
+
+
+class MeasureMultiPauliSum(tq.QuantumModule):
+    """
+    similar to qiskit.opflow PauliSumOp
+    obs list:
+    list of dict: example
+    [{'wires': [0, 2, 3, 1],
+    'observables': ['x', 'y', 'z', 'i'],
+    'coefficient': [1, 0.5, 0.4, 0.3]
+    },
+    {'wires': [0, 2, 3, 1],
+    'observables': ['x', 'y', 'z', 'i'],
+    'coefficient': [1, 0.5, 0.4, 0.3]
+    },
+    ]
+    """
+    def __init__(self, obs_list, v_c_reg_mapping=None):
+        super().__init__()
+        self.obs_list = obs_list
+        self.v_c_reg_mapping = v_c_reg_mapping
+        self.measure_multiple_times = MeasureMultipleTimes(
+            obs_list=obs_list,
+            v_c_reg_mapping=v_c_reg_mapping
+        )
+
+    def forward(self, q_device: tq.QuantumDevice):
+        res_all = self.measure_multiple_times(q_device)
+
+        return res_all.sum(-1)

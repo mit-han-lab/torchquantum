@@ -48,8 +48,8 @@ python fix_qiskit_parameterization.py
 
 ## Papers using TorchQuantum
 - [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
-- [DAC'22] [RobustQNN: Noise-Aware Training for Robust Quantum Neural Networks](https://arxiv.org/abs/2110.11331)
-- [DAC'22] [On-Chip QNN: Towards Efficient On-Chip Training of Quantum Neural Networks](examples/param_shift_onchip_training)
+- [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
+- [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
 
 ## Usage
 Construct quantum NN models as simple as constructing a normal pytorch model.
@@ -132,7 +132,7 @@ class QFCModel(nn.Module):
 - [x] Support conversion from torchquantum to qiskit
 
 ## Dependencies
-- Python >= 3.7
+- 3.9 >= Python >= 3.7 (Python 3.10 may have the `concurrent` package issue for Qiskit)
 - PyTorch >= 1.8.0 
 - configargparse >= 0.14
 - GPU model training requires NVIDIA GPUs
@@ -229,6 +229,6 @@ python mnist_example.py
 [comment]: <> (</p>)
 
 ## Contact
-TorchQuantum [Forum](qmlsys.hanruiwang.me)
+TorchQuantum [Forum](https://qmlsys.hanruiwang.me)
 
 Hanrui Wang [hanrui@mit.edu](mailto:hanrui@mit.edu)

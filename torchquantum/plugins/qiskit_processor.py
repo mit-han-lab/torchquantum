@@ -7,7 +7,8 @@ from qiskit import Aer, execute, IBMQ, transpile, QuantumCircuit
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
-from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized
+from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized, \
+    tq2qiskit_measurement
 from torchquantum.utils import (get_expectations_from_counts, get_provider,
                                 get_circ_stats)
 from .qiskit_macros import IBMQ_NAMES
@@ -195,16 +196,9 @@ class QiskitProcessor(object):
         circ_fixed = tq2qiskit(q_device, q_layer_fixed,
                                remove_ops=self.remove_ops,
                                remove_ops_thres=self.remove_ops_thres)
-        circ = circ_parameterized + circ_fixed
 
-        v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
-
-        if v_c_reg_mapping is not None:
-            for q_reg, c_reg in v_c_reg_mapping['v2c'].items():
-                circ.measure(q_reg, c_reg)
-        else:
-            circ.measure(list(range(q_device.n_wires)), list(range(
-                q_device.n_wires)))
+        circ_measurement = tq2qiskit_measurement(q_device, q_layer_measure)
+        circ = circ_parameterized + circ_fixed + circ_measurement
 
         logger.info(f'Before transpile: {get_circ_stats(circ)}')
         transpiled_circ = self.transpile(circ)
@@ -470,7 +464,6 @@ class QiskitProcessor(object):
                               q_layer: tq.QuantumModule,
                               q_layer_measure: tq.QuantumModule,):
         obs_list = q_layer_measure.obs_list
-        v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
         circ_fixed = tq2qiskit(q_device, q_layer,
                                remove_ops=self.remove_ops,
                                remove_ops_thres=self.remove_ops_thres)
@@ -492,12 +485,9 @@ class QiskitProcessor(object):
                     circ_diagonalize.s(qubit=wire)
                     circ_diagonalize.h(qubit=wire)
 
-            if v_c_reg_mapping is not None:
-                for q_reg, c_reg in v_c_reg_mapping['v2c'].items():
-                    circ_diagonalize.measure(q_reg, c_reg)
-            else:
-                circ_diagonalize.measure(list(range(q_device.n_wires)),
-                                         list(range(q_device.n_wires)))
+            circ_measurement = tq2qiskit_measurement(q_device, q_layer_measure)
+
+            circ_diagonalize = circ_diagonalize + circ_measurement
 
             transpiled_circ_diagonalize = self.transpile(circ_diagonalize)
             circ_all.append(transpiled_circ_fixed +
@@ -551,13 +541,9 @@ class QiskitProcessor(object):
         circs = []
         for i, x_single in tqdm(enumerate(x)):
             circ = tq2qiskit(q_device, q_layer, x_single.unsqueeze(0))
-            if q_layer_measure.v_c_reg_mapping is not None:
-                for q_reg, c_reg in q_layer_measure.v_c_reg_mapping[
-                        'v2c'].items():
-                    circ.measure(q_reg, c_reg)
-            else:
-                circ.measure(list(range(q_device.n_wires)), list(range(
-                    q_device.n_wires)))
+            circ_measurement = tq2qiskit_measurement(q_device, q_layer_measure)
+            circ = circ + circ_measurement
+
             circs.append(circ)
 
         transpiled_circs = self.transpile(circs)
