@@ -97,14 +97,21 @@ class QVQEModel0(tq.QuantumModule):
         hamil_coefficients = torch.tensor([hamil['coefficient'] for hamil in
                                            self.hamil_info['hamil_list']],
                                           device=x.device).double()
-
+        x_axis = []
+        y_axis = []
         for k, hamil in enumerate(self.hamil_info['hamil_list']):
             for wire, observable in zip(hamil['wires'], hamil['observables']):
                 if observable == 'i':
                     x[k][wire] = 1
+                    x_axis.append(k)
+                    y_axis.append(wire)
             for wire in range(self.q_device.n_wires):
                 if wire not in hamil['wires']:
                     x[k][wire] = 1
+                    x_axis.append(k)
+                    y_axis.append(wire)
+        for grad in self.grad_list:
+            grad[x_axis, y_axis] = 0
         
         self.circuit_output = x
         self.circuit_output.requires_grad = True
