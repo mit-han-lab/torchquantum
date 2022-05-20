@@ -225,6 +225,7 @@ class ParamsShiftTrainer(Trainer):
             inputs = feed_dict[configs.dataset.input_name]
             targets = feed_dict[configs.dataset.target_name]
         
+        # print('bp:')
         # outputs = self.model(inputs)
         # loss = self.criterion(outputs, targets)
         # self.optimizer.zero_grad()
@@ -255,12 +256,10 @@ class ParamsShiftTrainer(Trainer):
             logger.info('global_step {0}, load grad from tensorboard file!'.format(self.global_step))
             for i, param in enumerate(self.model.parameters()):
                 param.grad = torch.tensor(self.grad_dict[self.global_step][i]).to(dtype=torch.float32, device=param.device).view(param.shape)
+        # print('ps:')
         # for param in self.model.parameters():
         #     print(param.grad)
         self.optimizer.step()
-        # with torch.no_grad():
-        #     for param in self.model.parameters():
-        #         param.copy_(param - param.grad * 1.0)
 
         return {'outputs': outputs, 'targets': targets}
 
