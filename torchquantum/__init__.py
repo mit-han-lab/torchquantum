@@ -26,14 +26,14 @@ path_provider = path.replace('__init__.py',
                              'providers/aer/backends/aerbackend.py')
 # print(path_provider)
 
-with open(path_provider, 'r') as fid:
-    for line in fid.readlines():
-        if 'FIXED' in line:
-            # print('The qiskit parameterization bug is already fixed!')
-            break
-        else:
-            print(f'\n\n WARNING: The qiskit parameterization bug is not '
-                  f'fixed!\n\n'
-                  f'run python fix_qiskit_parameterization.py to fix it!'
-                  )
-            break
+# with open(path_provider, 'r') as fid:
+#     for line in fid.readlines():
+#         if 'FIXED' in line:
+#             # print('The qiskit parameterization bug is already fixed!')
+#             break
+#         else:
+#             print(f'\n\n WARNING: The qiskit parameterization bug is not '
+#                   f'fixed!\n\n'
+#                   f'run python fix_qiskit_parameterization.py to fix it!'
+#                   )
+#             break
