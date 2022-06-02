@@ -24,4 +24,5 @@ if __name__ == '__main__':
     unittest.main()
 
 
-# run python test/op_unittest.py
+# run $python test/op_unittest.py
+# or  $python -m unittest test/op_unittest.py
