@@ -24,6 +24,10 @@ class QuantumDevice(nn.Module):
     def clone_states(self, existing_states: torch.Tensor):
         self.states = existing_states.clone()
 
+    def set_states(self, states: torch.Tensor):
+        bsz = states.shape[0]
+        self.states = torch.reshape(states, [bsz] + [2] * self.n_wires)
+
     def reset_states(self, bsz: int):
         repeat_times = [bsz] + [1] * len(self.state.shape)
         self.states = self.state.repeat(*repeat_times).to(self.state.device)
