@@ -164,7 +164,6 @@ class QMultiFCModel0(tq.QuantumModule):
                     if self.accumulation_steps == self.accumulation_window_size:
                         self.is_accumulation = False
                         self.accumulation_steps = 0
-                        self.sum_abs_grad = torch.tensor([0.01] * self.n_params)
                 else:
                     self.pruning_steps += 1
                     node.shift_this_step[:] = False
@@ -174,6 +173,7 @@ class QMultiFCModel0(tq.QuantumModule):
                     if self.pruning_steps == self.pruning_window_size:
                         self.is_accumulation = True
                         self.pruning_steps = 0
+                        self.sum_abs_grad = torch.tensor([0.01] * self.n_params)
             elif self.pruning_method == 'phase_based_pruning':
                 if self.is_accumulation:
                     self.accumulation_steps += 1
