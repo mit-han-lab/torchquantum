@@ -5,7 +5,8 @@
 
 # TorchQuantum 
 
-A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
+A PyTorch-based hybrid quantum simulation framework. It supports the fast statevector simulation and pulse simulation (coming soon) on GPUs. I can scale up to the simulation of 25qubits with multiple GPUs. Researchers on quantum algorithm design, quantum machine learning, variational quantum circuits will benefit from the easy usage and fast processing time of it.
+
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 [![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum.readthedocs.io)
