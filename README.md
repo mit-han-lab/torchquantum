@@ -2,18 +2,21 @@
 <img src="https://github.com/mit-han-lab/pytorch-quantum/blob/master/torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
 </p>
 
+<h2><p align="center">A PyTorch Library for Quantum Simulation</p></h2>
+<h3><p align="center">Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p></h3>
 
-# TorchQuantum 
 
-### 
+
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 [![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum.readthedocs.io)
 [![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F)](https://qmlsys.hanruiwang.me)
 [![Website](https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu)](https://qmlsys.mit.edu)
 
-#### What simulation it is performing
-Fast quantum simulation framework based on PyTorch. It supports the fast statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 25 qubits with multiple GPUs.
+# 👋 Welcome
+
+#### What it is doing
+Quantum simulation framework based on PyTorch. It supports statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 25 qubits with multiple GPUs.
 #### Who will benefit
 Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning
 #### Difference to Qiskit
