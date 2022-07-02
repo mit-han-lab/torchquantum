@@ -2,25 +2,35 @@
 <img src="https://github.com/mit-han-lab/pytorch-quantum/blob/master/torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
 </p>
 
-
-```
-@inproceedings{hanruiwang2022quantumnas,
-    title     = {Quantumnas: Noise-adaptive search for robust quantum circuits},
-    author    = {Wang, Hanrui and Ding, Yongshan and Gu, Jiaqi and Li, Zirui and Lin, Yujun and Pan, David Z and Chong, Frederic T and Han, Song},
-    booktitle = {The 28th IEEE International Symposium on High-Performance Computer Architecture (HPCA-28)},
-    year      = {2022}
-}
-```
+<h2><p align="center">A PyTorch Library for Quantum Simulation</p></h2>
+<h3><p align="center">Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p></h3>
 
 
-# TorchQuantum 
 
-A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
 [![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum.readthedocs.io)
 [![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F)](https://qmlsys.hanruiwang.me)
 [![Website](https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu)](https://qmlsys.mit.edu)
+
+# 👋 Welcome
+
+#### What it is doing
+Quantum simulation framework based on PyTorch. It supports statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 25 qubits with multiple GPUs.
+#### Who will benefit
+Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning
+#### Difference to Qiskit
+Dynamic computatioh graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
+
+
+## Features
+- Easy construction and simulation of quantum circuits in **PyTorch**
+- **Dynamic computation graph** for easy debugging
+- **Gradient support** via autograd
+- **Batch mode** inference and training on **CPU/GPU**.
+- Easy **deployment on real quantum devices** such as IBMQ
+- **Easy hybrid classical-quantum** model construction
+- (coming soon) **pulse-level simulation**
 
 ## News
 - Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
@@ -38,21 +48,34 @@ A PyTorch-based hybrid classical-quantum dynamic neural networks framework.
 
 [comment]: <> (- v0.0.1 available. Feedbacks are highly welcomed!)
 
+
 ## Installation
 ```bash
 git clone https://github.com/mit-han-lab/torchquantum.git
 cd torchquantum
 pip install --editable .
-python fix_qiskit_parameterization.py
 ```
 
-## Papers using TorchQuantum
-- [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
-- [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
-- [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
+## Basic Usage
+
+```python
+import torchquantum as tq
+import torchquantum.functional as tqf
+
+x = tq.QuantumDevice(n_wires=1)
+
+x.hadamard(wires=0)
+
+tqf.hadamard(x, wires=0)
+tqf.x(x, wires=1)
+tqf.cnot(x, wires=[0, 1])
+
+# print the current state (dynamic computation graph supported)
+print(x.states)
+```
 
 ## Usage
-Construct quantum NN models as simple as constructing a normal pytorch model.
+Construct parameterized quantum circuit models as simple as constructing a normal pytorch model.
 ```python
 import torch.nn as nn
 import torch.nn.functional as F 
@@ -115,21 +138,12 @@ class QFCModel(nn.Module):
 
 [comment]: <> (- [Opening]&#40;https://www.dropbox.com/s/35xtw31myhidiq2/TorchQuantum-tutorial1-Opening.mp4?dl=0&#41;)
 
-## Features
-- Easy construction of parameterized quantum circuits in PyTorch.
-- Support **batch mode** inference and training on CPU/GPU.
-- Support **dynamic computation graph** for easy debugging.
-- Support easy **deployment on real quantum devices** such as IBMQ.
+## Papers using TorchQuantum
+- [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
+- [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
+- [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
+- [ArXiv'22] [Variational Quantum Pulse Learning](https://arxiv.org/abs/2203.17267)
 
-## TODOs
-- [x] Support more gates
-- [x] Support compile a unitary with descriptions to speedup training
-- [ ] Support other measurements other than analytic method
-- [x] In einsum support multiple qubit sharing one letter. So that more 
-  than 26 qubit can be simulated.
-- [x] Support bmm based implementation to solve 
-  scalability issue
-- [x] Support conversion from torchquantum to qiskit
 
 ## Dependencies
 - 3.9 >= Python >= 3.7 (Python 3.10 may have the `concurrent` package issue for Qiskit)
@@ -232,3 +246,14 @@ python mnist_example.py
 TorchQuantum [Forum](https://qmlsys.hanruiwang.me)
 
 Hanrui Wang [hanrui@mit.edu](mailto:hanrui@mit.edu)
+
+## Citation
+```
+@inproceedings{hanruiwang2022quantumnas,
+    title     = {Quantumnas: Noise-adaptive search for robust quantum circuits},
+    author    = {Wang, Hanrui and Ding, Yongshan and Gu, Jiaqi and Li, Zirui and Lin, Yujun and Pan, David Z and Chong, Frederic T and Han, Song},
+    booktitle = {The 28th IEEE International Symposium on High-Performance Computer Architecture (HPCA-28)},
+    year      = {2022}
+}
+```
+

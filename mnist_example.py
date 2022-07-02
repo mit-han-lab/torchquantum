@@ -6,7 +6,7 @@ import argparse
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-from examples.core.datasets import MNIST
+from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
