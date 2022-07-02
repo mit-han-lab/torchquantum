@@ -2,7 +2,7 @@
 <img src="https://github.com/mit-han-lab/pytorch-quantum/blob/master/torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
 </p>
 
-<h2><p align="center">A PyTorch Library for Quantum Simulation</p></h2>
+<h2><p align="center">A PyTorch Library for Quantum Simulation and Quantum Machine Learning</p></h2>
 <h3><p align="center">Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p></h3>
 
 
@@ -142,7 +142,7 @@ class QFCModel(nn.Module):
 - [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
 - [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
 - [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
-- [ArXiv'22] [Variational Quantum Pulse Learning](https://arxiv.org/abs/2203.17267)
+- [QCE'22] [Variational Quantum Pulse Learning](https://arxiv.org/abs/2203.17267)
 
 
 ## Dependencies
