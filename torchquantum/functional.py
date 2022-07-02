@@ -1,10 +1,10 @@
 import functools
 import torch
-import torchquantum as tq
 import numpy as np
 
-from functools import partial
-from typing import Callable
+import torchquantum as tq
+
+from typing import Callable, Union, Optional, List, Dict
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from .utils import pauli_eigs, diag
 from torchpack.utils.logging import logger
@@ -259,7 +259,16 @@ def reset(q_device: tq.QuantumDevice, wires, inverse=False):
     q_device.states = normalize_statevector(q_device.states)
 
 
-def rx_matrix(params):
+def rx_matrix(params: torch.Tensor) -> torch.Tensor:
+    """Compute unitary matrix for rx gate.
+
+    Args:
+        params: The rotation angle.
+
+    Returns:
+        The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     """
     Seems to be a pytorch bug. Have to explicitly cast the theta to a 
@@ -279,7 +288,16 @@ def rx_matrix(params):
                         torch.cat([jsi, co], dim=-1)], dim=-2).squeeze(0)
 
 
-def ry_matrix(params):
+def ry_matrix(params: torch.Tensor) -> torch.Tensor:
+    """Compute unitary matrix for ry gate.
+
+    Args:
+        params: The rotation angle.
+
+    Returns:
+        The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
 
     co = torch.cos(theta / 2)
@@ -289,7 +307,16 @@ def ry_matrix(params):
                         torch.cat([si, co], dim=-1)], dim=-2).squeeze(0)
 
 
-def rz_matrix(params):
+def rz_matrix(params: torch.Tensor) -> torch.Tensor:
+    """Compute unitary matrix for rz gate.
+
+    Args:
+        params: The rotation angle.
+
+    Returns:
+        The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
@@ -749,14 +776,31 @@ mat_dict = {
 }
 
 
-def hadamard(q_device,
-             wires,
-             params=None,
-             n_wires=None,
-             static=False,
+def hadamard(q_device: tq.QuantumDevice,
+             wires: Union[List[int], int],
+             params: torch.Tensor = None,
+             n_wires: int = None,
+             static: bool = False,
              parent_graph=None,
-             inverse=False,
-             comp_method='bmm'):
+             inverse: bool = False,
+             comp_method: str = 'bmm'):
+    """Perform the hadamard gate.
+
+    Args:
+        q_device: The QuantumDevice.
+        wires: Which qubit(s) to apply the gate.
+        params: Parameters (if any) of the gate.
+        n_wires: Number of qubits the gate is applied to.
+        static: Whether use static mode computation.
+        parent_graph: Parent QuantumGraph of current operation.
+        inverse: Whether inverse the gate.
+        comp_method: Use 'bmm' or 'einsum' method to perform matrix vector
+            multiplication.
+
+    Returns:
+        None.
+
+    """
     name = 'hadamard'
     mat = mat_dict[name]
     gate_wrapper(
@@ -781,6 +825,23 @@ def shadamard(q_device,
               parent_graph=None,
               inverse=False,
               comp_method='bmm'):
+    """Perform the shadamard gate.
+
+    Args:
+        q_device: The QuantumDevice.
+        wires: Which qubit(s) to apply the gate.
+        params: Parameters (if any) of the gate.
+        n_wires: Number of qubits the gate is applied to.
+        static: Whether use static mode computation.
+        parent_graph: Parent QuantumGraph of current operation.
+        inverse: Whether inverse the gate.
+        comp_method: Use 'bmm' or 'einsum' method to perform matrix vector
+            multiplication.
+
+    Returns:
+        None.
+
+    """
     name = 'shadamard'
     mat = mat_dict[name]
     gate_wrapper(
@@ -805,6 +866,23 @@ def paulix(q_device,
            parent_graph=None,
            inverse=False,
            comp_method='bmm'):
+    """Perform the pauli x gate.
+
+    Args:
+        q_device: The QuantumDevice.
+        wires: Which qubit(s) to apply the gate.
+        params: Parameters (if any) of the gate.
+        n_wires: Number of qubits the gate is applied to.
+        static: Whether use static mode computation.
+        parent_graph: Parent QuantumGraph of current operation.
+        inverse: Whether inverse the gate.
+        comp_method: Use 'bmm' or 'einsum' method to perform matrix vector
+            multiplication.
+
+    Returns:
+        None.
+
+    """
     name = 'paulix'
     mat = mat_dict[name]
     gate_wrapper(
