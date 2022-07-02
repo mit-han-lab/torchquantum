@@ -487,7 +487,8 @@ def get_provider(backend_name, hub=None):
                                              group='mass-inst-tech-1',
                                              project='main')
             except QiskitError:
-                logger.warning(f"Cannot use MIT backend, roll back to open")
+                # logger.warning(f"Cannot use MIT backend, roll back to open")
+                logger.warning(f"Use the open backend")
                 provider = IBMQ.get_provider(hub='ibm-q')
         elif hub == 'mit':
             provider = IBMQ.get_provider(hub='ibm-q-research',
