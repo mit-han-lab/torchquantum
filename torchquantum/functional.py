@@ -749,50 +749,989 @@ mat_dict = {
 }
 
 
-hadamard = partial(gate_wrapper, 'hadamard', mat_dict['hadamard'], 'bmm')
-shadamard = partial(gate_wrapper, 'shadamard', mat_dict['shadamard'], 'bmm')
-paulix = partial(gate_wrapper, 'paulix', mat_dict['paulix'], 'bmm')
-pauliy = partial(gate_wrapper, 'pauliy', mat_dict['pauliy'], 'bmm')
-pauliz = partial(gate_wrapper, 'pauliz', mat_dict['pauliz'], 'bmm')
-i = partial(gate_wrapper, 'i', mat_dict['i'], 'bmm')
-s = partial(gate_wrapper, 's', mat_dict['s'], 'bmm')
-t = partial(gate_wrapper, 't', mat_dict['t'], 'bmm')
-sx = partial(gate_wrapper, 'sx', mat_dict['sx'], 'bmm')
-cnot = partial(gate_wrapper, 'cnot', mat_dict['cnot'], 'bmm')
-cz = partial(gate_wrapper, 'cz', mat_dict['cz'], 'bmm')
-cy = partial(gate_wrapper, 'cy', mat_dict['cy'], 'bmm')
-rx = partial(gate_wrapper, 'rx', mat_dict['rx'], 'bmm')
-ry = partial(gate_wrapper, 'ry', mat_dict['ry'], 'bmm')
-rz = partial(gate_wrapper, 'rz', mat_dict['rz'], 'bmm')
-rxx = partial(gate_wrapper, 'rxx', mat_dict['rxx'], 'bmm')
-ryy = partial(gate_wrapper, 'ryy', mat_dict['ryy'], 'bmm')
-rzz = partial(gate_wrapper, 'rzz', mat_dict['rzz'], 'bmm')
-rzx = partial(gate_wrapper, 'rzx', mat_dict['rzx'], 'bmm')
-swap = partial(gate_wrapper, 'swap', mat_dict['swap'], 'bmm')
-sswap = partial(gate_wrapper, 'sswap', mat_dict['sswap'], 'bmm')
-cswap = partial(gate_wrapper, 'cswap', mat_dict['cswap'], 'bmm')
-toffoli = partial(gate_wrapper, 'toffoli', mat_dict['toffoli'], 'bmm')
-phaseshift = partial(gate_wrapper, 'phaseshift', mat_dict['phaseshift'], 'bmm')
-rot = partial(gate_wrapper, 'rot', mat_dict['rot'], 'bmm')
-multirz = partial(gate_wrapper, 'multirz', mat_dict['multirz'], 'bmm')
-crx = partial(gate_wrapper, 'crx', mat_dict['crx'], 'bmm')
-cry = partial(gate_wrapper, 'cry', mat_dict['cry'], 'bmm')
-crz = partial(gate_wrapper, 'crz', mat_dict['crz'], 'bmm')
-crot = partial(gate_wrapper, 'crot', mat_dict['crot'], 'bmm')
-u1 = partial(gate_wrapper, 'u1', mat_dict['u1'], 'bmm')
-u2 = partial(gate_wrapper, 'u2', mat_dict['u2'], 'bmm')
-u3 = partial(gate_wrapper, 'u3', mat_dict['u3'], 'bmm')
-cu1 = partial(gate_wrapper, 'cu1', mat_dict['cu1'], 'bmm')
-cu2 = partial(gate_wrapper, 'cu2', mat_dict['cu2'], 'bmm')
-cu3 = partial(gate_wrapper, 'cu3', mat_dict['cu3'], 'bmm')
-qubitunitary = partial(gate_wrapper, 'qubitunitary', mat_dict[
-    'qubitunitary'], 'bmm')
-qubitunitaryfast = partial(gate_wrapper, 'qubitunitaryfast', mat_dict[
-    'qubitunitaryfast'], 'bmm')
-qubitunitarystrict = partial(gate_wrapper, 'qubitunitarystrict', mat_dict[
-    'qubitunitarystrict'], 'bmm')
-multicnot = partial(gate_wrapper, 'multicnot', mat_dict['multicnot'], 'bmm')
-multixcnot = partial(gate_wrapper, 'multixcnot', mat_dict['multixcnot'], 'bmm')
+def hadamard(q_device,
+             wires,
+             params=None,
+             n_wires=None,
+             static=False,
+             parent_graph=None,
+             inverse=False,
+             comp_method='bmm'):
+    name = 'hadamard'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def shadamard(q_device,
+              wires,
+              params=None,
+              n_wires=None,
+              static=False,
+              parent_graph=None,
+              inverse=False,
+              comp_method='bmm'):
+    name = 'shadamard'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def paulix(q_device,
+           wires,
+           params=None,
+           n_wires=None,
+           static=False,
+           parent_graph=None,
+           inverse=False,
+           comp_method='bmm'):
+    name = 'paulix'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def pauliy(q_device,
+           wires,
+           params=None,
+           n_wires=None,
+           static=False,
+           parent_graph=None,
+           inverse=False,
+           comp_method='bmm'):
+    name = 'pauliy'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def pauliz(q_device,
+           wires,
+           params=None,
+           n_wires=None,
+           static=False,
+           parent_graph=None,
+           inverse=False,
+           comp_method='bmm'):
+    name = 'pauliz'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def i(q_device,
+      wires,
+      params=None,
+      n_wires=None,
+      static=False,
+      parent_graph=None,
+      inverse=False,
+      comp_method='bmm'):
+    name = 'i'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def s(q_device,
+      wires,
+      params=None,
+      n_wires=None,
+      static=False,
+      parent_graph=None,
+      inverse=False,
+      comp_method='bmm'):
+    name = 's'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def t(q_device,
+      wires,
+      params=None,
+      n_wires=None,
+      static=False,
+      parent_graph=None,
+      inverse=False,
+      comp_method='bmm'):
+    name = 't'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def sx(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'sx'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cnot(q_device,
+         wires,
+         params=None,
+         n_wires=None,
+         static=False,
+         parent_graph=None,
+         inverse=False,
+         comp_method='bmm'):
+    name = 'cnot'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cz(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'cz'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cy(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'cy'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def rx(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'rx'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def ry(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'ry'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def rz(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'rz'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def rxx(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'rxx'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def ryy(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'ryy'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def rzz(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'rzz'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def rzx(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'rzx'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def swap(q_device,
+         wires,
+         params=None,
+         n_wires=None,
+         static=False,
+         parent_graph=None,
+         inverse=False,
+         comp_method='bmm'):
+    name = 'swap'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def sswap(q_device,
+          wires,
+          params=None,
+          n_wires=None,
+          static=False,
+          parent_graph=None,
+          inverse=False,
+          comp_method='bmm'):
+    name = 'sswap'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cswap(q_device,
+          wires,
+          params=None,
+          n_wires=None,
+          static=False,
+          parent_graph=None,
+          inverse=False,
+          comp_method='bmm'):
+    name = 'cswap'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def toffoli(q_device,
+            wires,
+            params=None,
+            n_wires=None,
+            static=False,
+            parent_graph=None,
+            inverse=False,
+            comp_method='bmm'):
+    name = 'toffoli'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def phaseshift(q_device,
+               wires,
+               params=None,
+               n_wires=None,
+               static=False,
+               parent_graph=None,
+               inverse=False,
+               comp_method='bmm'):
+    name = 'phaseshift'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def rot(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'rot'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def multirz(q_device,
+            wires,
+            params=None,
+            n_wires=None,
+            static=False,
+            parent_graph=None,
+            inverse=False,
+            comp_method='bmm'):
+    name = 'multirz'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def crx(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'crx'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cry(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'cry'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def crz(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'crz'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def crot(q_device,
+         wires,
+         params=None,
+         n_wires=None,
+         static=False,
+         parent_graph=None,
+         inverse=False,
+         comp_method='bmm'):
+    name = 'crot'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def u1(q_device,
+         wires,
+         params=None,
+         n_wires=None,
+         static=False,
+         parent_graph=None,
+         inverse=False,
+         comp_method='bmm'):
+    name = 'u1'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def u2(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'u2'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def u3(q_device,
+       wires,
+       params=None,
+       n_wires=None,
+       static=False,
+       parent_graph=None,
+       inverse=False,
+       comp_method='bmm'):
+    name = 'u3'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cu1(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'cu1'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cu2(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'cu2'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def cu3(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method='bmm'):
+    name = 'cu3'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+
+def qubitunitary(q_device,
+                 wires,
+                 params=None,
+                 n_wires=None,
+                 static=False,
+                 parent_graph=None,
+                 inverse=False,
+                 comp_method='bmm'):
+    name = 'qubitunitary'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def qubitunitaryfast(q_device,
+                     wires,
+                     params=None,
+                     n_wires=None,
+                     static=False,
+                     parent_graph=None,
+                     inverse=False,
+                     comp_method='bmm'):
+    name = 'qubitunitaryfast'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def qubitunitarystrict(q_device,
+                       wires,
+                       params=None,
+                       n_wires=None,
+                       static=False,
+                       parent_graph=None,
+                       inverse=False,
+                       comp_method='bmm'):
+    name = 'qubitunitarystrict'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def multicnot(q_device,
+              wires,
+              params=None,
+              n_wires=None,
+              static=False,
+              parent_graph=None,
+              inverse=False,
+              comp_method='bmm'):
+    name = 'multicnot'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
+
+
+def multixcnot(q_device,
+              wires,
+              params=None,
+              n_wires=None,
+              static=False,
+              parent_graph=None,
+              inverse=False,
+              comp_method='bmm'):
+    name = 'multixcnot'
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse
+    )
 
 
 h = hadamard
