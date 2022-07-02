@@ -2,7 +2,7 @@
 <img src="https://github.com/mit-han-lab/pytorch-quantum/blob/master/torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
 </p>
 
-<h2><p align="center">A PyTorch Library for Quantum Simulation</p></h2>
+<h2><p align="center">A PyTorch Library for Quantum Simulation and Quantum Machine Learning</p></h2>
 <h3><p align="center">Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p></h3>
 
 
