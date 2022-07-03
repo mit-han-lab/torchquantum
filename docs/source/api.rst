@@ -5,3 +5,6 @@ API
    :toctree: generated
 
    torchquantum
+   torchquantum.operators
+   torchquantum.functional
+   

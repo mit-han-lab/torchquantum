@@ -199,6 +199,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/source/generated
+docs/source/stubs
 
 # PyBuilder
 target/
@@ -327,3 +329,6 @@ es_runs/
 /examples/noise_script/plot/cluster/
 /activations/fashion.four0123.eval.santiago.real.opt2.noancilla.act_quant.300_loadop_s18000_valid.pt
 /activations/fashion.four0123.eval.tq.act_quant.300_loadop_s18000_valid.pt
+
+# macOS
+.DS_Store
