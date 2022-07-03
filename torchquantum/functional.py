@@ -263,10 +263,10 @@ def rx_matrix(params: torch.Tensor) -> torch.Tensor:
     """Compute unitary matrix for rx gate.
 
     Args:
-        params: The rotation angle.
+        params (torch.Tensor): The rotation angle.
 
     Returns:
-        The computed unitary matrix.
+        torch.Tensor: The computed unitary matrix.
 
     """
     theta = params.type(C_DTYPE)

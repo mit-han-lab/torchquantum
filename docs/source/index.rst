@@ -1,3 +1,7 @@
+.. toctree::
+   usage
+   api
+   
 .. raw:: html
 
    <p align="center">
@@ -9,8 +13,8 @@
 ::
 
 
-Welcome to TorchQuantum's documentation!
-============
+   Welcome to TorchQuantum's documentation!
+   ============
 
 
    @inproceedings{hanruiwang2022quantumnas,
