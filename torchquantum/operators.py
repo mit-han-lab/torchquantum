@@ -291,12 +291,22 @@ class Observable(Operator, metaclass=ABCMeta):
 
 
 class Operation(Operator, metaclass=ABCMeta):
+    """_summary_"""
     def __init__(self,
                  has_params: bool = False,
                  trainable: bool = False,
                  init_params=None,
                  n_wires=None,
                  wires=None):
+        """_summary_
+
+        Args:
+            has_params (bool, optional): _description_. Defaults to False.
+            trainable (bool, optional): _description_. Defaults to False.
+            init_params (_type_, optional): _description_. Defaults to None.
+            n_wires (_type_, optional): _description_. Defaults to None.
+            wires (_type_, optional): _description_. Defaults to None.
+        """
         super().__init__(
             has_params=has_params,
             trainable=trainable,
@@ -307,20 +317,43 @@ class Operation(Operator, metaclass=ABCMeta):
 
     @property
     def matrix(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         op_matrix = self._matrix(self.params)
 
         return op_matrix
 
     @property
     def eigvals(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         op_eigvals = self._eigvals(self.params)
 
         return op_eigvals
 
     def init_params(self):
+        """_summary_
+
+        Raises:
+            NotImplementedError: _description_
+        """
         raise NotImplementedError
 
     def build_params(self, trainable):
+        """_summary_
+
+        Args:
+            trainable (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         parameters = nn.Parameter(torch.empty([1, self.num_params],
                                               dtype=F_DTYPE))
         parameters.requires_grad = True if trainable else False
@@ -328,6 +361,11 @@ class Operation(Operator, metaclass=ABCMeta):
         return parameters
 
     def reset_params(self, init_params=None):
+        """_summary_
+
+        Args:
+            init_params (_type_, optional): _description_. Defaults to None.
+        """
         if init_params is not None:
             if isinstance(init_params, Iterable):
                 for k, init_param in enumerate(init_params):

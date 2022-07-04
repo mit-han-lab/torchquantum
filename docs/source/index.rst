@@ -1,6 +1,16 @@
 .. toctree::
-   usage
-   api
+   :maxdepth: 1
+   :caption: API
+
+   api_torchquantum
+   api_functional
+   api_operators
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Usage
+
+   usage_installation
    
 .. raw:: html
 
@@ -10,24 +20,17 @@
 
    </p>
 
-::
-
-
-   Welcome to TorchQuantum's documentation!
-   ============
-
-
-   @inproceedings{hanruiwang2022quantumnas,
-       title     = {Quantumnas: Noise-adaptive search for robust quantum circuits},
-       author    = {Wang, Hanrui and Ding, Yongshan and Gu, Jiaqi and Lin, Yujun and Pan, David Z and Chong, Frederic T and Han, Song},
-       booktitle = {The 28th IEEE International Symposium on High-Performance Computer Architecture (HPCA-28)},
-       year      = {2022}
-   }
-
-
+Welcome to TorchQuantum's documentation!
+========================================
 
 A PyTorch-based hybrid classical-quantum dynamic neural networks
-framework.
+framework. ::
+    @inproceedings{hanruiwang2022quantumnas,
+        title     = {Quantumnas: Noise-adaptive search for robust quantum circuits},
+        author    = {Wang, Hanrui and Ding, Yongshan and Gu, Jiaqi and Lin, Yujun and Pan, David Z and Chong, Frederic T and Han, Song},
+        booktitle = {The 28th IEEE International Symposium on High-Performance Computer Architecture (HPCA-28)},
+        year      = {2022}
+    }
 
 |MIT License|
 
