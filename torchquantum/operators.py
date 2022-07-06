@@ -10,7 +10,7 @@ from torchquantum.quantization.clifford_quantization import CliffordQuantizer
 from abc import ABCMeta
 from .macro import C_DTYPE, F_DTYPE
 from torchpack.utils.logging import logger
-from typing import Iterable
+from typing import Iterable, Union, List
 
 __all__ = [
     'op_name_dict',
@@ -92,6 +92,7 @@ subsystem. It is equivalent to an integer with value -1."""
 
 
 class Operator(tq.QuantumModule):
+    """The class for quantum operators."""
     fixed_ops = [
         'Hadamard',
         'SHadamard',
@@ -148,6 +149,12 @@ class Operator(tq.QuantumModule):
 
     @name.setter
     def name(self, value):
+        """Set the name of the operator.
+
+        Args:
+            value (str): operator name.
+
+        """
         self._name = value
 
     def __init__(self,
@@ -156,6 +163,19 @@ class Operator(tq.QuantumModule):
                  init_params=None,
                  n_wires=None,
                  wires=None):
+        """
+
+        Args:
+            has_params (bool, optional): Whether the operations has parameters.
+                Defaults to False.
+            trainable (bool, optional): Whether the parameters are trainable
+                (if contains parameters). Defaults to False.
+            init_params (torch.Tensor, optional): Initial parameters.
+                Defaults to None.
+            n_wires (int, optional): Number of qubits. Defaults to None.
+            wires (Union[int, List[int]], optional): Which qubit the operation is applied to.
+                Defaults to None.
+        """
         super().__init__()
         self.params = None
         # number of wires of the operator
@@ -308,7 +328,7 @@ class Operation(Operator, metaclass=ABCMeta):
             init_params (torch.Tensor, optional): Initial parameters.
                 Defaults to None.
             n_wires (int, optional): Number of qubits. Defaults to None.
-            wires (int, optional): Which qubit the operation is applied to.
+            wires (Union[int, List[int]], optional): Which qubit the operation is applied to.
                 Defaults to None.
         """
         super().__init__(
