@@ -301,11 +301,15 @@ class Operation(Operator, metaclass=ABCMeta):
         """_summary_
 
         Args:
-            has_params (bool, optional): _description_. Defaults to False.
-            trainable (bool, optional): _description_. Defaults to False.
-            init_params (_type_, optional): _description_. Defaults to None.
-            n_wires (_type_, optional): _description_. Defaults to None.
-            wires (_type_, optional): _description_. Defaults to None.
+            has_params (bool, optional): Whether the operations has parameters.
+                Defaults to False.
+            trainable (bool, optional): Whether the parameters are trainable
+                (if contains parameters). Defaults to False.
+            init_params (torch.Tensor, optional): Initial parameters.
+                Defaults to None.
+            n_wires (int, optional): Number of qubits. Defaults to None.
+            wires (int, optional): Which qubit the operation is applied to.
+                Defaults to None.
         """
         super().__init__(
             has_params=has_params,
