@@ -66,16 +66,16 @@ __all__ = [
 
 class WiresEnum(IntEnum):
     """Integer enumeration class
-    to represent the number of wires
-    an operation acts on"""
+        to represent the number of wires
+        an operation acts on."""
     AnyWires = -1
     AllWires = 0
 
 
 class NParamsEnum(IntEnum):
     """Integer enumeration class
-    to represent the number of wires
-    an operation acts on"""
+        to represent the number of wires
+        an operation acts on"""
     AnyNParams = -1
 
 
@@ -173,8 +173,8 @@ class Operator(tq.QuantumModule):
             init_params (torch.Tensor, optional): Initial parameters.
                 Defaults to None.
             n_wires (int, optional): Number of qubits. Defaults to None.
-            wires (Union[int, List[int]], optional): Which qubit the operation is applied to.
-                Defaults to None.
+            wires (Union[int, List[int]], optional): Which qubit the operation
+                is applied to. Defaults to None.
         """
         super().__init__()
         self.params = None
@@ -205,28 +205,78 @@ class Operator(tq.QuantumModule):
 
     @classmethod
     def _matrix(cls, params):
+        """The unitary matrix of the operator.
+
+        Args:
+            params (torch.Tensor, optional): The parameters for parameterized
+                operators.
+
+        Returns: None.
+
+        """
         raise NotImplementedError
 
     @property
     def matrix(self):
+        """The unitary matrix of the operator."""
         return self._matrix(self.params)
 
     @classmethod
     def _eigvals(cls, params):
+        """The eigenvalues of the unitary matrix of the operator.
+
+        Args:
+            params (torch.Tensor, optional): The parameters for parameterized
+                operators.
+
+        Returns: None.
+
+        """
         raise NotImplementedError
 
     @property
     def eigvals(self):
+        """The eigenvalues of the unitary matrix of the operator.
+
+        Returns: Eigenvalues.
+
+        """
         return self._eigvals(self.params)
 
     def _get_unitary_matrix(self):
+        """Obtain the unitary matrix of the operator.
+
+        Returns: Unitary matrix.
+
+        """
         return self.matrix
 
     def set_wires(self, wires):
+        """Set which qubits the operator is applied to.
+
+        Args:
+            wires (Union[int, List[int]]): Qubits the operator is applied to.
+
+        Returns: None.
+
+        """
         self.wires = [wires] if isinstance(wires, int) else wires
 
     def forward(self, q_device: tq.QuantumDevice, wires=None, params=None,
                 inverse=False):
+        """Apply the operator to the quantum device states.
+
+        Args:
+            q_device (torchquantum.QuantumDevice): Quantum Device that the
+                operator is applied to.
+            wires (Union[int, List[int]]): Qubits that the operator is
+                applied to.
+            params (torch.Tensor): Parameters of the operator
+            inverse (bool): Whether inverse the unitary matrix of the operator.
+
+        Returns:
+
+        """
         # try:
         #     assert self.name in self.fixed_ops or \
         #            self.has_params ^ (params is not None)
@@ -291,12 +341,27 @@ class Operator(tq.QuantumModule):
 
 
 class Observable(Operator, metaclass=ABCMeta):
+    """Class for Observables.
+
+    """
     def __init__(self,
                  has_params: bool = False,
                  trainable: bool = False,
                  init_params=None,
                  n_wires=None,
                  wires=None):
+        """Init function of the Observable class
+
+        has_params (bool, optional): Whether the operations has parameters.
+                Defaults to False.
+            trainable (bool, optional): Whether the parameters are trainable
+                (if contains parameters). Defaults to False.
+            init_params (torch.Tensor, optional): Initial parameters.
+                Defaults to None.
+            n_wires (int, optional): Number of qubits. Defaults to None.
+            wires (Union[int, List[int]], optional): Which qubit the operation
+                is applied to. Defaults to None.
+        """
         super().__init__(
             has_params=has_params,
             trainable=trainable,
@@ -307,6 +372,11 @@ class Observable(Operator, metaclass=ABCMeta):
         self.return_type = None
 
     def diagonalizing_gates(self):
+        """The diagonalizing gates when perform measurements.
+
+        Returns: None.
+
+        """
         raise NotImplementedError
 
 
@@ -341,42 +411,39 @@ class Operation(Operator, metaclass=ABCMeta):
 
     @property
     def matrix(self):
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """
+        """The unitary matrix of the operator."""
         op_matrix = self._matrix(self.params)
 
         return op_matrix
 
     @property
     def eigvals(self):
-        """_summary_
+        """"The eigenvalues of the unitary matrix of the operator.
 
         Returns:
-            _type_: _description_
+            torch.Tensor: Eigenvalues.
+
         """
         op_eigvals = self._eigvals(self.params)
 
         return op_eigvals
 
     def init_params(self):
-        """_summary_
+        """Initialize the parameters.
 
         Raises:
-            NotImplementedError: _description_
+            NotImplementedError: The init param function is not implemented.
         """
         raise NotImplementedError
 
     def build_params(self, trainable):
-        """_summary_
+        """Build parameters.
 
         Args:
-            trainable (_type_): _description_
+            trainable (bool): Whether the parameters are trainable.
 
         Returns:
-            _type_: _description_
+            torch.Tensor: Built parameters.
         """
         parameters = nn.Parameter(torch.empty([1, self.num_params],
                                               dtype=F_DTYPE))
@@ -385,10 +452,11 @@ class Operation(Operator, metaclass=ABCMeta):
         return parameters
 
     def reset_params(self, init_params=None):
-        """_summary_
+        """Reset parameters.
 
         Args:
-            init_params (_type_, optional): _description_. Defaults to None.
+            init_params (torch.Tensor, optional): Input the initialization
+                parameters. Defaults to None.
         """
         if init_params is not None:
             if isinstance(init_params, Iterable):
@@ -401,20 +469,44 @@ class Operation(Operator, metaclass=ABCMeta):
 
 
 class DiagonalOperation(Operation, metaclass=ABCMeta):
+    """Class for Diagonal Operation."""
     @classmethod
     def _eigvals(cls, params):
+        """The eigenvalues of the unitary matrix of the operator.
+
+        Args:
+            params (torch.Tensor, optional): The parameters for parameterized
+                operators.
+
+        Returns: None.
         raise NotImplementedError
+    """
 
     @property
     def eigvals(self):
+        """The eigenvalues of the unitary matrix of the operator.
+
+        Returns: Eigenvalues.
+
+        """
         return super().eigvals
 
     @classmethod
     def _matrix(cls, params):
+        """The unitary matrix of the operator.
+
+        Args:
+            params (torch.Tensor, optional): The parameters for parameterized
+                operators.
+
+        Returns: None.
+
+        """
         return torch.diag(cls._eigvals(params))
 
 
 class Hadamard(Observable, metaclass=ABCMeta):
+    """Class for Hadamard Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
@@ -436,6 +528,7 @@ class Hadamard(Observable, metaclass=ABCMeta):
 
 
 class SHadamard(Operation, metaclass=ABCMeta):
+    """Class for SHadamard Gate."""
     num_params = 0
     num_wires = 1
     matrix = mat_dict['shadamard']
@@ -447,6 +540,7 @@ class SHadamard(Operation, metaclass=ABCMeta):
 
 
 class PauliX(Observable, metaclass=ABCMeta):
+    """Class for Pauli X Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
@@ -466,6 +560,7 @@ class PauliX(Observable, metaclass=ABCMeta):
 
 
 class PauliY(Observable, metaclass=ABCMeta):
+    """Class for Pauli Y Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
@@ -485,6 +580,7 @@ class PauliY(Observable, metaclass=ABCMeta):
 
 
 class PauliZ(Observable, metaclass=ABCMeta):
+    """Class for Pauli Z Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
@@ -504,6 +600,7 @@ class PauliZ(Observable, metaclass=ABCMeta):
 
 
 class I(Observable, metaclass=ABCMeta):
+    """Class for Identity Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1], dtype=C_DTYPE)
@@ -523,6 +620,7 @@ class I(Observable, metaclass=ABCMeta):
 
 
 class S(DiagonalOperation, metaclass=ABCMeta):
+    """Class for S Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
@@ -539,6 +637,7 @@ class S(DiagonalOperation, metaclass=ABCMeta):
 
 
 class T(DiagonalOperation, metaclass=ABCMeta):
+    """Class for T Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
@@ -555,6 +654,7 @@ class T(DiagonalOperation, metaclass=ABCMeta):
 
 
 class SX(Operation, metaclass=ABCMeta):
+    """Class for SX Gate."""
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
