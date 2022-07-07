@@ -1005,6 +1005,8 @@ op_name_dict = {
     'u': U3,
     'cu1': CU1,
     'cp': CU1,
+    'cr': CU1,
+    'cphase': CU1,
     'cu2': CU2,
     'cu3': CU3,
     'cu': CU3,

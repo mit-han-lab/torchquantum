@@ -1828,6 +1828,8 @@ u = u3
 cu = cu3
 p = phaseshift
 cp = cu1
+cr = cu1
+cphase = cu1
 
 func_name_dict = {
     'hadamard': hadamard,
@@ -1871,6 +1873,8 @@ func_name_dict = {
     'u3': u3,
     'u': u,
     'cu1': cu1,
+    'cphase': cphase,
+    'cr': cr,
     'cu2': cu2,
     'cu3': cu3,
     'cu': cu,
