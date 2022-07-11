@@ -671,6 +671,7 @@ class SX(Operation, metaclass=ABCMeta):
 
 
 class CNOT(Operation, metaclass=ABCMeta):
+    """Class for CNOT Gate."""
     num_params = 0
     num_wires = 2
     matrix = mat_dict['cnot']
@@ -682,6 +683,7 @@ class CNOT(Operation, metaclass=ABCMeta):
 
 
 class CZ(DiagonalOperation, metaclass=ABCMeta):
+    """Class for CZ Gate."""
     num_params = 0
     num_wires = 2
     eigvals = np.array([1, 1, 1, -1])
@@ -698,6 +700,7 @@ class CZ(DiagonalOperation, metaclass=ABCMeta):
 
 
 class CY(Operation, metaclass=ABCMeta):
+    """Class for CY Gate."""
     num_params = 0
     num_wires = 2
     matrix = mat_dict['cy']
@@ -709,6 +712,7 @@ class CY(Operation, metaclass=ABCMeta):
 
 
 class SWAP(Operation, metaclass=ABCMeta):
+    """Class for SWAP Gate."""
     num_params = 0
     num_wires = 2
     matrix = mat_dict['swap']
@@ -720,6 +724,7 @@ class SWAP(Operation, metaclass=ABCMeta):
 
 
 class SSWAP(Operation, metaclass=ABCMeta):
+    """Class for SSWAP Gate."""
     num_params = 0
     num_wires = 2
     matrix = mat_dict['sswap']
@@ -731,6 +736,7 @@ class SSWAP(Operation, metaclass=ABCMeta):
 
 
 class CSWAP(Operation, metaclass=ABCMeta):
+    """Class for CSWAP Gate."""
     num_params = 0
     num_wires = 3
     matrix = mat_dict['cswap']
@@ -742,6 +748,7 @@ class CSWAP(Operation, metaclass=ABCMeta):
 
 
 class Toffoli(Operation, metaclass=ABCMeta):
+    """Class for Toffoli Gate."""
     num_params = 0
     num_wires = 3
     matrix = mat_dict['toffoli']
@@ -753,6 +760,7 @@ class Toffoli(Operation, metaclass=ABCMeta):
 
 
 class RX(Operation, metaclass=ABCMeta):
+    """Class for RX Gate."""
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.rx)
@@ -763,6 +771,7 @@ class RX(Operation, metaclass=ABCMeta):
 
 
 class RY(Operation, metaclass=ABCMeta):
+    """Class for RY Gate."""
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.ry)
@@ -773,6 +782,7 @@ class RY(Operation, metaclass=ABCMeta):
 
 
 class RZ(DiagonalOperation, metaclass=ABCMeta):
+    """Class for RZ Gate."""
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.rz)
@@ -783,6 +793,7 @@ class RZ(DiagonalOperation, metaclass=ABCMeta):
 
 
 class PhaseShift(DiagonalOperation, metaclass=ABCMeta):
+    """Class for PhaseShift Gate."""
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.phaseshift)
@@ -793,6 +804,7 @@ class PhaseShift(DiagonalOperation, metaclass=ABCMeta):
 
 
 class Rot(Operation, metaclass=ABCMeta):
+    """Class for Rotation Gate."""
     num_params = 3
     num_wires = 1
     func = staticmethod(tqf.rot)
@@ -803,6 +815,7 @@ class Rot(Operation, metaclass=ABCMeta):
 
 
 class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
+    """Class for Multi-qubit RZ Gate."""
     num_params = 1
     num_wires = AnyWires
     func = staticmethod(tqf.multirz)
@@ -813,6 +826,7 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
 
 
 class RXX(Operation, metaclass=ABCMeta):
+    """Class for RXX Gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.rxx)
@@ -823,6 +837,7 @@ class RXX(Operation, metaclass=ABCMeta):
 
 
 class RYY(Operation, metaclass=ABCMeta):
+    """Class for RYY Gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.ryy)
@@ -833,6 +848,7 @@ class RYY(Operation, metaclass=ABCMeta):
 
 
 class RZZ(DiagonalOperation, metaclass=ABCMeta):
+    """Class for RZZ Gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.rzz)
@@ -843,6 +859,7 @@ class RZZ(DiagonalOperation, metaclass=ABCMeta):
 
 
 class RZX(Operation, metaclass=ABCMeta):
+    """Class for RZX Gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.rzx)
@@ -853,11 +870,21 @@ class RZX(Operation, metaclass=ABCMeta):
 
 
 class TrainableUnitary(Operation, metaclass=ABCMeta):
+    """Class for TrainableUnitary Gate."""
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitaryfast)
 
     def build_params(self, trainable):
+        """Build the parameters for the gate.
+
+        Args:
+            trainable (bool): Whether the parameters are trainble.
+
+        Returns:
+            torch.Tensor: Parameters.
+
+        """
         parameters = nn.Parameter(torch.empty(
             1, 2 ** self.n_wires, 2 ** self.n_wires, dtype=C_DTYPE))
         parameters.requires_grad = True if trainable else False
@@ -865,6 +892,15 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
         return parameters
 
     def reset_params(self, init_params=None):
+        """Reset the parameters.
+
+        Args:
+            init_params (torch.Tensor, optional): Initial parameters.
+
+        Returns:
+            None.
+
+        """
         mat = torch.randn((1, 2 ** self.n_wires, 2 ** self.n_wires),
                           dtype=C_DTYPE)
         U, Sigma, V = torch.svd(mat)
@@ -876,12 +912,14 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
 
 
 class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
+    """Class for Strict Unitary matrix gate."""
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitarystrict)
 
 
 class CRX(Operation, metaclass=ABCMeta):
+    """Class for Controlled Rotation X gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.crx)
@@ -892,6 +930,7 @@ class CRX(Operation, metaclass=ABCMeta):
 
 
 class CRY(Operation, metaclass=ABCMeta):
+    """Class for Controlled Rotation Y gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.cry)
@@ -902,6 +941,7 @@ class CRY(Operation, metaclass=ABCMeta):
 
 
 class CRZ(Operation, metaclass=ABCMeta):
+    """Class for Controlled Rotation Z gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.crz)
@@ -912,6 +952,7 @@ class CRZ(Operation, metaclass=ABCMeta):
 
 
 class CRot(Operation, metaclass=ABCMeta):
+    """Class for Controlled Rotation gate."""
     num_params = 3
     num_wires = 2
     func = staticmethod(tqf.crot)
@@ -922,7 +963,9 @@ class CRot(Operation, metaclass=ABCMeta):
 
 
 class U1(DiagonalOperation, metaclass=ABCMeta):
-    # U1 is the same as phaseshift
+    """Class for Controlled Rotation Y gate.  U1 is the same
+        as phaseshift.
+    """
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.u1)
@@ -933,6 +976,7 @@ class U1(DiagonalOperation, metaclass=ABCMeta):
 
 
 class CU1(DiagonalOperation, metaclass=ABCMeta):
+    """Class for controlled U1 gate."""
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.cu1)
@@ -943,6 +987,7 @@ class CU1(DiagonalOperation, metaclass=ABCMeta):
 
 
 class U2(Operation, metaclass=ABCMeta):
+    """Class for U2 gate."""
     num_params = 2
     num_wires = 1
     func = staticmethod(tqf.u2)
@@ -953,6 +998,7 @@ class U2(Operation, metaclass=ABCMeta):
 
 
 class CU2(Operation, metaclass=ABCMeta):
+    """Class for controlled U2 gate."""
     num_params = 2
     num_wires = 2
     func = staticmethod(tqf.cu2)
@@ -963,6 +1009,7 @@ class CU2(Operation, metaclass=ABCMeta):
 
 
 class U3(Operation, metaclass=ABCMeta):
+    """Class for U3 gate."""
     num_params = 3
     num_wires = 1
     func = staticmethod(tqf.u3)
@@ -973,6 +1020,7 @@ class U3(Operation, metaclass=ABCMeta):
 
 
 class CU3(Operation, metaclass=ABCMeta):
+    """Class for Controlled U3 gate."""
     num_params = 3
     num_wires = 2
     func = staticmethod(tqf.cu3)
@@ -983,13 +1031,14 @@ class CU3(Operation, metaclass=ABCMeta):
 
 
 class QubitUnitary(Operation, metaclass=ABCMeta):
+    """Class for controlled Qubit Unitary gate."""
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitary)
 
     @classmethod
     def _matrix(cls, params):
-        return tqf.qubitunitary(params)
+        return tqf.qubitunitary_matrix(params)
 
     def build_params(self, trainable):
         return None
@@ -1000,13 +1049,15 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
 
 
 class QubitUnitaryFast(Operation, metaclass=ABCMeta):
+    """Class for fast implementation of
+    controlled Qubit Unitary gate."""
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitaryfast)
 
     @classmethod
     def _matrix(cls, params):
-        return tqf.qubitunitaryfast(params)
+        return tqf.qubitunitaryfast_matrix(params)
 
     def build_params(self, trainable):
         return None
@@ -1017,6 +1068,7 @@ class QubitUnitaryFast(Operation, metaclass=ABCMeta):
 
 
 class MultiCNOT(Operation, metaclass=ABCMeta):
+    """Class for Multi qubit CNOT gate."""
     num_params = 0
     num_wires = AnyWires
     func = staticmethod(tqf.multicnot)
@@ -1032,6 +1084,7 @@ class MultiCNOT(Operation, metaclass=ABCMeta):
 
 
 class MultiXCNOT(Operation, metaclass=ABCMeta):
+    """Class for Multi qubit XCNOT gate."""
     num_params = 0
     num_wires = AnyWires
     func = staticmethod(tqf.multixcnot)
@@ -1047,6 +1100,7 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
 
 
 class Reset(Operator, metaclass=ABCMeta):
+    """Class for Reset gate."""
     num_params = 0
     num_wires = AnyWires
     func = staticmethod(tqf.reset)
