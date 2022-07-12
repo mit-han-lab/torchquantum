@@ -126,8 +126,7 @@ html_theme_options = {
 
 # adjust code block style for readthedocs
 
-pygments_style = "sphinx"
-pygments_dark_style = "monokai"
+html_static_path = ["_static"]
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
