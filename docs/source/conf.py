@@ -122,5 +122,10 @@ html_theme_options = {
     'logo_only': False,
 }
 
+# adjust code block style for readthedocs
+
+pygments_style = "sphinx"
+pygments_dark_style = "monokai"
+
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
