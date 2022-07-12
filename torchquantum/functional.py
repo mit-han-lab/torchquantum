@@ -74,6 +74,17 @@ __all__ = [
 
 
 def apply_unitary_einsum(state, mat, wires):
+    """Apply the unitary to the statevector using torch.einsum method.
+
+    Args:
+        state (torch.Tensor): The statevector.
+        mat (torch.Tensor): The unitary matrix of the operation.
+        wires (int or List[int]): Which qubit the operation is applied to.
+
+    Returns:
+        torch.Tensor: The new statevector.
+
+    """
     device_wires = wires
 
     # minus one because of batch
@@ -141,6 +152,17 @@ def apply_unitary_einsum(state, mat, wires):
 
 
 def apply_unitary_bmm(state, mat, wires):
+    """Apply the unitary to the statevector using torch.bmm method.
+
+        Args:
+            state (torch.Tensor): The statevector.
+            mat (torch.Tensor): The unitary matrix of the operation.
+            wires (int or List[int]): Which qubit the operation is applied to.
+
+        Returns:
+            torch.Tensor: The new statevector.
+
+        """
     device_wires = wires
 
     # if len(mat.shape) > 2:
@@ -180,6 +202,31 @@ def apply_unitary_bmm(state, mat, wires):
 def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
                  params=None, n_wires=None, static=False, parent_graph=None,
                  inverse=False):
+    """Perform the phaseshift gate.
+
+    Args:
+        name (str): The name of the operation.
+        mat (torch.Tensor): The unitary matrix of the gate.
+        method (str): 'bmm' or 'einsum' to compute matrix vector
+            multiplication.
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     if params is not None:
         if not isinstance(params, torch.Tensor):
             # this is for qubitunitary gate
@@ -344,6 +391,15 @@ def phaseshift_matrix(params):
 
 
 def rot_matrix(params):
+    """Compute unitary matrix for rot gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     theta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     omega = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -362,12 +418,30 @@ def rot_matrix(params):
 
 
 def multirz_eigvals(params, n_wires):
+    """Compute eigenvalue for multiqubit RZ gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed eigenvalues.
+
+    """
     theta = params.type(C_DTYPE)
     return torch.exp(-1j * theta / 2 * torch.tensor(pauli_eigs(n_wires)).to(
         params.device))
 
 
 def multirz_matrix(params, n_wires):
+    """Compute unitary matrix for multiqubit RZ gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     # torch diagonal not available for complex number
     eigvals = multirz_eigvals(params, n_wires)
     dia = diag(eigvals)
@@ -375,6 +449,16 @@ def multirz_matrix(params, n_wires):
 
 
 def rxx_matrix(params):
+    """Compute unitary matrix for RXX gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
@@ -399,6 +483,15 @@ def rxx_matrix(params):
 
 
 def ryy_matrix(params):
+    """Compute unitary matrix for RYY gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
@@ -423,6 +516,15 @@ def ryy_matrix(params):
 
 
 def rzz_matrix(params):
+    """Compute unitary matrix for RZZ gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
     conj_exp = torch.conj(exp)
@@ -442,6 +544,15 @@ def rzz_matrix(params):
 
 
 def rzx_matrix(params):
+    """Compute unitary matrix for RZX gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
@@ -468,6 +579,15 @@ def rzx_matrix(params):
 
 
 def crx_matrix(params):
+    """Compute unitary matrix for CRX gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(-theta / 2)
@@ -486,6 +606,15 @@ def crx_matrix(params):
 
 
 def cry_matrix(params):
+    """Compute unitary matrix for CRY gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
@@ -504,6 +633,15 @@ def cry_matrix(params):
 
 
 def crz_matrix(params):
+    """Compute unitary matrix for CRZ gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
@@ -519,6 +657,15 @@ def crz_matrix(params):
 
 
 def crot_matrix(params):
+    """Compute unitary matrix for CRot gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     phi = params[:, 0].type(C_DTYPE)
     theta = params[:, 1].type(C_DTYPE)
     omega = params[:, 2].type(C_DTYPE)
@@ -541,6 +688,15 @@ def crot_matrix(params):
 
 
 def u1_matrix(params):
+    """Compute unitary matrix for U1 gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -555,6 +711,15 @@ def u1_matrix(params):
 
 
 def cu1_matrix(params):
+    """Compute unitary matrix for CU1 gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -570,6 +735,15 @@ def cu1_matrix(params):
 
 
 def u2_matrix(params):
+    """Compute unitary matrix for U2 gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
@@ -584,6 +758,15 @@ def u2_matrix(params):
 
 
 def cu2_matrix(params):
+    """Compute unitary matrix for CU2 gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
@@ -601,6 +784,15 @@ def cu2_matrix(params):
 
 
 def u3_matrix(params):
+    """Compute unitary matrix for U3 gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -619,6 +811,15 @@ def u3_matrix(params):
 
 
 def cu3_matrix(params):
+    """Compute unitary matrix for CU3 gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -641,6 +842,15 @@ def cu3_matrix(params):
 
 
 def qubitunitary_matrix(params):
+    """Compute unitary matrix for Qubitunitary gate.
+
+    Args:
+        params (torch.Tensor): The unitary matrix.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     matrix = params.squeeze(0)
     try:
         assert matrix.shape[-1] == matrix.shape[-2]
@@ -667,10 +877,29 @@ def qubitunitary_matrix(params):
 
 
 def qubitunitaryfast_matrix(params):
+    """Compute unitary matrix for Qubitunitary fast gate.
+
+    Args:
+        params (torch.Tensor): The unitary matrix.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     return params.squeeze(0)
 
 
 def qubitunitarystrict_matrix(params):
+    """Compute unitary matrix for Qubitunitary strict gate.
+        Strictly be the unitary.
+
+    Args:
+        params (torch.Tensor): The unitary matrix.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     params.squeeze(0)
     mat = params
     U, Sigma, V = torch.svd(mat)
@@ -678,6 +907,15 @@ def qubitunitarystrict_matrix(params):
 
 
 def multicnot_matrix(n_wires):
+    """Compute unitary matrix for Multi qubit CNOT gate.
+
+    Args:
+        n_wires (int): The number of wires.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
     mat[-1][-1] = 0
     mat[-2][-2] = 0
@@ -688,6 +926,15 @@ def multicnot_matrix(n_wires):
 
 
 def multixcnot_matrix(n_wires):
+    """Compute unitary matrix for Multi qubit XCNOT gate.
+
+    Args:
+        params (torch.Tensor): The unitary matrix.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
     # when all control qubits are zero, then the target qubit will flip
     mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
     mat[0][0] = 0
@@ -781,21 +1028,25 @@ def hadamard(q_device: tq.QuantumDevice,
              params: torch.Tensor = None,
              n_wires: int = None,
              static: bool = False,
-             parent_graph=None,
+             parent_graph = None,
              inverse: bool = False,
              comp_method: str = 'bmm'):
     """Perform the hadamard gate.
 
     Args:
-        q_device: The QuantumDevice.
-        wires: Which qubit(s) to apply the gate.
-        params: Parameters (if any) of the gate.
-        n_wires: Number of qubits the gate is applied to.
-        static: Whether use static mode computation.
-        parent_graph: Parent QuantumGraph of current operation.
-        inverse: Whether inverse the gate.
-        comp_method: Use 'bmm' or 'einsum' method to perform matrix vector
-            multiplication.
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to. 
+            Default to None.
+        static (bool, optional): Whether use static mode computation. 
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of 
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform 
+        matrix vector multiplication. Default to 'bmm'.
 
     Returns:
         None.
@@ -828,15 +1079,19 @@ def shadamard(q_device,
     """Perform the shadamard gate.
 
     Args:
-        q_device: The QuantumDevice.
-        wires: Which qubit(s) to apply the gate.
-        params: Parameters (if any) of the gate.
-        n_wires: Number of qubits the gate is applied to.
-        static: Whether use static mode computation.
-        parent_graph: Parent QuantumGraph of current operation.
-        inverse: Whether inverse the gate.
-        comp_method: Use 'bmm' or 'einsum' method to perform matrix vector
-            multiplication.
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
 
     Returns:
         None.
@@ -866,18 +1121,22 @@ def paulix(q_device,
            parent_graph=None,
            inverse=False,
            comp_method='bmm'):
-    """Perform the pauli x gate.
+    """Perform the Pauli X gate.
 
     Args:
-        q_device: The QuantumDevice.
-        wires: Which qubit(s) to apply the gate.
-        params: Parameters (if any) of the gate.
-        n_wires: Number of qubits the gate is applied to.
-        static: Whether use static mode computation.
-        parent_graph: Parent QuantumGraph of current operation.
-        inverse: Whether inverse the gate.
-        comp_method: Use 'bmm' or 'einsum' method to perform matrix vector
-            multiplication.
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
 
     Returns:
         None.
@@ -907,6 +1166,27 @@ def pauliy(q_device,
            parent_graph=None,
            inverse=False,
            comp_method='bmm'):
+    """Perform the Pauli Y gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'pauliy'
     mat = mat_dict[name]
     gate_wrapper(
@@ -931,6 +1211,27 @@ def pauliz(q_device,
            parent_graph=None,
            inverse=False,
            comp_method='bmm'):
+    """Perform the Pauli Z gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'pauliz'
     mat = mat_dict[name]
     gate_wrapper(
@@ -955,6 +1256,27 @@ def i(q_device,
       parent_graph=None,
       inverse=False,
       comp_method='bmm'):
+    """Perform the I gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'i'
     mat = mat_dict[name]
     gate_wrapper(
@@ -979,6 +1301,27 @@ def s(q_device,
       parent_graph=None,
       inverse=False,
       comp_method='bmm'):
+    """Perform the s gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 's'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1003,6 +1346,27 @@ def t(q_device,
       parent_graph=None,
       inverse=False,
       comp_method='bmm'):
+    """Perform the t gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 't'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1027,6 +1391,27 @@ def sx(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the sx gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'sx'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1051,6 +1436,27 @@ def cnot(q_device,
          parent_graph=None,
          inverse=False,
          comp_method='bmm'):
+    """Perform the cnot gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cnot'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1075,6 +1481,27 @@ def cz(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the cz gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cz'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1099,6 +1526,27 @@ def cy(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the cy gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cy'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1123,6 +1571,27 @@ def rx(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the rx gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'rx'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1147,6 +1616,27 @@ def ry(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the ry gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'ry'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1171,6 +1661,27 @@ def rz(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the rz gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'rz'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1195,6 +1706,27 @@ def rxx(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the rxx gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'rxx'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1219,6 +1751,27 @@ def ryy(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the ryy gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'ryy'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1243,6 +1796,27 @@ def rzz(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the rzz gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'rzz'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1267,6 +1841,27 @@ def rzx(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the rzx gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'rzx'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1291,6 +1886,27 @@ def swap(q_device,
          parent_graph=None,
          inverse=False,
          comp_method='bmm'):
+    """Perform the swap gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'swap'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1315,6 +1931,27 @@ def sswap(q_device,
           parent_graph=None,
           inverse=False,
           comp_method='bmm'):
+    """Perform the sswap gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'sswap'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1339,6 +1976,27 @@ def cswap(q_device,
           parent_graph=None,
           inverse=False,
           comp_method='bmm'):
+    """Perform the cswap gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cswap'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1363,6 +2021,27 @@ def toffoli(q_device,
             parent_graph=None,
             inverse=False,
             comp_method='bmm'):
+    """Perform the toffoli gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'toffoli'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1387,6 +2066,27 @@ def phaseshift(q_device,
                parent_graph=None,
                inverse=False,
                comp_method='bmm'):
+    """Perform the phaseshift gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'phaseshift'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1411,6 +2111,27 @@ def rot(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the rot gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'rot'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1435,6 +2156,27 @@ def multirz(q_device,
             parent_graph=None,
             inverse=False,
             comp_method='bmm'):
+    """Perform the multi qubit RZ gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'multirz'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1459,6 +2201,27 @@ def crx(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the crx gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'crx'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1483,6 +2246,27 @@ def cry(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the cry gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cry'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1507,6 +2291,27 @@ def crz(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the crz gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'crz'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1531,6 +2336,27 @@ def crot(q_device,
          parent_graph=None,
          inverse=False,
          comp_method='bmm'):
+    """Perform the crot gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'crot'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1555,6 +2381,27 @@ def u1(q_device,
          parent_graph=None,
          inverse=False,
          comp_method='bmm'):
+    """Perform the u1 gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'u1'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1579,6 +2426,27 @@ def u2(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the u2 gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'u2'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1603,6 +2471,27 @@ def u3(q_device,
        parent_graph=None,
        inverse=False,
        comp_method='bmm'):
+    """Perform the u3 gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'u3'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1627,6 +2516,27 @@ def cu1(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the cu1 gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cu1'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1651,6 +2561,27 @@ def cu2(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the cu2 gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cu2'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1675,6 +2606,27 @@ def cu3(q_device,
         parent_graph=None,
         inverse=False,
         comp_method='bmm'):
+    """Perform the cu3 gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'cu3'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1700,6 +2652,27 @@ def qubitunitary(q_device,
                  parent_graph=None,
                  inverse=False,
                  comp_method='bmm'):
+    """Perform the qubitunitary gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'qubitunitary'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1724,6 +2697,27 @@ def qubitunitaryfast(q_device,
                      parent_graph=None,
                      inverse=False,
                      comp_method='bmm'):
+    """Perform the qubitunitaryfast gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'qubitunitaryfast'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1748,6 +2742,27 @@ def qubitunitarystrict(q_device,
                        parent_graph=None,
                        inverse=False,
                        comp_method='bmm'):
+    """Perform the qubitunitarystrict = gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'qubitunitarystrict'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1772,6 +2787,27 @@ def multicnot(q_device,
               parent_graph=None,
               inverse=False,
               comp_method='bmm'):
+    """Perform the multi qubit cnot gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'multicnot'
     mat = mat_dict[name]
     gate_wrapper(
@@ -1796,6 +2832,27 @@ def multixcnot(q_device,
               parent_graph=None,
               inverse=False,
               comp_method='bmm'):
+    """Perform the multi qubit xcnot gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
     name = 'multixcnot'
     mat = mat_dict[name]
     gate_wrapper(

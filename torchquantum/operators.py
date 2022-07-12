@@ -163,7 +163,7 @@ class Operator(tq.QuantumModule):
                  init_params=None,
                  n_wires=None,
                  wires=None):
-        """
+        """__init__ function for Operator.
 
         Args:
             has_params (bool, optional): Whether the operations has parameters.
