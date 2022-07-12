@@ -115,8 +115,7 @@ html_theme_options = {
     'logo_only': False,
 }
 """
-import sphinx_rtd_theme
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 html_theme_options = {
     'collapse_navigation': False,
     'display_version': True,

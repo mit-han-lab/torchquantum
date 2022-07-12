@@ -14,3 +14,4 @@ tensorflow>=2.4.1
 scipy>=1.5.2
 
 pyscf>=2.0.1
+furo
