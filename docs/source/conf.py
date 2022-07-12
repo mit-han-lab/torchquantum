@@ -115,6 +115,8 @@ html_theme_options = {
     'logo_only': False,
 }
 """
+
+import furo
 html_theme = 'furo'
 html_theme_options = {
     'collapse_navigation': False,
