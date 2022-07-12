@@ -3,6 +3,8 @@ torchquantum.operators
 
 .. currentmodule:: torchquantum.operators
 
+Classes
+---------
 .. autosummary::
     :toctree: generated
     :template: classtemplate_controlflow.rst

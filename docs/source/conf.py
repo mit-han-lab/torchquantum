@@ -115,12 +115,18 @@ html_theme_options = {
     'logo_only': False,
 }
 """
+
+import furo
 html_theme = 'furo'
 html_theme_options = {
     'collapse_navigation': False,
     'display_version': True,
     'logo_only': False,
 }
+
+# adjust code block style for readthedocs
+
+html_static_path = ["_static"]
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
