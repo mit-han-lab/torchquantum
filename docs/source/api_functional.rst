@@ -1,11 +1,14 @@
 torchquantum.functional
 ===================================
 
+.. automodule:: torchquantum.functional
 .. currentmodule:: torchquantum.functional
 
+Functions
+---------
 .. autosummary::
     :toctree: generated
-    :template: classtemplate_controlflow.rst
+    :template: functiontemplate.rst
 
     apply_unitary_einsum
     apply_unitary_bmm
