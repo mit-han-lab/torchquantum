@@ -9,7 +9,7 @@
 
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
-[![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum.readthedocs.io)
+[![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum-doc.readthedocs.io/)
 [![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F)](https://qmlsys.hanruiwang.me)
 [![Website](https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu)](https://qmlsys.mit.edu)
 
