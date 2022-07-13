@@ -122,7 +122,11 @@ html_theme_options = {
     'collapse_navigation': False,
     'display_version': True,
     'logo_only': False,
+    "index": "page.html"
 }
+html_css_files = [
+    "css/custom.css"
+]
 
 # adjust code block style for readthedocs
 
