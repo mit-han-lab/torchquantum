@@ -125,13 +125,14 @@ html_theme_options = {
     'logo_only': False,
     "index": "page.html"
 }
-html_css_files = [
-    "css/custom.css"
-]
 
 # adjust code block style for readthedocs
 
 html_static_path = ["_static"]
 
+display_github = False
+display_bitbucket = False
+display_gitlab = False
+show_source = True
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
