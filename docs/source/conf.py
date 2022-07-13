@@ -5,6 +5,8 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath('../..'))
+import furo
+
 #import pathlib
 #sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 
@@ -116,7 +118,6 @@ html_theme_options = {
 }
 """
 
-import furo
 html_theme = 'furo'
 html_theme_options = {
     'collapse_navigation': False,
