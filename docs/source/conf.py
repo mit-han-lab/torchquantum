@@ -38,8 +38,8 @@ extensions = [
     # 'sphinx.ext.mathjax',
     # 'sphinx.ext.extlinks',
     # 'sphinx_autodoc_typehints',
-    # 'jupyter_sphinx',
-    # 'nbsphinx',
+    'jupyter_sphinx',
+    'nbsphinx',
     # 'sphinx_design',
     # 'sphinx_reredirects'
 ]
