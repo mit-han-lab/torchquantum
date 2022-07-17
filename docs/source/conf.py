@@ -39,7 +39,8 @@ extensions = [
     # 'sphinx.ext.extlinks',
     # 'sphinx_autodoc_typehints',
     # 'jupyter_sphinx',
-    # 'nbsphinx',
+    'nbsphinx', # support for including Jupyter Notebook (*.ipynb) file
+    'recommonmark', # support for including markdown (*.md) file
     # 'sphinx_design',
     # 'sphinx_reredirects'
 ]

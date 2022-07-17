@@ -15,3 +15,5 @@ scipy>=1.5.2
 
 pyscf>=2.0.1
 furo @ git+https://github.com/frogcjn/torchquantum-doc-furo-theme.git
+nbsphinx
+recommonmark

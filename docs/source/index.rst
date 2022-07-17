@@ -11,6 +11,7 @@
    :caption: Usage
 
    usage_installation
+   usage_examples
    
 .. raw:: html
 
