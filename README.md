@@ -134,22 +134,15 @@ class QFCModel(nn.Module):
 
 ```
 
-[comment]: <> (## Tutorials)
+## VQE Example
+Train a quantum circuit to perform VQE task.
+Quito quantum computer as in [simple_vqe.py](./examples/simple_vqe/simple_vqe.py)
+script:
+```python
+cd examples/simple_vqe
+python simple_vqe.py
+```
 
-[comment]: <> (- [Opening]&#40;https://www.dropbox.com/s/35xtw31myhidiq2/TorchQuantum-tutorial1-Opening.mp4?dl=0&#41;)
-
-## Papers using TorchQuantum
-- [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
-- [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
-- [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
-- [QCE'22] [Variational Quantum Pulse Learning](https://arxiv.org/abs/2203.17267)
-
-
-## Dependencies
-- 3.9 >= Python >= 3.7 (Python 3.10 may have the `concurrent` package issue for Qiskit)
-- PyTorch >= 1.8.0 
-- configargparse >= 0.14
-- GPU model training requires NVIDIA GPUs
 
 ## MNIST Example
 Train a quantum circuit to perform MNIST task and deploy on the real IBM
@@ -241,6 +234,19 @@ python mnist_example.py
 [comment]: <> (<img src="https://hanruiwang.me/project_pages/quantumnas/assets/results.jpg" alt="torchquantum results" width="550">)
 
 [comment]: <> (</p>)
+
+## Papers using TorchQuantum
+- [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
+- [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
+- [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
+- [QCE'22] [Variational Quantum Pulse Learning](https://arxiv.org/abs/2203.17267)
+
+
+## Dependencies
+- 3.9 >= Python >= 3.7 (Python 3.10 may have the `concurrent` package issue for Qiskit)
+- PyTorch >= 1.8.0 
+- configargparse >= 0.14
+- GPU model training requires NVIDIA GPUs
 
 ## Contact
 TorchQuantum [Forum](https://qmlsys.hanruiwang.me)
