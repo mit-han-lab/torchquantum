@@ -61,6 +61,7 @@ __all__ = [
     'MultiCNOT',
     'MultiXCNOT',
     'Reset',
+    'SingleExcitation',
 ]
 
 
@@ -1108,6 +1109,17 @@ class Reset(Operator, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return None
+
+
+class SingleExcitation(Operator, metaclass=ABCMeta):
+    """Class for SingleExcitation gate."""
+    num_params = 1
+    num_wires = 2
+    func = staticmethod(tqf.single_excitation)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.single_excitation_matrix(params)
 
 
 op_name_dict = {
