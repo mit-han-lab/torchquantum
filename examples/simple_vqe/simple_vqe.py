@@ -8,7 +8,7 @@ import numpy as np
 import argparse
 import torch.optim as optim
 
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, ConstantLR
 
 
 class QVQEModel(tq.QuantumModule):
@@ -71,7 +71,7 @@ def train(dataflow, q_device, model, device, optimizer):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print(f"loss: {loss.item()}")
+        print(f"Expectation of energy: {loss.item()}")
 
 
 def valid_test(dataflow, q_device, split, model, device):
@@ -80,7 +80,7 @@ def valid_test(dataflow, q_device, split, model, device):
             outputs = model(q_device)
     loss = outputs.mean()
 
-    print(f"{split} set loss: {loss}")
+    print(f"Expectation of energy: {loss}")
 
 
 def main():
