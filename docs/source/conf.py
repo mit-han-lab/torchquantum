@@ -5,6 +5,8 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath('../..'))
+import furo
+
 #import pathlib
 #sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 
@@ -37,7 +39,8 @@ extensions = [
     # 'sphinx.ext.extlinks',
     # 'sphinx_autodoc_typehints',
     # 'jupyter_sphinx',
-    # 'nbsphinx',
+    'nbsphinx', # support for including Jupyter Notebook (*.ipynb) file
+    'recommonmark', # support for including markdown (*.md) file
     # 'sphinx_design',
     # 'sphinx_reredirects'
 ]
@@ -115,13 +118,22 @@ html_theme_options = {
     'logo_only': False,
 }
 """
-import sphinx_rtd_theme
-html_theme = 'sphinx_rtd_theme'
+
+html_theme = 'furo'
 html_theme_options = {
     'collapse_navigation': False,
     'display_version': True,
     'logo_only': False,
+    "index": "page.html"
 }
 
+# adjust code block style for readthedocs
+
+html_static_path = ["_static"]
+
+display_github = False
+display_bitbucket = False
+display_gitlab = False
+show_source = True
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
