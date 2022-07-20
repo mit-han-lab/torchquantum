@@ -16,10 +16,10 @@
 # 👋 Welcome
 
 #### What it is doing
-Quantum simulation framework based on PyTorch. It supports statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 25 qubits with multiple GPUs.
+Quantum simulation framework based on PyTorch. It supports statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 25+ qubits with multiple GPUs.
 #### Who will benefit
-Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning
-#### Difference to Qiskit
+Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning, quantum neural networks.
+#### Differences from Qiskit/Pennylane
 Dynamic computatioh graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
 
 
@@ -36,18 +36,6 @@ Dynamic computatioh graph, automatic gradient computation, fast GPU support, bat
 - Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
 - Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
 
-[comment]: <> (- Refactoring the ```examples``` folder, see the ```allconfigs``` branch for previous ```example``` folder.)
-
-[comment]: <> (- Colab examples are available in the [artifact]&#40;./artifact&#41; folder.)
-
-[comment]: <> (- Our recent paper ["QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits"]&#40;https://arxiv.org/abs/2107.10845&#41; is accepted to HPCA 2022. We are working on updating the repo to add more examples soon!)
-
-[comment]: <> (- Add a simple [example script]&#40;./mnist_example.py&#41; using quantum gates to do MNIST )
-
-[comment]: <> (classification.)
-
-[comment]: <> (- v0.0.1 available. Feedbacks are highly welcomed!)
-
 
 ## Installation
 ```bash
@@ -63,8 +51,6 @@ import torchquantum as tq
 import torchquantum.functional as tqf
 
 x = tq.QuantumDevice(n_wires=1)
-
-x.hadamard(wires=0)
 
 tqf.hadamard(x, wires=0)
 tqf.x(x, wires=1)
