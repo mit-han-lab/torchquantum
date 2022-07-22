@@ -170,6 +170,8 @@ class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
         super().__init__()
 
 
+AmplitudeEncoder = StateEncoder
+
 encoder_op_list_name_dict = {
     '1x1_ry':
         [
