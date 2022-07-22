@@ -10,6 +10,7 @@ from qiskit.exceptions import QiskitError
 from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized, \
     tq2qiskit_measurement
 from torchquantum.utils import (get_expectations_from_counts, get_provider,
+                                get_provider_hub_group_project,
                                 get_circ_stats)
 from .qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
@@ -17,6 +18,7 @@ from torchpack.utils.logging import logger
 from qiskit.transpiler import PassManager
 import numpy as np
 import datetime
+
 
 class EmptyPassManager(PassManager):
     def run(
@@ -64,7 +66,9 @@ class QiskitProcessor(object):
                  remove_ops=False,
                  remove_ops_thres=1e-4,
                  transpile_with_ancilla=True,
-                 hub=None,
+                 hub='ibm-q',
+                 group='open',
+                 project='main',
                  layout_method=None,
                  routing_method=None
                  ):
@@ -85,6 +89,8 @@ class QiskitProcessor(object):
         self.routing_method = routing_method
 
         self.hub = hub
+        self.group = group
+        self.project = project
         self.backend = None
         self.provider = None
         self.noise_model = None
@@ -145,11 +151,14 @@ class QiskitProcessor(object):
         self.properties = None
 
         IBMQ.load_account()
-        self.provider = get_provider(self.backend_name, hub=self.hub)
+        self.provider = get_provider_hub_group_project(
+            hub=self.hub,
+            group=self.group,
+            project=self.project,
+        )
 
         if self.use_real_qc:
-            self.backend = self.provider.get_backend(
-                self.backend_name)
+            self.backend = self.provider.get_backend(self.backend_name)
             self.properties = self.backend.properties()
             self.coupling_map = self.get_coupling_map(self.backend_name)
         else:

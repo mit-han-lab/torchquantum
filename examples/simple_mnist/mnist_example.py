@@ -129,7 +129,7 @@ def main():
     parser.add_argument('--pdb', action='store_true', help='debug with pdb')
     parser.add_argument('--wires-per-block', type=int, default=2,
                         help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=5,
                         help='number of training epochs')
 
     args = parser.parse_args()
@@ -199,10 +199,16 @@ def main():
         valid_test(dataflow, 'test', model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = 'ibmq_quito'
+        backend_name = 'ibmq_lima'
         print(f"\nTest on Real Quantum Computer {backend_name}")
+        # Please specify your own hub group and project if you have the
+        # IBMQ premium plan to access more machines.
         processor_real_qc = QiskitProcessor(use_real_qc=True,
-                                            backend_name=backend_name)
+                                            backend_name=backend_name,
+                                            hub='ibm-q',
+                                            group='open',
+                                            project='main',
+                                            )
         model.set_qiskit_processor(processor_real_qc)
         valid_test(dataflow, 'test', model, device, qiskit=True)
     except ImportError:

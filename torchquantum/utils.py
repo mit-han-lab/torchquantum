@@ -499,6 +499,18 @@ def get_provider(backend_name, hub=None):
 
     return provider
 
+
+def get_provider_hub_group_project(hub='ibm-q',
+                                   group='open',
+                                   project='main'):
+    provider = IBMQ.get_provider(
+        hub=hub,
+        group=group,
+        project=project,
+    )
+    return provider
+
+
 def normalize_statevector(states):
     # make sure the square magnitude of statevector sum to 1
     # states = states.contiguous()
@@ -517,6 +529,7 @@ def normalize_statevector(states):
     states = (states_reshape * factors).reshape(original_shape)
 
     return states
+
 
 def get_circ_stats(circ):
     depth = circ.depth()
