@@ -579,3 +579,62 @@ class QiskitProcessor(object):
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
         return measured_qiskit
+
+    def process_ready_circs(self, q_device, circs_all, parallel=True):
+        circs_all_transpiled = []
+        for circ in tqdm(circs_all):
+            circs_all_transpiled.append(self.transpile(circ))
+
+        circs_all = circs_all_transpiled
+
+        if parallel:
+            if hasattr(self.backend.configuration(), 'max_experiments'):
+                chunk_size = self.backend.configuration().max_experiments
+            else:
+                # using simulator, apply multithreading
+                chunk_size = len(circs_all) // self.max_jobs
+
+            split_circs = [circs_all[i:i + chunk_size] for i in range(
+                0, len(circs_all), chunk_size)]
+
+            qiskit_verbose = self.max_jobs <= 6
+            feed_dicts = []
+            for split_circ in split_circs:
+                feed_dict = {
+                    'experiments': split_circ,
+                    'backend': self.backend,
+                    'pass_manager': self.empty_pass_manager,
+                    'shots': self.n_shots,
+                    'seed_simulator': self.seed_simulator,
+                    'noise_model': self.noise_model,
+                }
+                feed_dicts.append([feed_dict, qiskit_verbose])
+
+            p = multiprocessing.Pool(self.max_jobs)
+            results = p.map(run_job_worker, feed_dicts)
+            p.close()
+
+            if all(isinstance(result, dict) for result in results):
+                counts = results
+            else:
+                if isinstance(results[-1], dict):
+                    results[-1] = [results[-1]]
+                counts = list(itertools.chain(*results))
+        else:
+            job = execute(experiments=circs_all,
+                          backend=self.backend,
+                          pass_manager=self.empty_pass_manager,
+                          shots=self.n_shots,
+                          seed_simulator=self.seed_simulator,
+                          noise_model=self.noise_model,
+                          )
+            job_monitor(job, interval=1)
+
+            result = job.result()
+            counts = result.get_counts()
+
+        measured_qiskit = get_expectations_from_counts(
+            counts, n_wires=q_device.n_wires)
+        measured_torch = torch.tensor(measured_qiskit)
+
+        return measured_torch

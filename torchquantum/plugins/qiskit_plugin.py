@@ -10,11 +10,107 @@ from qiskit.circuit import Parameter
 from torchpack.utils.logging import logger
 from torchquantum.utils import (switch_little_big_endian_matrix,
                                 find_global_phase)
-from typing import Iterable
+from typing import Iterable, List
 
 
 __all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq',
-           'tq2qiskit_measurement']
+           'tq2qiskit_measurement', 'tq2qiskit_expand_params',
+           'qiskit_assemble_circs']
+
+
+def qiskit_assemble_circs(encoders, fixed_layer, measurement):
+    circs_all = []
+
+    for encoder in encoders:
+        circs_all.append(encoder + fixed_layer + measurement)
+
+    return circs_all
+
+
+def append_parameterized_gate(func, circ, input_idx, params, wires):
+    if func == 'rx':
+        circ.rx(theta=params[input_idx[0]], qubit=wires[0])
+    elif func == 'ry':
+        circ.ry(theta=params[input_idx[0]], qubit=wires[0])
+    elif func == 'rz':
+        circ.rz(phi=params[input_idx[0]], qubit=wires[0])
+    elif func == 'rxx':
+        circ.rxx(theta=params[input_idx[0]], qubit1=wires[0],
+                 qubit2=wires[1])
+    elif func == 'ryy':
+        circ.ryy(theta=params[input_idx[0]], qubit1=wires[0],
+                 qubit2=wires[1])
+    elif func == 'rzz':
+        circ.rzz(theta=params[input_idx[0]], qubit1=wires[0],
+                 qubit2=wires[1])
+    elif func == 'rzx':
+        circ.rzx(theta=params[input_idx[0]], qubit1=wires[0],
+                 qubit2=wires[1])
+    elif func == 'phaseshift':
+        circ.p(theta=params[input_idx[0]], qubit=wires[0])
+    elif func == 'crx':
+        circ.crx(theta=params[input_idx[0]], control_qubit=wires[0],
+                 target_qubit=wires[1])
+    elif func == 'cry':
+        circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
+                 target_qubit=wires[1])
+    elif func == 'crz':
+        circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
+                 target_qubit=wires[1])
+    elif func == 'u1':
+        circ.p(theta=params[input_idx[0]], qubit=wires[0])
+    elif func == 'cu1':
+        circ.cu1(theta=params[input_idx[0]], control_qubit=wires[0],
+                 target_qubit=wires[1])
+    elif func == 'u2':
+        circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]],
+                qubit=wires[0])
+    elif func == 'u3':
+        circ.u3(theta=params[input_idx[0]], phi=params[input_idx[1]],
+                lam=params[input_idx[2]], qubit=wires[0])
+    elif func == 'cu3':
+        circ.cu3(theta=params[input_idx[0]], phi=params[input_idx[1]],
+                 lam=params[input_idx[2]], qubit=wires[0])
+    else:
+        raise NotImplementedError(f"{func} cannot be converted to "
+                                  f"parameterized Qiskit QuantumCircuit")
+
+
+def tq2qiskit_expand_params(q_device: tq.QuantumDevice,
+                            x: torch.Tensor,
+                            func_list,
+                            ):
+    """Expand the input classical values to fixed rotation angles in gates. No
+        Qiskit.circuit.Parameter is used. All rotations are hard coded in
+        gates. This will solve the issue of qiskit bugs.
+
+    Args:
+        q_device (tq.QuantumDevice): Quantum device
+        x (torch.Tensor): Input classical values waited to be embedded in the
+            circuits.
+        func_list (List): Information about how the classical values should be
+            encoded.
+
+    Returns:
+        circ_all (List[Qiskit.QiskitCircuit]): expand the parameters into encodings
+            and return the hard coded circuits.
+    """
+    # the bsz determines how many QuantumCircuit will be constructed
+    bsz = x.shape[0]
+    circ_all = []
+    for k in range(bsz):
+        classical_values = x[k].detach().cpu().numpy()
+        circ = QuantumCircuit(q_device.n_wires)
+        for info in func_list:
+            input_idx = info['input_idx']
+            func = info['func']
+            wires = info['wires']
+            append_parameterized_gate(func, circ, input_idx,
+                                      classical_values, wires)
+
+        circ_all.append(circ)
+
+    return circ_all
 
 
 # construct a QuantumCircuit object according to the tq module
@@ -223,52 +319,7 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
         wires = info['wires']
         wires = wires if isinstance(wires, Iterable) else [wires]
 
-        if func == 'rx':
-            circ.rx(theta=params[input_idx[0]], qubit=wires[0])
-        elif func == 'ry':
-            circ.ry(theta=params[input_idx[0]], qubit=wires[0])
-        elif func == 'rz':
-            circ.rz(phi=params[input_idx[0]], qubit=wires[0])
-        elif func == 'rxx':
-            circ.rxx(theta=params[input_idx[0]], qubit1=wires[0],
-                     qubit2=wires[1])
-        elif func == 'ryy':
-            circ.ryy(theta=params[input_idx[0]], qubit1=wires[0],
-                     qubit2=wires[1])
-        elif func == 'rzz':
-            circ.rzz(theta=params[input_idx[0]], qubit1=wires[0],
-                     qubit2=wires[1])
-        elif func == 'rzx':
-            circ.rzx(theta=params[input_idx[0]], qubit1=wires[0],
-                     qubit2=wires[1])
-        elif func == 'phaseshift':
-            circ.p(theta=params[input_idx[0]], qubit=wires[0])
-        elif func == 'crx':
-            circ.crx(theta=params[input_idx[0]], control_qubit=wires[0],
-                     target_qubit=wires[1])
-        elif func == 'cry':
-            circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
-                     target_qubit=wires[1])
-        elif func == 'crz':
-            circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
-                     target_qubit=wires[1])
-        elif func == 'u1':
-            circ.p(theta=params[input_idx[0]], qubit=wires[0])
-        elif func == 'cu1':
-            circ.cu1(theta=params[input_idx[0]], control_qubit=wires[0],
-                     target_qubit=wires[1])
-        elif func == 'u2':
-            circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]],
-                    qubit=wires[0])
-        elif func == 'u3':
-            circ.u3(theta=params[input_idx[0]], phi=params[input_idx[1]],
-                    lam=params[input_idx[2]], qubit=wires[0])
-        elif func == 'cu3':
-            circ.cu3(theta=params[input_idx[0]], phi=params[input_idx[1]],
-                     lam=params[input_idx[2]], qubit=wires[0])
-        else:
-            raise NotImplementedError(f"{func} cannot be converted to "
-                                      f"parameterized Qiskit QuantumCircuit")
+        append_parameterized_gate(func, circ, input_idx, params, wires)
 
     return circ, params
 
