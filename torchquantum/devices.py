@@ -21,6 +21,8 @@ class QuantumDevice(nn.Module):
 
         self.states = None
 
+        self.reset_states(1)
+
     def clone_states(self, existing_states: torch.Tensor):
         self.states = existing_states.clone()
 
