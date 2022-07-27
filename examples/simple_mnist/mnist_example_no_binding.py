@@ -149,7 +149,7 @@ def main():
     parser.add_argument('--pdb', action='store_true', help='debug with pdb')
     parser.add_argument('--wires-per-block', type=int, default=2,
                         help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=5,
                         help='number of training epochs')
 
     args = parser.parse_args()
