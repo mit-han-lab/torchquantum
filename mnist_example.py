@@ -6,8 +6,16 @@ import argparse
 import torchquantum as tq
 import torchquantum.functional as tqf
 
+from torchquantum.plugins import (tq2qiskit_expand_params,
+                                  tq2qiskit,
+                                  tq2qiskit_measurement,
+                                  qiskit_assemble_circs)
+
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
+
+import random
+import numpy as np
 
 
 class QFCModel(tq.QuantumModule):
@@ -66,10 +74,24 @@ class QFCModel(tq.QuantumModule):
     def forward(self, x, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
+        devi = x.device
 
         if use_qiskit:
-            x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, self.measure, x)
+            encoder_circs = tq2qiskit_expand_params(self.q_device, x,
+                                                    self.encoder.func_list)
+            q_layer_circ = tq2qiskit(self.q_device, self.q_layer)
+            measurement_circ = tq2qiskit_measurement(self.q_device,
+                                                     self.measure)
+            assembled_circs = qiskit_assemble_circs(encoder_circs,
+                                                    q_layer_circ,
+                                                    measurement_circ)
+            x0 = self.qiskit_processor.process_ready_circs(
+                self.q_device, assembled_circs).to(devi)
+            # x1 = self.qiskit_processor.process_parameterized(
+            #     self.q_device, self.encoder, self.q_layer, self.measure, x)
+            # print((x0-x1).max())
+            x = x0
+
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
@@ -124,12 +146,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--static', action='store_true', help='compute with '
                                                               'static mode')
+    parser.add_argument('--pdb', action='store_true', help='debug with pdb')
     parser.add_argument('--wires-per-block', type=int, default=2,
                         help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=5,
                         help='number of training epochs')
 
     args = parser.parse_args()
+
+    if args.pdb:
+        import pdb
+        pdb.set_trace()
+
+    seed = 0
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
     dataset = MNIST(
         root='./mnist_data',
@@ -187,10 +219,16 @@ def main():
         valid_test(dataflow, 'test', model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = 'ibmq_quito'
+        backend_name = 'ibmq_lima'
         print(f"\nTest on Real Quantum Computer {backend_name}")
+        # Please specify your own hub group and project if you have the
+        # IBMQ premium plan to access more machines.
         processor_real_qc = QiskitProcessor(use_real_qc=True,
-                                            backend_name=backend_name)
+                                            backend_name=backend_name,
+                                            hub='ibm-q',
+                                            group='open',
+                                            project='main',
+                                            )
         model.set_qiskit_processor(processor_real_qc)
         valid_test(dataflow, 'test', model, device, qiskit=True)
     except ImportError:
