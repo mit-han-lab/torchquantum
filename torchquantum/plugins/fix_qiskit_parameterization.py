@@ -9,7 +9,7 @@ if __name__ == '__main__':
     path_provider = path.replace('__init__.py',
                                  'providers/aer/backends/aerbackend.py')
     print(path_provider)
-    fixed_file = './torchquantum/plugins/aerbackend_fixed.py'
+    fixed_file = 'aerbackend_fixed.py'
 
     with open(path_provider, 'r') as fid:
         for line in fid.readlines():

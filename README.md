@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/mit-han-lab/pytorch-quantum/blob/master/torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
+<img src="https://github.com/mit-han-lab/pytorch-quantum/blob/master/docs/torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
 </p>
 
 <h2><p align="center">A PyTorch Library for Quantum Simulation and Quantum Machine Learning</p></h2>
@@ -142,7 +142,7 @@ python simple_vqe.py
 
 ## MNIST Example
 Train a quantum circuit to perform MNIST task and deploy on the real IBM
-Quito quantum computer as in [mnist_example.py](./examples/simple_mnist/mnist_example.py)
+Quito quantum computer as in [mnist_example.py](./examples/simple_mnist/mnist_example_no_binding.py)
 script:
 ```python
 cd examples/simple_mnist
