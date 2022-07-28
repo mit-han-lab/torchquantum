@@ -27,7 +27,10 @@ def expval(q_device: tq.QuantumDevice,
     for wire, observable in zip(wires, observables):
         # compute marginal magnitude
         reduction_dims = np.delete(all_dims, [0, wire + 1])
-        probs = state_mag.sum(list(reduction_dims))
+        if reduction_dims.size == 0:
+            probs = state_mag
+        else:
+            probs = state_mag.sum(list(reduction_dims))
         res = probs.mv(observable.eigvals.real.to(probs.device))
         expectations.append(res)
 
