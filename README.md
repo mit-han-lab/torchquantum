@@ -6,13 +6,27 @@
 <h3><p align="center">Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p></h3>
 
 
+<p align="center">
+    <a href="https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE">
+        <img alt="MIT License" src="https://img.shields.io/apm/l/atomic-design-ui.svg?">
+    </a>
+    <a href="https://torchquantum-doc.readthedocs.io/">
+        <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum">
+    </a>
+    <a href="https://join.slack.com/t/torchquantum/shared_invite/zt-1d830lvph-E~6IlXdtdQLoGLljLp_xFg">
+        <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
+    </a>
+    <a href="https://qmlsys.hanruiwang.me">
+        <img alt="Discourse" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
+    </a>
+    <a href="https://qmlsys.mit.edu">
+        <img alt="Website" src="https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu">
+    </a>
+    
+</p>
+<br />
 
 
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE)
-[![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum-doc.readthedocs.io/)
-[![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F)](https://qmlsys.hanruiwang.me)
-[![Website](https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu)](https://qmlsys.mit.edu)
-[![Slack](https://img.shields.io/badge/Slack-join-green)]()
 
 
 
