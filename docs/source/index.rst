@@ -11,7 +11,7 @@
    :caption: Usage
 
    usage_installation
-   usage_examples
+   examples_README.md
    
 .. raw:: html
 

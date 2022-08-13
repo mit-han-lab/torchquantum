@@ -21,6 +21,14 @@ setup(name='torchquantum',
             'pathos>=0.2.7',
             'pylatexenc>=2.10'
       ],
+      extras_require = {
+            'doc': [
+                  'furo @ git+https://github.com/frogcjn/torchquantum-doc-furo-theme.git',
+                  'nbsphinx',
+                  'recommonmark'
+            ]
+      },
       python_requires='>=3',
       include_package_data=True,
-      packages=find_packages())
+      packages=find_packages()
+)
