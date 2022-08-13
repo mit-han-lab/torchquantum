@@ -12,6 +12,9 @@
 [![Read the Docs](https://img.shields.io/readthedocs/torchquantum)](https://torchquantum-doc.readthedocs.io/)
 [![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F)](https://qmlsys.hanruiwang.me)
 [![Website](https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu)](https://qmlsys.mit.edu)
+[![Slack](https://img.shields.io/badge/Slack-join-green)]()
+
+
 
 # 👋 Welcome
 
