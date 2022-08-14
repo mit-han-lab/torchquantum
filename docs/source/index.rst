@@ -21,31 +21,78 @@
 
    </p>
 
-Welcome to TorchQuantum's documentation!
-========================================
+.. raw:: html
 
-A PyTorch-based hybrid classical-quantum dynamic neural networks
-framework. ::
-    @inproceedings{hanruiwang2022quantumnas,
-        title     = {Quantumnas: Noise-adaptive search for robust quantum circuits},
-        author    = {Wang, Hanrui and Ding, Yongshan and Gu, Jiaqi and Lin, Yujun and Pan, David Z and Chong, Frederic T and Han, Song},
-        booktitle = {The 28th IEEE International Symposium on High-Performance Computer Architecture (HPCA-28)},
-        year      = {2022}
-    }
+   <h2>
 
-|MIT License|
+.. raw:: html
+
+   <p align="center">
+
+A PyTorch Library for Quantum Simulation and Quantum Machine Learning
+
+.. raw:: html
+
+   </p>
+
+.. raw:: html
+
+   </h2>
+
+.. raw:: html
+
+   <h3>
+
+.. raw:: html
+
+   <p align="center">
+
+Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine
+
+.. raw:: html
+
+   </p>
+
+.. raw:: html
+
+   </h3>
+
+|MIT License| |Read the Docs| |Discourse status| |Website|
+
+👋 Welcome
+=========
+
+What it is doing
+^^^^^^^^^^^^^^^^
+
+Quantum simulation framework based on PyTorch. It supports statevector
+simulation and pulse simulation (coming soon) on GPUs. It can scale up
+to the simulation of 25+ qubits with multiple GPUs. #### Who will
+benefit Researchers on quantum algorithm design, parameterized quantum
+circuit training, quantum optimal control, quantum machine learning,
+quantum neural networks. #### Differences from Qiskit/Pennylane Dynamic
+computatioh graph, automatic gradient computation, fast GPU support,
+batch model tersorized processing.
+
+Features
+--------
+
+-  Easy construction and simulation of quantum circuits in **PyTorch**
+-  **Dynamic computation graph** for easy debugging
+-  **Gradient support** via autograd
+-  **Batch mode** inference and training on **CPU/GPU**.
+-  Easy **deployment on real quantum devices** such as IBMQ
+-  **Easy hybrid classical-quantum** model construction
+-  (coming soon) **pulse-level simulation**
 
 News
 ----
 
--  Colab examples are available in the `artifact <./artifact>`__ folder.
--  Our recent paper `“QuantumNAS: Noise-Adaptive Search for Robust
-   Quantum Circuits” <https://arxiv.org/abs/2107.10845>`__ is accepted
-   to HPCA 2022. We are working on updating the repo to add more
-   examples soon!
--  Add a simple `example script <./mnist_example.py>`__ using quantum
-   gates to do MNIST classification.
--  v0.0.1 available. Feedbacks are highly welcomed!
+-  Welcome to contribute! Please contact us or post in the
+   `forum <https://qmlsys.hanruiwang.me>`__ if you want to have new
+   examples implemented by TorchQuantum or any other questions.
+-  Qmlsys website goes online:
+   `qmlsys.mit.edu <https://qmlsys.mit.edu>`__
 
 Installation
 ------------
@@ -56,23 +103,56 @@ Installation
    cd torchquantum
    pip install --editable .
 
-.. raw:: html
+Basic Usage
+-----------
 
-   <!-- ## Brief Intro Video
-   [![Watch the video](https://hanlab.mit.edu/projects/qmlsys/assets/torchquantum_intro.png)](https://qmlsys.mit.edu/assets/torchquantum_intro.mp4)
+.. code:: python
 
-    -->
+   import torchquantum as tq
+   import torchquantum.functional as tqf
+
+   x = tq.QuantumDevice(n_wires=1)
+
+   tqf.hadamard(x, wires=0)
+   tqf.x(x, wires=1)
+   tqf.cnot(x, wires=[0, 1])
+
+   # print the current state (dynamic computation graph supported)
+   print(x.states)
+
+Guide to the examples
+---------------------
+
+We also prepare many example and tutorials using TorchQuantum.
+
+For **beginning level**, you may check `QNN for
+MNIST <examples/simple_mnist>`__, `Quantum Convolution
+(Quanvolution) <examples/quanvolution>`__ and `Quantum Kernel
+Method <examples/quantum_kernel_method>`__, and `Quantum
+Regression <examples/regression>`__.
+
+For **intermediate level**, you may check `Amplitude Encoding for
+MNIST <examples/amplitude_encoding_mnist>`__, `Clifford gate
+QNN <examples/clifford_qnn>`__, `Save and Load QNN
+models <examples/save_load_example>`__, `PauliSum
+Operation <examples/PauliSumOp>`__, `How to convert tq to
+Qiskit <examples/converter_tq_qiskit>`__.
+
+For **expert**, you may check `Parameter Shift on-chip
+Training <examples/param_shift_onchip_training>`__, `VQA Gradient
+Pruning <examples/gradient_pruning>`__, `VQE <examples/simple_vqe>`__,
+`VQA for State Prepration <examples/train_state_prep>`__.
 
 Usage
 -----
 
-Construct quantum NN models as simple as constructing a normal pytorch
-model.
+Construct parameterized quantum circuit models as simple as constructing
+a normal pytorch model.
 
 .. code:: python
 
    import torch.nn as nn
-   import torch.nn.functional as F 
+   import torch.nn.functional as F
    import torchquantum as tq
    import torchquantum.functional as tqf
 
@@ -82,7 +162,7 @@ model.
        self.n_wires = 4
        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
        self.measure = tq.MeasureAll(tq.PauliZ)
-       
+
        self.encoder_gates = [tqf.rx] * 4 + [tqf.ry] * 4 + \
                             [tqf.rz] * 4 + [tqf.rx] * 4
        self.rx0 = tq.RX(has_params=True, trainable=True)
@@ -94,20 +174,20 @@ model.
        bsz = x.shape[0]
        # down-sample the image
        x = F.avg_pool2d(x, 6).view(bsz, 16)
-       
+
        # reset qubit states
        self.q_device.reset_states(bsz)
-       
+
        # encode the classical image to quantum domain
        for k, gate in enumerate(self.encoder_gates):
          gate(self.q_device, wires=k % self.n_wires, params=x[:, k])
-       
+
        # add some trainable gates (need to instantiate ahead of time)
        self.rx0(self.q_device, wires=0)
        self.ry0(self.q_device, wires=1)
        self.rz0(self.q_device, wires=3)
        self.crx0(self.q_device, wires=[0, 2])
-       
+
        # add some more non-parameterized gates (add on-the-fly)
        tqf.hadamard(self.q_device, wires=3)
        tqf.sx(self.q_device, wires=2)
@@ -116,52 +196,38 @@ model.
                                                               [0, 1, 0, 0],
                                                               [0, 0, 0, 1j],
                                                               [0, 0, -1j, 0]])
-       
+
        # perform measurement to get expectations (back to classical domain)
        x = self.measure(self.q_device).reshape(bsz, 2, 2)
-       
+
        # classification
        x = x.sum(-1).squeeze()
        x = F.log_softmax(x, dim=1)
 
        return x
 
-Features
---------
+VQE Example
+-----------
 
--  Easy construction of parameterized quantum circuits in PyTorch.
--  Support **batch mode** inference and training on CPU/GPU.
--  Support **dynamic computation graph** for easy debugging.
--  Support easy **deployment on real quantum devices** such as IBMQ.
+Train a quantum circuit to perform VQE task. Quito quantum computer as
+in `simple_vqe.py <./examples/simple_vqe/simple_vqe.py>`__ script:
 
-TODOs
------
+.. code:: python
 
--  ☒ Support more gates
--  ☒ Support compile a unitary with descriptions to speedup training
--  ☐ Support other measurements other than analytic method
--  ☒ In einsum support multiple qubit sharing one letter. So that more
-   than 26 qubit can be simulated.
--  ☒ Support bmm based implementation to solve scalability issue
--  ☒ Support conversion from torchquantum to qiskit
-
-Dependencies
-------------
-
--  Python >= 3.7
--  PyTorch >= 1.8.0
--  configargparse >= 0.14
--  GPU model training requires NVIDIA GPUs
+   cd examples/simple_vqe
+   python simple_vqe.py
 
 MNIST Example
 -------------
 
 Train a quantum circuit to perform MNIST task and deploy on the real IBM
-Yorktown quantum computer as in
-`mnist_example.py <./mnist_example.py>`__ script:
+Quito quantum computer as in
+`mnist_example.py <./examples/simple_mnist/mnist_example_no_binding.py>`__
+script:
 
 .. code:: python
 
+   cd examples/simple_mnist
    python mnist_example.py
 
 Files
@@ -194,102 +260,52 @@ Files
 | examples/        | More examples for training QML and VQE models    |
 +------------------+--------------------------------------------------+
 
-More Examples
--------------
+Papers using TorchQuantum
+-------------------------
 
-The ``examples/`` folder contains more examples to train the QML and VQE
-models. Example usage for a QML circuit:
+-  [HPCA’22] `QuantumNAS: Noise-Adaptive Search for Robust Quantum
+   Circuits <artifact>`__
+-  [DAC’22] `QuantumNAT: Quantum Noise-Aware Training with Noise
+   Injection, Quantization and
+   Normalization <https://arxiv.org/abs/2110.11331>`__
+-  [DAC’22] `QOC: Quantum On-Chip Training with Parameter Shift and
+   Gradient Pruning <https://arxiv.org/abs/2202.13239>`__
+-  [QCE’22] `Variational Quantum Pulse
+   Learning <https://arxiv.org/abs/2203.17267>`__
 
-.. code:: python
+Dependencies
+------------
 
-   # train the circuit with 36 params in the U3+CU3 space
-   python examples/train.py examples/configs/mnist/four0123/train/baseline/u3cu3_s0/rand/param36.yml
-
-   # evaluate the circuit with torchquantum
-   python examples/eval.py examples/configs/mnist/four0123/eval/tq/all.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36
-
-   # evaluate the circuit with real IBMQ-Yorktown quantum computer
-   python examples/eval.py examples/configs/mnist/four0123/eval/x2/real/opt2/300.yml --run-dir=runs/mnist.four0123.train.baseline.u3cu3_s0.rand.param36
-
-Example usage for a VQE circuit:
-
-.. code:: python
-
-   # Train the VQE circuit for h2
-   python examples/train.py examples/configs/vqe/h2/train/baseline/u3cu3_s0/human/param12.yml
-
-   # evaluate the VQE circuit with torchquantum
-   python examples/eval.py examples/configs/vqe/h2/eval/tq/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
-
-   # evaluate the VQE circuit with real IBMQ-Yorktown quantum computer
-   python examples/eval.py examples/configs/vqe/h2/eval/x2/real/opt2/all.yml --run-dir=runs/vqe.h2.train.baseline.u3cu3_s0.human.param12/
-
-Detailed documentations coming soon.
-
-QuantumNAS
-----------
-
-Quantum noise is the key challenge in Noisy Intermediate-Scale Quantum
-(NISQ) computers. Previous work for mitigating noise has primarily
-focused on gate-level or pulse-level noise-adaptive compilation.
-However, limited research efforts have explored a higher level of
-optimization by making the quantum circuits themselves resilient to
-noise. We propose QuantumNAS, a comprehensive framework for
-noise-adaptive co-search of the variational circuit and qubit mapping.
-Variational quantum circuits are a promising approach for constructing
-QML and quantum simulation. However, finding the best variational
-circuit and its optimal parameters is challenging due to the large
-design space and parameter training cost. We propose to decouple the
-circuit search and parameter training by introducing a novel
-SuperCircuit. The SuperCircuit is constructed with multiple layers of
-pre-defined parameterized gates and trained by iteratively sampling and
-updating the parameter subsets (SubCircuits) of it. It provides an
-accurate estimation of SubCircuits performance trained from scratch.
-Then we perform an evolutionary co-search of SubCircuit and its qubit
-mapping. The SubCircuit performance is estimated with parameters
-inherited from SuperCircuit and simulated with real device noise models.
-Finally, we perform iterative gate pruning and finetuning to remove
-redundant gates. Extensively evaluated with 12 QML and VQE benchmarks on
-10 quantum comput, QuantumNAS significantly outperforms baselines. For
-QML, QuantumNAS is the first to demonstrate over 95% 2-class, 85%
-4-class, and 32% 10-class classification accuracy on real QC. It also
-achieves the lowest eigenvalue for VQE tasks on H2, H2O, LiH, CH4, BeH2
-compared with UCCSD. We also open-source torchquantum for fast training
-of parameterized quantum circuits to facilitate future research.
-
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
-
-QuantumNAS Framework overview:
-
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
-
-QuantumNAS models achieve higher robustness and accuracy than other
-baseline models:
-
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+-  3.9 >= Python >= 3.7 (Python 3.10 may have the ``concurrent`` package
+   issue for Qiskit)
+-  PyTorch >= 1.8.0
+-  configargparse >= 0.14
+-  GPU model training requires NVIDIA GPUs
 
 Contact
 -------
 
-Hanrui Wang (hanrui@mit.edu)
+TorchQuantum `Forum <https://qmlsys.hanruiwang.me>`__
+
+Hanrui Wang hanrui@mit.edu
+
+Citation
+--------
+
+::
+
+   @inproceedings{hanruiwang2022quantumnas,
+       title     = {Quantumnas: Noise-adaptive search for robust quantum circuits},
+       author    = {Wang, Hanrui and Ding, Yongshan and Gu, Jiaqi and Li, Zirui and Lin, Yujun and Pan, David Z and Chong, Frederic T and Han, Song},
+       booktitle = {The 28th IEEE International Symposium on High-Performance Computer Architecture (HPCA-28)},
+       year      = {2022}
+   }
 
 .. |MIT License| image:: https://img.shields.io/apm/l/atomic-design-ui.svg?
    :target: https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE
+.. |Read the Docs| image:: https://img.shields.io/readthedocs/torchquantum
+   :target: https://torchquantum-doc.readthedocs.io/
+.. |Discourse status| image:: https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F
+   :target: https://qmlsys.hanruiwang.me
+.. |Website| image:: https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu
+   :target: https://qmlsys.mit.edu

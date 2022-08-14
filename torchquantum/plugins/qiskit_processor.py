@@ -251,8 +251,11 @@ class QiskitProcessor(object):
                 # using simulator, apply multithreading
                 chunk_size = len(binds_all) // self.max_jobs
 
-            split_binds = [binds_all[i:i + chunk_size] for i in range(
-                0, len(binds_all), chunk_size)]
+            if chunk_size == 0:
+                split_binds = [binds_all]
+            else:
+                split_binds = [binds_all[i:i + chunk_size] for i in range(
+                    0, len(binds_all), chunk_size)]
 
             qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []

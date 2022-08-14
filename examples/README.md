@@ -1,10 +1,10 @@
 ## TorchQuantum Examples
 
-For **beginning level**, you may check [QNN for MNIST](https://github.com/mit-han-lab/torchquantum/blob/master/examples/simple_mnist), [Quantum Convolution (Quanvolution)](https://github.com/mit-han-lab/torchquantum/blob/master/examples/quanvolution) and [Quantum Kernel Method](https://github.com/mit-han-lab/torchquantum/blob/master/examples/quantum_kernel_method), and [Quantum Regression](https://github.com/mit-han-lab/torchquantum/blob/master/examples/regression).
+For **beginning level**, you may check [QNN for MNIST](simple_mnist), [Quantum Convolution (Quanvolution)](quanvolution) and [Quantum Kernel Method](quantum_kernel_method), and [Quantum Regression](regression).
 
-For **intermediate level**, you may check [Amplitude Encoding for MNIST](https://github.com/mit-han-lab/torchquantum/blob/master/examples/amplitude_encoding_mnist), [Clifford gate QNN](https://github.com/mit-han-lab/torchquantum/blob/master/examples/clifford_qnn), [Save and Load QNN models](https://github.com/mit-han-lab/torchquantum/blob/master/examples/save_load_example), [PauliSum Operation](https://github.com/mit-han-lab/torchquantum/blob/master/examples/PauliSumOp), [How to convert tq to Qiskit](https://github.com/mit-han-lab/torchquantum/blob/master/examples/converter_tq_qiskit).
+For **intermediate level**, you may check [Amplitude Encoding for MNIST](amplitude_encoding_mnist), [Clifford gate QNN](clifford_qnn), [Save and Load QNN models](save_load_example), [PauliSum Operation](PauliSumOp), [How to convert tq to Qiskit](converter_tq_qiskit).
 
-For **expert**, you may check [Parameter Shift on-chip Training](https://github.com/mit-han-lab/torchquantum/blob/master/examples/param_shift_onchip_training), [VQA Gradient Pruning](https://github.com/mit-han-lab/torchquantum/blob/master/examples/radient_pruning), [VQE](https://github.com/mit-han-lab/torchquantum/blob/master/examples/simple_vqe),  [VQA for State Prepration](https://github.com/mit-han-lab/torchquantum/blob/master/examples/train_state_prep).
+For **expert**, you may check [Parameter Shift on-chip Training](param_shift_onchip_training), [VQA Gradient Pruning](gradient_pruning), [VQE](simple_vqe),  [VQA for State Prepration](train_state_prep).
 
 
 ## Welcome to contribute!
