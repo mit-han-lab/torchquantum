@@ -11,9 +11,8 @@
    :caption: Usage
 
    usage_installation
-   usage_examples
-
-
+   examples/index.rst
+   
 .. raw:: html
 
    <p align="center">
