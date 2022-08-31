@@ -37,7 +37,7 @@ Quantum simulation framework based on PyTorch. It supports statevector simulatio
 #### Who will benefit
 Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning, quantum neural networks.
 #### Differences from Qiskit/Pennylane
-Dynamic computatioh graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
+Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
 
 
 ## Features
