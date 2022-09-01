@@ -129,7 +129,7 @@ html_theme_options = {
 
 # adjust code block style for readthedocs
 
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
 display_github = False
 display_bitbucket = False
