@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='torchquantum',
-      version='0.1.0',
+      version='0.1.1',
       description='A PyTorch-centric hybrid classical-quantum dynamic '
                   'neural networks framework.',
       url='https://github.com/mit-han-lab/torchquantum',
@@ -23,7 +23,6 @@ setup(name='torchquantum',
       ],
       extras_require = {
             'doc': [
-                  'furo @ git+https://github.com/frogcjn/torchquantum-doc-furo-theme.git',
                   'nbsphinx',
                   'recommonmark'
             ]
