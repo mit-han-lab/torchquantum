@@ -17,10 +17,14 @@
         <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
     </a>
     <a href="https://qmlsys.hanruiwang.me">
-        <img alt="Discourse" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
+        <img alt="Forum" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
     </a>
     <a href="https://qmlsys.mit.edu">
         <img alt="Website" src="https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu">
+    </a>
+    
+   <a href="https://pypi.org/project/torchquantum/">
+        <img alt="Pypi" src="https://img.shields.io/pypi/v/torchquantum">
     </a>
     
 </p>
