@@ -39,6 +39,11 @@ Researchers on quantum algorithm design, parameterized quantum circuit training,
 #### Differences from Qiskit/Pennylane
 Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
 
+## News
+- v0.1.2 Available!
+- Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1d830lvph-E~6IlXdtdQLoGLljLp_xFg) for real time support! 
+- Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
+- Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
 
 ## Features
 - Easy construction and simulation of quantum circuits in **PyTorch**
@@ -49,10 +54,7 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 - **Easy hybrid classical-quantum** model construction
 - (coming soon) **pulse-level simulation**
 
-## News
-- Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1d830lvph-E~6IlXdtdQLoGLljLp_xFg) for real time support! 
-- Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
-- Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
+
 
 
 ## Installation
