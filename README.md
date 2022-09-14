@@ -17,10 +17,14 @@
         <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
     </a>
     <a href="https://qmlsys.hanruiwang.me">
-        <img alt="Discourse" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
+        <img alt="Forum" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
     </a>
     <a href="https://qmlsys.mit.edu">
         <img alt="Website" src="https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu">
+    </a>
+    
+   <a href="https://pypi.org/project/torchquantum/">
+        <img alt="Pypi" src="https://img.shields.io/pypi/v/torchquantum">
     </a>
     
 </p>
@@ -39,6 +43,11 @@ Researchers on quantum algorithm design, parameterized quantum circuit training,
 #### Differences from Qiskit/Pennylane
 Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
 
+## News
+- v0.1.2 Available!
+- Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1d830lvph-E~6IlXdtdQLoGLljLp_xFg) for real time support! 
+- Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
+- Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
 
 ## Features
 - Easy construction and simulation of quantum circuits in **PyTorch**
@@ -49,26 +58,38 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 - **Easy hybrid classical-quantum** model construction
 - (coming soon) **pulse-level simulation**
 
-## News
-- Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1d830lvph-E~6IlXdtdQLoGLljLp_xFg) for real time support! 
-- Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
-- Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
+
 
 
 ## Installation
 ```bash
-git clone https://github.com/mit-han-lab/torchquantum.git
-cd torchquantum
-pip install --editable .
-```
+pip install torchquantum
 
-## Basic Usage
+```
+## Basic Usage 1
 
 ```python
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-x = tq.QuantumDevice(n_wires=1)
+state = tq.QuantumState(n_wires=2)
+
+state.h(wires=0)
+state.cnot(wires=[0, 1])
+tqf.h(state, wires=1)
+tqf.x(state, wires=1)
+
+# print the current state (dynamic computation graph supported)
+print(state)
+```
+
+## Basic Usage 2
+
+```python
+import torchquantum as tq
+import torchquantum.functional as tqf
+
+x = tq.QuantumDevice(n_wires=2)
 
 tqf.hadamard(x, wires=0)
 tqf.x(x, wires=1)
@@ -77,6 +98,8 @@ tqf.cnot(x, wires=[0, 1])
 # print the current state (dynamic computation graph supported)
 print(x.states)
 ```
+
+
 
 ## Guide to the examples
 We also prepare many example and tutorials using TorchQuantum.
