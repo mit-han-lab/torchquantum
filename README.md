@@ -57,18 +57,33 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 
 ## Installation
 ```bash
-git clone https://github.com/mit-han-lab/torchquantum.git
-cd torchquantum
-pip install --editable .
-```
+pip install torchquantum
 
-## Basic Usage
+```
+## Basic Usage 1
 
 ```python
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-x = tq.QuantumDevice(n_wires=1)
+state = tq.QuantumState(n_wires=2)
+
+state.h(wires=0)
+state.cnot(wires=[0, 1])
+tqf.h(state, wires=1)
+tqf.x(state, wires=1)
+
+# print the current state (dynamic computation graph supported)
+print(state)
+```
+
+## Basic Usage 2
+
+```python
+import torchquantum as tq
+import torchquantum.functional as tqf
+
+x = tq.QuantumDevice(n_wires=2)
 
 tqf.hadamard(x, wires=0)
 tqf.x(x, wires=1)
@@ -77,6 +92,8 @@ tqf.cnot(x, wires=[0, 1])
 # print the current state (dynamic computation graph supported)
 print(x.states)
 ```
+
+
 
 ## Guide to the examples
 We also prepare many example and tutorials using TorchQuantum.
