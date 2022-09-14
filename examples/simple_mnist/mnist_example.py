@@ -54,6 +54,8 @@ class QFCModel(tq.QuantumModule):
                    parent_graph=self.graph)
             tqf.cnot(self.q_device, wires=[3, 0], static=self.static_mode,
                      parent_graph=self.graph)
+            tqf.rx(self.q_device, wires=1, params=torch.tensor([0.1]),
+                   static=self.static_mode, parent_graph=self.graph)
 
     def __init__(self):
         super().__init__()
