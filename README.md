@@ -277,6 +277,8 @@ python mnist_example.py
 - [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
 - [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
 - [QCE'22] [Variational Quantum Pulse Learning](https://arxiv.org/abs/2203.17267)
+- [ICCAD'22] [Quantum Neural Network Compression](https://arxiv.org/abs/2207.01578)
+- [ICCAD'22] [Graph Transformer for Quantum Circuit Reliability Prediction]()
 
 
 ## Dependencies
