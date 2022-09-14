@@ -15,6 +15,7 @@ from .utils import *
 from .noise_model import *
 from .node import *
 from .states import *
+from .pulse import *
 
 # here we check whether the Qiskit parameterization bug is fixed, if not, a
 # warning message will be printed
