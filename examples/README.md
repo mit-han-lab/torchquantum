@@ -1,12 +1,12 @@
-## TorchQuantum Examples
 
-For **beginning level**, you may check [QNN for MNIST](simple_mnist), [Quantum Convolution (Quanvolution)](quanvolution) and [Quantum Kernel Method](quantum_kernel_method), and [Quantum Regression](regression).
+# Quantum Transformer
 
-For **intermediate level**, you may check [Amplitude Encoding for MNIST](amplitude_encoding_mnist), [Clifford gate QNN](clifford_qnn), [Save and Load QNN models](save_load_example), [PauliSum Operation](PauliSumOp), [How to convert tq to Qiskit](converter_tq_qiskit).
-
-For **expert**, you may check [Parameter Shift on-chip Training](param_shift_onchip_training), [VQA Gradient Pruning](gradient_pruning), [VQE](simple_vqe),  [VQA for State Prepration](train_state_prep).
+Nowadays, Transformer models are ubiquitous and dominant in the analysis of sequential data. Pre-trained models such as GPT-3 are hard to train and have hundreds of billions of parameters. On the Other hand, quantum computing has developed recently in terms of hardware and algorithm implementation. Recent articles indicate quantum advantages for deploying some learning algorithms, such as support vector machines, even on near-term quantum devices. Based on that, I wrote tutorials on how to build and train quantum-enhanced transformers with the Torch-Quantum library.
 
 
-## Welcome to contribute!
-Welcome to check out the TorchQuantum example series. If you want to see more examples implemented, or papers reproduced by TorchQuantum, please do not hesitate to contact us or post in the TorchQuantum [Forum](qmlsys.hanruiwang.me).
+## Authors
+
+
+
+- [@MohammadrezaTavasoli](https://github.com/MohammadrezaTavasoli)
 
