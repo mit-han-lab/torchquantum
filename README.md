@@ -81,6 +81,8 @@ tqf.x(state, wires=1)
 
 # print the current state (dynamic computation graph supported)
 print(state)
+print(tq.measure(state, n_shots=1024))
+
 ```
 
 ## Basic Usage 2
