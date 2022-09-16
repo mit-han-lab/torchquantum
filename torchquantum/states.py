@@ -77,7 +77,7 @@ class QuantumState(nn.Module):
         return self.__class__.__name__
 
     def __repr__(self):
-        return f"{self.name} {self.n_wires} wires \n state: {self.get_state_1d()}"
+        return f"{self.name} {self.n_wires} wires \n state: {self.get_states_1d()}"
 
     def hadamard(self,
                  wires: Union[List[int], int],
