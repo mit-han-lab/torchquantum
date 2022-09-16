@@ -1,8 +1,12 @@
+import random
+
 import torch
 import torchquantum as tq
 import numpy as np
+import matplotlib.pyplot as plt
 
 from typing import Union, List
+from collections import Counter, OrderedDict
 
 
 def expval(q_device: tq.QuantumDevice,
@@ -150,3 +154,45 @@ class MeasureMultiPauliSum(tq.QuantumModule):
         res_all = self.measure_multiple_times(q_device)
 
         return res_all.sum(-1)
+
+
+def gen_bitstrings(n_wires):
+    return ['{:0{}b}'.format(k, n_wires) for k in range(2**n_wires)]
+
+
+def measure(q_state, n_shots=1024, draw_id=None):
+    """Measure the target state and obtain classical bitstream distribution
+
+    Args:
+        q_state: input tq.QuantumState
+        n_shots: number of simulated shots
+        draw_id: which state to draw
+
+    Returns:
+        distribution of bitstrings
+
+    """
+    bitstring_candidates = gen_bitstrings(q_state.n_wires)
+
+    state_mag = q_state.get_states_1d().abs().detach().numpy()
+    distri_all = []
+
+    for state_mag_one in state_mag:
+        measured = random.choices(
+            population=bitstring_candidates,
+            weights=state_mag_one,
+            k=n_shots,
+        )
+        counter = Counter(measured)
+        counter.update({key: 0 for key in bitstring_candidates})
+        distri = dict(counter)
+        distri = OrderedDict(sorted(distri.items()))
+        distri_all.append(distri)
+
+    if draw_id is not None:
+        plt.bar(distri_all[draw_id].keys(), distri_all[draw_id].values())
+        plt.xticks(rotation='vertical')
+        plt.xlabel('bitstring [qubit0, qubit1, ..., qubitN]')
+        plt.title('distribution of measured bitstrings')
+        plt.show()
+    return distri_all
