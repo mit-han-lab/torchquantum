@@ -34,20 +34,25 @@ class QuantumState(nn.Module):
         _state = torch.reshape(_state, [2] * self.n_wires)
         self.register_buffer('state', _state)
 
-        self.states = None
-
         self.reset_states(bsz)
+        self.register_buffer('states', self._states)
+
+        self.op_list = []
 
     def clone_states(self, existing_states: torch.Tensor):
         self.states = existing_states.clone()
 
-    def set_states(self, states: torch.Tensor):
+    def set_states(self, states: Union[torch.Tensor, List]):
+        states = torch.tensor(states, dtype=C_DTYPE).to(self.state.device)
         bsz = states.shape[0]
         self.states = torch.reshape(states, [bsz] + [2] * self.n_wires)
 
     def reset_states(self, bsz: int):
         repeat_times = [bsz] + [1] * len(self.state.shape)
-        self.states = self.state.repeat(*repeat_times).to(self.state.device)
+        if self.states is not None:
+            self.states = self.state.repeat(*repeat_times).to(self.state.device)
+        else:
+            self._states = self.state.repeat(*repeat_times).to(self.state.device)
 
     def reset_identity_states(self):
         """Make the states as the identity matrix, one dim is the batch
