@@ -52,6 +52,23 @@ def extract_amp(pulse_prog):
     amps_list = np.array(amps_list)
     return amps_list
 
+def is_phase_pulse(t0, *inst: Union['Schedule', Instruction]):
+    inst = t0[1]
+    t0 = t0[0]
+    if isinstance(inst, pulse.ShiftPhase):
+        return True
+    return False
+
+def extract_phase(pulse_prog):
+
+    for _, ShiftPhase in pulse_prog.filter(is_phase_pulse).instructions:
+    # print(play.pulse.amp)
+        pass                
+    instructions = pulse_prog..filter(is_phase_pulse).instructions
+
+    phase_list = list(map(lambda x: x[1]._operands[0], pulse_prog.operands[0].filter(is_phase_pulse).instructions))
+    return phase_list
+
 def cir2pul(circuit, backend):
     #transform quantum circuit to pulse schedule
     with pulse.build(backend) as pulse_prog:
@@ -85,6 +102,7 @@ def map_amp(pulse_ansatz, modified_list):
         if(is_parametric_pulse(i)):
             sched +=copy.deepcopy(i[1])
     return sched
+
 
 def get_from(d: dict, key: str):
 
