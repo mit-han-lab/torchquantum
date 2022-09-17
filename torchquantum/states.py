@@ -35,6 +35,8 @@ class QuantumState(nn.Module):
         self.register_buffer('state', _state)
 
         self.reset_states(bsz)
+        repeat_times = [bsz] + [1] * len(self.state.shape)
+        self._states = self.state.repeat(*repeat_times)
         self.register_buffer('states', self._states)
 
         self.op_list = []
@@ -49,10 +51,7 @@ class QuantumState(nn.Module):
 
     def reset_states(self, bsz: int):
         repeat_times = [bsz] + [1] * len(self.state.shape)
-        if self.states is not None:
-            self.states = self.state.repeat(*repeat_times).to(self.state.device)
-        else:
-            self._states = self.state.repeat(*repeat_times).to(self.state.device)
+        self.states = self.state.repeat(*repeat_times).to(self.state.device)
 
     def reset_identity_states(self):
         """Make the states as the identity matrix, one dim is the batch
