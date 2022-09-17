@@ -34,7 +34,6 @@ class QuantumState(nn.Module):
         _state = torch.reshape(_state, [2] * self.n_wires)
         self.register_buffer('state', _state)
 
-        self.reset_states(bsz)
         repeat_times = [bsz] + [1] * len(self.state.shape)
         self._states = self.state.repeat(*repeat_times)
         self.register_buffer('states', self._states)
