@@ -86,20 +86,6 @@ def map_amp(pulse_ansatz, modified_list):
             sched +=copy.deepcopy(i[1])
     return sched
 
-def measurement_pauli(prepulse, pauli_string, backend, n_qubit):
-    with pulse.build(backend) as pulse_measure:
-        pulse.call(copy.deepcopy(prepulse))
-        for ind,pauli in enumerate(pauli_string):
-            if(pauli=='X'):
-                pulse.u2(0, np.pi, ind)
-            if(pauli=='Y'):
-                pulse.u2(0, np.pi/2, ind)
-        for qubit in range(n_qubit):
-            pulse.barrier(qubit)
-        pulse.measure(range(n_qubit))
-    pulse_measure = block_to_schedule(pulse_measure)
-    return pulse_measure
-
 def get_from(d: dict, key: str):
 
     value = 0
@@ -108,6 +94,7 @@ def get_from(d: dict, key: str):
     return value
 
 def run_pulse_sim(measurement_pulse):
+    measure_result  = []
     for measure_pulse in measurement_pulse:   
         shots = 1024
         pulse_sim = qiskit.providers.aer.PulseSimulator.from_backend(FakeJakarta())
@@ -116,7 +103,8 @@ def run_pulse_sim(measurement_pulse):
 
         counts = results.get_counts()   
         expectation_value = ((get_from(counts, '00')+get_from(counts, '11')) - (get_from(counts,'10')+get_from(counts, '01'))) / shots
-    return expectation_value
+        measure_result.append(expectation_value)
+    return measure_result
 
 def gen_LC(parameters_array):
     dim_design = int(len(parameters_array))
