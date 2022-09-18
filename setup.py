@@ -16,11 +16,11 @@ setup(name='torchquantum',
             'torch>=1.8.0',
             'torchquantum>=0.1',
             'torchpack>=0.3.0',
-            'qiskit>=0.32.0',
+            'qiskit==0.32.1',
             'matplotlib>=3.3.2',
             'pathos>=0.2.7',
             'pylatexenc>=2.10',
-            'qiskit-nature>=0.4.4'
+            # 'qiskit-nature>=0.4.4'
       ],
       extras_require = {
             'doc': [
