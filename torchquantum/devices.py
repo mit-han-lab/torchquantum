@@ -63,4 +63,4 @@ class QuantumDevice(nn.Module):
         return self.__class__.__name__
 
     def __repr__(self):
-        return f"{self.name} {self.n_wires} wires"
+        return f"{self.name} {self.n_wires} wires with states: {self.get_states_1d()}"

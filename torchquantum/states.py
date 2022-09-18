@@ -614,9 +614,9 @@ class QuantumState(nn.Module):
                 comp_method: str = 'bmm'):
 
         if isinstance(params, Iterable):
-            params = torch.Tensor(params)
+            params = torch.tensor(params, dtype=C_DTYPE)
         else:
-            params = torch.Tensor([params])
+            params = torch.tensor([params], dtype=C_DTYPE)
 
         tqf.qubitunitary(self,
                     wires=wires,
@@ -631,9 +631,9 @@ class QuantumState(nn.Module):
                 comp_method: str = 'bmm'):
 
         if isinstance(params, Iterable):
-            params = torch.Tensor(params)
+            params = torch.tensor(params, dtype=C_DTYPE)
         else:
-            params = torch.Tensor([params])
+            params = torch.tensor([params], dtype=C_DTYPE)
 
         tqf.qubitunitaryfast(self,
                     wires=wires,
@@ -648,9 +648,9 @@ class QuantumState(nn.Module):
                 comp_method: str = 'bmm'):
 
         if isinstance(params, Iterable):
-            params = torch.Tensor(params)
+            params = torch.tensor(params, dtype=C_DTYPE)
         else:
-            params = torch.Tensor([params])
+            params = torch.tensor([params], dtype=C_DTYPE)
 
         tqf.qubitunitarystrict(self,
                     wires=wires,
