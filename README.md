@@ -10,8 +10,8 @@
     <a href="https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE">
         <img alt="MIT License" src="https://img.shields.io/apm/l/atomic-design-ui.svg?">
     </a>
-    <a href="https://torchquantum-doc.readthedocs.io/">
-        <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum">
+    <a href="https://torchquantum.readthedocs.io/">
+        <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum/master">
     </a>
     <a href="https://join.slack.com/t/torchquantum/shared_invite/zt-1d830lvph-E~6IlXdtdQLoGLljLp_xFg">
         <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
