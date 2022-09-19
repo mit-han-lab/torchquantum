@@ -62,7 +62,7 @@ class QuantumPulseDirect(QuantumPulse):
         return u_overall
 
     def __repr__(self):
-        return f"QuantumPulse Direct {self.name} \n shape: {self.pulse_shape}"
+        return f"QuantumPulse Direct \n shape: {self.pulse_shape}"
 
 
 class QuantumPulseGaussian(QuantumPulse):
@@ -124,7 +124,7 @@ class QuantumPulseGaussian(QuantumPulse):
         return u_overall
 
     def __repr__(self):
-        return f"QuantumPulse Guassian {self.name} \n shape: {self.pulse_shape}"
+        return f"QuantumPulse Guassian \n shape: {self.pulse_shape}"
 
 
 if __name__=='__main__':
