@@ -19,6 +19,7 @@ __all__ = [
     'DiagonalOperation',
     'Observable',
     'Hadamard',
+    'H',
     'SHadamard',
     'PauliX',
     'PauliY',
@@ -1120,6 +1121,9 @@ class SingleExcitation(Operator, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.single_excitation_matrix(params)
+
+
+H=Hadamard
 
 
 op_name_dict = {

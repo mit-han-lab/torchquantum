@@ -64,7 +64,7 @@ def extract_phase(pulse_prog):
     for _, ShiftPhase in pulse_prog.filter(is_phase_pulse).instructions:
     # print(play.pulse.amp)
         pass                
-    instructions = pulse_prog..filter(is_phase_pulse).instructions
+    instructions = pulse_prog.filter(is_phase_pulse).instructions
 
     phase_list = list(map(lambda x: x[1]._operands[0], pulse_prog.operands[0].filter(is_phase_pulse).instructions))
     return phase_list

@@ -34,14 +34,17 @@ class QuantumState(nn.Module):
         _state = torch.reshape(_state, [2] * self.n_wires)
         self.register_buffer('state', _state)
 
-        self.states = None
+        repeat_times = [bsz] + [1] * len(self.state.shape)
+        self._states = self.state.repeat(*repeat_times)
+        self.register_buffer('states', self._states)
 
-        self.reset_states(bsz)
+        self.op_list = []
 
     def clone_states(self, existing_states: torch.Tensor):
         self.states = existing_states.clone()
 
-    def set_states(self, states: torch.Tensor):
+    def set_states(self, states: Union[torch.Tensor, List]):
+        states = torch.tensor(states, dtype=C_DTYPE).to(self.state.device)
         bsz = states.shape[0]
         self.states = torch.reshape(states, [bsz] + [2] * self.n_wires)
 
@@ -611,9 +614,9 @@ class QuantumState(nn.Module):
                 comp_method: str = 'bmm'):
 
         if isinstance(params, Iterable):
-            params = torch.Tensor(params)
+            params = torch.tensor(params, dtype=C_DTYPE)
         else:
-            params = torch.Tensor([params])
+            params = torch.tensor([params], dtype=C_DTYPE)
 
         tqf.qubitunitary(self,
                     wires=wires,
@@ -628,9 +631,9 @@ class QuantumState(nn.Module):
                 comp_method: str = 'bmm'):
 
         if isinstance(params, Iterable):
-            params = torch.Tensor(params)
+            params = torch.tensor(params, dtype=C_DTYPE)
         else:
-            params = torch.Tensor([params])
+            params = torch.tensor([params], dtype=C_DTYPE)
 
         tqf.qubitunitaryfast(self,
                     wires=wires,
@@ -645,9 +648,9 @@ class QuantumState(nn.Module):
                 comp_method: str = 'bmm'):
 
         if isinstance(params, Iterable):
-            params = torch.Tensor(params)
+            params = torch.tensor(params, dtype=C_DTYPE)
         else:
-            params = torch.Tensor([params])
+            params = torch.tensor([params], dtype=C_DTYPE)
 
         tqf.qubitunitarystrict(self,
                     wires=wires,

@@ -596,6 +596,8 @@ class QiskitProcessor(object):
             else:
                 # using simulator, apply multithreading
                 chunk_size = len(circs_all) // self.max_jobs
+                if chunk_size == 0:
+                    chunk_size = 1
 
             split_circs = [circs_all[i:i + chunk_size] for i in range(
                 0, len(circs_all), chunk_size)]

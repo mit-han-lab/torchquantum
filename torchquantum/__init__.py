@@ -1,4 +1,4 @@
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 __author__ = 'Hanrui Wang'
 
 from .macro import *
@@ -16,6 +16,7 @@ from .noise_model import *
 from .node import *
 from .states import *
 from .pulse import *
+# from .pulse_utils import *
 
 # here we check whether the Qiskit parameterization bug is fixed, if not, a
 # warning message will be printed
