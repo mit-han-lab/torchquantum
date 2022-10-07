@@ -411,7 +411,7 @@ class Operation(Operator, metaclass=ABCMeta):
             n_wires=n_wires,
             wires=wires
         )
-        if self.num_wires is not None:
+        if type(self.num_wires) == int:
             self.n_wires = self.num_wires
 
     @property

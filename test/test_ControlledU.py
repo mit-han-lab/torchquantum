@@ -10,7 +10,7 @@ import torchquantum.functional as tqf
 import pdb
 pdb.set_trace()
 
-flag = 4
+flag = 8
 
 if flag == 1:
     state = tq.QuantumState(n_wires=3)
@@ -215,4 +215,32 @@ if flag == 7:
     print(state)
 
     gate(state)
+    print(state)
+
+
+if flag == 8:
+    state = tq.QuantumState(n_wires=3)
+    print(state)
+    gate0 = tq.PauliX(n_wires=1, wires=0)
+    gate1 = tq.PauliX(n_wires=1, wires=1)
+    gate_cx = tq.QubitUnitaryFast.from_controlled_operation(
+        op=tq.PauliX(),
+        c_wires=0,
+        t_wires=1,
+        trainable=False)
+
+    gate_ccx = tq.QubitUnitaryFast.from_controlled_operation(
+        op=gate_cx,
+        c_wires=0,
+        t_wires=[1, 2],
+        trainable=False
+    )
+
+    gate0(state)
+    print(state)
+
+    gate1(state)
+    print(state)
+
+    gate_ccx(state)
     print(state)
