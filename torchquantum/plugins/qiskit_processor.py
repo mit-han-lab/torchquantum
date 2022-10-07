@@ -40,6 +40,9 @@ def run_job_worker(data):
                 my_job_monitor(job, interval=1)
             result = job.result()
             counts = result.get_counts()
+            circ_num = len(data[0]['parameter_binds'])
+            logger.info(
+                f'run job worker successful, circuit number = {circ_num}')
             break
         except Exception as e:
             if "Job was cancelled" in str(e):
@@ -55,9 +58,13 @@ class QiskitProcessor(object):
     def __init__(self,
                  use_real_qc=False,
                  backend_name=None,
+                 backend=None,
                  noise_model_name=None,
+                 noise_model=None,
                  coupling_map_name=None,
+                 coupling_map=None,
                  basis_gates_name=None,
+                 basis_gates=None,
                  n_shots=8192,
                  initial_layout=None,
                  seed_transpiler=42,
@@ -92,11 +99,11 @@ class QiskitProcessor(object):
         self.hub = hub
         self.group = group
         self.project = project
-        self.backend = None
+        self.backend = backend
         self.provider = None
-        self.noise_model = None
-        self.coupling_map = None
-        self.basis_gates = None
+        self.noise_model = noise_model
+        self.coupling_map = coupling_map
+        self.basis_gates = basis_gates
         self.properties = None
         self.empty_pass_manager = EmptyPassManager()
 
@@ -144,34 +151,42 @@ class QiskitProcessor(object):
         return basis_gates
 
     def qiskit_init(self):
-        self.backend = None
         self.provider = None
-        self.noise_model = None
-        self.coupling_map = None
-        self.basis_gates = None
         self.properties = None
 
-        IBMQ.load_account()
-        self.provider = get_provider_hub_group_project(
-            hub=self.hub,
-            group=self.group,
-            project=self.project,
-        )
-
-        if self.use_real_qc:
-            self.backend = self.provider.get_backend(self.backend_name)
-            self.properties = self.backend.properties()
-            self.coupling_map = self.get_coupling_map(self.backend_name)
+        if self.backend is None:
+            # initialize now
+            IBMQ.load_account()
+            self.provider = get_provider_hub_group_project(
+                hub=self.hub,
+                group=self.group,
+                project=self.project,
+            )
+            if self.use_real_qc:
+                self.backend = self.provider.get_backend(self.backend_name)
+                self.properties = self.backend.properties()
+                self.coupling_map = self.get_coupling_map(self.backend_name)
+            else:
+                # use simulator
+                self.backend = Aer.get_backend('qasm_simulator',
+                                               max_parallel_experiments=0)
+                self.noise_model = self.get_noise_model(self.noise_model_name)
+                self.coupling_map = self.get_coupling_map(self.coupling_map_name)
+                self.basis_gates = self.get_basis_gates(self.basis_gates_name)
         else:
-            # use simulator
-            self.backend = Aer.get_backend('qasm_simulator',
-                                           max_parallel_experiments=0)
-            self.noise_model = self.get_noise_model(self.noise_model_name)
-            self.coupling_map = self.get_coupling_map(self.coupling_map_name)
-            self.basis_gates = self.get_basis_gates(self.basis_gates_name)
+            # predefined backend
+            self.backend_name = self.backend.name()
+            print(f"Use backend: {self.backend_name}")
+            if self.coupling_map is None:
+                self.coupling_map = self.backend.configuration().coupling_map
+            if self.basis_gates is None:
+                self.basis_gates = self.backend.configuration().basis_gates
 
     def set_layout(self, layout):
         self.initial_layout = layout
+
+    def set_backend(self, backend):
+        self.backend = backend
 
     def transpile(self, circs):
         if not self.transpile_with_ancilla and self.coupling_map is not None:
