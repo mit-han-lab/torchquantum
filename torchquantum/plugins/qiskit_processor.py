@@ -19,6 +19,7 @@ from qiskit.transpiler import PassManager
 import numpy as np
 import datetime
 
+from my_job_monitor import my_job_monitor
 
 class EmptyPassManager(PassManager):
     def run(
@@ -36,7 +37,7 @@ def run_job_worker(data):
             job = execute(**(data[0]))
             qiskit_verbose = data[1]
             if qiskit_verbose:
-                job_monitor(job, interval=1)
+                my_job_monitor(job, interval=1)
             result = job.result()
             counts = result.get_counts()
             break
