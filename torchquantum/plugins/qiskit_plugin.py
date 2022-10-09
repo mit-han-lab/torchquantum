@@ -1,3 +1,4 @@
+import qiskit.circuit.library.data_preparation.state_preparation
 import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
@@ -9,13 +10,17 @@ from qiskit import Aer, execute
 from qiskit.circuit import Parameter
 from torchpack.utils.logging import logger
 from torchquantum.utils import (switch_little_big_endian_matrix,
-                                find_global_phase)
+                                find_global_phase,
+                                switch_little_big_endian_state,
+                                )
 from typing import Iterable, List
 
 
 __all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq',
            'tq2qiskit_measurement', 'tq2qiskit_expand_params',
-           'qiskit_assemble_circs']
+           'qiskit_assemble_circs',
+           'tq2qiskit_initialize'
+           ]
 
 
 def qiskit_assemble_circs(encoders, fixed_layer, measurement):
@@ -74,6 +79,30 @@ def append_parameterized_gate(func, circ, input_idx, params, wires):
     else:
         raise NotImplementedError(f"{func} cannot be converted to "
                                   f"parameterized Qiskit QuantumCircuit")
+
+
+def tq2qiskit_initialize(q_device: tq.QuantumDevice, all_states):
+    """Call the qiskit initialize funtion and encoder the current quantum state
+     using initialize and return circuits
+
+    Args:
+        q_device:
+
+    Returns:
+
+    """
+    bsz = all_states.shape[0]
+    circ_all = []
+    for k in range(bsz):
+        circ = QuantumCircuit(q_device.n_wires)
+        state = all_states[k]
+        state = np.complex128(state)
+        state = state / (np.absolute(state)**2).sum()
+        state = switch_little_big_endian_state(state)
+        qiskit.circuit.library.data_preparation.state_preparation._EPS = 1e-7
+        circ.initialize(state, circ.qubits)
+        circ_all.append(circ)
+    return circ_all
 
 
 def tq2qiskit_expand_params(q_device: tq.QuantumDevice,
