@@ -19,7 +19,7 @@ from qiskit.transpiler import PassManager
 import numpy as np
 import datetime
 
-from my_job_monitor import my_job_monitor
+from torchquantum.plugins import my_job_monitor
 
 class EmptyPassManager(PassManager):
     def run(
