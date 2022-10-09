@@ -264,10 +264,12 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
                 # this is for gates that can be applied to arbitrary numbers of
                 # qubits but no params, such as multicnot
                 matrix = mat(n_wires)
-            else:
+            elif name in ['multirz']:
                 # this is for gates that can be applied to arbitrary numbers of
                 # qubits such as multirz
                 matrix = mat(params, n_wires)
+            else:
+                matrix = mat(params)
 
         else:
             matrix = mat
