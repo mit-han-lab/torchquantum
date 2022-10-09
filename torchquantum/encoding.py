@@ -156,7 +156,7 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
         self.q_device = q_device
 
         # normalize the input
-        x = x / (torch.sqrt((x * x).sum(dim=-1))).unsqueeze(-1)
+        x = x / (torch.sqrt((x.abs()**2).sum(dim=-1))).unsqueeze(-1)
         state = torch.cat((x, torch.zeros(
             x.shape[0], 2 ** self.q_device.n_wires - x.shape[1],
             device=x.device)), dim=-1)
