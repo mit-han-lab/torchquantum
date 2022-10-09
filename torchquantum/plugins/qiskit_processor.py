@@ -37,12 +37,12 @@ def run_job_worker(data):
             job = execute(**(data[0]))
             qiskit_verbose = data[1]
             if qiskit_verbose:
-                my_job_monitor(job, interval=1)
+                job_monitor(job, interval=1)
             result = job.result()
             counts = result.get_counts()
-            circ_num = len(data[0]['parameter_binds'])
-            logger.info(
-                f'run job worker successful, circuit number = {circ_num}')
+            # circ_num = len(data[0]['parameter_binds'])
+            # logger.info(
+            #     f'run job worker successful, circuit number = {circ_num}')
             break
         except Exception as e:
             if "Job was cancelled" in str(e):
