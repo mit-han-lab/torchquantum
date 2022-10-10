@@ -1,4 +1,3 @@
-import qiskit.circuit.library.data_preparation.state_preparation
 import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
