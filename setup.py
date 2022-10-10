@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='torchquantum',
-      version='0.1.2',
+      version='0.1.4',
       description='A PyTorch-centric hybrid classical-quantum dynamic '
                   'neural networks framework.',
       url='https://github.com/mit-han-lab/torchquantum',
