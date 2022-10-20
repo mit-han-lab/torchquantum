@@ -1,1 +1,0 @@
-python artifact/example1/mnist_example.py
