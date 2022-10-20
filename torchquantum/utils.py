@@ -1,17 +1,19 @@
+import copy
+from typing import Dict, Iterable, List
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchquantum as tq
-import copy
-
-from torchquantum.macro import C_DTYPE
-from torchpack.utils.logging import logger
-from typing import List, Dict, Iterable
-from torchpack.utils.config import Config
-from qiskit.providers.aer.noise.device.parameters import gate_error_values
+from opt_einsum import contract
 from qiskit import IBMQ
 from qiskit.exceptions import QiskitError
+from qiskit.providers.aer.noise.device.parameters import gate_error_values
+from torchpack.utils.config import Config
+from torchpack.utils.logging import logger
+
+import torchquantum as tq
+from torchquantum.macro import C_DTYPE
 
 
 def pauli_eigs(n) -> np.ndarray:
@@ -269,6 +271,7 @@ def build_module_from_op_list(op_list: List[Dict],
 
 def build_module_description_test():
     import pdb
+
     from torchquantum.plugins import tq2qiskit
 
     pdb.set_trace()
@@ -569,6 +572,122 @@ def get_circ_stats(circ):
     }
 
 
+def partial_trace(
+    q_device: tq.QuantumDevice,
+    keep_indices: List[int],
+) -> torch.Tensor:
+    """Returns a density matrix with only some qubits kept.
+    Args:
+        q_device: The q_device to take the partial trace over.
+        keep_indices: Which indices to take the partial trace of the
+            state_vector on.
+    Returns:
+        A density matrix with only the qubits specified by keep_indices.
+    """
+    n_wires = q_device.n_wires
+    keep_indices = np.array(keep_indices) + 1
+    dm_left_index = np.arange(n_wires + 1)
+    dm_right_index = np.arange(n_wires + 1)
+    dm_right_index[keep_indices] *= -1
+
+    dm_out_index = np.array([0])
+    dm_out_index = np.concatenate((dm_out_index, keep_indices))
+    dm_out_index = np.concatenate((dm_out_index, -keep_indices))
+
+    dm = contract(
+        q_device.states,
+        dm_left_index,
+        q_device.states.conj(),
+        dm_right_index,
+        dm_out_index,
+    )
+    return dm
+
+
+def tensor_form(dm: torch.Tensor):
+    """Returns the tensor form of a density matrix.
+    Args:
+        dm: a (batched) density matrix.
+    Returns:
+        The tensor form of the density matrix.
+    """
+    size = dm.size()
+    batched = len(size) % 2 == 1
+    if batched:
+        n_wires = int(np.log2(np.prod(size) / size[0]) / 2)
+        shape_list = [size[0]] + [2] * (2 * n_wires)
+    else:
+        n_wires = int(np.log2(np.prod(size)) / 2)
+        shape_list = [2] * (2 * n_wires)
+    return dm.reshape(shape_list)
+
+
+def matrix_form(dm: torch.Tensor):
+    """Returns the matrix form of a density matrix.
+    Args:
+        dm: a (batched) density matrix.
+    Returns:
+        The matrix form of the density matrix.
+    """
+    size = dm.size()
+    batched = len(size) % 2 == 1
+    if batched:
+        n_wires = int(np.log2(np.prod(size) / size[0]) / 2)
+        shape_list = [size[0]] + [2**n_wires] * 2
+    else:
+        n_wires = int(np.log2(np.prod(size)) / 2)
+        shape_list = [2**n_wires] * 2
+    return dm.reshape(shape_list)
+
+
+def dm_to_mixture_of_state(dm: torch.Tensor, atol=1e-10):
+    """
+    Args:
+        q_device: The state vector to take the partial trace over.
+        keep_indices: Which indices to take the partial trace of the
+            state_vector on.
+        atol: The tolerance for determining that a factored state is pure.
+    """
+    size = dm.size()
+    batched = len(size) % 2 == 1
+    if batched:
+        dims = int(np.log2(np.prod(size) / size[0]) / 2)
+
+        eigvals, eigvecs = torch.linalg.eigh(dm)
+        result_list = []
+        for batch in range(size[0]):
+            mixture = tuple(
+                zip(
+                    eigvals[batch],
+                    [vec.reshape([2] * dims) for vec in eigvecs[batch].T],
+                )
+            )
+            result_list.append(
+                tuple([(float(p[0]), p[1]) for p in mixture if p[0] > 1e-10])
+            )
+        return result_list
+    else:
+
+        dims = int(np.log2(np.prod(size)) / 2)
+
+        eigvals, eigvecs = torch.linalg.eigh(dm)
+        mixture = tuple(zip(eigvals, [vec.reshape([2] * dims) for vec in eigvecs.T]))
+        return tuple([(float(p[0]), p[1]) for p in mixture if p[0] > 1e-10])
+
+def partial_trace_test():
+    import torchquantum.functional as tqf
+
+    n_wires = 4
+    q_device = tq.QuantumDevice(n_wires=n_wires)
+
+    tqf.hadamard(q_device, wires=0)
+    tqf.cnot(q_device, wires=[0, 1])
+
+    dms = partial_trace(q_device, [0])
+    dms = matrix_form(dms)
+    mixture = dm_to_mixture_of_state(dms)
+    
+    print(mixture)
 if __name__ == '__main__':
     build_module_description_test()
     switch_little_big_endian_matrix_test()
