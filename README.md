@@ -61,7 +61,6 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 
 
 
-
 ## Installation
 ```bash
 pip install torchquantum
@@ -294,6 +293,9 @@ python mnist_example.py
 TorchQuantum [Forum](https://qmlsys.hanruiwang.me)
 
 Hanrui Wang [hanrui@mit.edu](mailto:hanrui@mit.edu)
+
+## Contributors
+Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Yilian Liu, Mohammadreza Tavasoli
 
 ## Citation
 ```

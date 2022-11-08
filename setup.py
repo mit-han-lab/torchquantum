@@ -1,11 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(name='torchquantum',
-      version='0.1.4',
-      description='A PyTorch-centric hybrid classical-quantum dynamic '
-                  'neural networks framework.',
+      version='0.1.5',
+      description='A PyTorch-based framework for differentiable classical simulation of quantum computing',
       url='https://github.com/mit-han-lab/torchquantum',
-      author='Hanrui Wang',
+      author='Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli',
       author_email='hanruiwang.hw@gmail.com',
       license='MIT',
       install_requires=[
@@ -19,7 +18,6 @@ setup(name='torchquantum',
             'matplotlib>=3.3.2',
             'pathos>=0.2.7',
             'pylatexenc>=2.10',
-            # 'qiskit-nature>=0.4.4'
       ],
       extras_require = {
             'doc': [

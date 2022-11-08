@@ -1,5 +1,5 @@
-__version__ = "0.1.4"
-__author__ = 'Hanrui Wang'
+__version__ = "0.1.5"
+__author__ = 'Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli'
 
 from .macro import *
 from .devices import *
