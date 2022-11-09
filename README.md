@@ -275,12 +275,19 @@ python mnist_example.py
 [comment]: <> (</p>)
 
 ## Papers using TorchQuantum
-- [HPCA'22] [QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits](artifact)
-- [DAC'22] [QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization](https://arxiv.org/abs/2110.11331)
-- [DAC'22] [QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning](https://arxiv.org/abs/2202.13239)
-- [QCE'22] [Variational Quantum Pulse Learning](https://arxiv.org/abs/2203.17267)
-- [ICCAD'22] [Quantum Neural Network Compression](https://arxiv.org/abs/2207.01578)
-- [ICCAD'22] [Graph Transformer for Quantum Circuit Reliability Prediction]()
+- [HPCA'22] [Wang et al., "QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits"](https://arxiv.org/abs/2107.10845)
+- [DAC'22] [Wang et al., "QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization"](https://arxiv.org/abs/2110.11331)
+- [DAC'22] [Wang et al., "QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning"](https://arxiv.org/abs/2202.13239)
+- [QCE'22] [Liang et al., "Variational Quantum Pulse Learning"](https://arxiv.org/abs/2203.17267)
+- [ICCAD'22] [Hu et al., "Quantum Neural Network Compression"](https://arxiv.org/abs/2207.01578)
+- [ICCAD'22] [Wang et al., "QuEst: Graph Transformer for Quantum Circuit Reliability Estimation"](https://arxiv.org/abs/2210.16724)
+
+- [Yun et al., "Projection Valued Measure-based Quantum Machine Learning for Multi-Class Classification"](https://arxiv.org/abs/2210.16731)
+- [Baek et al., "3D Scalable Quantum Convolutional Neural Networks for Point Cloud Data Processing in Classification Applications"](https://arxiv.org/abs/2210.09728)
+- [Baek et al., "Scalable Quantum Convolutional Neural Networks"](https://arxiv.org/abs/2209.12372)
+- [Yun et al., "Quantum Multi-Agent Meta Reinforcement Learning"](https://arxiv.org/abs/2208.11510)
+- [Yun et al., "Slimmable Quantum Federated Learning"](https://dynn-icml2022.github.io/spapers/paper_7.pdf)
+- [Yun et al., "Quantum Multi-Agent Reinforcement Learning via Variational Quantum Circuit Design"](https://ieeexplore.ieee.org/document/9912289)
 
 
 ## Dependencies
