@@ -281,13 +281,19 @@ python mnist_example.py
 - [QCE'22] [Liang et al., "Variational Quantum Pulse Learning"](https://arxiv.org/abs/2203.17267)
 - [ICCAD'22] [Hu et al., "Quantum Neural Network Compression"](https://arxiv.org/abs/2207.01578)
 - [ICCAD'22] [Wang et al., "QuEst: Graph Transformer for Quantum Circuit Reliability Estimation"](https://arxiv.org/abs/2210.16724)
+- [ICML Workshop] [Yun et al., "Slimmable Quantum Federated Learning"](https://dynn-icml2022.github.io/spapers/paper_7.pdf)
+- [IEEE ICDCS] [Yun et al., "Quantum Multi-Agent Reinforcement Learning via Variational Quantum Circuit Design"](https://ieeexplore.ieee.org/document/9912289)
+<details>
+  <summary>Manuscripts</summary>
+  
+  ## Manuscripts
+  - [Yun et al., "Projection Valued Measure-based Quantum Machine Learning for Multi-Class Classification"](https://arxiv.org/abs/2210.16731)
+  - [Baek et al., "3D Scalable Quantum Convolutional Neural Networks for Point Cloud Data Processing in Classification Applications"](https://arxiv.org/abs/2210.09728)
+  - [Baek et al., "Scalable Quantum Convolutional Neural Networks"](https://arxiv.org/abs/2209.12372)
+  - [Yun et al., "Quantum Multi-Agent Meta Reinforcement Learning"](https://arxiv.org/abs/2208.11510)
+  
+</details>
 
-- [Yun et al., "Projection Valued Measure-based Quantum Machine Learning for Multi-Class Classification"](https://arxiv.org/abs/2210.16731)
-- [Baek et al., "3D Scalable Quantum Convolutional Neural Networks for Point Cloud Data Processing in Classification Applications"](https://arxiv.org/abs/2210.09728)
-- [Baek et al., "Scalable Quantum Convolutional Neural Networks"](https://arxiv.org/abs/2209.12372)
-- [Yun et al., "Quantum Multi-Agent Meta Reinforcement Learning"](https://arxiv.org/abs/2208.11510)
-- [Yun et al., "Slimmable Quantum Federated Learning"](https://dynn-icml2022.github.io/spapers/paper_7.pdf)
-- [Yun et al., "Quantum Multi-Agent Reinforcement Learning via Variational Quantum Circuit Design"](https://ieeexplore.ieee.org/document/9912289)
 
 
 ## Dependencies
