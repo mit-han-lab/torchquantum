@@ -308,7 +308,7 @@ TorchQuantum [Forum](https://qmlsys.hanruiwang.me)
 Hanrui Wang [hanrui@mit.edu](mailto:hanrui@mit.edu)
 
 ## Contributors
-Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Yilian Liu, Mohammadreza Tavasoli
+Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zhirui Hu, Zirui Li, Zhiding Liang, Pengyu Liu, Yilian Liu, Mohammadreza Tavasoli, Hanrui Wang, Zhepeng Wang, Zhuoyang Ye
 
 ## Citation
 ```
