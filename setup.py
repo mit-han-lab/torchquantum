@@ -18,6 +18,7 @@ setup(name='torchquantum',
             'matplotlib>=3.3.2',
             'pathos>=0.2.7',
             'pylatexenc>=2.10',
+            'dill==0.3.4'
       ],
       extras_require = {
             'doc': [
