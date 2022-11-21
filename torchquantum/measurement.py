@@ -178,9 +178,10 @@ def measure(q_state, n_shots=1024, draw_id=None):
     distri_all = []
 
     for state_mag_one in state_mag:
+        state_prob_one = np.abs(state_mag_one) ** 2
         measured = random.choices(
             population=bitstring_candidates,
-            weights=state_mag_one,
+            weights=state_prob_one,
             k=n_shots,
         )
         counter = Counter(measured)
