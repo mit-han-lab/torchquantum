@@ -50,8 +50,12 @@ pair_list = [
     {'qiskit': qiskit_gate.CU3Gate, 'tq': tq.CU3},
 ]
 
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 if __name__ == '__main__':
+
+    
     """
     For CNOT, the Qiskit matrix is [[1, 0, 0, 0],
                                     [0, 0, 0, 1],
