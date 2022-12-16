@@ -16,6 +16,8 @@ from .noise_model import *
 from .node import *
 from .states import *
 from .pulse import *
+from .density import *
+from .densityfunc import *
 # from .pulse_utils import *
 
 # here we check whether the Qiskit parameterization bug is fixed, if not, a

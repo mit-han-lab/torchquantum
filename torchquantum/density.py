@@ -4,12 +4,13 @@ import torch.nn as nn
 import numpy as np
 import functools
 import torchquantum.functional as tqf
-import torchquantum.Dfunc as dfunc
+import torchquantum.densityfunc as dfunc
 import torchquantum as tq
 import copy
 from torchquantum.states import QuantumState
 from torchquantum.macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from typing import Union, List, Iterable
+from qiskit.visualization import plot_state_city
 
 
 __all__ = ['DensityMatrix']
@@ -42,12 +43,6 @@ class DensityMatrix(nn.Module):
         self.register_buffer('matrix', self._matrix)
         
         """
-        Whether or not calculate by states
-        """
-        self._calc_by_states=True
-
-
-        """
         Remember whether or not a standard matrix on a given wire is contructed
         """
         self.construct={}
@@ -72,8 +67,29 @@ class DensityMatrix(nn.Module):
             self.state_list.append((1,QuantumState(n_wires)))
 
 
-    def set_calc_by_states(self,val):
-        self._calc_by_states=val
+    def init_by_pure_state(self,purestate:QuantumState):
+        """
+        Initialize the value of density matrix by a pure state |psi> by rho=|psi><psi|
+        """
+        state=purestate.get_states_1d()
+        if(len(state.shape))>1:
+            bsz=state.shape[0]
+            size=state.shape[1]
+        else:
+            bsz=1
+            size=state.shape[0]
+        """
+        Compute By outer product
+        """
+        _matrix = torch.zeros(bsz*2 ** (2*self.n_wires), dtype=C_DTYPE)
+        _matrix = torch.reshape(_matrix, [bsz,2**self.n_wires,2**self.n_wires])
+        for i in range(0,bsz):
+            _matrix[i]=torch.outer(state[i],state[i])
+            
+        print(_matrix[0])   
+        self._matrix=torch.reshape(_matrix,[bsz]+[2]*(2*self.n_wires))
+        return
+
 
 
     def update_matrix_from_states(self):
@@ -92,7 +108,7 @@ class DensityMatrix(nn.Module):
 
 
     def vector(self):
-        return torch.reshape(_matrix,[2 ** (2*self.n_wires)])
+        return torch.reshape(self._matrix,[2 ** (2*self.n_wires)])
 
 
     def print_2d(self,index):
@@ -149,9 +165,18 @@ class DensityMatrix(nn.Module):
     def set_matrix(self,matrix:Union[torch.tensor,List]):
         matrix = torch.tensor(matrix, dtype=C_DTYPE).to(self.matrix.device)
         bsz = matrix.shape[0]
-        self.matrix = torch.reshape(matrix, [bsz] + [2**(2*self.n_wires),2**(2*self.n_wires)])
+        self.matrix = torch.reshape(matrix, [bsz] + [2**self.n_wires,2**self.n_wires])
+
+    def get_matrix(self,bindex:int):
+        return torch.reshape(self._matrix[bindex],[2**self.n_wires,2**self.n_wires])
 
 
+    def plot(self,bindex:int):
+        import matplotlib.pyplot as plt
+        plot_state_city(np.array(self.get_matrix(bindex)), title='Density Matrix')
+        plt.show()
+        return
+    
 
     def evolve(self,operator):
         """Evolve the density matrix in batchmode         
@@ -270,6 +295,7 @@ class DensityMatrix(nn.Module):
                         inverse=inverse,
                         comp_method=comp_method)
 
+
     def paulix(self,
             wires: Union[List[int], int],
             inverse: bool = False,
@@ -279,6 +305,7 @@ class DensityMatrix(nn.Module):
                 inverse=inverse,
                 comp_method=comp_method)
 
+
     def pauliy(self,
             wires: Union[List[int], int],
             inverse: bool = False,
@@ -287,6 +314,7 @@ class DensityMatrix(nn.Module):
                 wires=wires,
                 inverse=inverse,
                 comp_method=comp_method)
+
 
     def pauliz(self,
             wires: Union[List[int], int],

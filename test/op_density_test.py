@@ -5,9 +5,21 @@ import torch
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
     density = tq.DensityMatrix(
         n_wires=4,
         bsz=1
     )
-    density.print_2d(0)
+    #density.print_2d(0)
+    print(density.trace(0))
