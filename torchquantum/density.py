@@ -82,8 +82,6 @@ class DensityMatrix(nn.Module):
         _matrix = torch.reshape(_matrix, [bsz,2**self.n_wires,2**self.n_wires])
         for i in range(0,bsz):
             _matrix[i]=torch.outer(state[i],state[i])
-            
-        print(_matrix[0])   
         self.matrices=torch.reshape(_matrix,[bsz]+[2]*(2*self.n_wires))
         return
 
