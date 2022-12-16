@@ -39,7 +39,7 @@ class DensityMatrix(nn.Module):
         self._bsz=bsz
         repeat_times = [bsz] + [1] * len(self.matrix.shape)
         self._matrix = self.matrix.repeat(*repeat_times)
-        self.register_buffer('matrix', self._matrix)
+        self.register_buffer('matrices', self._matrix)
         
         """
         Remember whether or not a standard matrix on a given wire is contructed
@@ -73,10 +73,8 @@ class DensityMatrix(nn.Module):
         state=purestate.get_states_1d()
         if(len(state.shape))>1:
             bsz=state.shape[0]
-            size=state.shape[1]
         else:
             bsz=1
-            size=state.shape[0]
         """
         Compute By outer product
         """
@@ -86,49 +84,34 @@ class DensityMatrix(nn.Module):
             _matrix[i]=torch.outer(state[i],state[i])
             
         print(_matrix[0])   
-        self._matrix=torch.reshape(_matrix,[bsz]+[2]*(2*self.n_wires))
+        self.matrices=torch.reshape(_matrix,[bsz]+[2]*(2*self.n_wires))
         return
 
 
 
-    def update_matrix_from_states(self):
-        """Update the density matrix value from all pure states"""
-        _matrix = torch.zeros(2 ** (2*self.n_wires), dtype=C_DTYPE)
-        _matrix = torch.reshape(_matrix, [2**self.n_wires,2**self.n_wires])
-        self.register_buffer('matrix', _matrix)
-        bsz=self.matrix.shape[0]
-        repeat_times = [bsz] + [1] * len(self.matrix.shape)
-        self._matrix = self.matrix.repeat(*repeat_times)
-        for i in range(0,bsz):
-            for p,state in self.state_list:
-                self._matrix[i]=self._matrix[i]+p*state.density_matrix()[0][:][:]
-        self.register_buffer('matrix', self._matrix)
-
-
-
     def vector(self):
-        return torch.reshape(self._matrix,[2 ** (2*self.n_wires)])
+        return torch.reshape(self.matrix,[2 ** (2*self.n_wires)])
 
 
     def print_2d(self,index):
         """Print the matrix value of matrix[index]"""
-        _matrix=torch.reshape(self._matrix[index],[2**self.n_wires]*2)
+        _matrix=torch.reshape(self.matrices[index],[2**self.n_wires]*2)
         print(_matrix)
 
 
     def trace(self,index):
         """Return the trace of the DensityMatrix of matrix[index]"""
-        return torch.trace(self._matrix[index])
+        return torch.trace(self.matrices[index])
 
 
     def positive_semidefinite(self,index):
         """Check whether the matrix is positive semidefinite by Sylvester's_criterion"""
-        return np.all(np.linalg.eigvals(self._matrix[index]) > 0)
+        return np.all(np.linalg.eigvals(self.matrices[index]) > 0)
 
 
     def check_valid(self):
         """Check whether the matrix has trace 1 and is positive semidefinite"""
-        for i in range(0,self._matrix.shape[0]):
+        for i in range(0,self.matrices.shape[0]):
             if self.trace(i) !=1 or not self.positive_semidefinite(i):
                 return False
         return True
@@ -136,7 +119,7 @@ class DensityMatrix(nn.Module):
 
     def spectral(self,index):
         """Return the spectral of the DensityMatrix"""
-        return list(np.linalg.eigvals(self._matrix[index]))
+        return list(np.linalg.eigvals(self.matrices[index]))
 
 
     def tensor(self,other):
@@ -144,7 +127,7 @@ class DensityMatrix(nn.Module):
         Args:
             other (DensityMatrix: Another density matrix
         """
-        self._matrix=torch.kron(self._matrix,other._matrix)
+        self.matrices=torch.kron(self.matrices,other._matrix)
 
 
 
@@ -153,25 +136,25 @@ class DensityMatrix(nn.Module):
         Args:
             other (DensityMatrix: Another density matrix
         """
-        self._matrix=torch.kron(other._matrix,self._matrix)
+        self.matrices=torch.kron(other.matrices,self.matrices)
 
 
 
     def clone_matrix(self,existing_matrix: torch.Tensor):
-        self._matrix=existing_matrix.clone()
+        self.matrices=existing_matrix.clone()
 
 
     def set_matrix(self,matrix:Union[torch.tensor,List]):
         matrix = torch.tensor(matrix, dtype=C_DTYPE).to(self.matrix.device)
         bsz = matrix.shape[0]
-        self.matrix = torch.reshape(matrix, [bsz] + [2**self.n_wires,2**self.n_wires])
+        self.matrices = torch.reshape(matrix, [bsz] + [2**self.n_wires,2**self.n_wires])
 
     def get_matrix(self,bindex:int):
-        return torch.reshape(self._matrix[bindex],[2**self.n_wires,2**self.n_wires])
+        return torch.reshape(self.matrices[bindex],[2**self.n_wires,2**self.n_wires])
 
     
     def get_tensor(self,bindex:int):
-        return self._matrix[bindex]
+        return self.matrices[bindex]
     
     
 
@@ -186,7 +169,7 @@ class DensityMatrix(nn.Module):
         expand_shape = [bsz] + list(operator.shape)
         
         new_matrix = operator.expand(expand_shape).bmm(torch.reshape(self.matrix,[bsz,2**(2*self.n_wires)]))
-        self.matrix=torch.reshape(new_matrix,[bsz,2**self.n_wires,2**self.n_wires])
+        self.matrices=torch.reshape(new_matrix,[bsz,2**self.n_wires,2**self.n_wires])
 
 
     def expectation(self):
@@ -227,10 +210,10 @@ class DensityMatrix(nn.Module):
         """
         if not isinstance(other, DensityMatrix):
             other = DensityMatrix(other)
-        if not self._matrix.shape==other._matrix.shape:
+        if not self.matrix.shape==other.matrix.shape:
             raise("Two density matrix must have the same shape.")
         ret = copy.copy(self)
-        ret._matrix = self.matrix + other._matrix
+        ret.matrix = self.matrix + other.matrix
         return ret
 
 
@@ -240,14 +223,14 @@ class DensityMatrix(nn.Module):
             other (complex): a complex number.
         """
         ret = copy.copy(self)
-        ret._matrix = other * self._matrix
+        ret.matrix = other * self.matrix
         return ret
 
 
     def purity(self):
         """Calculate the purity of the DensityMatrix defined as \gamma=tr(\rho^2)
         """
-        return torch.trace(torch.matmul(self._matrix, self._matrix))
+        return torch.trace(torch.matmul(self.matrix, self.matrix))
 
 
     def partial_trace(self,dims:List[int]):
@@ -260,18 +243,15 @@ class DensityMatrix(nn.Module):
             then we call  np.einsum('ijiiqi->jq', reshaped_dm)
         """
         dimlist=sorted(dims,reverse=True)
-        traced=torch.reshape(self._matrix,[self._bsz]+[2]*(2*self.n_wires)).clone()
+        traced=torch.reshape(self.matrices,[self._bsz]+[2]*(2*self.n_wires)).clone()
         traced=np.array(traced)
         index=0
         for dim in dimlist:   
-            traced=np.trace(traced,dim,dim+self.n_wires-index)
+            traced=np.trace(traced,dim+1,dim+self.n_wires-index)
             index+=1
         self.n_wires=self.n_wires-index  
-        self._matrix=torch.tensor(traced)
-        return self._matrix
-
-
-
+        self.matrices=torch.tensor(traced)
+        return self.matrices
 
 
 

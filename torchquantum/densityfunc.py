@@ -345,17 +345,16 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
                 matrix = matrix.permute(0, 2, 1)
             else:
                 matrix = matrix.permute(1, 0)
-        print("Computing")
-        state = q_device.states
+        state = q_device.matrices
         if method == 'einsum':
-            q_device.states = apply_unitary_density_einsum(state, matrix, wires)
+            q_device.matrices = apply_unitary_density_einsum(state, matrix, wires)
         elif method == 'bmm':
-            q_device.states = apply_unitary_density_bmm(state, matrix, wires)
+            q_device.matrices = apply_unitary_density_bmm(state, matrix, wires)
 
 
 def reset(q_device: tq.QuantumDevice, wires, inverse=False):
     # reset the target qubits to 0, non-unitary operation
-    state = q_device.states
+    state = q_device.matrices
 
     wires = [wires] if isinstance(wires, int) else wires
 
@@ -376,7 +375,7 @@ def reset(q_device: tq.QuantumDevice, wires, inverse=False):
         state = state.permute(permute_back)
 
     # normalize the magnitude of states
-    q_device.states = normalize_statevector(q_device.states)
+    q_device.matrices = normalize_statevector(q_device.matrices)
 
 
 
