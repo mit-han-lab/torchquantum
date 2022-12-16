@@ -10,7 +10,6 @@ import copy
 from torchquantum.states import QuantumState
 from torchquantum.macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from typing import Union, List, Iterable
-from qiskit.visualization import plot_state_city
 
 
 __all__ = ['DensityMatrix']
@@ -37,7 +36,7 @@ class DensityMatrix(nn.Module):
         _matrix = torch.reshape(_matrix, [2]*(2*self.n_wires))
         self.register_buffer('matrix', _matrix)
 
-
+        self._bsz=bsz
         repeat_times = [bsz] + [1] * len(self.matrix.shape)
         self._matrix = self.matrix.repeat(*repeat_times)
         self.register_buffer('matrix', self._matrix)
@@ -170,12 +169,10 @@ class DensityMatrix(nn.Module):
     def get_matrix(self,bindex:int):
         return torch.reshape(self._matrix[bindex],[2**self.n_wires,2**self.n_wires])
 
-
-    def plot(self,bindex:int):
-        import matplotlib.pyplot as plt
-        plot_state_city(np.array(self.get_matrix(bindex)), title='Density Matrix')
-        plt.show()
-        return
+    
+    def get_tensor(self,bindex:int):
+        return self._matrix[bindex]
+    
     
 
     def evolve(self,operator):
@@ -262,7 +259,21 @@ class DensityMatrix(nn.Module):
             First, the matrix should be reshped to (2,2,2,2,2,2)
             then we call  np.einsum('ijiiqi->jq', reshaped_dm)
         """
-        return False
+        dimlist=sorted(dims,reverse=True)
+        traced=torch.reshape(self._matrix,[self._bsz]+[2]*(2*self.n_wires)).clone()
+        traced=np.array(traced)
+        index=0
+        for dim in dimlist:   
+            traced=np.trace(traced,dim,dim+self.n_wires-index)
+            index+=1
+        self.n_wires=self.n_wires-index  
+        self._matrix=torch.tensor(traced)
+        return self._matrix
+
+
+
+
+
 
 
     @property
