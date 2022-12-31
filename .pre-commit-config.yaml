@@ -1,0 +1,59 @@
+exclude: 'build|docs|assets'
+
+default_language_version:
+    python: python3
+
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.4.0
+      hooks:
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-symlinks
+      - id: check-yaml
+      - id: destroyed-symlinks
+      - id: check-ast
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: fix-encoding-pragma
+        args: [--remove]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+      - id: no-commit-to-branch
+        args: ['--branch=main']
+      - id: end-of-file-fixer
+
+    - repo: https://github.com/Lucas-C/pre-commit-hooks
+      rev: v1.1.7
+      hooks:
+      -   id: insert-license
+          files: \.py$
+          args:
+          - --license-filepath
+
+    - repo: https://github.com/psf/black
+      rev: 22.12.0
+      hooks:
+      - id: black
+        language_version: python3.8
+
+    - repo: https://github.com/PyCQA/flake8
+      rev: 6.0.0
+      hooks:
+      - id: flake8
+        args: [--show-source, --statistics]
+
+    - repo: https://github.com/codespell-project/codespell
+      rev: v2.2.2
+      hooks:
+      - id: codespell
+        args: [
+              '--ignore-words-list=reord,dout,nd,te,ser',
+              --check-filenames,
+              --check-hidden,
+          ]
