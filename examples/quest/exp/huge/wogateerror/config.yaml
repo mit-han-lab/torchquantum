@@ -1,0 +1,32 @@
+dataset:
+  name: huge.data
+  split_ratio: [0.8, 0.1, 0.1]
+
+model:
+  name: simple
+  use_only_global: False
+  use_global_features: True
+  use_gate_type: True
+  use_qubit_index: True
+  use_T1T2: True
+  use_gate_error: False
+  use_gate_index: True
+  num_layers: 2
+
+num_epochs: 100
+batch_size: 1000
+
+criterion:
+  name: mse
+
+optimizer:
+  name: adam
+  lr: 5.0e-4
+  weight_decay: 1.0e-4
+
+scheduler:
+  name: constant
+
+pdb: False
+
+device: gpu

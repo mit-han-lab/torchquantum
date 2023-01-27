@@ -1,0 +1,3 @@
+[submodule "examples/quest/data"]
+	path = examples/quest/data
+	url = https://github.com/Hanrui-Wang/quantum-quest-data.git
