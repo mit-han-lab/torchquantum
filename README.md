@@ -8,7 +8,7 @@
 
 <p align="center">
     <a href="https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE">
-        <img alt="MIT License" src="https://img.shields.io/apm/l/atomic-design-ui.svg?">
+        <img alt="MIT License" src="https://img.shields.io/github/license/mit-han-lab/torchquantum">
     </a>
     <a href="https://torchquantum.readthedocs.io/">
         <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum/master">
