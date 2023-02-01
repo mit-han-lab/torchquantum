@@ -1,0 +1,33 @@
+name: Lint
+
+on:
+  pull_request:
+
+env:
+  PYTHON_VERSION: "3.8"
+
+defaults:
+  run:
+    shell: bash -l -eo pipefail {0}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Update pip and install lint utilities
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pre-commit
+          pre-commit install-hooks
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.4
+        with:
+          prNumber: ${{ github.event.number }}
+          output: ' '
+      - name: Lint modified files
+        run: pre-commit run --files ${{ steps.file_changes.outputs.files }}

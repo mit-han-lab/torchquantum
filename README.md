@@ -22,11 +22,11 @@
     <a href="https://qmlsys.mit.edu">
         <img alt="Website" src="https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu">
     </a>
-    
+
    <a href="https://pypi.org/project/torchquantum/">
         <img alt="Pypi" src="https://img.shields.io/pypi/v/torchquantum">
     </a>
-    
+
 </p>
 <br />
 
@@ -37,20 +37,25 @@
 # 👋 Welcome
 
 #### What it is doing
+
 Quantum simulation framework based on PyTorch. It supports statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 30+ qubits with multiple GPUs.
 #### Who will benefit
+
 Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning, quantum neural networks.
 #### Differences from Qiskit/Pennylane
+
 Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
 
 ## News
+
 - Added support for controlled unitary
 - v0.1.2 Available!
-- Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ) for real time support! 
+- Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ) for real time support!
 - Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
 - Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
 
 ## Features
+
 - Easy construction and simulation of quantum circuits in **PyTorch**
 - **Dynamic computation graph** for easy debugging
 - **Gradient support** via autograd
@@ -66,6 +71,17 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 pip install torchquantum
 
 ```
+
+## Coding Style
+
+torchquantum uses pre-commit hooks to ensure Python style consistency and prevent common mistakes in its codebase.
+
+To enable it pre-commit hooks please reproduce:
+```bash
+pip install pre-commit
+pre-commit install
+```
+
 ## Basic Usage 1
 
 ```python
@@ -104,6 +120,7 @@ print(x.states)
 
 
 ## Guide to the examples
+
 We also prepare many example and tutorials using TorchQuantum.
 
 For **beginning level**, you may check [QNN for MNIST](examples/simple_mnist), [Quantum Convolution (Quanvolution)](examples/quanvolution) and [Quantum Kernel Method](examples/quantum_kernel_method), and [Quantum Regression](examples/regression).
@@ -114,10 +131,11 @@ For **expert**, you may check [Parameter Shift on-chip Training](examples/param_
 
 
 ## Usage
+
 Construct parameterized quantum circuit models as simple as constructing a normal pytorch model.
 ```python
 import torch.nn as nn
-import torch.nn.functional as F 
+import torch.nn.functional as F
 import torchquantum as tq
 import torchquantum.functional as tqf
 
@@ -127,7 +145,7 @@ class QFCModel(nn.Module):
     self.n_wires = 4
     self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
     self.measure = tq.MeasureAll(tq.PauliZ)
-    
+
     self.encoder_gates = [tqf.rx] * 4 + [tqf.ry] * 4 + \
                          [tqf.rz] * 4 + [tqf.rx] * 4
     self.rx0 = tq.RX(has_params=True, trainable=True)
@@ -139,20 +157,20 @@ class QFCModel(nn.Module):
     bsz = x.shape[0]
     # down-sample the image
     x = F.avg_pool2d(x, 6).view(bsz, 16)
-    
+
     # reset qubit states
     self.q_device.reset_states(bsz)
-    
+
     # encode the classical image to quantum domain
     for k, gate in enumerate(self.encoder_gates):
       gate(self.q_device, wires=k % self.n_wires, params=x[:, k])
-    
+
     # add some trainable gates (need to instantiate ahead of time)
     self.rx0(self.q_device, wires=0)
     self.ry0(self.q_device, wires=1)
     self.rz0(self.q_device, wires=3)
     self.crx0(self.q_device, wires=[0, 2])
-    
+
     # add some more non-parameterized gates (add on-the-fly)
     tqf.hadamard(self.q_device, wires=3)
     tqf.sx(self.q_device, wires=2)
@@ -161,10 +179,10 @@ class QFCModel(nn.Module):
                                                            [0, 1, 0, 0],
                                                            [0, 0, 0, 1j],
                                                            [0, 0, -1j, 0]])
-    
+
     # perform measurement to get expectations (back to classical domain)
     x = self.measure(self.q_device).reshape(bsz, 2, 2)
-    
+
     # classification
     x = x.sum(-1).squeeze()
     x = F.log_softmax(x, dim=1)
@@ -174,6 +192,7 @@ class QFCModel(nn.Module):
 ```
 
 ## VQE Example
+
 Train a quantum circuit to perform VQE task.
 Quito quantum computer as in [simple_vqe.py](./examples/simple_vqe/simple_vqe.py)
 script:
@@ -182,8 +201,8 @@ cd examples/simple_vqe
 python simple_vqe.py
 ```
 
-
 ## MNIST Example
+
 Train a quantum circuit to perform MNIST task and deploy on the real IBM
 Quito quantum computer as in [mnist_example.py](./examples/simple_mnist/mnist_example_no_binding.py)
 script:
@@ -193,6 +212,7 @@ python mnist_example.py
 ```
 
 ## Files
+
 | File      | Description |
 | ----------- | ----------- |
 | devices.py      | QuantumDevice class which stores the statevector |
@@ -275,6 +295,7 @@ python mnist_example.py
 [comment]: <> (</p>)
 
 ## Papers using TorchQuantum
+
 - [HPCA'22] [Wang et al., "QuantumNAS: Noise-Adaptive Search for Robust Quantum Circuits"](https://arxiv.org/abs/2107.10845)
 - [DAC'22] [Wang et al., "QuantumNAT: Quantum Noise-Aware Training with Noise Injection, Quantization and Normalization"](https://arxiv.org/abs/2110.11331)
 - [DAC'22] [Wang et al., "QOC: Quantum On-Chip Training with Parameter Shift and Gradient Pruning"](https://arxiv.org/abs/2202.13239)
@@ -285,29 +306,33 @@ python mnist_example.py
 - [IEEE ICDCS] [Yun et al., "Quantum Multi-Agent Reinforcement Learning via Variational Quantum Circuit Design"](https://ieeexplore.ieee.org/document/9912289)
 <details>
   <summary>Manuscripts</summary>
-  
+
   ## Manuscripts
+
   - [Yun et al., "Projection Valued Measure-based Quantum Machine Learning for Multi-Class Classification"](https://arxiv.org/abs/2210.16731)
   - [Baek et al., "3D Scalable Quantum Convolutional Neural Networks for Point Cloud Data Processing in Classification Applications"](https://arxiv.org/abs/2210.09728)
   - [Baek et al., "Scalable Quantum Convolutional Neural Networks"](https://arxiv.org/abs/2209.12372)
   - [Yun et al., "Quantum Multi-Agent Meta Reinforcement Learning"](https://arxiv.org/abs/2208.11510)
-  
+
 </details>
 
 
 
 ## Dependencies
+
 - 3.9 >= Python >= 3.7 (Python 3.10 may have the `concurrent` package issue for Qiskit)
-- PyTorch >= 1.8.0 
+- PyTorch >= 1.8.0
 - configargparse >= 0.14
 - GPU model training requires NVIDIA GPUs
 
 ## Contact
+
 TorchQuantum [Forum](https://qmlsys.hanruiwang.me)
 
 Hanrui Wang [hanrui@mit.edu](mailto:hanrui@mit.edu)
 
 ## Contributors
+
 Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zhirui Hu, Zirui Li, Zhiding Liang, Pengyu Liu, Yilian Liu, Mohammadreza Tavasoli, Hanrui Wang, Zhepeng Wang, Zhuoyang Ye
 
 ## Citation
@@ -319,4 +344,3 @@ Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zhirui Hu, Zirui Li, Zhiding Liang
     year      = {2022}
 }
 ```
-
