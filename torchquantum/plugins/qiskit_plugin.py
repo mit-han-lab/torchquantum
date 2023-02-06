@@ -26,7 +26,8 @@ def qiskit_assemble_circs(encoders, fixed_layer, measurement):
     circs_all = []
 
     for encoder in encoders:
-        circs_all.append(encoder + fixed_layer + measurement)
+        circ = encoder.compose(fixed_layer).compose(measurement)
+        circs_all.append(circ)
 
     return circs_all
 
