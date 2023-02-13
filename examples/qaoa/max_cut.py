@@ -60,7 +60,9 @@ class MAXCUT(tq.QuantumModule):
 
         if edge is None:
             # if no edge is specified, measure all qubits
-            return self.measure(self.q_device).flatten()
+            q_state = tq.QuantumState(n_wires=self.n_wires)
+            q_state.set_states(self.q_device.get_states_1d())
+            return tq.measure(q_state, n_shots=1024, draw_id=0)
 
         # with only one shot calculate the expectation value of the edge qubit
         return tq.expval(
@@ -84,12 +86,18 @@ class MAXCUT(tq.QuantumModule):
         betas = torch.rand(n_layers, requires_grad=True)
         gammas = torch.rand(n_layers, requires_grad=True)
 
+        print(
+            "The initial parameters are betas = {} and gammas = {}".format(
+                betas, gammas
+            )
+        )
+
         # measure all edges in the input_graph
         def cost_objective(betas, gammas):
             loss = 0
             for edge in self.input_graph:
                 loss -= 1 / 2 * (1 - self.forward(betas, gammas, edge))
-            return torch.mean(loss)
+            return torch.sum(loss)
 
         loss = cost_objective(betas, gammas)
 
@@ -103,22 +111,12 @@ class MAXCUT(tq.QuantumModule):
             loss.backward(retain_graph=True)
             optimizer.step()
             # scheduler.step()
-            print("Step: {}, Cost Objective: {}".format(step, loss.item()))
+            if step % 5 == 0:
+                print("Step: {}, Cost Objective: {}".format(step, loss.item()))
 
-        # compute the bitsring with the highest probability
-        expectation_vals = self.forward(betas, gammas, edge=None)
-        # calculate the probability of zero and one from the expectation values
-        probs_zero = (1 + expectation_vals) / 2
-        probs_one = (1 - expectation_vals) / 2
-        # find the outcome with the highest probability from probs_zero and probs_one
-        outcome = np.where(probs_zero >= probs_one, 0, 1)
-        bitstring = "".join(str(int(item)) for item in outcome)
-        print("The bitstring with the highest probability is: {}".format(bitstring))
-        print(
-            "The optimal parameters are betas = {} and gammas = {}".format(
-                betas, gammas
-            )
-        )
+        # plot the distribution of the final state
+        self.forward(betas, gammas, edge=None)
+
         return (betas, gammas)
 
 
@@ -149,9 +147,9 @@ def main():
     for i in range(len(betas)):
         print(qaoa.forward(betas[i].unsqueeze(0), gammas[i].unsqueeze(0)))
 
-    # #optimize the parameters
+    # # #optimize the parameters
     print("Optimizing the parameters...")
-    qaoa.optimize(betas, gammas)
+    qaoa.optimize(betas, gammas, n_steps=10, lr=0.1)
 
 
 if __name__ == "__main__":
