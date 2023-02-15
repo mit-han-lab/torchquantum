@@ -63,7 +63,7 @@ class MAXCUT(tq.QuantumModule):
             self.mixer_n_entangler(self.input_graph[k])
 
         if edge is None:
-            return tq.measure(self.q_device, n_shots=1024)
+            return tq.measure(self.q_device, n_shots=1024, draw_id=0)
 
         exp_val = torch.prod(
             tq.expval(
