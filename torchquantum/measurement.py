@@ -49,12 +49,9 @@ def expval_joint_analytical(q_device: tq.QuantumDevice,
 
     observable = observable.upper()
     assert len(observable) == q_device.n_wires
-    hamiltonian = None
-    for op in observable:
-        if hamiltonian is None:
-            hamiltonian = pauli_dict[op]
-        else:
-            hamiltonian = torch.kron(hamiltonian, pauli_dict[op])
+    hamiltonian = pauli_dict[observable[0]]
+    for op in observable[1:]:
+        hamiltonian = torch.kron(hamiltonian, pauli_dict[op])
 
     states = q_device.get_states_1d()
 
