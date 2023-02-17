@@ -49,34 +49,18 @@ class MAXCUT(tq.QuantumModule):
 
     def circuit(self, edge=None):
         """Run the QAOA circuit for the given edge.
-
         Args:
             edge (tuple): edge to be measured, defaults to None.
-
         Returns:
             the expectation value measured on the qubits corresponding to the edge.
         """
-        self.q_device.reset_states(1)
         tqf.h(self.q_device, wires=list(range(self.n_wires)))
-
         for k in range(self.n_layers):
             self.mixer_n_entangler(self.input_graph[k])
-
-        if edge is None:
-            return tq.measure(self.q_device, n_shots=1024, draw_id=0)
-
-        exp_val = torch.prod(
-            tq.expval(
-                self.q_device, wires=[*edge], observables=[tq.PauliZ(), tq.PauliZ()]
-            )
-        )
-
-        return exp_val
 
     def forward(self):
         """
         Apply the QAOA ansatz and only measure the edge qubit on z-basis.
-
         Args:
             betas (np.array): A list of beta parameters.
             gammas (np.array): A list of gamma parameters.
@@ -86,6 +70,8 @@ class MAXCUT(tq.QuantumModule):
         # create a uniform superposition over all qubits
         loss = 0
         for edge in self.input_graph:
+            # construct pauli string
+            # expval(self.q_device, 'zizi')
             loss -= 1 / 2 * (1 - self.circuit(edge))
         return loss
 
@@ -93,7 +79,6 @@ class MAXCUT(tq.QuantumModule):
 def optimize(model, n_steps=10, lr=0.1):
     """
     Optimize the QAOA ansatz over the parameters gamma and beta
-
     Args:
         betas (np.array): A list of beta parameters.
         gammas (np.array): A list of gamma parameters.
@@ -101,24 +86,18 @@ def optimize(model, n_steps=10, lr=0.1):
         lr (float): The learning rate, defaults to 0.1.
         scheduler (torch.optim.lr_scheduler): The learning rate scheduler, defaults to None.
     """
-
     # measure all edges in the input_graph
     loss = model()
-
     print("The initial cost objective is {}".format(loss.item()))
-
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
     print(
         "The initial parameters are betas = {} and gammas = {}".format(
             *model.parameters()
         )
     )
-
     # optimize the parameters and return the optimal values
     for step in range(n_steps):
-        optimizer.zero_grad()  # right now the optimizer goes forwards and backwards, so need to specify the edge to measure
-        loss.backward(retain_graph=True)
+        optimizer.zero_grad()
         optimizer.step()
         if step % 2 == 0:
             print("Step: {}, Cost Objective: {}".format(step, loss.item()))
@@ -129,6 +108,22 @@ def optimize(model, n_steps=10, lr=0.1):
         )
     )
     return model.circuit()
+
+
+def shift_and_run(model, use_qiskit=False):
+    param_list = []
+    for param in model.parameters():
+        param_list.append(param)
+    grad_list = []
+    for param in param_list:
+        param.copy_(param + np.pi * 0.5)
+        out1 = model(use_qiskit)
+        param.copy_(param - np.pi)
+        out2 = model(use_qiskit)
+        param.copy_(param + np.pi * 0.5)
+        grad = 0.5 * (out1 - out2)
+        grad_list.append(grad)
+    return model(use_qiskit), grad_list
 
 
 def main():
