@@ -4,9 +4,61 @@ import torch
 import torchquantum as tq
 import numpy as np
 import matplotlib.pyplot as plt
+from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
 from typing import Union, List
 from collections import Counter, OrderedDict
+
+from torchquantum.functional import mat_dict
+
+def expval_joint_analytical(q_device: tq.QuantumDevice,
+                            observable: str,
+                            ):
+    """
+    Compute the expectation value of a joint observable in analytical way, assuming the
+    statevector is available.
+    Args:
+        q_device: the quantum device
+        observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
+    Returns:
+        the expectation value
+    Examples:
+    >>> import torchquantum as tq
+    >>> import torchquantum.functional as tqf
+    >>> x = tq.QuantumDevice(n_wires=2)
+    >>> tqf.hadamard(x, wires=0)
+    >>> tqf.x(x, wires=1)
+    >>> tqf.cnot(x, wires=[0, 1])
+    >>> print(expval_joint_analytical(x, 'II'))
+    tensor([[1.0000]])
+    >>> print(expval_joint_analytical(x, 'XX'))
+    tensor([[1.0000]])
+    >>> print(expval_joint_analytical(x, 'ZZ'))
+    tensor([[-1.0000]])
+
+    """
+    # compute the hamiltonian matrix
+    paulix = mat_dict['paulix']
+    pauliy = mat_dict['pauliy']
+    pauliz = mat_dict['pauliz']
+    iden = mat_dict['i']
+    pauli_dict = {'X': paulix, 
+                  'Y': pauliy, 
+                  'Z': pauliz,
+                  'I': iden}
+
+    observable = observable.upper()
+    assert len(observable) == q_device.n_wires
+    hamiltonian = None
+    for op in observable:
+        if hamiltonian is None:
+            hamiltonian = pauli_dict[op]
+        else:
+            hamiltonian = torch.kron(hamiltonian, pauli_dict[op])
+
+    states = q_device.get_states_1d()
+
+    return torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
 
 
 def expval(q_device: tq.QuantumDevice,
