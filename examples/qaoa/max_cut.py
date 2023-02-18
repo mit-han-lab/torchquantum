@@ -13,7 +13,7 @@ torch.manual_seed(seed)
 
 class MAXCUT(tq.QuantumModule):
     """computes the optimal cut for a given graph.
-    outputs: the most probable bitstring decides the set {0 or 1} each 
+    outputs: the most probable bitstring decides the set {0 or 1} each
     node belongs to.
     """
 
@@ -42,14 +42,10 @@ class MAXCUT(tq.QuantumModule):
         for wire in range(self.n_wires):
             for (beta, gamma) in zip(self.betas, self.gammas):
                 # mixer
-                self.rx0(self.q_device, wires=wire, 
-                         params=2 * beta.unsqueeze(0)
-                )
+                self.rx0(self.q_device, wires=wire, params=2 * beta.unsqueeze(0))
                 # entangler
                 tqf.cx(self.q_device, [edge[0], edge[1]])
-                self.rz0(self.q_device, wires=edge[1], 
-                         params=2 * gamma.unsqueeze(0)
-                )
+                self.rz0(self.q_device, wires=edge[1], params=2 * gamma.unsqueeze(0))
                 tqf.cx(self.q_device, [edge[0], edge[1]])
 
     def circuit(self):
