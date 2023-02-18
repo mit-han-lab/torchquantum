@@ -13,7 +13,8 @@ torch.manual_seed(seed)
 
 class MAXCUT(tq.QuantumModule):
     """computes the optimal cut for a given graph.
-    outputs: the most probable bitstring decides the set {0 or 1} each node belongs to.
+    outputs: the most probable bitstring decides the set {0 or 1} each 
+    node belongs to.
     """
 
     def __init__(self, n_wires, input_graph, n_layers):
@@ -41,39 +42,54 @@ class MAXCUT(tq.QuantumModule):
         for wire in range(self.n_wires):
             for (beta, gamma) in zip(self.betas, self.gammas):
                 # mixer
-                self.rx0(self.q_device, wires=wire, params=2 * beta.unsqueeze(0))
+                self.rx0(self.q_device, wires=wire, 
+                         params=2 * beta.unsqueeze(0)
+                )
                 # entangler
                 tqf.cx(self.q_device, [edge[0], edge[1]])
-                self.rz0(self.q_device, wires=edge[1], params=2 * gamma.unsqueeze(0))
+                self.rz0(self.q_device, wires=edge[1], 
+                         params=2 * gamma.unsqueeze(0)
+                )
                 tqf.cx(self.q_device, [edge[0], edge[1]])
 
-    def circuit(self, edge=None):
+    def circuit(self):
         """Run the QAOA circuit for the given edge.
         Args:
             edge (tuple): edge to be measured, defaults to None.
         Returns:
-            the expectation value measured on the qubits corresponding to the edge.
+            the expectation value measured on the qubits of the edge.
         """
         tqf.h(self.q_device, wires=list(range(self.n_wires)))
         for k in range(self.n_layers):
             self.mixer_n_entangler(self.input_graph[k])
 
-    def forward(self):
+    def edge_to_PauliString(self, edge):
+        # construct pauli string
+        pauli_string = ""
+        for wire in range(self.n_wires):
+            if wire in edge:
+                pauli_string += "Z"
+            else:
+                pauli_string += "I"
+        return pauli_string
+
+    def forward(self, measure_all=False):
         """
         Apply the QAOA ansatz and only measure the edge qubit on z-basis.
         Args:
-            betas (np.array): A list of beta parameters.
-            gammas (np.array): A list of gamma parameters.
-            n_layers (int): The number of layers in the QAOA circuit, defaults to 1.
-            edge (tuple of two ints): The edge to be measured, defaults to None.
+            if edge is None
         """
-        # create a uniform superposition over all qubits
-        loss = 0
-        for edge in self.input_graph:
-            # construct pauli string
-            # expval(self.q_device, 'zizi')
-            loss -= 1 / 2 * (1 - self.circuit(edge))
-        return loss
+        self.circuit()
+        expVal = 0
+        if measure_all is False:
+            for edge in self.input_graph:
+                pauli_string = self.edge_to_PauliString(edge)
+                expVal += tq.expval_joint_analytical(
+                    self.q_device, observable=pauli_string
+                )
+            return -expVal
+        else:
+            return tq.measure(self.q_device, n_shots=1024)
 
 
 def optimize(model, n_steps=10, lr=0.1):
@@ -84,7 +100,6 @@ def optimize(model, n_steps=10, lr=0.1):
         gammas (np.array): A list of gamma parameters.
         n_steps (int): The number of steps to optimize, defaults to 10.
         lr (float): The learning rate, defaults to 0.1.
-        scheduler (torch.optim.lr_scheduler): The learning rate scheduler, defaults to None.
     """
     # measure all edges in the input_graph
     loss = model()
@@ -107,7 +122,7 @@ def optimize(model, n_steps=10, lr=0.1):
             *model.parameters()
         )
     )
-    return model.circuit()
+    return model(measure_all=True)
 
 
 def shift_and_run(model, use_qiskit=False):
