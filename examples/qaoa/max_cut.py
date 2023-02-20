@@ -5,10 +5,56 @@ import torchquantum.functional as tqf
 import random
 import numpy as np
 
+from torchquantum.functional import mat_dict
+
 seed = 0
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
+
+
+def expval_joint_analytical(
+    q_device: tq.QuantumDevice,
+    observable: str,
+):
+    """
+    Compute the expectation value of a joint observable in analytical way, assuming the
+    statevector is available.
+    Args:
+        q_device: the quantum device
+        observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
+    Returns:
+        the expectation value
+    Examples:
+    >>> import torchquantum as tq
+    >>> import torchquantum.functional as tqf
+    >>> x = tq.QuantumDevice(n_wires=2)
+    >>> tqf.hadamard(x, wires=0)
+    >>> tqf.x(x, wires=1)
+    >>> tqf.cnot(x, wires=[0, 1])
+    >>> print(expval_joint_analytical(x, 'II'))
+    tensor([[1.0000]])
+    >>> print(expval_joint_analytical(x, 'XX'))
+    tensor([[1.0000]])
+    >>> print(expval_joint_analytical(x, 'ZZ'))
+    tensor([[-1.0000]])
+    """
+    # compute the hamiltonian matrix
+    paulix = mat_dict["paulix"]
+    pauliy = mat_dict["pauliy"]
+    pauliz = mat_dict["pauliz"]
+    iden = mat_dict["i"]
+    pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
+
+    observable = observable.upper()
+    assert len(observable) == q_device.n_wires
+    hamiltonian = pauli_dict[observable[0]]
+    for op in observable[1:]:
+        hamiltonian = torch.kron(hamiltonian, pauli_dict[op])
+
+    states = q_device.get_states_1d()
+
+    return torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
 
 
 class MAXCUT(tq.QuantumModule):
@@ -76,16 +122,16 @@ class MAXCUT(tq.QuantumModule):
             if edge is None
         """
         self.circuit()
-        expVal = 0
         if measure_all is False:
+            expVal = 0
             for edge in self.input_graph:
                 pauli_string = self.edge_to_PauliString(edge)
-                expVal += tq.expval_joint_analytical(
+                expVal += expval_joint_analytical(
                     self.q_device, observable=pauli_string
                 )
             return -expVal
         else:
-            return tq.measure(self.q_device, n_shots=1024)
+            return tq.measure(self.q_device, n_shots=1024, draw_id=0)
 
 
 def optimize(model, n_steps=10, lr=0.1):
@@ -98,8 +144,6 @@ def optimize(model, n_steps=10, lr=0.1):
         lr (float): The learning rate, defaults to 0.1.
     """
     # measure all edges in the input_graph
-    loss = model()
-    print("The initial cost objective is {}".format(loss.item()))
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print(
         "The initial parameters are betas = {} and gammas = {}".format(
@@ -109,6 +153,8 @@ def optimize(model, n_steps=10, lr=0.1):
     # optimize the parameters and return the optimal values
     for step in range(n_steps):
         optimizer.zero_grad()
+        loss = model()
+        loss.backward(retain_graph=True)
         optimizer.step()
         if step % 2 == 0:
             print("Step: {}, Cost Objective: {}".format(step, loss.item()))
