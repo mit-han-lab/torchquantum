@@ -91,19 +91,8 @@ class MAXCUT(tq.QuantumModule):
                 self.rx0(self.q_device, wires=wire, params=2 * beta.unsqueeze(0))
                 # entangler
                 tqf.cx(self.q_device, [edge[0], edge[1]])
-                self.rz0(self.q_device, wires=edge[1], params=2 * gamma.unsqueeze(0))
+                self.rz0(self.q_device, wires=edge[1], params=gamma.unsqueeze(0))
                 tqf.cx(self.q_device, [edge[0], edge[1]])
-
-    def circuit(self):
-        """Run the QAOA circuit for the given edge.
-        Args:
-            edge (tuple): edge to be measured, defaults to None.
-        Returns:
-            the expectation value measured on the qubits of the edge.
-        """
-        tqf.h(self.q_device, wires=list(range(self.n_wires)))
-        for k in range(self.n_layers):
-            self.mixer_n_entangler(self.input_graph[k])
 
     def edge_to_PauliString(self, edge):
         # construct pauli string
@@ -115,6 +104,15 @@ class MAXCUT(tq.QuantumModule):
                 pauli_string += "I"
         return pauli_string
 
+    def circuit(self):
+        """
+        execute the quantum circuit
+        """
+
+        tqf.h(self.q_device, wires=list(range(self.n_wires)))
+        for k in range(self.n_layers):
+            self.mixer_n_entangler(self.input_graph[k])
+
     def forward(self, measure_all=False):
         """
         Apply the QAOA ansatz and only measure the edge qubit on z-basis.
@@ -122,14 +120,15 @@ class MAXCUT(tq.QuantumModule):
             if edge is None
         """
         self.circuit()
+        # compute the expectation value
         if measure_all is False:
             expVal = 0
             for edge in self.input_graph:
                 pauli_string = self.edge_to_PauliString(edge)
-                expVal += expval_joint_analytical(
-                    self.q_device, observable=pauli_string
+                expVal -= 0.5 * (
+                    1 - expval_joint_analytical(self.q_device, observable=pauli_string)
                 )
-            return -expVal
+            return expVal
         else:
             return tq.measure(self.q_device, n_shots=1024, draw_id=0)
 
@@ -183,15 +182,31 @@ def shift_and_run(model, use_qiskit=False):
     return model(use_qiskit), grad_list
 
 
+# def main():
+#     import torchquantum as tq
+#     import torchquantum.functional as tqf
+#     #test
+#     beta = torch.tensor([0.8])
+#     gamma = torch.tensor([0.9])
+#     x = tq.QuantumDevice(n_wires=3)
+#     for wire in range(2):
+#         tqf.h(x, wires=wire)
+#         tqf.cx(x, wires=[wire, wire+1])
+#         tqf.rx(x, wires=wire, params= beta)
+#         tqf.rz(x, wires=1, params=gamma)
+
+#     # print(expval_joint_analytical(x, 'III'))
+#     # print(expval_joint_analytical(x, 'XXI'))
+#     print(expval_joint_analytical(x, 'ZZI'))
+
+
 def main():
     # create a input_graph
     input_graph = [(0, 1), (3, 0), (1, 2), (2, 3)]
     n_wires = 4
     n_layers = 1
-    # create a QAOA ansatz
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
-    # optimizer
-    optimize(model, n_steps=10, lr=0.1)
+    optimize(model, n_steps=50, lr=0.1)
 
 
 if __name__ == "__main__":
