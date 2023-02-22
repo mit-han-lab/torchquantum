@@ -133,7 +133,7 @@ class MAXCUT(tq.QuantumModule):
             return tq.measure(self.q_device, n_shots=1024, draw_id=0)
 
 
-def optimize(model, n_steps=10, lr=0.1):
+def backprop_optimize(model, n_steps=10, lr=0.1):
     """
     Optimize the QAOA ansatz over the parameters gamma and beta
     Args:
@@ -167,46 +167,74 @@ def optimize(model, n_steps=10, lr=0.1):
 
 
 def shift_and_run(model, use_qiskit=False):
-    param_list = []
-    for param in model.parameters():
-        param_list.append(param)
+
+    # flatten the parameters into 1D array
+    params_list = list(model.parameters())
+    params_flat = torch.cat([param.flatten() for param in params_list])
+
     grad_list = []
-    for param in param_list:
+    for param in params_flat:
         param.copy_(param + np.pi * 0.5)
         out1 = model(use_qiskit)
         param.copy_(param - np.pi)
         out2 = model(use_qiskit)
+        # return the parameters to their original values
         param.copy_(param + np.pi * 0.5)
         grad = 0.5 * (out1 - out2)
         grad_list.append(grad)
-    return model(use_qiskit), grad_list
+
+    grad_flat = torch.tensor(grad_list)
+    # unflatten the parameters
+    return model(use_qiskit), grad_flat
 
 
-# def main():
-#     import torchquantum as tq
-#     import torchquantum.functional as tqf
-#     #test
-#     beta = torch.tensor([0.8])
-#     gamma = torch.tensor([0.9])
-#     x = tq.QuantumDevice(n_wires=3)
-#     for wire in range(2):
-#         tqf.h(x, wires=wire)
-#         tqf.cx(x, wires=[wire, wire+1])
-#         tqf.rx(x, wires=wire, params= beta)
-#         tqf.rz(x, wires=1, params=gamma)
+def param_shift_optimize(model, n_steps=10, step_size=0.1):
+    """finds the optimal cut where parameter shift rule is used to compute the gradient"""
+    # optimize the parameters and return the optimal values
+    print(
+        "The initial parameters are betas = {} and gammas = {}".format(
+            *model.parameters()
+        )
+    )
 
-#     # print(expval_joint_analytical(x, 'III'))
-#     # print(expval_joint_analytical(x, 'XXI'))
-#     print(expval_joint_analytical(x, 'ZZI'))
+    for step in range(n_steps):
+        with torch.no_grad():
+            loss, grad_list = shift_and_run(model)
+        param_list = list(model.parameters())
+        print(
+            "The initial parameters are betas = {} and gammas = {}".format(
+                *model.parameters()
+            )
+        )
+        param_list = torch.cat([param.flatten() for param in param_list])
+
+        # print("The shape of the params", len(param_list), param_list[0].shape, param_list)
+        # print("")
+        # print("The shape of the grad_list = {}, 0th elem shape = {}, grad_list = {}".format(len(grad_list), grad_list[0].shape, grad_list))
+        for param, grad in zip(param_list, grad_list):
+            # modify the parameters and ensure that there are no multiple views
+            param.copy_(param - step_size * grad)
+        if step % 2 == 0:
+            print("Step: {}, Cost Objective: {}".format(step, loss.item()))
+
+        print(
+            "The updated parameters are betas = {} and gammas = {}".format(
+                *model.parameters()
+            )
+        )
+    return model(measure_all=True)
 
 
 def main():
     # create a input_graph
     input_graph = [(0, 1), (3, 0), (1, 2), (2, 3)]
     n_wires = 4
-    n_layers = 1
+    n_layers = 2
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
-    optimize(model, n_steps=50, lr=0.1)
+    # use backprop
+    backprop_optimize(model, n_steps=50, lr=0.1)
+    # use parameter shift rule
+    # param_shift_optimize(model, n_steps=10, step_size=0.1)
 
 
 if __name__ == "__main__":
