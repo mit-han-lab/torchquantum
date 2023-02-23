@@ -68,6 +68,7 @@ class QFCModel(tq.QuantumModule):
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
+        self.q_device.reset_states(x.shape[0])
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
