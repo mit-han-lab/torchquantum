@@ -73,8 +73,8 @@ class MAXCUT(tq.QuantumModule):
 
         self.q_device = tq.QuantumDevice(n_wires=n_wires)
 
-        self.rx0 = tq.RX(has_params=False, trainable=False)
-        self.rz0 = tq.RZ(has_params=False, trainable=False)
+        # self.rx0 = tq.RX(has_params=False, trainable=False)
+        # self.rz0 = tq.RZ(has_params=False, trainable=False)
 
         self.betas = torch.nn.Parameter(torch.rand(self.n_layers))
         self.gammas = torch.nn.Parameter(torch.rand(self.n_layers))
@@ -88,10 +88,10 @@ class MAXCUT(tq.QuantumModule):
         for wire in range(self.n_wires):
             for (beta, gamma) in zip(self.betas, self.gammas):
                 # mixer
-                self.rx0(self.q_device, wires=wire, params=2 * beta.unsqueeze(0))
+                tqf.rx(self.q_device, wires=wire, params=2 * beta.unsqueeze(0))
                 # entangler
                 tqf.cx(self.q_device, [edge[0], edge[1]])
-                self.rz0(self.q_device, wires=edge[1], params=gamma.unsqueeze(0))
+                tqf.rz(self.q_device, wires=edge[1], params=gamma.unsqueeze(0))
                 tqf.cx(self.q_device, [edge[0], edge[1]])
 
     def edge_to_PauliString(self, edge):
@@ -119,7 +119,10 @@ class MAXCUT(tq.QuantumModule):
         Args:
             if edge is None
         """
+        self.q_device.reset_states(1)
         self.circuit()
+        # states = self.q_device.get_states_1d()
+        print(tq.measure(self.q_device, n_shots=1024))
         # compute the expectation value
         if measure_all is False:
             expVal = 0
@@ -133,7 +136,7 @@ class MAXCUT(tq.QuantumModule):
             return tq.measure(self.q_device, n_shots=1024, draw_id=0)
 
 
-def backprop_optimize(model, n_steps=10, lr=0.1):
+def backprop_optimize(model, n_steps=100, lr=0.1):
     """
     Optimize the QAOA ansatz over the parameters gamma and beta
     Args:
@@ -153,7 +156,7 @@ def backprop_optimize(model, n_steps=10, lr=0.1):
     for step in range(n_steps):
         optimizer.zero_grad()
         loss = model()
-        loss.backward(retain_graph=True)
+        loss.backward()
         optimizer.step()
         if step % 2 == 0:
             print("Step: {}, Cost Objective: {}".format(step, loss.item()))
@@ -232,7 +235,7 @@ def main():
     n_layers = 2
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
     # use backprop
-    backprop_optimize(model, n_steps=50, lr=0.1)
+    backprop_optimize(model, n_steps=500, lr=0.01)
     # use parameter shift rule
     # param_shift_optimize(model, n_steps=10, step_size=0.1)
 
