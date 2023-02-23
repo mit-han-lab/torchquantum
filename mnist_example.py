@@ -72,6 +72,7 @@ class QFCModel(tq.QuantumModule):
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
+        self.q_device.reset_states(x.shape[0])
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         devi = x.device
@@ -111,6 +112,7 @@ def train(dataflow, model, device, optimizer):
         outputs = model(inputs)
         loss = F.nll_loss(outputs, targets)
         optimizer.zero_grad()
+        
         loss.backward()
         optimizer.step()
         print(f"loss: {loss.item()}", end='\r')
