@@ -6,14 +6,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
+# from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+
 from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
 
-def expval_joint_analytical(q_device: tq.QuantumDevice,
-                            observable: str,
-                            ):
+
+def expval_joint_analytical(
+    q_device: tq.QuantumDevice,
+    observable: str,
+):
     """
     Compute the expectation value of a joint observable in analytical way, assuming the
     statevector is available.
@@ -35,17 +39,13 @@ def expval_joint_analytical(q_device: tq.QuantumDevice,
     tensor([[1.0000]])
     >>> print(expval_joint_analytical(x, 'ZZ'))
     tensor([[-1.0000]])
-
     """
     # compute the hamiltonian matrix
-    paulix = mat_dict['paulix']
-    pauliy = mat_dict['pauliy']
-    pauliz = mat_dict['pauliz']
-    iden = mat_dict['i']
-    pauli_dict = {'X': paulix, 
-                  'Y': pauliy, 
-                  'Z': pauliz,
-                  'I': iden}
+    paulix = mat_dict["paulix"]
+    pauliy = mat_dict["pauliy"]
+    pauliz = mat_dict["pauliz"]
+    iden = mat_dict["i"]
+    pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
     observable = observable.upper()
     assert len(observable) == q_device.n_wires
@@ -215,7 +215,6 @@ class MeasureMultiQubitPauliSum(tq.QuantumModule):
     """obs list:
     list of dict: example
     [{'coefficient': [0.5, 0.2]},
-
     {'wires': [0, 2, 3, 1],
     'observables': ['x', 'y', 'z', 'i'],
     },
@@ -245,15 +244,12 @@ def gen_bitstrings(n_wires):
 
 def measure(q_state, n_shots=1024, draw_id=None):
     """Measure the target state and obtain classical bitstream distribution
-
     Args:
         q_state: input tq.QuantumState
         n_shots: number of simulated shots
         draw_id: which state to draw
-
     Returns:
         distribution of bitstrings
-
     """
     bitstring_candidates = gen_bitstrings(q_state.n_wires)
 
