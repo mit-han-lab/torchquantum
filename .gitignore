@@ -332,3 +332,6 @@ es_runs/
 
 # macOS
 .DS_Store
+
+.vscode-upload.json
+

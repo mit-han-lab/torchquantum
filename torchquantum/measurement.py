@@ -4,6 +4,7 @@ import torch
 import torchquantum as tq
 import numpy as np
 import matplotlib.pyplot as plt
+from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
 # from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 

@@ -115,6 +115,9 @@ tqf.cnot(x, wires=[0, 1])
 
 # print the current state (dynamic computation graph supported)
 print(x.states)
+
+# obtain the classical bitstring distribution
+print(tq.measure(x, n_shots=2048))
 ```
 
 
