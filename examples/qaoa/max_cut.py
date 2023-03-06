@@ -132,16 +132,17 @@ class MAXCUT(tq.QuantumModule):
         """
         execute the quantum circuit
         """
-        tqf.h(
-            self.q_device,
-            wires=list(range(self.n_wires)),
-            static=self.static_mode,
-            parent_graph=self.graph,
-        )
+        for wire in range(self.n_wires):
+            tqf.hadamard(
+                self.q_device,
+                wires=wire,
+                static=self.static_mode,
+                parent_graph=self.graph,
+            )
 
         for i in range(self.n_layers):
-            self.entangler(self.gammas[i])
             self.mixer(self.betas[i])
+            self.entangler(self.gammas[i])
 
     @tq.static_support
     def forward(self, measure_all=False):
@@ -153,7 +154,7 @@ class MAXCUT(tq.QuantumModule):
         self.q_device.reset_states(1)
         self.circuit()
         # states = self.q_device.get_states_1d()
-        # print(tq.measure(self.q_device, n_shots=1024))
+        print(tq.measure(self.q_device, n_shots=1024))
         # compute the expectation value
         if measure_all is False:
             expVal = 0
@@ -263,23 +264,20 @@ def main():
     # create a input_graph
     input_graph = [(0, 1), (0, 3), (1, 2), (2, 3)]
     n_wires = 4
-    n_layers = 1
+    n_layers = 3
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
     # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
     # print("The circuit is", circ.draw(output="mpl"))
     # circ.draw(output="mpl")
     # use backprop
-    backprop_optimize(model, n_steps=30, lr=0.1)
+    backprop_optimize(model, n_steps=300, lr=0.01)
     # use parameter shift rule
     # param_shift_optimize(model, n_steps=10, step_size=0.1)
 
 
 """
 Notes:
-1. input_graph = [(0, 1), (3, 0), (1, 2), (2, 3)], mixer 1st & entangler 2nd, n_layers =2, answer = correct.
-                                                                              n_layers =1, answer = wrong, same probs for all edges.
-2. input_graph = [(0, 1), (3, 0), (1, 2), (2, 3)], mixer 2nd & entangler 1st, n_layers =2, answer = correct.
-                                                                              n_layers =1, answer = wrong, same probs for all edges.
+1. input_graph = [(0, 1), (3, 0), (1, 2), (2, 3)], mixer 1st & entangler 2nd, n_layers >= 2, answer is correct.
 
 """
 
