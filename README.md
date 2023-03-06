@@ -82,7 +82,7 @@ pip install pre-commit
 pre-commit install
 ```
 
-## Basic Usage 1
+<!-- ## Basic Usage 1
 
 ```python
 import torchquantum as tq
@@ -99,9 +99,9 @@ tqf.x(state, wires=1)
 print(state)
 print(tq.measure(state, n_shots=1024))
 
-```
+``` -->
 
-## Basic Usage 2
+## Basic Usage
 
 ```python
 import torchquantum as tq
