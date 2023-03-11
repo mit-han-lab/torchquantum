@@ -105,7 +105,7 @@ op(qdev, wires=0)
 print(qdev)
 print(tq.measure(qdev, n_shots=1024))
 
-``` -->
+```
 
 
 <!-- 
