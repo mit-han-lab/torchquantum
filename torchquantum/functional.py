@@ -4,11 +4,16 @@ import numpy as np
 
 import torchquantum as tq
 
-from typing import Callable, Union, Optional, List, Dict
+from typing import Callable, Union, Optional, List, Dict, TYPE_CHECKING
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from .utils import pauli_eigs, diag
 from torchpack.utils.logging import logger
 from torchquantum.utils import normalize_statevector
+
+if TYPE_CHECKING:
+    from torchquantum.devices import QuantumDevice
+else:
+    QuantumDevice = None
 
 __all__ = [
     'func_name_dict',
@@ -205,7 +210,7 @@ def apply_unitary_bmm(state, mat, wires):
     return new_state
 
 
-def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
+def gate_wrapper(name, mat, method, q_device: QuantumDevice, wires,
                  params=None, n_wires=None, static=False, parent_graph=None,
                  inverse=False):
     """Perform the phaseshift gate.
@@ -288,7 +293,7 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
             q_device.states = apply_unitary_bmm(state, matrix, wires)
 
 
-def reset(q_device: tq.QuantumDevice, wires, inverse=False):
+def reset(q_device: QuantumDevice, wires, inverse=False):
     # reset the target qubits to 0, non-unitary operation
     state = q_device.states
 
@@ -1060,7 +1065,7 @@ mat_dict = {
 }
 
 
-def hadamard(q_device: tq.QuantumDevice,
+def hadamard(q_device: QuantumDevice,
              wires: Union[List[int], int],
              params: torch.Tensor = None,
              n_wires: int = None,
@@ -2972,6 +2977,7 @@ cphase = cu1
 
 func_name_dict = {
     'hadamard': hadamard,
+    'h': h,
     'sh': shadamard,
     'paulix': paulix,
     'pauliy': pauliy,

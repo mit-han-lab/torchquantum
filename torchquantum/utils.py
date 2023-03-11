@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -15,6 +15,41 @@ from torchpack.utils.logging import logger
 import torchquantum as tq
 from torchquantum.macro import C_DTYPE
 
+
+if TYPE_CHECKING:
+    from torchquantum.module import QuantumModule
+    from torchquantum.devices import QuantumDevice
+else:
+    QuantumModule = None
+    QuantumDevice= None
+
+
+__all__ = ['pauli_eigs', 
+            'diag', 
+            'Timer', 
+            'get_unitary_loss', 
+            'legalize_unitary',
+            'switch_little_big_endian_matrix', 
+            'switch_little_big_endian_state',
+            'get_expectations_from_counts', 
+            'find_global_phase',
+            'build_module_op_list', 
+            'build_module_from_op_list',
+            'build_module_description_test',
+            'get_p_v_reg_mapping',
+            'get_p_c_reg_mapping',
+            'get_v_c_reg_mapping',
+            'get_cared_configs',
+            'get_success_rate',
+            'get_provider',
+            'get_provider_hub_group_project',
+            'normalize_statevector',
+            'get_circ_stats',
+            'partial_trace',
+            'tensor_form',
+            'matrix_form',
+            'dm_to_mixture_of_state',
+           ]
 
 def pauli_eigs(n) -> np.ndarray:
     r"""Eigenvalues for :math:`A^{\o times n}`, where :math:`A` is
@@ -180,7 +215,7 @@ def find_global_phase(mat1, mat2, threshold):
     return None
 
 
-def build_module_op_list(m: tq.QuantumModule, x=None) -> List:
+def build_module_op_list(m: QuantumModule, x=None) -> List:
     """
     serialize all operations in the module and generate a list with
     [{'name': RX, 'has_params': True, 'trainable': True, 'wires': [0],
@@ -234,7 +269,7 @@ def build_module_op_list(m: tq.QuantumModule, x=None) -> List:
 
 def build_module_from_op_list(op_list: List[Dict],
                               remove_ops=False,
-                              thres=None) -> tq.QuantumModule:
+                              thres=None) -> QuantumModule:
     logger.info(f"Building module from op_list...")
     thres = 1e-5 if thres is None else thres
     n_removed_ops = 0
@@ -573,7 +608,7 @@ def get_circ_stats(circ):
 
 
 def partial_trace(
-    q_device: tq.QuantumDevice,
+    q_device: QuantumDevice,
     keep_indices: List[int],
 ) -> torch.Tensor:
     """Returns a density matrix with only some qubits kept.

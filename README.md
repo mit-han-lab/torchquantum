@@ -32,8 +32,6 @@
 
 
 
-
-
 # 👋 Welcome
 
 #### What it is doing
@@ -82,26 +80,36 @@ pip install pre-commit
 pre-commit install
 ```
 
-<!-- ## Basic Usage 1
+
+## Basic Usage
 
 ```python
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-state = tq.QuantumState(n_wires=2)
+qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cuda")
 
-state.h(wires=0)
-state.cnot(wires=[0, 1])
-tqf.h(state, wires=1)
-tqf.x(state, wires=1)
+# use qdev.op
+qdev.h(wires=0)
+qdev.cnot(wires=[0, 1])
+
+# use tqf
+tqf.h(qdev, wires=1)
+tqf.x(qdev, wires=1)
+
+# use tq.Operator
+op = tq.RX(has_params=True, trainable=True, init_params=0.5)
+op(qdev, wires=0)
 
 # print the current state (dynamic computation graph supported)
-print(state)
-print(tq.measure(state, n_shots=1024))
+print(qdev)
+print(tq.measure(qdev, n_shots=1024))
 
 ``` -->
 
-## Basic Usage
+
+<!-- 
+## Basic Usage 2
 
 ```python
 import torchquantum as tq
@@ -119,7 +127,7 @@ print(x.states)
 # obtain the classical bitstring distribution
 print(tq.measure(x, n_shots=2048))
 ```
-
+ -->
 
 
 ## Guide to the examples
@@ -130,7 +138,7 @@ For **beginning level**, you may check [QNN for MNIST](examples/simple_mnist), [
 
 For **intermediate level**, you may check [Amplitude Encoding for MNIST](examples/amplitude_encoding_mnist), [Clifford gate QNN](examples/clifford_qnn), [Save and Load QNN models](examples/save_load_example), [PauliSum Operation](examples/PauliSumOp), [How to convert tq to Qiskit](examples/converter_tq_qiskit).
 
-For **expert**, you may check [Parameter Shift on-chip Training](examples/param_shift_onchip_training), [VQA Gradient Pruning](examples/gradient_pruning), [VQE](examples/simple_vqe),  [VQA for State Prepration](examples/train_state_prep).
+For **expert**, you may check [Parameter Shift on-chip Training](examples/param_shift_onchip_training), [VQA Gradient Pruning](examples/gradient_pruning), [VQE](examples/simple_vqe),  [VQA for State Prepration](examples/train_state_prep), [QAOA (Quantum Approximate Optimization Algorithm)](examples/qaoa).
 
 
 ## Usage
@@ -146,7 +154,6 @@ class QFCModel(nn.Module):
   def __init__(self):
     super().__init__()
     self.n_wires = 4
-    self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
     self.measure = tq.MeasureAll(tq.PauliZ)
 
     self.encoder_gates = [tqf.rx] * 4 + [tqf.ry] * 4 + \
@@ -161,30 +168,30 @@ class QFCModel(nn.Module):
     # down-sample the image
     x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-    # reset qubit states
-    self.q_device.reset_states(bsz)
+    # create a quantum device to run the gates
+    qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=bsz, device=x.device)
 
     # encode the classical image to quantum domain
     for k, gate in enumerate(self.encoder_gates):
-      gate(self.q_device, wires=k % self.n_wires, params=x[:, k])
+      gate(qdev, wires=k % self.n_wires, params=x[:, k])
 
     # add some trainable gates (need to instantiate ahead of time)
-    self.rx0(self.q_device, wires=0)
-    self.ry0(self.q_device, wires=1)
-    self.rz0(self.q_device, wires=3)
-    self.crx0(self.q_device, wires=[0, 2])
+    self.rx0(qdev, wires=0)
+    self.ry0(qdev, wires=1)
+    self.rz0(qdev, wires=3)
+    self.crx0(qdev, wires=[0, 2])
 
     # add some more non-parameterized gates (add on-the-fly)
-    tqf.hadamard(self.q_device, wires=3)
-    tqf.sx(self.q_device, wires=2)
-    tqf.cnot(self.q_device, wires=[3, 0])
-    tqf.qubitunitary(self.q_device0, wires=[1, 2], params=[[1, 0, 0, 0],
-                                                           [0, 1, 0, 0],
-                                                           [0, 0, 0, 1j],
-                                                           [0, 0, -1j, 0]])
+    qdev.h(wires=3)
+    qdev.sx(wires=2)
+    qdev.cnot(wires=[3, 0])
+    qdev.qubitunitary(wires=[1, 2], params=[[1, 0, 0, 0],
+                                            [0, 1, 0, 0],
+                                            [0, 0, 0, 1j],
+                                            [0, 0, -1j, 0]])
 
     # perform measurement to get expectations (back to classical domain)
-    x = self.measure(self.q_device).reshape(bsz, 2, 2)
+    x = self.measure(qdev).reshape(bsz, 2, 2)
 
     # classification
     x = x.sum(-1).squeeze()

@@ -6,13 +6,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
-# from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
-
 from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
 
+__all__ = [
+    'expval_joint_analytical',
+    'expval',
+    'MeasureAll',
+    'MeasureMultipleTimes',
+    'MeasureMultiPauliSum',
+    'MeasureMultiQubitPauliSum',
+    'gen_bitstrings',
+    'measure',
+]
 
 def expval_joint_analytical(
     q_device: tq.QuantumDevice,
@@ -49,11 +57,12 @@ def expval_joint_analytical(
 
     observable = observable.upper()
     assert len(observable) == q_device.n_wires
-    hamiltonian = pauli_dict[observable[0]]
-    for op in observable[1:]:
-        hamiltonian = torch.kron(hamiltonian, pauli_dict[op])
-
     states = q_device.get_states_1d()
+
+    hamiltonian = pauli_dict[observable[0]].to(states.device)
+    for op in observable[1:]:
+        hamiltonian = torch.kron(hamiltonian, pauli_dict[op].to(states.device))
+
 
     return torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
 
@@ -253,7 +262,7 @@ def measure(q_state, n_shots=1024, draw_id=None):
     """
     bitstring_candidates = gen_bitstrings(q_state.n_wires)
 
-    state_mag = q_state.get_states_1d().abs().detach().numpy()
+    state_mag = q_state.get_states_1d().abs().detach().cpu().numpy()
     distri_all = []
 
     for state_mag_one in state_mag:
