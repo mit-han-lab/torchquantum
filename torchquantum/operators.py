@@ -342,6 +342,10 @@ class Operator(tq.QuantumModule):
                 for noise_op in noise_ops:
                     noise_op(q_device)
 
+    def __repr__(self):
+        return f" class: {self.name} \n parameters: {self.params} \n wires: {self.wires} \n inverse: {self.inverse}"
+    
+
 
 class Observable(Operator, metaclass=ABCMeta):
     """Class for Observables.
