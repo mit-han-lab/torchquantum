@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -15,6 +15,13 @@ from torchpack.utils.logging import logger
 import torchquantum as tq
 from torchquantum.macro import C_DTYPE
 
+
+if TYPE_CHECKING:
+    from torchquantum.module import QuantumModule
+    from torchquantum.devices import QuantumDevice
+else:
+    QuantumModule = None
+    QuantumDevice= None
 
 def pauli_eigs(n) -> np.ndarray:
     r"""Eigenvalues for :math:`A^{\o times n}`, where :math:`A` is
@@ -180,7 +187,7 @@ def find_global_phase(mat1, mat2, threshold):
     return None
 
 
-def build_module_op_list(m: tq.QuantumModule, x=None) -> List:
+def build_module_op_list(m: QuantumModule, x=None) -> List:
     """
     serialize all operations in the module and generate a list with
     [{'name': RX, 'has_params': True, 'trainable': True, 'wires': [0],
@@ -234,7 +241,7 @@ def build_module_op_list(m: tq.QuantumModule, x=None) -> List:
 
 def build_module_from_op_list(op_list: List[Dict],
                               remove_ops=False,
-                              thres=None) -> tq.QuantumModule:
+                              thres=None) -> QuantumModule:
     logger.info(f"Building module from op_list...")
     thres = 1e-5 if thres is None else thres
     n_removed_ops = 0
@@ -573,7 +580,7 @@ def get_circ_stats(circ):
 
 
 def partial_trace(
-    q_device: tq.QuantumDevice,
+    q_device: QuantumDevice,
     keep_indices: List[int],
 ) -> torch.Tensor:
     """Returns a density matrix with only some qubits kept.
