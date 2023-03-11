@@ -66,8 +66,9 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 
 ## Installation
 ```bash
-pip install torchquantum
-
+git clone https://github.com/mit-han-lab/torchquantum.git
+cd torchquantum
+pip install --editable .
 ```
 
 ## Coding Style
