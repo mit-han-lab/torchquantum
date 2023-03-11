@@ -5,6 +5,8 @@ import numpy as np
 from torchquantum.macro import C_DTYPE
 from torchquantum.functional import func_name_dict
 
+from typing import Union
+
 __all__ = ['QuantumDevice']
 
 
@@ -12,12 +14,14 @@ class QuantumDevice(nn.Module):
     def __init__(self, n_wires: int,
                  device_name: str = 'default',
                  bsz: int = 1,
-                 device: torch.device = torch.device('cpu')):
-        """ A quantum device that can be used in a quantum circuit.
+                 device: Union[torch.device, str] = 'cpu'
+                 ):
+        """ A quantum device that contains the quantum state vector.
         Args:
             n_wires: number of qubits
             device_name: name of the quantum device
             bsz: batch size of the quantum state
+            device: which classical computing device to use, 'cpu' or 'cuda'
         """
         super().__init__()
         # number of qubits
@@ -84,7 +88,7 @@ class QuantumDevice(nn.Module):
         return self.__class__.__name__
 
     def __repr__(self):
-        return f"{self.name} {self.n_wires} wires with states: {self.get_states_1d()}"
+        return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.state.device} \n current states: {self.get_states_1d().cpu().detach().numpy()}"
     
 for func_name, func in func_name_dict.items():
     setattr(QuantumDevice, func_name, func)
