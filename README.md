@@ -71,16 +71,6 @@ cd torchquantum
 pip install --editable .
 ```
 
-## Coding Style
-
-torchquantum uses pre-commit hooks to ensure Python style consistency and prevent common mistakes in its codebase.
-
-To enable it pre-commit hooks please reproduce:
-```bash
-pip install pre-commit
-pre-commit install
-```
-
 
 ## Basic Usage
 
@@ -236,6 +226,17 @@ python mnist_example.py
 | super_layer.py   | Layer templates for SuperCircuits |
 | plugins/qiskit*   | Convertors and processors for easy deployment on IBMQ |
 | examples/| More examples for training QML and VQE models |
+
+## Coding Style
+
+torchquantum uses pre-commit hooks to ensure Python style consistency and prevent common mistakes in its codebase.
+
+To enable it pre-commit hooks please reproduce:
+```bash
+pip install pre-commit
+pre-commit install
+```
+
 
 [comment]: <> (## More Examples)
 
