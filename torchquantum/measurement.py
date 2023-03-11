@@ -6,13 +6,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 
-# from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
-
 from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
 
+__all__ = [
+    'expval_joint_analytical',
+    'expval',
+    'MeasureAll',
+    'MeasureMultipleTimes',
+    'MeasureMultiPauliSum',
+    'MeasureMultiQubitPauliSum',
+    'gen_bitstrings',
+    'measure',
+]
 
 def expval_joint_analytical(
     q_device: tq.QuantumDevice,

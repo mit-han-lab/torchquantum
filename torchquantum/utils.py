@@ -23,6 +23,34 @@ else:
     QuantumModule = None
     QuantumDevice= None
 
+
+__all__ = ['pauli_eigs', 
+            'diag', 
+            'Timer', 
+            'get_unitary_loss', 
+            'legalize_unitary',
+            'switch_little_big_endian_matrix', 
+            'switch_little_big_endian_state',
+            'get_expectations_from_counts', 
+            'find_global_phase',
+            'build_module_op_list', 
+            'build_module_from_op_list',
+            'build_module_description_test',
+            'get_p_v_reg_mapping',
+            'get_p_c_reg_mapping',
+            'get_v_c_reg_mapping',
+            'get_cared_configs',
+            'get_success_rate',
+            'get_provider',
+            'get_provider_hub_group_project',
+            'normalize_statevector',
+            'get_circ_stats',
+            'partial_trace',
+            'tensor_form',
+            'matrix_form',
+            'dm_to_mixture_of_state',
+           ]
+
 def pauli_eigs(n) -> np.ndarray:
     r"""Eigenvalues for :math:`A^{\o times n}`, where :math:`A` is
     Pauli operator, or shares its eigenvalues.
