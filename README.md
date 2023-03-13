@@ -32,8 +32,6 @@
 
 
 
-
-
 # 👋 Welcome
 
 #### What it is doing
@@ -82,6 +80,7 @@ pip install pre-commit
 pre-commit install
 ```
 
+
 ## Basic Usage
 
 ```python
@@ -106,7 +105,7 @@ op(qdev, wires=0)
 print(qdev)
 print(tq.measure(qdev, n_shots=1024))
 
-```
+``` -->
 
 
 <!-- 
