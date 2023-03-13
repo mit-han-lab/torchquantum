@@ -43,7 +43,7 @@ class MAXCUT(tq.QuantumModule):
             tqf.rx(
                 self.q_device,
                 wires=wire,
-                params=2 * beta.unsqueeze(0),
+                params=beta.unsqueeze(0),
                 static=self.static_mode,
                 parent_graph=self.graph,
             )
@@ -116,8 +116,8 @@ class MAXCUT(tq.QuantumModule):
             expVal = 0
             for edge in self.input_graph:
                 pauli_string = self.edge_to_PauliString(edge)
-                expVal -= 0.5 * (
-                    1 - expval_joint_analytical(self.q_device, observable=pauli_string)
+                expVal += 0.5 * (
+                    expval_joint_analytical(self.q_device, observable=pauli_string)
                 )
             return expVal
         else:
