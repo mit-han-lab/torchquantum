@@ -40,7 +40,7 @@ class MAXCUT(tq.QuantumModule):
         for wire in range(self.n_wires):
             qdev.rx(
                 wires=wire,
-                params=2 * beta.unsqueeze(0),
+                params=beta.unsqueeze(0),
             ) # type: ignore
 
     def entangler(self, qdev, gamma):
@@ -74,6 +74,7 @@ class MAXCUT(tq.QuantumModule):
         """
         execute the quantum circuit
         """
+        # print(self.betas, self.gammas)
         for wire in range(self.n_wires):
             qdev.h(
                 wires=wire,
@@ -92,15 +93,17 @@ class MAXCUT(tq.QuantumModule):
         qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device)
 
         self.circuit(qdev)
-        print(tq.measure(qdev, n_shots=1024))
+        # print(tq.measure(qdev, n_shots=1024))
         # compute the expectation value
+        # print(qdev.get_states_1d())
         if measure_all is False:
             expVal = 0
             for edge in self.input_graph:
                 pauli_string = self.edge_to_PauliString(edge)
-                expVal -= 0.5 * (
-                    1 - expval_joint_analytical(qdev, observable=pauli_string)
-                )
+                expv = expval_joint_analytical(qdev, observable=pauli_string)
+                expVal += 0.5 * expv
+                # print(pauli_string, expv)
+            # print(expVal)
             return expVal
         else:
             return tq.measure(qdev, n_shots=1024, draw_id=0)
@@ -143,16 +146,16 @@ def main():
     n_wires = 4
     n_layers = 3
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
-    model.to("cuda")
+    # model.to("cuda")
     # model.to(torch.device("cuda"))
-    circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
-    print(circ)
+    # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
+    # print(circ)
     # print("The circuit is", circ.draw(output="mpl"))
     # circ.draw(output="mpl")
     # use backprop
     backprop_optimize(model, n_steps=300, lr=0.01)
     # use parameter shift rule
-    # param_shift_optimize(model, n_steps=10, step_size=0.1)
+    # param_shift_optimize(model, n_steps=500, step_size=100000)
 
 """
 Notes:
@@ -161,7 +164,7 @@ Notes:
 """
 
 if __name__ == "__main__":
-    import pdb
-    pdb.set_trace()
+    # import pdb
+    # pdb.set_trace()
 
     main()
