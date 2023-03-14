@@ -201,6 +201,17 @@ encoder_op_list_name_dict = {
             {'input_idx': [2], 'func': 'ry', 'wires': [2]},
             {'input_idx': [3], 'func': 'ry', 'wires': [3]},
         ],
+    '4x4_u3rx':
+        [
+            {'input_idx': [0, 1, 2], 'func': 'u3', 'wires': [0]},
+            {'input_idx': [3], 'func': 'rx', 'wires': [0]},
+            {'input_idx': [4, 5, 6], 'func': 'u3', 'wires': [1]},
+            {'input_idx': [7], 'func': 'rx', 'wires': [1]},
+            {'input_idx': [8, 9, 10], 'func': 'u3', 'wires': [2]},
+            {'input_idx': [11], 'func': 'rx', 'wires': [2]},
+            {'input_idx': [12, 13, 14], 'func': 'u3', 'wires': [3]},
+            {'input_idx': [15], 'func': 'rx', 'wires': [3]},
+        ],
     '4x4_ryzxy':
         [
             {'input_idx': [0], 'func': 'ry', 'wires': [0]},

@@ -59,12 +59,14 @@ def expval_joint_analytical(
     assert len(observable) == q_device.n_wires
     states = q_device.get_states_1d()
 
+
     hamiltonian = pauli_dict[observable[0]].to(states.device)
     for op in observable[1:]:
         hamiltonian = torch.kron(hamiltonian, pauli_dict[op].to(states.device))
 
+    # torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
 
-    return torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
+    return (states * torch.mm(hamiltonian, states.conj().transpose(0, 1)).transpose(0, 1)).sum(-1).real
 
 
 def expval(

@@ -14,14 +14,17 @@ class QuantumDevice(nn.Module):
     def __init__(self, n_wires: int,
                  device_name: str = 'default',
                  bsz: int = 1,
-                 device: Union[torch.device, str] = 'cpu'
+                 device: Union[torch.device, str] = 'cpu',
+                 record_op: bool = False,
                  ):
-        """ A quantum device that contains the quantum state vector.
+        """A quantum device that contains the quantum state vector.
         Args:
             n_wires: number of qubits
             device_name: name of the quantum device
             bsz: batch size of the quantum state
             device: which classical computing device to use, 'cpu' or 'cuda'
+            record_op: whether to record the operations on the quantum device and then
+                they can be used to construct a static computation graph
         """
         super().__init__()
         # number of qubits
@@ -38,8 +41,14 @@ class QuantumDevice(nn.Module):
         self.register_buffer('state', _state)
 
         repeat_times = [bsz] + [1] * len(self.state.shape) # type: ignore
-        self._states = self.state.repeat(*repeat_times)
+        self._states = self.state.repeat(*repeat_times) # type: ignore
         self.register_buffer('states', self._states)
+
+        self.record_op = record_op
+        self.op_history = []
+
+    def reset_op_history(self):
+        self.op_history = []
 
     def clone_states(self, existing_states: torch.Tensor):
         """Clone the states of the quantum device."""
@@ -88,7 +97,7 @@ class QuantumDevice(nn.Module):
         return self.__class__.__name__
 
     def __repr__(self):
-        return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.state.device} \n current states: {self.get_states_1d().cpu().detach().numpy()}"
+        return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.state.device} \n recording op history: {self.record_op} \n current states: {self.get_states_1d().cpu().detach().numpy()}"
     
 for func_name, func in func_name_dict.items():
     setattr(QuantumDevice, func_name, func)

@@ -9,7 +9,9 @@ import torchquantum.functional as tqf
 from torchquantum.plugins import (tq2qiskit_expand_params,
                                   tq2qiskit,
                                   tq2qiskit_measurement,
-                                  qiskit_assemble_circs)
+                                  qiskit_assemble_circs,
+                                  op_history2qiskit,
+                                  op_history2qiskit_expand_params)
 
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -61,13 +63,14 @@ class QFCModel(tq.QuantumModule):
         super().__init__()
         self.n_wires = 4
         self.encoder = tq.GeneralEncoder(
-            tq.encoder_op_list_name_dict['4x4_ryzxy'])
+            tq.encoder_op_list_name_dict['4x4_u3rx'])
 
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device)
+        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True)
+
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         devi = x.device
@@ -87,8 +90,14 @@ class QFCModel(tq.QuantumModule):
 
         else:
             self.encoder(qdev, x)
+            op_history_parameterized = qdev.op_history
+            qdev.reset_op_history()
             self.q_layer(qdev)
+            op_history_fixed = qdev.op_history
             x = self.measure(qdev)
+
+        # circs = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
+        # print(op_history2qiskit(self.n_wires, op_history_fixed))
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
