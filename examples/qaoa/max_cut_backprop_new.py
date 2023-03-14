@@ -9,6 +9,7 @@ from torchquantum.functional import mat_dict
 
 from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.measurement import expval_joint_analytical
+from torchquantum.plugins import op_history2qiskit
 
 seed = 0
 random.seed(seed)
@@ -90,9 +91,13 @@ class MAXCUT(tq.QuantumModule):
         Args:
             if edge is None
         """
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device)
+        qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device, record_op=False)
 
         self.circuit(qdev)
+
+        # turn on the record_op above to print the circuit
+        # print(op_history2qiskit(self.n_wires, qdev.op_history))
+
         # print(tq.measure(qdev, n_shots=1024))
         # compute the expectation value
         # print(qdev.get_states_1d())
