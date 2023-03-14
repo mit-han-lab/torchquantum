@@ -46,8 +46,7 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 
 ## News
 
-- Added support for controlled unitary
-- v0.1.2 Available!
+- v0.1.6 Available!
 - Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ) for real time support!
 - Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
 - Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
@@ -63,14 +62,12 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 - (coming soon) **pulse-level simulation**
 
 
-
 ## Installation
 ```bash
 git clone https://github.com/mit-han-lab/torchquantum.git
 cd torchquantum
 pip install --editable .
 ```
-
 
 ## Basic Usage
 
