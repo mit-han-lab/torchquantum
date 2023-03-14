@@ -249,6 +249,14 @@ def gate_wrapper(name, mat, method, q_device: QuantumDevice, wires,
             params = params.unsqueeze(-1) if params.dim() == 1 else params
     wires = [wires] if isinstance(wires, int) else wires
 
+    if q_device.record_op:
+        q_device.op_history.append({
+            'name': name, # type: ignore
+            'wires': np.array(wires).squeeze().tolist(),
+            'params': params.squeeze().detach().cpu().numpy().tolist() if params is not None else None,
+            'inverse': inverse,
+            })
+
     if static:
         # in static mode, the function is not computed immediately, instead,
         # the unitary of a module will be computed and then applied

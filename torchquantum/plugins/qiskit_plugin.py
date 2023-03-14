@@ -13,12 +13,18 @@ from torchquantum.utils import (switch_little_big_endian_matrix,
                                 switch_little_big_endian_state,
                                 )
 from typing import Iterable, List
+from torchquantum.functional import mat_dict
 
 
 __all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq',
            'tq2qiskit_measurement', 'tq2qiskit_expand_params',
            'qiskit_assemble_circs',
-           'tq2qiskit_initialize'
+           'tq2qiskit_initialize',
+           'append_parameterized_gate',
+           'append_fixed_gate',
+           'op_history2qiskit',
+           'op_history2qiskit_expand_params',
+           'op_history2qasm',
            ]
 
 
@@ -79,6 +85,106 @@ def append_parameterized_gate(func, circ, input_idx, params, wires):
     else:
         raise NotImplementedError(f"{func} cannot be converted to "
                                   f"parameterized Qiskit QuantumCircuit")
+
+
+def append_fixed_gate(circ, func, params, wires, inverse):
+    if not isinstance(wires, Iterable):
+        wires = [wires]
+    # if not isinstance(params, Iterable):
+        # params = [params]
+    
+    if func in ['hadamard', 'h']:
+        circ.h(*wires)
+    elif func in ['shadamard', 'sh']:
+        circ.ry(np.pi / 4, *wires)
+    elif func in ['paulix', 'x']:
+        circ.x(*wires)
+    elif func in ['pauliy', 'y']:
+        circ.y(*wires)
+    elif func in ['pauliz', 'z']:
+        circ.z(*wires)
+    elif func == 's':
+        circ.s(*wires)
+    elif func == 't':
+        circ.t(*wires)
+    elif func == 'sx':
+        circ.sx(*wires)
+    elif func in ['cnot', 'cx']:
+        circ.cnot(*wires)
+    elif func == 'cz':
+        circ.cz(*wires)
+    elif func == 'cy':
+        circ.cy(*wires)
+    elif func == 'rx':
+        circ.rx(params, *wires)
+    elif func == 'ry':
+        circ.ry(params, *wires)
+    elif func == 'rz':
+        circ.rz(params, *wires)
+    elif func in ['rxx', 'xx']:
+        circ.rxx(params, *wires)
+    elif func in ['ryy', 'yy']:
+        circ.ryy(params, *wires)
+    elif func in ['rzz', 'zz']:
+        circ.rzz(params, *wires)
+    elif func == ['rzx', 'zx']:
+        circ.rzx(params, *wires)
+    elif func == 'swap':
+        circ.swap(*wires)
+    elif func == 'sswap':
+        # square root of swap
+        from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
+        mat = mat_dict['sswap'].detach().cpu().numpy()
+        mat = switch_little_big_endian_matrix(mat)
+        circ.append(UnitaryGate(mat), *wires, [])
+    elif func == 'cswap':
+        circ.cswap(*wires)
+    elif func in ['toffoli', 'ccx']:
+        circ.ccx(*wires)
+    elif func in ['phaseshift', 'p']:
+        circ.p(params, *wires)
+    elif func == 'crx':
+        circ.crx(params, *wires)
+    elif func == 'cry':
+        circ.cry(params, *wires)
+    elif func == 'crz':
+        circ.crz(params, *wires)
+    elif func == 'u1':
+        circ.u1(params, *wires)
+    elif func in ['cu1', 'cp', 'cr', 'cphase']:
+        circ.cu1(params, *wires)
+    elif func == 'u2':
+        circ.u2(*list(params), *wires)
+    elif func == 'u3':
+        circ.u3(*list(params), *wires)
+    elif func == 'cu3':
+        circ.cu3(*list(params), *wires)
+    elif func == 'qubitunitary' or \
+            func == 'qubitunitaryfast' or \
+            func == 'qubitunitarystrict':
+        from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
+        mat = np.array(params)
+        mat = switch_little_big_endian_matrix(mat)
+        circ.append(UnitaryGate(mat), wires, [])
+    elif func == 'multicnot':
+        circ.mcx(wires[:-1], wires[-1]) # type: ignore
+    elif func == 'multixcnot':
+        controls = wires[:-1] # type: ignore
+        target = wires[-1] # type: ignore
+        num_ctrl_qubits = len(controls)
+
+        gate = qiskit_gate.MCXGrayCode(num_ctrl_qubits,
+                                        ctrl_state='0' * num_ctrl_qubits)
+        circ.append(gate, controls + [target], [])
+    else:
+        logger.exception(f"{func} cannot be converted to Qiskit.")
+        raise NotImplementedError(func)
+
+    if inverse:
+        data = list(circ.data[-1])
+        del circ.data[-1]
+        circ.data.append(tuple([data[0].inverse()] + data[1:]))
+    return circ
 
 
 def tq2qiskit_initialize(q_device: tq.QuantumDevice, all_states):
@@ -351,6 +457,53 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
         append_parameterized_gate(func, circ, input_idx, params, wires)
 
     return circ, params
+
+
+def op_history2qiskit(n_wires, op_history):
+    """convert a tq op_history to a qiskit QuantumCircuit
+    Args:
+        n_wires: number of wires
+        op_history: a list of tq QuantumModule objects
+    Returns:
+        a qiskit QuantumCircuit object
+    """
+    circ = QuantumCircuit(n_wires)
+    for op in op_history:
+        append_fixed_gate(circ, op['name'], op['params'], op['wires'], op['inverse'])
+    return circ
+
+
+def op_history2qasm(n_wires, op_history):
+    """convert a tq op_history to a qasm string
+    Args:
+        n_wires: number of wires
+        op_history: a list of tq QuantumModule objects
+    Returns:
+        a qasm string
+    """
+    circ = op_history2qiskit(n_wires, op_history)
+    return circ.qasm()
+
+
+def op_history2qiskit_expand_params(n_wires, op_history, bsz):
+    """convert a tq op_history to a qiskit QuantumCircuit
+    Args:
+        n_wires: number of wires
+        op_history: a list of tq operations
+        bsz: batch size
+    Returns:
+        a qiskit QuantumCircuit object
+    """
+    assert bsz == len(op_history[0]['params'])
+    circs_all = []
+    for i in range(bsz):
+        circ = QuantumCircuit(n_wires)
+        for op in op_history:
+            append_fixed_gate(circ, op['name'], op['params'][i], op['wires'], op['inverse'])
+
+        circs_all.append(circ)
+
+    return circs_all
 
 
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit

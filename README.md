@@ -78,7 +78,7 @@ pip install --editable .
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cuda")
+qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cpu", record_op=True) # use device='cuda' for GPU 
 
 # use qdev.op
 qdev.h(wires=0)
@@ -94,8 +94,22 @@ op(qdev, wires=0)
 
 # print the current state (dynamic computation graph supported)
 print(qdev)
+
+# obtain the qasm string
+from torchquantum.plugins import op_history2qasm
+print(op_history2qasm(qdev.n_wires, qdev.op_history))
+
+# measure the state on z basis
 print(tq.measure(qdev, n_shots=1024))
 
+# obtain the expval on a observable
+from torchquantum.measurement import expval_joint_analytical
+expval = expval_joint_analytical(qdev, 'ZX')
+print(expval)
+
+# obtain gradients of expval w.r.t. trainable parameters
+expval[0].backward()
+print(op.params.grad)
 ```
 
 
