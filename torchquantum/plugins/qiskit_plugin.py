@@ -302,8 +302,8 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
                                'U1',
                                'CU1']:
                 param = module.params[0][0].item()
-                param = param % (2 * np.pi)
-                param = param - 2 * np.pi if param > np.pi else param
+                param = param % (4 * np.pi)
+                param = param - 4 * np.pi if param > 2 * np.pi else param
                 if abs(param) < remove_ops_thres:
                     n_removed_ops += 1
                     continue
@@ -312,8 +312,8 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
                                  'U3',
                                  'CU3']:
                 param = module.params[0].data.cpu().numpy()
-                param = param % (2 * np.pi)
-                param[param > np.pi] -= 2 * np.pi
+                param = param % (4 * np.pi)
+                param[param > 2 * np.pi] -= 4 * np.pi
                 if all(abs(param) < remove_ops_thres):
                     n_removed_ops += 1
                     continue
