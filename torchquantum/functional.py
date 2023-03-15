@@ -295,7 +295,7 @@ def gate_wrapper(name, mat, method, q_device: QuantumDevice, wires,
                 matrix = matrix.permute(0, 2, 1)
             else:
                 matrix = matrix.permute(1, 0)
-
+        assert np.log2(matrix.shape[-1]) == len(wires)
         state = q_device.states
         if method == 'einsum':
             q_device.states = apply_unitary_einsum(state, matrix, wires)
