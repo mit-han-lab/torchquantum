@@ -238,7 +238,8 @@ class Operator(tq.QuantumModule):
         Returns: None.
 
         """
-        raise NotImplementedError
+        #Warning: The eigenvalues of the operator {cls.__name__} are not defined.
+        return None
 
     @property
     def eigvals(self):
@@ -460,7 +461,7 @@ class Operation(Operator, metaclass=ABCMeta):
         parameters = nn.Parameter(torch.empty([1, self.num_params],
                                               dtype=F_DTYPE))
         parameters.requires_grad = True if trainable else False
-        self.register_parameter(f"{self.name}_params", parameters)
+        # self.register_parameter(f"{self.name}_params", parameters)
         return parameters
 
     def reset_params(self, init_params=None):
@@ -900,7 +901,7 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
         parameters = nn.Parameter(torch.empty(
             1, 2 ** self.n_wires, 2 ** self.n_wires, dtype=C_DTYPE))
         parameters.requires_grad = True if trainable else False
-        self.register_parameter(f"{self.name}_params", parameters)
+        # self.register_parameter(f"{self.name}_params", parameters)
         return parameters
 
     def reset_params(self, init_params=None):
