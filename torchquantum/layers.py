@@ -230,7 +230,6 @@ class RandomLayer(tq.QuantumModule):
 
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
-        self.q_device = q_device
         for op in self.op_list:
             op(q_device)
 
