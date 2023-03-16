@@ -9,6 +9,7 @@ from torchquantum.functional import mat_dict
 
 from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.measurement import expval_joint_analytical
+from torchquantum.plugins import op_history2qiskit
 
 seed = 0
 random.seed(seed)
@@ -29,50 +30,36 @@ class MAXCUT(tq.QuantumModule):
         self.input_graph = input_graph  # list of edges
         self.n_layers = n_layers
 
-        self.q_device = tq.QuantumDevice(n_wires=n_wires)
-
         self.betas = torch.nn.Parameter(0.01 * torch.rand(self.n_layers))
         self.gammas = torch.nn.Parameter(0.01 * torch.rand(self.n_layers))
 
-    def mixer(self, beta):
+    def mixer(self, qdev, beta):
         """
         Apply the single rotation and entangling layer of the QAOA ansatz.
         mixer = exp(-i * beta * sigma_x)
         """
         for wire in range(self.n_wires):
-            tqf.rx(
-                self.q_device,
+            qdev.rx(
                 wires=wire,
                 params=beta.unsqueeze(0),
-                static=self.static_mode,
-                parent_graph=self.graph,
-            )
+            ) # type: ignore
 
-    def entangler(self, gamma):
+    def entangler(self, qdev, gamma):
         """
         Apply the single rotation and entangling layer of the QAOA ansatz.
         entangler = exp(-i * gamma * (1 - sigma_z * sigma_z)/2)
         """
         for edge in self.input_graph:
-            tqf.cx(
-                self.q_device,
+            qdev.cx(
                 [edge[0], edge[1]],
-                static=self.static_mode,
-                parent_graph=self.graph,
-            )
-            tqf.rz(
-                self.q_device,
+            ) # type: ignore 
+            qdev.rz(
                 wires=edge[1],
                 params=gamma.unsqueeze(0),
-                static=self.static_mode,
-                parent_graph=self.graph,
-            )
-            tqf.cx(
-                self.q_device,
+            ) # type: ignore
+            qdev.cx(
                 [edge[0], edge[1]],
-                static=self.static_mode,
-                parent_graph=self.graph,
-            )
+            ) # type: ignore
 
     def edge_to_PauliString(self, edge):
         # construct pauli string
@@ -84,44 +71,47 @@ class MAXCUT(tq.QuantumModule):
                 pauli_string += "I"
         return pauli_string
 
-    def circuit(self):
+    def circuit(self, qdev):
         """
         execute the quantum circuit
         """
+        # print(self.betas, self.gammas)
         for wire in range(self.n_wires):
-            tqf.hadamard(
-                self.q_device,
+            qdev.h(
                 wires=wire,
-                static=self.static_mode,
-                parent_graph=self.graph,
-            )
+            ) # type: ignore
 
         for i in range(self.n_layers):
-            self.mixer(self.betas[i])
-            self.entangler(self.gammas[i])
+            self.mixer(qdev, self.betas[i])
+            self.entangler(qdev, self.gammas[i])
 
-    @tq.static_support
     def forward(self, measure_all=False):
         """
         Apply the QAOA ansatz and only measure the edge qubit on z-basis.
         Args:
             if edge is None
         """
-        self.q_device.reset_states(1)
-        self.circuit()
-        # states = self.q_device.get_states_1d()
-        print(tq.measure(self.q_device, n_shots=1024))
+        qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device, record_op=False)
+
+        self.circuit(qdev)
+
+        # turn on the record_op above to print the circuit
+        # print(op_history2qiskit(self.n_wires, qdev.op_history))
+
+        # print(tq.measure(qdev, n_shots=1024))
         # compute the expectation value
+        # print(qdev.get_states_1d())
         if measure_all is False:
             expVal = 0
             for edge in self.input_graph:
                 pauli_string = self.edge_to_PauliString(edge)
-                expVal += 0.5 * (
-                    expval_joint_analytical(self.q_device, observable=pauli_string)
-                )
+                expv = expval_joint_analytical(qdev, observable=pauli_string)
+                expVal += 0.5 * expv
+                # print(pauli_string, expv)
+            # print(expVal)
             return expVal
         else:
-            return tq.measure(self.q_device, n_shots=1024, draw_id=0)
+            return tq.measure(qdev, n_shots=1024, draw_id=0)
 
 def backprop_optimize(model, n_steps=100, lr=0.1):
     """
@@ -161,14 +151,16 @@ def main():
     n_wires = 4
     n_layers = 3
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
-    circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
-    print(circ)
+    # model.to("cuda")
+    # model.to(torch.device("cuda"))
+    # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
+    # print(circ)
     # print("The circuit is", circ.draw(output="mpl"))
     # circ.draw(output="mpl")
     # use backprop
     backprop_optimize(model, n_steps=300, lr=0.01)
     # use parameter shift rule
-    # param_shift_optimize(model, n_steps=10, step_size=0.1)
+    # param_shift_optimize(model, n_steps=500, step_size=100000)
 
 """
 Notes:
@@ -177,4 +169,7 @@ Notes:
 """
 
 if __name__ == "__main__":
+    # import pdb
+    # pdb.set_trace()
+
     main()

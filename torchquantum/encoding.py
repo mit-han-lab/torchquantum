@@ -12,7 +12,7 @@ class Encoder(tq.QuantumModule):
         super().__init__()
         pass
 
-    def forward(self, q_device: tq.QuantumDevice, x):
+    def forward(self, qdev: tq.QuantumDevice, x):
         raise NotImplementedError
 
 
@@ -55,16 +55,14 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
         self.func_list = func_list
 
     @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice, x):
-        self.q_device = q_device
-        self.q_device.reset_states(x.shape[0])
+    def forward(self, qdev: tq.QuantumDevice, x):
         for info in self.func_list:
             if tq.op_name_dict[info['func']].num_params > 0:
                 params = x[:, info['input_idx']]
             else:
                 params = None
             func_name_dict[info['func']](
-                self.q_device,
+                qdev,
                 wires=info['wires'],
                 params=params,
                 static=self.static_mode,
@@ -107,11 +105,9 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
         self.func = func
 
     @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice, x):
-        self.q_device = q_device
-        self.q_device.reset_states(x.shape[0])
-        for k in range(self.q_device.n_wires):
-            self.func(self.q_device, wires=k, params=x[:, k],
+    def forward(self, qdev: tq.QuantumDevice, x):
+        for k in range(qdev.n_wires):
+            self.func(qdev, wires=k, params=x[:, k],
                       static=self.static_mode, parent_graph=self.graph)
 
 
@@ -122,12 +118,10 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
         self.wires = wires
 
     @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice, x):
+    def forward(self, qdev: tq.QuantumDevice, x):
         if self.wires is None:
-            self.wires = list(range(q_device.n_wires)) * (len(self.funcs) //
-                                                          q_device.n_wires)
-        self.q_device = q_device
-        self.q_device.reset_states(x.shape[0])
+            self.wires = list(range(qdev.n_wires)) * (len(self.funcs) //
+                                                          qdev.n_wires)
 
         x_id = 0
         for k, func in enumerate(self.funcs):
@@ -140,7 +134,7 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
             else:
                 raise ValueError(func)
 
-            func_name_dict[func](self.q_device, wires=self.wires[k],
+            func_name_dict[func](qdev, wires=self.wires[k],
                                  params=x[:, x_id:(x_id + stride)],
                                  static=self.static_mode,
                                  parent_graph=self.graph)
@@ -151,18 +145,17 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
 
-    def forward(self, q_device: tq.QuantumDevice, x):
+    def forward(self, qdev: tq.QuantumDevice, x):
         # encoder the x to the statevector of the quantum device
-        self.q_device = q_device
 
         # normalize the input
         x = x / (torch.sqrt((x.abs()**2).sum(dim=-1))).unsqueeze(-1)
         state = torch.cat((x, torch.zeros(
-            x.shape[0], 2 ** self.q_device.n_wires - x.shape[1],
+            x.shape[0], 2 ** qdev.n_wires - x.shape[1],
             device=x.device)), dim=-1)
-        state = state.view([x.shape[0]] + [2] * self.q_device.n_wires)
+        state = state.view([x.shape[0]] + [2] * qdev.n_wires)
 
-        self.q_device.states = state.type(C_DTYPE)
+        qdev.states = state.type(C_DTYPE)
 
 
 class MagnitudeEncoder(Encoder, metaclass=ABCMeta):

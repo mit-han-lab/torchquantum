@@ -23,14 +23,14 @@ __all__ = [
 ]
 
 def expval_joint_analytical(
-    q_device: tq.QuantumDevice,
+    qdev: tq.QuantumDevice,
     observable: str,
 ):
     """
     Compute the expectation value of a joint observable in analytical way, assuming the
     statevector is available.
     Args:
-        q_device: the quantum device
+        qdev: the quantum device
         observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
     Returns:
         the expectation value
@@ -56,8 +56,8 @@ def expval_joint_analytical(
     pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
     observable = observable.upper()
-    assert len(observable) == q_device.n_wires
-    states = q_device.get_states_1d()
+    assert len(observable) == qdev.n_wires
+    states = qdev.get_states_1d()
 
 
     hamiltonian = pauli_dict[observable[0]].to(states.device)
@@ -70,12 +70,12 @@ def expval_joint_analytical(
 
 
 def expval(
-    q_device: tq.QuantumDevice,
+    qdev: tq.QuantumDevice,
     wires: Union[int, List[int]],
     observables: Union[tq.Observable, List[tq.Observable]],
 ):
 
-    all_dims = np.arange(q_device.states.dim())
+    all_dims = np.arange(qdev.states.dim())
     if isinstance(wires, int):
         wires = [wires]
         observables = [observables]
@@ -83,9 +83,9 @@ def expval(
     # rotation to the desired basis
     for wire, observable in zip(wires, observables):
         for rotation in observable.diagonalizing_gates():
-            rotation(q_device, wires=wire)
+            rotation(qdev, wires=wire)
 
-    states = q_device.states
+    states = qdev.states
     # compute magnitude
     state_mag = torch.abs(states) ** 2
 
@@ -109,10 +109,9 @@ class MeasureAll(tq.QuantumModule):
         self.obs = obs
         self.v_c_reg_mapping = v_c_reg_mapping
 
-    def forward(self, q_device: tq.QuantumDevice):
-        self.q_device = q_device
+    def forward(self, qdev: tq.QuantumDevice):
         x = expval(
-            q_device, list(range(q_device.n_wires)), [self.obs()] * q_device.n_wires
+            qdev, list(range(qdev.n_wires)), [self.obs()] * qdev.n_wires
         )
 
         if self.v_c_reg_mapping is not None:
@@ -151,26 +150,25 @@ class MeasureMultipleTimes(tq.QuantumModule):
         self.obs_list = obs_list
         self.v_c_reg_mapping = v_c_reg_mapping
 
-    def forward(self, q_device: tq.QuantumDevice):
-        self.q_device = q_device
+    def forward(self, qdev: tq.QuantumDevice):
         res_all = []
 
         for layer in self.obs_list:
             # create a new q device for each time of measurement
-            q_device_new = tq.QuantumDevice(n_wires=q_device.n_wires)
-            q_device_new.clone_states(existing_states=q_device.states)
-            q_device_new.state = q_device.state
+            qdev_new = tq.QuantumDevice(n_wires=qdev.n_wires)
+            qdev_new.clone_states(existing_states=qdev.states)
+            qdev_new.state = qdev.state
 
             observables = []
-            for wire in range(q_device.n_wires):
+            for wire in range(qdev.n_wires):
                 observables.append(tq.I())
 
             for wire, observable in zip(layer["wires"], layer["observables"]):
                 observables[wire] = tq.op_name_dict[observable]()
 
             res = expval(
-                q_device_new,
-                wires=list(range(q_device.n_wires)),
+                qdev_new,
+                wires=list(range(qdev.n_wires)),
                 observables=observables,
             )
 
@@ -216,8 +214,8 @@ class MeasureMultiPauliSum(tq.QuantumModule):
             obs_list=obs_list, v_c_reg_mapping=v_c_reg_mapping
         )
 
-    def forward(self, q_device: tq.QuantumDevice):
-        res_all = self.measure_multiple_times(q_device)
+    def forward(self, qdev: tq.QuantumDevice):
+        res_all = self.measure_multiple_times(qdev)
 
         return res_all.sum(-1)
 
@@ -244,8 +242,8 @@ class MeasureMultiQubitPauliSum(tq.QuantumModule):
             obs_list=obs_list[1:], v_c_reg_mapping=v_c_reg_mapping
         )
 
-    def forward(self, q_device: tq.QuantumDevice):
-        res_all = self.measure_multiple_times(q_device)
+    def forward(self, qdev: tq.QuantumDevice):
+        res_all = self.measure_multiple_times(qdev)
         return (res_all * self.obs_list[0]["coefficient"]).sum(-1)
 
 
