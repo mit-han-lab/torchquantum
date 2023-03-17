@@ -66,7 +66,7 @@ def expval_joint_analytical(
 
     # torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
 
-    return (states * torch.mm(hamiltonian, states.conj().transpose(0, 1)).transpose(0, 1)).sum(-1).real
+    return (states.conj() * torch.mm(hamiltonian, states.transpose(0, 1)).transpose(0, 1)).sum(-1).real
 
 
 def expval(
