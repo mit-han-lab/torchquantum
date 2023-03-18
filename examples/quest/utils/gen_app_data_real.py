@@ -1,9 +1,9 @@
 import os
 import pickle
 from qiskit import QuantumCircuit
-from qiskit.providers.fake_provider import *
-from rand_circ_native import *
-from qiskit import IBMQ
+# from qiskit.providers.fake_provider import *
+from .rand_circ_native import *
+from qiskit import IBMQ, transpile
 import sys
 
 dir_path = "./application_qasm"
@@ -53,7 +53,7 @@ for file_name in files:
 
         try:
             fidelity = simu(appended, backend, appended.num_clbits, shots=4096)
-        except:
+        except Exception as e:
             print("bypassed")
 
         data_p = [transpiled, my_dict, fidelity]

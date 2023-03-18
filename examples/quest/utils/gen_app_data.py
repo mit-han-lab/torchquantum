@@ -2,7 +2,7 @@ import os
 import pickle
 from qiskit import QuantumCircuit
 from qiskit.providers.fake_provider import *
-from rand_circ_native import *
+from .rand_circ_native import *
 from copy import deepcopy
 
 dir_path = "../application_qasm"
@@ -36,7 +36,7 @@ for file_name in files:
     data = []
     try:
         circ_app = QuantumCircuit.from_qasm_file(dir_path + "/" + file_name)
-    except:
+    except Exception as e:
         print("CANNOT LOAD")
         continue
 
@@ -50,7 +50,7 @@ for file_name in files:
     transpiled = transpile(circ_app, ini_backend)
     try:
         appended = circ_app.compose(circ_app.inverse())
-    except:
+    except Exception as e:
         print("ERROR!")
         continue
     appended.measure_active()
@@ -66,7 +66,7 @@ for file_name in files:
 
         try:
             fidelity = simu(appended, simulator, appended.num_clbits, shots=1024)
-        except:
+        except Exception as e:
             print("bypassed")
             continue
 

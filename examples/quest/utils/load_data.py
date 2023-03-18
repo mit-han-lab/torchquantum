@@ -1,7 +1,6 @@
 import pickle
 import random
 import sys
-from copy import deepcopy
 
 import torch
 from qiskit import QuantumCircuit
@@ -20,11 +19,11 @@ def load_data_from_raw(file_name):
 def load_data_from_pyg(file_name):
     try:
         return load_normalized_data(file_name)
-    except:
+    except Exception as e:
         try:
             file = open("data/pyg_data/" + file_name, "rb")
             normalize_data(file_name)
-        except:
+        except Exception as e:
             load_data_and_save(file_name)
             normalize_data(file_name)
         return load_normalized_data(file_name)

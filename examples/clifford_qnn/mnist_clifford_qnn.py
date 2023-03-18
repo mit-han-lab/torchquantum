@@ -4,7 +4,6 @@ import torch.optim as optim
 import argparse
 
 import torchquantum as tq
-import torchquantum.functional as tqf
 
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -16,7 +15,6 @@ import numpy as np
 # pi, 3pi/2 four types
 
 from torchquantum.layers import RXYZCXLayer0
-from torchquantum.quantization import CliffordQuantizer
 
 
 class QFCModel(tq.QuantumModule):
@@ -147,7 +145,7 @@ def main():
 
     model.eval()
     # test
-    print(f"Test with floating point model:")
+    print("Test with floating point model:")
     valid_test(dataflow, "test", model, device, qiskit=False)
 
     model.train()
@@ -170,7 +168,7 @@ def main():
 
     model.eval()
 
-    print(f"Test with clifford quantized model:")
+    print("Test with clifford quantized model:")
     valid_test(dataflow, "test", model, device, qiskit=False)
 
     # # run on Qiskit simulator and real Quantum Computers
