@@ -253,18 +253,18 @@ def gen_bitstrings(n_wires):
     return ["{:0{}b}".format(k, n_wires) for k in range(2**n_wires)]
 
 
-def measure(q_state, n_shots=1024, draw_id=None):
+def measure(qdev, n_shots=1024, draw_id=None):
     """Measure the target state and obtain classical bitstream distribution
     Args:
-        q_state: input tq.QuantumState
+        q_state: input tq.QuantumDevice
         n_shots: number of simulated shots
         draw_id: which state to draw
     Returns:
         distribution of bitstrings
     """
-    bitstring_candidates = gen_bitstrings(q_state.n_wires)
+    bitstring_candidates = gen_bitstrings(qdev.n_wires)
 
-    state_mag = q_state.get_states_1d().abs().detach().cpu().numpy()
+    state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
     distri_all = []
 
     for state_mag_one in state_mag:
