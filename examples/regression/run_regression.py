@@ -68,7 +68,7 @@ class Regression(Dataset):
 
 
 class QModel(tq.QuantumModule):
-    def __init__(self, n_wires, n_blocks):
+    def __init__(self, n_wires, n_blocks, add_fc=False):
         super().__init__()
         # inside one block, we have one u3 layer one each qubit and one layer
         # cu3 layer with ring connection
@@ -95,33 +95,41 @@ class QModel(tq.QuantumModule):
                 )
             )
         self.measure = tq.MeasureAll(tq.PauliZ)
+        self.add_fc = add_fc
+        if add_fc:
+            self.fc_layer = torch.nn.Linear(n_wires, 1)
 
-    def forward(self, q_device: tq.QuantumDevice, input_states):
-        # firstly set the q_device states
-        q_device.set_states(input_states)
+    def forward(self, input_states):
+        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=input_states.shape[0], device=input_states.device)
+        # firstly set the qdev states
+        qdev.set_states(input_states)
         for k in range(self.n_blocks):
-            self.u3_layers[k](q_device)
-            self.cu3_layers[k](q_device)
+            self.u3_layers[k](qdev)
+            self.cu3_layers[k](qdev)
 
-        res = self.measure(q_device)
+        res = self.measure(qdev)
+        if self.add_fc:
+            res = self.fc_layer(res)
+        else:
+            res = res[:, 1]
         return res
 
 
-def train(dataflow, q_device, model, device, optimizer):
+def train(dataflow, model, device, optimizer):
     for feed_dict in dataflow["train"]:
         inputs = feed_dict["states"].to(device).to(torch.complex64)
         targets = feed_dict["Xlabel"].to(device).to(torch.float)
 
-        outputs = model(q_device, inputs)
+        outputs = model(inputs)
 
-        loss = F.mse_loss(outputs[:, 1], targets)
+        loss = F.mse_loss(outputs, targets)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         print(f"loss: {loss.item()}")
 
 
-def valid_test(dataflow, q_device, split, model, device):
+def valid_test(dataflow, split, model, device):
     target_all = []
     output_all = []
     with torch.no_grad():
@@ -129,14 +137,14 @@ def valid_test(dataflow, q_device, split, model, device):
             inputs = feed_dict["states"].to(device).to(torch.complex64)
             targets = feed_dict["Xlabel"].to(device).to(torch.float)
 
-            outputs = model(q_device, inputs)
+            outputs = model(inputs)
 
             target_all.append(targets)
             output_all.append(outputs)
         target_all = torch.cat(target_all, dim=0)
         output_all = torch.cat(output_all, dim=0)
 
-    loss = F.mse_loss(output_all[:, 1], target_all)
+    loss = F.mse_loss(output_all, target_all)
 
     print(f"{split} set loss: {loss}")
 
@@ -164,6 +172,9 @@ def main():
     )
     parser.add_argument(
         "--epochs", type=int, default=100, help="number of training epochs"
+    )
+    parser.add_argument(
+        "--addfc", action="store_true", help="add a final classical FC layer"
     )
 
     args = parser.parse_args()
@@ -202,27 +213,23 @@ def main():
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    model = QModel(n_wires=args.n_wires, n_blocks=args.n_blocks).to(device)
+    model = QModel(n_wires=args.n_wires, n_blocks=args.n_blocks, add_fc=args.addfc).to(device)
 
     n_epochs = args.epochs
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
-    q_device = tq.QuantumDevice(n_wires=args.n_wires)
-    q_device.reset_states(bsz=args.bsz)
-
     for epoch in range(1, n_epochs + 1):
         # train
-        print(f"Epoch {epoch}, RL: {optimizer.param_groups[0]['lr']}")
-        train(dataflow, q_device, model, device, optimizer)
+        print(f"Epoch {epoch}, LR: {optimizer.param_groups[0]['lr']}")
+        train(dataflow, model, device, optimizer)
 
         # valid
-        valid_test(dataflow, q_device, "valid", model, device)
+        valid_test(dataflow,"valid", model, device)
         scheduler.step()
 
     # final valid
-    valid_test(dataflow, q_device, "valid", model, device)
-
+    valid_test(dataflow, "valid", model, device)
 
 if __name__ == "__main__":
     main()
