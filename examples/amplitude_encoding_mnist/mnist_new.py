@@ -12,10 +12,6 @@ from torchquantum.datasets import MNIST
 from torchquantum.operators import op_name_dict
 from typing import List
 
-import pdb
-pdb.set_trace()
-
-
 
 class TQNet(tq.QuantumModule):
     def __init__(self, layers: List[tq.QuantumModule], encoder=None, use_softmax=False):
