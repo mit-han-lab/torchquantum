@@ -13,74 +13,76 @@ from torchpack.utils.logging import logger
 from typing import Iterable, Union, List
 
 __all__ = [
-    'op_name_dict',
-    'Operator',
-    'Operation',
-    'DiagonalOperation',
-    'Observable',
-    'Hadamard',
-    'H',
-    'SHadamard',
-    'SH',
-    'PauliX',
-    'PauliY',
-    'PauliZ',
-    'I',
-    'S',
-    'T',
-    'SX',
-    'CNOT',
-    'CZ',
-    'CY',
-    'RX',
-    'RY',
-    'RZ',
-    'RXX',
-    'RYY',
-    'RZZ',
-    'RZX',
-    'SWAP',
-    'SSWAP',
-    'CSWAP',
-    'Toffoli',
-    'PhaseShift',
-    'Rot',
-    'MultiRZ',
-    'CRX',
-    'CRY',
-    'CRZ',
-    'CRot',
-    'U1',
-    'U2',
-    'U3',
-    'CU1',
-    'CU2',
-    'CU3',
-    'QubitUnitary',
-    'QubitUnitaryFast',
-    'TrainableUnitary',
-    'TrainableUnitaryStrict',
-    'MultiCNOT',
-    'MultiXCNOT',
-    'Reset',
-    'SingleExcitation',
-    'EchoedCrossResonance',
-    'ECR',
+    "op_name_dict",
+    "Operator",
+    "Operation",
+    "DiagonalOperation",
+    "Observable",
+    "Hadamard",
+    "H",
+    "SHadamard",
+    "SH",
+    "PauliX",
+    "PauliY",
+    "PauliZ",
+    "I",
+    "S",
+    "T",
+    "SX",
+    "CNOT",
+    "CZ",
+    "CY",
+    "RX",
+    "RY",
+    "RZ",
+    "RXX",
+    "RYY",
+    "RZZ",
+    "RZX",
+    "SWAP",
+    "SSWAP",
+    "CSWAP",
+    "Toffoli",
+    "PhaseShift",
+    "Rot",
+    "MultiRZ",
+    "CRX",
+    "CRY",
+    "CRZ",
+    "CRot",
+    "U1",
+    "U2",
+    "U3",
+    "CU1",
+    "CU2",
+    "CU3",
+    "QubitUnitary",
+    "QubitUnitaryFast",
+    "TrainableUnitary",
+    "TrainableUnitaryStrict",
+    "MultiCNOT",
+    "MultiXCNOT",
+    "Reset",
+    "SingleExcitation",
+    "EchoedCrossResonance",
+    "ECR",
 ]
 
 
 class WiresEnum(IntEnum):
     """Integer enumeration class
-        to represent the number of wires
-        an operation acts on."""
+    to represent the number of wires
+    an operation acts on."""
+
     AnyWires = -1
     AllWires = 0
 
 
 class NParamsEnum(IntEnum):
     """Integer enumeration class
-        to represent the number of wires
-        an operation acts on"""
+    to represent the number of wires
+    an operation acts on"""
+
     AnyNParams = -1
 
 
@@ -98,55 +100,56 @@ subsystem. It is equivalent to an integer with value -1."""
 
 class Operator(tq.QuantumModule):
     """The class for quantum operators."""
+
     fixed_ops = [
-        'Hadamard',
-        'SHadamard',
-        'PauliX',
-        'PauliY',
-        'PauliZ',
-        'I',
-        'S',
-        'T',
-        'SX',
-        'CNOT',
-        'CZ',
-        'CY',
-        'SWAP',
-        'SSWAP',
-        'CSWAP',
-        'Toffoli',
-        'MultiCNOT',
-        'MultiXCNOT',
-        'Reset',
-        'EchoedCrossResonance',
+        "Hadamard",
+        "SHadamard",
+        "PauliX",
+        "PauliY",
+        "PauliZ",
+        "I",
+        "S",
+        "T",
+        "SX",
+        "CNOT",
+        "CZ",
+        "CY",
+        "SWAP",
+        "SSWAP",
+        "CSWAP",
+        "Toffoli",
+        "MultiCNOT",
+        "MultiXCNOT",
+        "Reset",
+        "EchoedCrossResonance",
     ]
 
     parameterized_ops = [
-        'RX',
-        'RY',
-        'RZ',
-        'RXX',
-        'RYY',
-        'RZZ',
-        'RZX',
-        'PhaseShift',
-        'Rot',
-        'MultiRZ',
-        'CRX',
-        'CRY',
-        'CRZ',
-        'CRot',
-        'U1',
-        'U2',
-        'U3',
-        'CU1',
-        'CU2',
-        'CU3',
-        'QubitUnitary',
-        'QubitUnitaryFast',
-        'TrainableUnitary',
-        'TrainableUnitaryStrict',
-        'SingleExcitation',
+        "RX",
+        "RY",
+        "RZ",
+        "RXX",
+        "RYY",
+        "RZZ",
+        "RZX",
+        "PhaseShift",
+        "Rot",
+        "MultiRZ",
+        "CRX",
+        "CRY",
+        "CRZ",
+        "CRot",
+        "U1",
+        "U2",
+        "U3",
+        "CU1",
+        "CU2",
+        "CU3",
+        "QubitUnitary",
+        "QubitUnitaryFast",
+        "TrainableUnitary",
+        "TrainableUnitaryStrict",
+        "SingleExcitation",
     ]
 
     @property
@@ -164,12 +167,14 @@ class Operator(tq.QuantumModule):
         """
         self._name = value
 
-    def __init__(self,
-                 has_params: bool = False,
-                 trainable: bool = False,
-                 init_params=None,
-                 n_wires=None,
-                 wires=None):
+    def __init__(
+        self,
+        has_params: bool = False,
+        trainable: bool = False,
+        init_params=None,
+        n_wires=None,
+        wires=None,
+    ):
         """__init__ function for Operator.
 
         Args:
@@ -201,8 +206,10 @@ class Operator(tq.QuantumModule):
             assert not (trainable and not has_params)
         except AssertionError:
             has_params = True
-            logger.warning(f"Module must have parameters to be trainable; "
-                           f"Switched 'has_params' to True.")
+            logger.warning(
+                f"Module must have parameters to be trainable; "
+                f"Switched 'has_params' to True."
+            )
 
         self.has_params = has_params
         self.trainable = trainable
@@ -239,7 +246,7 @@ class Operator(tq.QuantumModule):
         Returns: None.
 
         """
-        #Warning: The eigenvalues of the operator {cls.__name__} are not defined.
+        # Warning: The eigenvalues of the operator {cls.__name__} are not defined.
         return None
 
     @property
@@ -270,8 +277,9 @@ class Operator(tq.QuantumModule):
         """
         self.wires = [wires] if isinstance(wires, int) else wires
 
-    def forward(self, q_device: tq.QuantumDevice, wires=None, params=None,
-                inverse=False):
+    def forward(
+        self, q_device: tq.QuantumDevice, wires=None, params=None, inverse=False
+    ):
         """Apply the operator to the quantum device states.
 
         Args:
@@ -304,8 +312,9 @@ class Operator(tq.QuantumModule):
             self.params = params
 
         if self.params is not None:
-            self.params = self.params.unsqueeze(-1) if self.params.dim() == 1 \
-                else self.params
+            self.params = (
+                self.params.unsqueeze(-1) if self.params.dim() == 1 else self.params
+            )
 
         if wires is not None:
             # update the wires
@@ -323,8 +332,7 @@ class Operator(tq.QuantumModule):
             if self.n_wires is None:
                 self.func(q_device, self.wires, inverse=inverse)
             else:
-                self.func(q_device, self.wires, n_wires=self.n_wires,
-                          inverse=inverse)
+                self.func(q_device, self.wires, n_wires=self.n_wires, inverse=inverse)
         else:
             if isinstance(self.noise_model_tq, tq.NoiseModelTQPhase):
                 params = self.noise_model_tq.add_noise(self.params)
@@ -334,14 +342,17 @@ class Operator(tq.QuantumModule):
             if self.clifford_quantization:
                 params = CliffordQuantizer.quantize_sse(params)
             if self.n_wires is None:
-                self.func(q_device, self.wires, params=params,
-                          inverse=inverse)
+                self.func(q_device, self.wires, params=params, inverse=inverse)
             else:
-                self.func(q_device, self.wires, params=params,
-                          n_wires=self.n_wires, inverse=inverse)
+                self.func(
+                    q_device,
+                    self.wires,
+                    params=params,
+                    n_wires=self.n_wires,
+                    inverse=inverse,
+                )
 
-        if self.noise_model_tq is not None and \
-                self.noise_model_tq.is_add_noise:
+        if self.noise_model_tq is not None and self.noise_model_tq.is_add_noise:
             noise_ops = self.noise_model_tq.sample_noise_op(self)
             if len(noise_ops):
                 for noise_op in noise_ops:
@@ -349,19 +360,19 @@ class Operator(tq.QuantumModule):
 
     def __repr__(self):
         return f" class: {self.name} \n parameters: {self.params} \n wires: {self.wires} \n inverse: {self.inverse}"
-    
 
 
 class Observable(Operator, metaclass=ABCMeta):
-    """Class for Observables.
+    """Class for Observables."""
 
-    """
-    def __init__(self,
-                 has_params: bool = False,
-                 trainable: bool = False,
-                 init_params=None,
-                 n_wires=None,
-                 wires=None):
+    def __init__(
+        self,
+        has_params: bool = False,
+        trainable: bool = False,
+        init_params=None,
+        n_wires=None,
+        wires=None,
+    ):
         """Init function of the Observable class
 
         has_params (bool, optional): Whether the operations has parameters.
@@ -379,7 +390,7 @@ class Observable(Operator, metaclass=ABCMeta):
             trainable=trainable,
             init_params=init_params,
             n_wires=n_wires,
-            wires=wires
+            wires=wires,
         )
         self.return_type = None
 
@@ -394,12 +405,15 @@ class Observable(Operator, metaclass=ABCMeta):
 
 class Operation(Operator, metaclass=ABCMeta):
     """_summary_"""
-    def __init__(self,
-                 has_params: bool = False,
-                 trainable: bool = False,
-                 init_params=None,
-                 n_wires=None,
-                 wires=None):
+
+    def __init__(
+        self,
+        has_params: bool = False,
+        trainable: bool = False,
+        init_params=None,
+        n_wires=None,
+        wires=None,
+    ):
         """_summary_
 
         Args:
@@ -418,7 +432,7 @@ class Operation(Operator, metaclass=ABCMeta):
             trainable=trainable,
             init_params=init_params,
             n_wires=n_wires,
-            wires=wires
+            wires=wires,
         )
         if type(self.num_wires) == int:
             self.n_wires = self.num_wires
@@ -432,7 +446,7 @@ class Operation(Operator, metaclass=ABCMeta):
 
     @property
     def eigvals(self):
-        """"The eigenvalues of the unitary matrix of the operator.
+        """ "The eigenvalues of the unitary matrix of the operator.
 
         Returns:
             torch.Tensor: Eigenvalues.
@@ -459,8 +473,7 @@ class Operation(Operator, metaclass=ABCMeta):
         Returns:
             torch.Tensor: Built parameters.
         """
-        parameters = nn.Parameter(torch.empty([1, self.num_params],
-                                              dtype=F_DTYPE))
+        parameters = nn.Parameter(torch.empty([1, self.num_params], dtype=F_DTYPE))
         parameters.requires_grad = True if trainable else False
         # self.register_parameter(f"{self.name}_params", parameters)
         return parameters
@@ -484,6 +497,7 @@ class Operation(Operator, metaclass=ABCMeta):
 
 class DiagonalOperation(Operation, metaclass=ABCMeta):
     """Class for Diagonal Operation."""
+
     @classmethod
     def _eigvals(cls, params):
         """The eigenvalues of the unitary matrix of the operator.
@@ -494,7 +508,7 @@ class DiagonalOperation(Operation, metaclass=ABCMeta):
 
         Returns: None.
         raise NotImplementedError
-    """
+        """
 
     @property
     def eigvals(self):
@@ -521,10 +535,11 @@ class DiagonalOperation(Operation, metaclass=ABCMeta):
 
 class Hadamard(Observable, metaclass=ABCMeta):
     """Class for Hadamard Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = mat_dict['hadamard']
+    matrix = mat_dict["hadamard"]
     func = staticmethod(tqf.hadamard)
 
     @classmethod
@@ -536,16 +551,15 @@ class Hadamard(Observable, metaclass=ABCMeta):
         return cls.eigvals
 
     def diagonalizing_gates(self):
-        return [tq.RY(has_params=True,
-                      trainable=False,
-                      init_params=-np.pi / 4)]
+        return [tq.RY(has_params=True, trainable=False, init_params=-np.pi / 4)]
 
 
 class SHadamard(Operation, metaclass=ABCMeta):
     """Class for SHadamard Gate."""
+
     num_params = 0
     num_wires = 1
-    matrix = mat_dict['shadamard']
+    matrix = mat_dict["shadamard"]
     func = staticmethod(tqf.shadamard)
 
     @classmethod
@@ -555,10 +569,11 @@ class SHadamard(Operation, metaclass=ABCMeta):
 
 class PauliX(Observable, metaclass=ABCMeta):
     """Class for Pauli X Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = mat_dict['paulix']
+    matrix = mat_dict["paulix"]
     func = staticmethod(tqf.paulix)
 
     @classmethod
@@ -575,10 +590,11 @@ class PauliX(Observable, metaclass=ABCMeta):
 
 class PauliY(Observable, metaclass=ABCMeta):
     """Class for Pauli Y Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = mat_dict['pauliy']
+    matrix = mat_dict["pauliy"]
     func = staticmethod(tqf.pauliy)
 
     @classmethod
@@ -595,10 +611,11 @@ class PauliY(Observable, metaclass=ABCMeta):
 
 class PauliZ(Observable, metaclass=ABCMeta):
     """Class for Pauli Z Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = mat_dict['pauliz']
+    matrix = mat_dict["pauliz"]
     func = staticmethod(tqf.pauliz)
 
     @classmethod
@@ -615,10 +632,11 @@ class PauliZ(Observable, metaclass=ABCMeta):
 
 class I(Observable, metaclass=ABCMeta):
     """Class for Identity Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1], dtype=C_DTYPE)
-    matrix = mat_dict['i']
+    matrix = mat_dict["i"]
     func = staticmethod(tqf.i)
 
     @classmethod
@@ -635,10 +653,11 @@ class I(Observable, metaclass=ABCMeta):
 
 class S(DiagonalOperation, metaclass=ABCMeta):
     """Class for S Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = mat_dict['s']
+    matrix = mat_dict["s"]
     func = staticmethod(tqf.s)
 
     @classmethod
@@ -652,10 +671,11 @@ class S(DiagonalOperation, metaclass=ABCMeta):
 
 class T(DiagonalOperation, metaclass=ABCMeta):
     """Class for T Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = mat_dict['t']
+    matrix = mat_dict["t"]
     func = staticmethod(tqf.t)
 
     @classmethod
@@ -669,10 +689,11 @@ class T(DiagonalOperation, metaclass=ABCMeta):
 
 class SX(Operation, metaclass=ABCMeta):
     """Class for SX Gate."""
+
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = mat_dict['sx']
+    matrix = mat_dict["sx"]
     func = staticmethod(tqf.sx)
 
     @classmethod
@@ -686,9 +707,10 @@ class SX(Operation, metaclass=ABCMeta):
 
 class CNOT(Operation, metaclass=ABCMeta):
     """Class for CNOT Gate."""
+
     num_params = 0
     num_wires = 2
-    matrix = mat_dict['cnot']
+    matrix = mat_dict["cnot"]
     func = staticmethod(tqf.cnot)
 
     @classmethod
@@ -698,10 +720,11 @@ class CNOT(Operation, metaclass=ABCMeta):
 
 class CZ(DiagonalOperation, metaclass=ABCMeta):
     """Class for CZ Gate."""
+
     num_params = 0
     num_wires = 2
     eigvals = np.array([1, 1, 1, -1])
-    matrix = mat_dict['cz']
+    matrix = mat_dict["cz"]
     func = staticmethod(tqf.cz)
 
     @classmethod
@@ -715,9 +738,10 @@ class CZ(DiagonalOperation, metaclass=ABCMeta):
 
 class CY(Operation, metaclass=ABCMeta):
     """Class for CY Gate."""
+
     num_params = 0
     num_wires = 2
-    matrix = mat_dict['cy']
+    matrix = mat_dict["cy"]
     func = staticmethod(tqf.cy)
 
     @classmethod
@@ -727,9 +751,10 @@ class CY(Operation, metaclass=ABCMeta):
 
 class SWAP(Operation, metaclass=ABCMeta):
     """Class for SWAP Gate."""
+
     num_params = 0
     num_wires = 2
-    matrix = mat_dict['swap']
+    matrix = mat_dict["swap"]
     func = staticmethod(tqf.swap)
 
     @classmethod
@@ -739,9 +764,10 @@ class SWAP(Operation, metaclass=ABCMeta):
 
 class SSWAP(Operation, metaclass=ABCMeta):
     """Class for SSWAP Gate."""
+
     num_params = 0
     num_wires = 2
-    matrix = mat_dict['sswap']
+    matrix = mat_dict["sswap"]
     func = staticmethod(tqf.sswap)
 
     @classmethod
@@ -751,9 +777,10 @@ class SSWAP(Operation, metaclass=ABCMeta):
 
 class CSWAP(Operation, metaclass=ABCMeta):
     """Class for CSWAP Gate."""
+
     num_params = 0
     num_wires = 3
-    matrix = mat_dict['cswap']
+    matrix = mat_dict["cswap"]
     func = staticmethod(tqf.cswap)
 
     @classmethod
@@ -763,9 +790,10 @@ class CSWAP(Operation, metaclass=ABCMeta):
 
 class Toffoli(Operation, metaclass=ABCMeta):
     """Class for Toffoli Gate."""
+
     num_params = 0
     num_wires = 3
-    matrix = mat_dict['toffoli']
+    matrix = mat_dict["toffoli"]
     func = staticmethod(tqf.toffoli)
 
     @classmethod
@@ -775,6 +803,7 @@ class Toffoli(Operation, metaclass=ABCMeta):
 
 class RX(Operation, metaclass=ABCMeta):
     """Class for RX Gate."""
+
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.rx)
@@ -786,6 +815,7 @@ class RX(Operation, metaclass=ABCMeta):
 
 class RY(Operation, metaclass=ABCMeta):
     """Class for RY Gate."""
+
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.ry)
@@ -797,6 +827,7 @@ class RY(Operation, metaclass=ABCMeta):
 
 class RZ(DiagonalOperation, metaclass=ABCMeta):
     """Class for RZ Gate."""
+
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.rz)
@@ -808,6 +839,7 @@ class RZ(DiagonalOperation, metaclass=ABCMeta):
 
 class PhaseShift(DiagonalOperation, metaclass=ABCMeta):
     """Class for PhaseShift Gate."""
+
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.phaseshift)
@@ -819,6 +851,7 @@ class PhaseShift(DiagonalOperation, metaclass=ABCMeta):
 
 class Rot(Operation, metaclass=ABCMeta):
     """Class for Rotation Gate."""
+
     num_params = 3
     num_wires = 1
     func = staticmethod(tqf.rot)
@@ -830,6 +863,7 @@ class Rot(Operation, metaclass=ABCMeta):
 
 class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
     """Class for Multi-qubit RZ Gate."""
+
     num_params = 1
     num_wires = AnyWires
     func = staticmethod(tqf.multirz)
@@ -841,6 +875,7 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
 
 class RXX(Operation, metaclass=ABCMeta):
     """Class for RXX Gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.rxx)
@@ -852,6 +887,7 @@ class RXX(Operation, metaclass=ABCMeta):
 
 class RYY(Operation, metaclass=ABCMeta):
     """Class for RYY Gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.ryy)
@@ -863,6 +899,7 @@ class RYY(Operation, metaclass=ABCMeta):
 
 class RZZ(DiagonalOperation, metaclass=ABCMeta):
     """Class for RZZ Gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.rzz)
@@ -874,6 +911,7 @@ class RZZ(DiagonalOperation, metaclass=ABCMeta):
 
 class RZX(Operation, metaclass=ABCMeta):
     """Class for RZX Gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.rzx)
@@ -885,6 +923,7 @@ class RZX(Operation, metaclass=ABCMeta):
 
 class TrainableUnitary(Operation, metaclass=ABCMeta):
     """Class for TrainableUnitary Gate."""
+
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitaryfast)
@@ -899,8 +938,9 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
             torch.Tensor: Parameters.
 
         """
-        parameters = nn.Parameter(torch.empty(
-            1, 2 ** self.n_wires, 2 ** self.n_wires, dtype=C_DTYPE))
+        parameters = nn.Parameter(
+            torch.empty(1, 2**self.n_wires, 2**self.n_wires, dtype=C_DTYPE)
+        )
         parameters.requires_grad = True if trainable else False
         # self.register_parameter(f"{self.name}_params", parameters)
         return parameters
@@ -915,8 +955,7 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
             None.
 
         """
-        mat = torch.randn((1, 2 ** self.n_wires, 2 ** self.n_wires),
-                          dtype=C_DTYPE)
+        mat = torch.randn((1, 2**self.n_wires, 2**self.n_wires), dtype=C_DTYPE)
         U, Sigma, V = torch.svd(mat)
         self.params.data.copy_(U.matmul(V.permute(0, 2, 1)))
 
@@ -927,6 +966,7 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
 
 class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
     """Class for Strict Unitary matrix gate."""
+
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitarystrict)
@@ -934,6 +974,7 @@ class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
 
 class CRX(Operation, metaclass=ABCMeta):
     """Class for Controlled Rotation X gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.crx)
@@ -945,6 +986,7 @@ class CRX(Operation, metaclass=ABCMeta):
 
 class CRY(Operation, metaclass=ABCMeta):
     """Class for Controlled Rotation Y gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.cry)
@@ -956,6 +998,7 @@ class CRY(Operation, metaclass=ABCMeta):
 
 class CRZ(Operation, metaclass=ABCMeta):
     """Class for Controlled Rotation Z gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.crz)
@@ -967,6 +1010,7 @@ class CRZ(Operation, metaclass=ABCMeta):
 
 class CRot(Operation, metaclass=ABCMeta):
     """Class for Controlled Rotation gate."""
+
     num_params = 3
     num_wires = 2
     func = staticmethod(tqf.crot)
@@ -978,8 +1022,9 @@ class CRot(Operation, metaclass=ABCMeta):
 
 class U1(DiagonalOperation, metaclass=ABCMeta):
     """Class for Controlled Rotation Y gate.  U1 is the same
-        as phaseshift.
+    as phaseshift.
     """
+
     num_params = 1
     num_wires = 1
     func = staticmethod(tqf.u1)
@@ -991,6 +1036,7 @@ class U1(DiagonalOperation, metaclass=ABCMeta):
 
 class CU1(DiagonalOperation, metaclass=ABCMeta):
     """Class for controlled U1 gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.cu1)
@@ -1002,6 +1048,7 @@ class CU1(DiagonalOperation, metaclass=ABCMeta):
 
 class U2(Operation, metaclass=ABCMeta):
     """Class for U2 gate."""
+
     num_params = 2
     num_wires = 1
     func = staticmethod(tqf.u2)
@@ -1013,6 +1060,7 @@ class U2(Operation, metaclass=ABCMeta):
 
 class CU2(Operation, metaclass=ABCMeta):
     """Class for controlled U2 gate."""
+
     num_params = 2
     num_wires = 2
     func = staticmethod(tqf.cu2)
@@ -1024,6 +1072,7 @@ class CU2(Operation, metaclass=ABCMeta):
 
 class U3(Operation, metaclass=ABCMeta):
     """Class for U3 gate."""
+
     num_params = 3
     num_wires = 1
     func = staticmethod(tqf.u3)
@@ -1035,6 +1084,7 @@ class U3(Operation, metaclass=ABCMeta):
 
 class CU3(Operation, metaclass=ABCMeta):
     """Class for Controlled U3 gate."""
+
     num_params = 3
     num_wires = 2
     func = staticmethod(tqf.cu3)
@@ -1046,6 +1096,7 @@ class CU3(Operation, metaclass=ABCMeta):
 
 class QubitUnitary(Operation, metaclass=ABCMeta):
     """Class for controlled Qubit Unitary gate."""
+
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitary)
@@ -1065,31 +1116,35 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
 class QubitUnitaryFast(Operation, metaclass=ABCMeta):
     """Class for fast implementation of
     controlled Qubit Unitary gate."""
+
     num_params = AnyNParams
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitaryfast)
 
-    def __init__(self,
-                 has_params: bool = False,
-                 trainable: bool = False,
-                 init_params=None,
-                 n_wires=None,
-                 wires=None):
+    def __init__(
+        self,
+        has_params: bool = False,
+        trainable: bool = False,
+        init_params=None,
+        n_wires=None,
+        wires=None,
+    ):
         super().__init__(
             has_params=True,
             trainable=trainable,
             init_params=init_params,
             n_wires=n_wires,
-            wires=wires
+            wires=wires,
         )
 
     @classmethod
-    def from_controlled_operation(cls,
-                                op,
-                                c_wires,
-                                t_wires,
-                                trainable,
-                                ):
+    def from_controlled_operation(
+        cls,
+        op,
+        c_wires,
+        t_wires,
+        trainable,
+    ):
         """
 
         Args:
@@ -1149,7 +1204,7 @@ class QubitUnitaryFast(Operation, metaclass=ABCMeta):
         # compute the new unitary, then permute
         unitary = torch.tensor(torch.zeros(2**n_wires, 2**n_wires, dtype=C_DTYPE))
         for k in range(2**n_wires - 2**n_t_wires):
-            unitary[k, k] = 1. + 0.j
+            unitary[k, k] = 1.0 + 0.0j
 
         # compute kronecker product of all the controlled target
 
@@ -1185,6 +1240,7 @@ class QubitUnitaryFast(Operation, metaclass=ABCMeta):
 
 class MultiCNOT(Operation, metaclass=ABCMeta):
     """Class for Multi qubit CNOT gate."""
+
     num_params = 0
     num_wires = AnyWires
     func = staticmethod(tqf.multicnot)
@@ -1201,6 +1257,7 @@ class MultiCNOT(Operation, metaclass=ABCMeta):
 
 class MultiXCNOT(Operation, metaclass=ABCMeta):
     """Class for Multi qubit XCNOT gate."""
+
     num_params = 0
     num_wires = AnyWires
     func = staticmethod(tqf.multixcnot)
@@ -1217,6 +1274,7 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
 
 class Reset(Operator, metaclass=ABCMeta):
     """Class for Reset gate."""
+
     num_params = 0
     num_wires = AnyWires
     func = staticmethod(tqf.reset)
@@ -1228,6 +1286,7 @@ class Reset(Operator, metaclass=ABCMeta):
 
 class SingleExcitation(Operator, metaclass=ABCMeta):
     """Class for SingleExcitation gate."""
+
     num_params = 1
     num_wires = 2
     func = staticmethod(tqf.singleexcitation)
@@ -1239,9 +1298,10 @@ class SingleExcitation(Operator, metaclass=ABCMeta):
 
 class ECR(Operation, metaclass=ABCMeta):
     """Class for Echoed Cross Resonance Gate."""
+
     num_params = 0
     num_wires = 2
-    matrix = mat_dict['ecr']
+    matrix = mat_dict["ecr"]
     func = staticmethod(tqf.ecr)
 
     @classmethod
@@ -1249,74 +1309,74 @@ class ECR(Operation, metaclass=ABCMeta):
         return cls.matrix
 
 
-H=Hadamard
-SH=SHadamard
-EchoedCrossResonance=ECR
+H = Hadamard
+SH = SHadamard
+EchoedCrossResonance = ECR
 
 
 op_name_dict = {
-    'hadamard': Hadamard,
-    'h': Hadamard,
-    'shadamard': SHadamard,
-    'sh': SHadamard,
-    'paulix': PauliX,
-    'x': PauliX,
-    'pauliy': PauliY,
-    'y': PauliY,
-    'pauliz': PauliZ,
-    'z': PauliZ,
-    'i': I,
-    's': S,
-    't': T,
-    'sx': SX,
-    'cx': CNOT,
-    'cnot': CNOT,
-    'cz': CZ,
-    'cy': CY,
-    'rx': RX,
-    'ry': RY,
-    'rz': RZ,
-    'rxx': RXX,
-    'xx': RXX,
-    'ryy': RYY,
-    'yy': RYY,
-    'rzz': RZZ,
-    'zz': RZZ,
-    'rzx': RZX,
-    'zx': RZX,
-    'swap': SWAP,
-    'sswap': SSWAP,
-    'cswap': CSWAP,
-    'toffoli': Toffoli,
-    'ccx': Toffoli,
-    'phaseshift': PhaseShift,
-    'rot': Rot,
-    'multirz': MultiRZ,
-    'crx': CRX,
-    'cry': CRY,
-    'crz': CRZ,
-    'crot': CRot,
-    'u1': U1,
-    'p': U1,
-    'u2': U2,
-    'u3': U3,
-    'u': U3,
-    'cu1': CU1,
-    'cp': CU1,
-    'cr': CU1,
-    'cphase': CU1,
-    'cu2': CU2,
-    'cu3': CU3,
-    'cu': CU3,
-    'qubitunitary': QubitUnitary,
-    'qubitunitarystrict': QubitUnitaryFast,
-    'qubitunitaryfast': QubitUnitaryFast,
-    'trainableunitary': TrainableUnitary,
-    'trainableunitarystrict': TrainableUnitaryStrict,
-    'multicnot': MultiCNOT,
-    'multixcnot': MultiXCNOT,
-    'reset': Reset,
-    'singleexcitation': SingleExcitation,
-    'ecr': ECR,
-    'echoedcrossresonance': ECR,
+    "hadamard": Hadamard,
+    "h": Hadamard,
+    "shadamard": SHadamard,
+    "sh": SHadamard,
+    "paulix": PauliX,
+    "x": PauliX,
+    "pauliy": PauliY,
+    "y": PauliY,
+    "pauliz": PauliZ,
+    "z": PauliZ,
+    "i": I,
+    "s": S,
+    "t": T,
+    "sx": SX,
+    "cx": CNOT,
+    "cnot": CNOT,
+    "cz": CZ,
+    "cy": CY,
+    "rx": RX,
+    "ry": RY,
+    "rz": RZ,
+    "rxx": RXX,
+    "xx": RXX,
+    "ryy": RYY,
+    "yy": RYY,
+    "rzz": RZZ,
+    "zz": RZZ,
+    "rzx": RZX,
+    "zx": RZX,
+    "swap": SWAP,
+    "sswap": SSWAP,
+    "cswap": CSWAP,
+    "toffoli": Toffoli,
+    "ccx": Toffoli,
+    "phaseshift": PhaseShift,
+    "rot": Rot,
+    "multirz": MultiRZ,
+    "crx": CRX,
+    "cry": CRY,
+    "crz": CRZ,
+    "crot": CRot,
+    "u1": U1,
+    "p": U1,
+    "u2": U2,
+    "u3": U3,
+    "u": U3,
+    "cu1": CU1,
+    "cp": CU1,
+    "cr": CU1,
+    "cphase": CU1,
+    "cu2": CU2,
+    "cu3": CU3,
+    "cu": CU3,
+    "qubitunitary": QubitUnitary,
+    "qubitunitarystrict": QubitUnitaryFast,
+    "qubitunitaryfast": QubitUnitaryFast,
+    "trainableunitary": TrainableUnitary,
+    "trainableunitarystrict": TrainableUnitaryStrict,
+    "multicnot": MultiCNOT,
+    "multixcnot": MultiXCNOT,
+    "reset": Reset,
+    "singleexcitation": SingleExcitation,
+    "ecr": ECR,
+    "echoedcrossresonance": ECR,
 }

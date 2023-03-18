@@ -19,7 +19,12 @@ from datetime import datetime, timezone
 
 
 def _text_checker(
-    job, interval, _interval_set=False, quiet=False, output=sys.stdout, line_discipline="\r"
+    job,
+    interval,
+    _interval_set=False,
+    quiet=False,
+    output=sys.stdout,
+    line_discipline="\r",
 ):
     """A text-based job status checker
     Args:
@@ -38,7 +43,9 @@ def _text_checker(
     msg_len = len(msg)
 
     if not quiet:
-        print("{}{}: {}".format(line_discipline, "Job Status", msg), end="", file=output)
+        print(
+            "{}{}: {}".format(line_discipline, "Job Status", msg), end="", file=output
+        )
     while status.name not in ["DONE", "CANCELLED", "ERROR"]:
         time.sleep(interval)
         status = job.status()
@@ -62,22 +69,28 @@ def _text_checker(
 
         queue_info = job.queue_info()
         if queue_info is not None:
-            now =  datetime.now(timezone.utc)
+            now = datetime.now(timezone.utc)
             job_id = queue_info.job_id
             wait_time = (queue_info.estimated_start_time - now).seconds / 60
-            msg += f'\t est. wait {wait_time:.3f} min'
-            msg += f'\t priority: {queue_info.hub_priority}(hub), {queue_info.group_priority}(group), {queue_info.project_priority}(proj)'
-            msg += f'\t job id: {job_id}'
+            msg += f"\t est. wait {wait_time:.3f} min"
+            msg += f"\t priority: {queue_info.hub_priority}(hub), {queue_info.group_priority}(group), {queue_info.project_priority}(proj)"
+            msg += f"\t job id: {job_id}"
 
         if msg != prev_msg and not quiet:
-            print("{}{}: {}".format(line_discipline, "Job Status", msg), end="", file=output)
+            print(
+                "{}{}: {}".format(line_discipline, "Job Status", msg),
+                end="",
+                file=output,
+            )
             prev_msg = msg
 
     if not quiet:
         print("", file=output)
 
 
-def my_job_monitor(job, interval=None, quiet=False, output=sys.stdout, line_discipline="\r"):
+def my_job_monitor(
+    job, interval=None, quiet=False, output=sys.stdout, line_discipline="\r"
+):
     """Monitor the status of a IBMQJob instance.
     Args:
         job (BaseJob): Job to monitor.
@@ -95,5 +108,10 @@ def my_job_monitor(job, interval=None, quiet=False, output=sys.stdout, line_disc
         _interval_set = True
 
     _text_checker(
-        job, interval, _interval_set, quiet=quiet, output=output, line_discipline=line_discipline
+        job,
+        interval,
+        _interval_set,
+        quiet=quiet,
+        output=output,
+        line_discipline=line_discipline,
     )

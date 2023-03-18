@@ -6,20 +6,22 @@ from rand_circ_native import *
 from qiskit import IBMQ
 import sys
 
-dir_path = './application_qasm'
+dir_path = "./application_qasm"
 files = os.listdir(dir_path)
 
 # ini_backend = FakeGuadalupe()
 
+
 def IBMQ_ini(backend_str):
     IBMQ.load_account()
     # provider = IBMQ.get_provider(hub="ibm-q-research", group="MIT-1", project="main")
-    provider = IBMQ.get_provider(hub='ibm-q-ornl', group='anl', project='csc428')
+    provider = IBMQ.get_provider(hub="ibm-q-ornl", group="anl", project="csc428")
     backend = provider.get_backend(backend_str)
     return backend
 
-def simu(circ,backend,n_used, shots):
-    result = backend.run(circ,shots=shots).result()
+
+def simu(circ, backend, n_used, shots):
+    result = backend.run(circ, shots=shots).result()
     counts = result.get_counts()
     fidelity = counts[n_used * "0"] / shots
     return fidelity
@@ -28,8 +30,8 @@ def simu(circ,backend,n_used, shots):
 for file_name in files:
     data = []
 
-    circ_app = QuantumCircuit.from_qasm_file(dir_path+'/'+file_name)
-    if(circ_app.num_qubits>7):
+    circ_app = QuantumCircuit.from_qasm_file(dir_path + "/" + file_name)
+    if circ_app.num_qubits > 7:
         # ini_backend = FakeGuadalupe()
         continue
     else:
@@ -47,19 +49,18 @@ for file_name in files:
         transpiled = transpile(circ_app, backend)
         appended = circ_app.compose(circ_app.inverse())
         appended.measure_active()
-        appended = transpile(appended,backend)
+        appended = transpile(appended, backend)
 
         try:
-            fidelity = simu(
-                appended, backend, appended.num_clbits, shots=4096
-            )
+            fidelity = simu(appended, backend, appended.num_clbits, shots=4096)
         except:
             print("bypassed")
-            
-        data_p = [transpiled,my_dict,fidelity]
+
+        data_p = [transpiled, my_dict, fidelity]
         data.append(data_p)
         # print(fidelity)
-    file_open = open('./app_real_data_test/'+sys.argv[1]+file_name[:-4]+'data','wb')
-    pickle.dump(data,file_open)
+    file_open = open(
+        "./app_real_data_test/" + sys.argv[1] + file_name[:-4] + "data", "wb"
+    )
+    pickle.dump(data, file_open)
     file_open.close()
-

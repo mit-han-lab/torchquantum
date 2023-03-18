@@ -8,19 +8,22 @@ from torchpack.utils.logging import logger
 from torchquantum.operators import op_name_dict
 from torchquantum.functional import func_name_dict
 from torchquantum.macro import F_DTYPE
-from torchquantum.plugins.qiskit_macros import (QISKIT_INCOMPATIBLE_FUNC_NAMES,
-                                                QISKIT_INCOMPATIBLE_OPS)
+from torchquantum.plugins.qiskit_macros import (
+    QISKIT_INCOMPATIBLE_FUNC_NAMES,
+    QISKIT_INCOMPATIBLE_OPS,
+)
 
 
 class QLayer(tq.QuantumModule):
-    def __init__(self,
-                 n_wires,
-                 wires,
-                 n_ops_rd,
-                 n_ops_cin,
-                 n_funcs,
-                 qiskit_compatible=False,
-                 ):
+    def __init__(
+        self,
+        n_wires,
+        wires,
+        n_ops_rd,
+        n_ops_cin,
+        n_funcs,
+        qiskit_compatible=False,
+    ):
         super().__init__()
         self.n_wires = n_wires
         self.wires = wires
@@ -30,9 +33,8 @@ class QLayer(tq.QuantumModule):
         self.rd_layer = None
         if self.n_ops_rd > 0:
             self.rd_layer = tq.RandomLayerAllTypes(
-                n_ops=n_ops_rd,
-                wires=wires,
-                qiskit_compatible=qiskit_compatible)
+                n_ops=n_ops_rd, wires=wires, qiskit_compatible=qiskit_compatible
+            )
 
         self.cin_op_types = [
             tq.RX,
@@ -50,36 +52,36 @@ class QLayer(tq.QuantumModule):
             tq.U3,
         ]
         self.funcs = [
-            'hadamard',
-            'paulix',
-            'pauliy',
-            'pauliz',
-            's',
-            't',
-            'sx',
-            'cnot',
-            'cz',
-            'cy',
-            'rx',
-            'ry',
-            'rz',
-            'swap',
-            'cswap',
-            'toffoli',
-            'phaseshift',
-            'rot',
-            'multirz',
-            'crx',
-            'cry',
-            'crz',
-            'crot',
-            'u1',
-            'u2',
-            'u3',
-            'qubitunitary',
-            'qubitunitaryfast',
-            'multicnot',
-            'multixcnot',
+            "hadamard",
+            "paulix",
+            "pauliy",
+            "pauliz",
+            "s",
+            "t",
+            "sx",
+            "cnot",
+            "cz",
+            "cy",
+            "rx",
+            "ry",
+            "rz",
+            "swap",
+            "cswap",
+            "toffoli",
+            "phaseshift",
+            "rot",
+            "multirz",
+            "crx",
+            "cry",
+            "crz",
+            "crot",
+            "u1",
+            "u2",
+            "u3",
+            "qubitunitary",
+            "qubitunitaryfast",
+            "multicnot",
+            "multixcnot",
         ]
 
         if qiskit_compatible:
@@ -90,7 +92,7 @@ class QLayer(tq.QuantumModule):
 
         self.x_idx = 0
         self.cin_op_list = tq.QuantumModuleList()
-        self.rand_mat = np.random.randn(2 ** self.n_wires, 2 ** self.n_wires)
+        self.rand_mat = np.random.randn(2**self.n_wires, 2**self.n_wires)
         self.build_random_cin_layer()
 
         self.func_list = []
@@ -113,8 +115,9 @@ class QLayer(tq.QuantumModule):
             else:
                 is_AnyWire = False
 
-            op_wires = list(np.random.choice(self.wires, size=n_op_wires,
-                                             replace=False))
+            op_wires = list(
+                np.random.choice(self.wires, size=n_op_wires, replace=False)
+            )
 
             if is_AnyWire:
                 operation = op(n_wires=n_op_wires, wires=op_wires)
@@ -136,8 +139,9 @@ class QLayer(tq.QuantumModule):
             if n_func_wires == -1:
                 n_func_wires = self.n_wires
 
-            func_wires = list(np.random.choice(self.wires, size=n_func_wires,
-                                               replace=False))
+            func_wires = list(
+                np.random.choice(self.wires, size=n_func_wires, replace=False)
+            )
             self.func_list.append(func)
             self.func_wires_list.append(func_wires)
 
@@ -154,19 +158,19 @@ class QLayer(tq.QuantumModule):
             n_op_params = op.num_params
             if n_op_params == -1:
                 n_op_params = 2
-            params = x[:, self.x_idx: self.x_idx + n_op_params]
+            params = x[:, self.x_idx : self.x_idx + n_op_params]
             self.x_idx += n_op_params
             op(self.q_device, params=params, inverse=is_inverse)
 
         # test functional layers
-        for func, func_wires, is_inverse in zip(self.func_list,
-                                                self.func_wires_list,
-                                                self.func_inverse):
+        for func, func_wires, is_inverse in zip(
+            self.func_list, self.func_wires_list, self.func_inverse
+        ):
             n_func_wires = len(func_wires)
             n_func_params = op_name_dict[func]().num_params
 
             if n_func_params == 0:
-                if func in ['multicnot', 'multixcnot']:
+                if func in ["multicnot", "multixcnot"]:
                     func_name_dict[func](
                         self.q_device,
                         wires=func_wires,
@@ -185,10 +189,10 @@ class QLayer(tq.QuantumModule):
                     )
             elif n_func_params == -1:
                 # qubitunitary:
-                if func in ['qubitunitary', 'qubitunitaryfast',
-                            'qubitunitarystrict']:
-                    u, s, v = np.linalg.svd(self.rand_mat[:2 ** n_func_wires,
-                                            :2 ** n_func_wires])
+                if func in ["qubitunitary", "qubitunitaryfast", "qubitunitarystrict"]:
+                    u, s, v = np.linalg.svd(
+                        self.rand_mat[: 2**n_func_wires, : 2**n_func_wires]
+                    )
                     params = u @ v
                     func_name_dict[func](
                         self.q_device,
@@ -202,9 +206,9 @@ class QLayer(tq.QuantumModule):
                 else:
                     raise NotImplementedError
             else:
-                params = x[:, self.x_idx: self.x_idx + n_func_params]
+                params = x[:, self.x_idx : self.x_idx + n_func_params]
                 self.x_idx += n_func_params
-                if func in ['multirz']:
+                if func in ["multirz"]:
                     func_name_dict[func](
                         self.q_device,
                         wires=func_wires,
@@ -265,20 +269,25 @@ def static_mode_dynamic_vs_static_gradients_test():
             name = None
             try:
                 for name, _ in q_layer.named_parameters():
-                    diff = q_layer_dynamic_grads[name] - \
-                           q_layer_static_grads[name]
-                    assert torch.allclose(q_layer_dynamic_grads[name],
-                                          q_layer_static_grads[name],
-                                          atol=1e-4)
+                    diff = q_layer_dynamic_grads[name] - q_layer_static_grads[name]
+                    assert torch.allclose(
+                        q_layer_dynamic_grads[name],
+                        q_layer_static_grads[name],
+                        atol=1e-4,
+                    )
                     logger.info(f"Diff: {diff}")
-                    logger.info(f"PASS: [n_wires]={n_wires}, dynamic VS "
-                                f"static run with [wires_per_block]="
-                                f"{wires_per_block}. Params: {name}")
+                    logger.info(
+                        f"PASS: [n_wires]={n_wires}, dynamic VS "
+                        f"static run with [wires_per_block]="
+                        f"{wires_per_block}. Params: {name}"
+                    )
             except AssertionError:
-                logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS "
-                                 f"static run with "
-                                 f"[wires_per_block]={wires_per_block}. "
-                                 f"Params: {name}")
+                logger.exception(
+                    f"FAIL: [n_wires]={n_wires}, dynamic VS "
+                    f"static run with "
+                    f"[wires_per_block]={wires_per_block}. "
+                    f"Params: {name}"
+                )
                 raise AssertionError
 
             q_layer.static_off()
@@ -310,14 +319,17 @@ def static_mode_dynamic_vs_static_test():
             state_static = q_dev1.states.clone()
 
             try:
-                assert torch.allclose(state_dyna, state_static,
-                                      atol=1e-5)
-                logger.info(f"PASS: [n_wires]={n_wires}, dynamic VS static "
-                            f"run with [wires_per_block]={wires_per_block}")
+                assert torch.allclose(state_dyna, state_static, atol=1e-5)
+                logger.info(
+                    f"PASS: [n_wires]={n_wires}, dynamic VS static "
+                    f"run with [wires_per_block]={wires_per_block}"
+                )
             except AssertionError:
-                logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS "
-                                 f"static run with "
-                                 f"[wires_per_block]={wires_per_block}")
+                logger.exception(
+                    f"FAIL: [n_wires]={n_wires}, dynamic VS "
+                    f"static run with "
+                    f"[wires_per_block]={wires_per_block}"
+                )
                 raise AssertionError
 
             q_layer.static_off()
@@ -333,39 +345,41 @@ def static_mode_dynamic_vs_static_vs_get_unitary_test():
 
         q_layer = tq.RandomLayerAllTypes(n_ops=500, wires=list(range(n_wires)))
         q_layer(q_dev0)
-        u_dyna = q_dev0.states.clone().reshape(2 ** n_wires,
-                                               2 ** n_wires).permute(1, 0)
+        u_dyna = q_dev0.states.clone().reshape(2**n_wires, 2**n_wires).permute(1, 0)
 
         u_static_get = q_layer.get_unitary(q_dev1)
         try:
             assert torch.allclose(u_dyna, u_static_get, atol=1e-5)
             logger.info(f"PASS: [n_wires]={n_wires}, dynamic VS get_unitary()")
         except AssertionError:
-            logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS "
-                             f"get_unitary()")
+            logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS " f"get_unitary()")
             raise AssertionError
 
-        for wires_per_block in range(1, n_wires+1):
+        for wires_per_block in range(1, n_wires + 1):
             q_dev2.reset_identity_states()
             q_layer.static_on(wires_per_block=wires_per_block)
             q_layer(q_dev2)
-            u_static_run = q_dev2.states.clone().reshape(
-                2 ** n_wires,
-                2 ** n_wires).permute(1, 0)
+            u_static_run = (
+                q_dev2.states.clone().reshape(2**n_wires, 2**n_wires).permute(1, 0)
+            )
             q_layer.static_off()
             try:
                 assert torch.allclose(u_dyna, u_static_run, atol=1e-5)
-                logger.info(f"PASS: [n_wires]={n_wires}, dynamic VS static "
-                            f"run with [wires_per_block]={wires_per_block}")
+                logger.info(
+                    f"PASS: [n_wires]={n_wires}, dynamic VS static "
+                    f"run with [wires_per_block]={wires_per_block}"
+                )
             except AssertionError:
-                logger.exception(f"FAIL: [n_wires]={n_wires}, dynamic VS "
-                                 f"static run with [wires_per_block]"
-                                 f"={wires_per_block}")
+                logger.exception(
+                    f"FAIL: [n_wires]={n_wires}, dynamic VS "
+                    f"static run with [wires_per_block]"
+                    f"={wires_per_block}"
+                )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pdb', action='store_true', help='pdb')
+    parser.add_argument("--pdb", action="store_true", help="pdb")
     args = parser.parse_args()
 
     if args.pdb:

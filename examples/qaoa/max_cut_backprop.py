@@ -16,6 +16,7 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 
+
 class MAXCUT(tq.QuantumModule):
     """computes the optimal cut for a given graph.
     outputs: the most probable bitstring decides the set {0 or 1} each
@@ -42,7 +43,7 @@ class MAXCUT(tq.QuantumModule):
             qdev.rx(
                 wires=wire,
                 params=beta.unsqueeze(0),
-            ) # type: ignore
+            )  # type: ignore
 
     def entangler(self, qdev, gamma):
         """
@@ -52,14 +53,14 @@ class MAXCUT(tq.QuantumModule):
         for edge in self.input_graph:
             qdev.cx(
                 [edge[0], edge[1]],
-            ) # type: ignore 
+            )  # type: ignore
             qdev.rz(
                 wires=edge[1],
                 params=gamma.unsqueeze(0),
-            ) # type: ignore
+            )  # type: ignore
             qdev.cx(
                 [edge[0], edge[1]],
-            ) # type: ignore
+            )  # type: ignore
 
     def edge_to_PauliString(self, edge):
         # construct pauli string
@@ -79,7 +80,7 @@ class MAXCUT(tq.QuantumModule):
         for wire in range(self.n_wires):
             qdev.h(
                 wires=wire,
-            ) # type: ignore
+            )  # type: ignore
 
         for i in range(self.n_layers):
             self.mixer(qdev, self.betas[i])
@@ -91,7 +92,9 @@ class MAXCUT(tq.QuantumModule):
         Args:
             if edge is None
         """
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device, record_op=False)
+        qdev = tq.QuantumDevice(
+            n_wires=self.n_wires, device=self.betas.device, record_op=False
+        )
 
         self.circuit(qdev)
 
@@ -112,6 +115,7 @@ class MAXCUT(tq.QuantumModule):
             return expVal
         else:
             return tq.measure(qdev, n_shots=1024, draw_id=0)
+
 
 def backprop_optimize(model, n_steps=100, lr=0.1):
     """
@@ -145,6 +149,7 @@ def backprop_optimize(model, n_steps=100, lr=0.1):
     )
     return model(measure_all=True)
 
+
 def main():
     # create a input_graph
     input_graph = [(0, 1), (0, 3), (1, 2), (2, 3)]
@@ -161,6 +166,7 @@ def main():
     backprop_optimize(model, n_steps=300, lr=0.01)
     # use parameter shift rule
     # param_shift_optimize(model, n_steps=500, step_size=100000)
+
 
 """
 Notes:

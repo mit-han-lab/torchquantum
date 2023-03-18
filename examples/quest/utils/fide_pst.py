@@ -6,6 +6,7 @@ from qiskit import QuantumCircuit
 from qiskit import Aer, transpile
 from rand_circ_native import *
 
+
 def noisy_sim(my_dict, circ, backend):
     backend = get_modified_backend(backend, my_dict)
     simulator = AerSimulator.from_backend(backend)
@@ -13,6 +14,7 @@ def noisy_sim(my_dict, circ, backend):
     result = simulator.run(circ).result()
     noise_dm = result.data()["density_matrix"].data
     return noise_dm.astype(np.complex64)
+
 
 def get_modified_backend(backend, mydict):
     backend = deepcopy(backend)
@@ -34,18 +36,21 @@ def get_modified_backend(backend, mydict):
     backend._properties = new_prop
     return backend
 
+
 def free_sim(circ):
-    backend = Aer.get_backend('aer_simulator')
+    backend = Aer.get_backend("aer_simulator")
     circ.save_density_matrix()
     result = backend.run(circ).result()
     noise_dm = result.data()["density_matrix"].data
     return noise_dm.astype(np.complex64)
 
+
 def load_pick(file_name):
-    file_open = open(file_name,'rb')
+    file_open = open(file_name, "rb")
     data = pickle.load(file_open)
     file_open.close()
     return data
+
 
 def main():
     file_name = sys.argv[1]
@@ -57,18 +62,19 @@ def main():
     for dp in data:
         pst = dp[2]
         a = free_sim(copy.deepcopy(dp[0]))
-        b = noisy_sim(dp[1],copy.deepcopy(dp[0]),backend=backend)
-        fid = np.trace(np.matmul(a,b)).real
+        b = noisy_sim(dp[1], copy.deepcopy(dp[0]), backend=backend)
+        fid = np.trace(np.matmul(a, b)).real
         fides.append(fid)
         psts.append(pst)
-    
+
     print(len(fides))
     print(len(psts))
-    file_o = open(sys.argv[1][:-4]+'fidpst','wb')
-    pickle.dump([fides,psts],file_o)
+    file_o = open(sys.argv[1][:-4] + "fidpst", "wb")
+    pickle.dump([fides, psts], file_o)
     file_o.close()
 
-    return fides,psts
+    return fides, psts
+
 
 if __name__ == "__main__":
     main()

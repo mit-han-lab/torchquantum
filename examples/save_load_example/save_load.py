@@ -6,47 +6,50 @@ import torchquantum as tq
 import random
 import numpy as np
 
+
 class QLayer(tq.QuantumModule):
-        def __init__(self):
-            super().__init__()
-            self.n_wires = 4
-            self.random_layer = tq.RandomLayer(n_ops=50,
-                                               seed=0,
-                                               wires=list(range(self.n_wires)))
+    def __init__(self):
+        super().__init__()
+        self.n_wires = 4
+        self.random_layer = tq.RandomLayer(
+            n_ops=50, seed=0, wires=list(range(self.n_wires))
+        )
 
-            # gates with trainable parameters
-            self.rx0 = tq.RX(has_params=True, trainable=True)
-            self.ry0 = tq.RY(has_params=True, trainable=True)
-            self.rz0 = tq.RZ(has_params=True, trainable=True)
-            self.crx0 = tq.CRX(has_params=True, trainable=True)
+        # gates with trainable parameters
+        self.rx0 = tq.RX(has_params=True, trainable=True)
+        self.ry0 = tq.RY(has_params=True, trainable=True)
+        self.rz0 = tq.RZ(has_params=True, trainable=True)
+        self.crx0 = tq.CRX(has_params=True, trainable=True)
 
-        def forward(self, qdev: tq.QuantumDevice):
-            # self.random_layer(qdev)
+    def forward(self, qdev: tq.QuantumDevice):
+        # self.random_layer(qdev)
 
-            # some trainable gates (instantiated ahead of time)
-            self.rx0(qdev, wires=0)
-            self.ry0(qdev, wires=1)
-            self.rz0(qdev, wires=3)
-            self.crx0(qdev, wires=[0, 2])
+        # some trainable gates (instantiated ahead of time)
+        self.rx0(qdev, wires=0)
+        self.ry0(qdev, wires=1)
+        self.rz0(qdev, wires=3)
+        self.crx0(qdev, wires=[0, 2])
 
-            # add some more non-parameterized gates (add on-the-fly)
-            qdev.h(wires=3) # type: ignore
-            qdev.sx(wires=2) # type: ignore
-            qdev.cnot(wires=[3, 0]) # type: ignore
-            qdev.rx(wires=1, params=torch.tensor([0.1])) # type: ignore
+        # add some more non-parameterized gates (add on-the-fly)
+        qdev.h(wires=3)  # type: ignore
+        qdev.sx(wires=2)  # type: ignore
+        qdev.cnot(wires=[3, 0])  # type: ignore
+        qdev.rx(wires=1, params=torch.tensor([0.1]))  # type: ignore
+
 
 class QFCModel(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.n_wires = 4
-        self.encoder = tq.GeneralEncoder(
-            tq.encoder_op_list_name_dict['4x4_u3rx'])
+        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_u3rx"])
 
         self.q_layer = QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x):
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True)
+        qdev = tq.QuantumDevice(
+            n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True
+        )
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
@@ -67,11 +70,11 @@ def save_load1():
     x = torch.rand(2, 1, 28, 28)
     y = model(x)
     print(y)
-    
-    torch.save(model.state_dict(), 'model_dict.pt')
+
+    torch.save(model.state_dict(), "model_dict.pt")
 
     model2 = QFCModel()
-    model2.load_state_dict(torch.load('model_dict.pt'))
+    model2.load_state_dict(torch.load("model_dict.pt"))
     y2 = model2(x)
     print(y2)
     assert torch.equal(y, y2)
@@ -89,13 +92,14 @@ def save_load2():
     x = torch.rand(2, 1, 28, 28)
     y = model(x)
     print(y)
-    
-    torch.save(model, 'model_whole.pt')
 
-    model2 = torch.load('model_whole.pt')
+    torch.save(model, "model_whole.pt")
+
+    model2 = torch.load("model_whole.pt")
     y2 = model2(x)
     print(y2)
     assert torch.equal(y, y2)
+
 
 def save_load3():
     """Assume the user cannot access to the model definition.
@@ -108,22 +112,22 @@ def save_load3():
     x = torch.rand(2, 1, 28, 28)
     y = model(x)
     print(y)
-    
+
     # the QFCModel class is not available to the user
-    torch.save(model, 'model_whole.pt')
+    torch.save(model, "model_whole.pt")
 
     # print(model.q_layer.rx0._parameters)
 
     traced_cell = torch.jit.trace(model, (x))
     torch.jit.save(traced_cell, "model_trace.pth")
 
-    loaded_trace = torch.jit.load("model_trace.pt")    
+    loaded_trace = torch.jit.load("model_trace.pt")
     y2 = loaded_trace(x)
     print(y2)
     assert torch.equal(y, y2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(f"case 1: save and load the state_dict")
     save_load1()
     print(f"case 2: save and load the entire model")

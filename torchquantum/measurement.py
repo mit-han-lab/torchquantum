@@ -12,15 +12,16 @@ from collections import Counter, OrderedDict
 from torchquantum.functional import mat_dict
 
 __all__ = [
-    'expval_joint_analytical',
-    'expval',
-    'MeasureAll',
-    'MeasureMultipleTimes',
-    'MeasureMultiPauliSum',
-    'MeasureMultiQubitPauliSum',
-    'gen_bitstrings',
-    'measure',
+    "expval_joint_analytical",
+    "expval",
+    "MeasureAll",
+    "MeasureMultipleTimes",
+    "MeasureMultiPauliSum",
+    "MeasureMultiQubitPauliSum",
+    "gen_bitstrings",
+    "measure",
 ]
+
 
 def expval_joint_analytical(
     qdev: tq.QuantumDevice,
@@ -59,14 +60,17 @@ def expval_joint_analytical(
     assert len(observable) == qdev.n_wires
     states = qdev.get_states_1d()
 
-
     hamiltonian = pauli_dict[observable[0]].to(states.device)
     for op in observable[1:]:
         hamiltonian = torch.kron(hamiltonian, pauli_dict[op].to(states.device))
 
     # torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
 
-    return (states.conj() * torch.mm(hamiltonian, states.transpose(0, 1)).transpose(0, 1)).sum(-1).real
+    return (
+        (states.conj() * torch.mm(hamiltonian, states.transpose(0, 1)).transpose(0, 1))
+        .sum(-1)
+        .real
+    )
 
 
 def expval(
@@ -110,9 +114,7 @@ class MeasureAll(tq.QuantumModule):
         self.v_c_reg_mapping = v_c_reg_mapping
 
     def forward(self, qdev: tq.QuantumDevice):
-        x = expval(
-            qdev, list(range(qdev.n_wires)), [self.obs()] * qdev.n_wires
-        )
+        x = expval(qdev, list(range(qdev.n_wires)), [self.obs()] * qdev.n_wires)
 
         if self.v_c_reg_mapping is not None:
             c2v_mapping = self.v_c_reg_mapping["c2v"]

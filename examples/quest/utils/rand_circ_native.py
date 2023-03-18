@@ -145,7 +145,28 @@ def main():
 
     n_circ = 4
     for n_used in range(1, 6, 1):
-        for n_gate in [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90, 100, 120, 150, 200, 250, 500]:
+        for n_gate in [
+            10,
+            15,
+            20,
+            25,
+            30,
+            35,
+            40,
+            45,
+            50,
+            55,
+            60,
+            70,
+            80,
+            90,
+            100,
+            120,
+            150,
+            200,
+            250,
+            500,
+        ]:
             for model in range(5):
                 native_circs = rand_circs(backend, n_circ, n_used, n_gate)
                 appended = append_reverse(native_circs, n_used)

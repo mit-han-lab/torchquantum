@@ -6,9 +6,9 @@ from typing import Union, List, Iterable
 
 
 __all__ = [
-    'QuantumPulse',
-    'QuantumPulseGaussian',
-    'QuantumPulseDirect',
+    "QuantumPulse",
+    "QuantumPulseGaussian",
+    "QuantumPulseDirect",
 ]
 
 
@@ -16,6 +16,7 @@ class QuantumPulse(nn.Module):
     """
     The Quantum Pulse simulator
     """
+
     def __init__(self):
         super().__init__()
         pass
@@ -25,11 +26,13 @@ class QuantumPulse(nn.Module):
 
 
 class QuantumPulseDirect(QuantumPulse):
-    def __init__(self,
-                 n_steps: int,
-                 hamil,
-                 delta_t: float = 1.,
-                 initial_shape: List[float] = None):
+    def __init__(
+        self,
+        n_steps: int,
+        hamil,
+        delta_t: float = 1.0,
+        initial_shape: List[float] = None,
+    ):
         super().__init__()
         self.hamil = torch.tensor(hamil, dtype=torch.complex64)
         if initial_shape is not None:
@@ -66,16 +69,17 @@ class QuantumPulseDirect(QuantumPulse):
 
 
 class QuantumPulseGaussian(QuantumPulse):
-    """Gaussian Quantum Pulse, will only count +- five sigmas
-    """
-    def __init__(self,
-                 hamil,
-                 n_steps: int = 100,
-                 delta_t: float = 1.,
-                 x_min: float = -10,
-                 x_max: float = 10,
-                 initial_params: List[float] = None,
-                 ):
+    """Gaussian Quantum Pulse, will only count +- five sigmas"""
+
+    def __init__(
+        self,
+        hamil,
+        n_steps: int = 100,
+        delta_t: float = 1.0,
+        x_min: float = -10,
+        x_max: float = 10,
+        initial_params: List[float] = None,
+    ):
         super(QuantumPulseGaussian, self).__init__()
         self.hamil = torch.tensor(hamil, dtype=torch.complex64)
         self.delta_t = delta_t
@@ -101,13 +105,16 @@ class QuantumPulseGaussian(QuantumPulse):
         # (self.mu - 5 * self.sigma).item(),
         # (self.mu + 5 * self.sigma).item(), delta_x))
 
-        self.pulse_shape = self.mag * torch.exp(-(self.x_list - self.mu) ** 2 /
-                                                (2 * self.sigma ** 2))
+        self.pulse_shape = self.mag * torch.exp(
+            -((self.x_list - self.mu) ** 2) / (2 * self.sigma**2)
+        )
 
         unitary_per_step = []
         for k in range(self.n_steps):
             magnitude = self.pulse_shape[k]
-            unitary = torch.matrix_exp(-1j * self.hamil * magnitude * self.delta_t * self.delta_x)
+            unitary = torch.matrix_exp(
+                -1j * self.hamil * magnitude * self.delta_t * self.delta_x
+            )
             # print(unitary @ unitary.conj().T)
             # unitary_mag = (unitary[0]**2).sum().sqrt()
             # unitary = unitary_mag / unitary
@@ -127,11 +134,11 @@ class QuantumPulseGaussian(QuantumPulse):
         return f"QuantumPulse Guassian \n shape: {self.pulse_shape}"
 
 
-if __name__=='__main__':
+if __name__ == "__main__":
     import pdb
+
     pdb.set_trace()
-    pulse = QuantumPulseDirect(n_steps=10,
-                               hamil=[[0, 1], [1, 0]])
+    pulse = QuantumPulseDirect(n_steps=10, hamil=[[0, 1], [1, 0]])
 
     print(pulse.get_unitary())
 
