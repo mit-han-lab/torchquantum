@@ -9,12 +9,8 @@ from turtle import back
 import numpy as np
 import qiskit
 import torch
-<<<<<<< HEAD:rand_circ_real.py
 from qiskit import QuantumCircuit, transpile, IBMQ
-=======
 from circ_dag_converter import GATE_DICT, build_my_noise_dict
-from qiskit import QuantumCircuit, transpile
->>>>>>> b09212aceaf88f3a069c216b4c7e72b0ebac6b92:utils/rand_circ_real.py
 from qiskit.compiler import assemble
 from qiskit.dagcircuit import DAGInNode, DAGOpNode, DAGOutNode
 from qiskit.providers.aer import AerSimulator
