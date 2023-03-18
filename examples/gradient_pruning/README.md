@@ -11,4 +11,3 @@ Referece: [On-chip QNN: Towards Efficient On-Chip Training of Quantum Neural Net
 ### Outline
 1. Introduction to probabilistic gradient pruning.
 2. Train a model with gradient pruning.
-

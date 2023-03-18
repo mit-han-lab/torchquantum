@@ -28,7 +28,6 @@ class CliffordQuantizer(object):
     def quantize_sse(params):
         param = params[0][0]
         param = param % (2 * np.pi)
-        param = np.pi / 2 * QuantizeFunction.apply(param /
-                                                   (np.pi / 2))
+        param = np.pi / 2 * QuantizeFunction.apply(param / (np.pi / 2))
         params = param.unsqueeze(0).unsqueeze(0)
         return params

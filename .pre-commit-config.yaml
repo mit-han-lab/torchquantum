@@ -28,13 +28,13 @@ repos:
         args: ['--branch=main']
       - id: end-of-file-fixer
 
-    - repo: https://github.com/Lucas-C/pre-commit-hooks
-      rev: v1.1.7
-      hooks:
-      -   id: insert-license
-          files: \.py$
-          args:
-          - --license-filepath
+    # - repo: https://github.com/Lucas-C/pre-commit-hooks
+    #   rev: v1.1.7
+    #   hooks:
+    #   -   id: insert-license
+    #       files: \.py$
+    #       args:
+    #       - --license-filepath
 
     - repo: https://github.com/psf/black
       rev: 22.12.0

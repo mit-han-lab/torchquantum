@@ -11,4 +11,3 @@ Optionally add more configs:
 ```python
 python simple_vqe.py --hamil_filename=h2.txt --epochs=100 --steps_per_epoch=100 --n_blocks=3
 ```
-

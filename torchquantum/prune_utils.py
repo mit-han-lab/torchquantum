@@ -20,7 +20,8 @@ class PhaseL1UnstructuredPruningMethod(torch.nn.utils.prune.BasePruningMethod):
     """
     Prune rotation phases which is close to -2pi, 0, +2pi, ..
     """
-    PRUNING_TYPE = 'unstructured'
+
+    PRUNING_TYPE = "unstructured"
 
     def __init__(self, amount):
         super().__init__()
@@ -38,20 +39,19 @@ class PhaseL1UnstructuredPruningMethod(torch.nn.utils.prune.BasePruningMethod):
         # else amount * tensor_size
         # noinspection PyProtectedMember
         nparams_toprune = torch.nn.utils.prune._compute_nparams_toprune(
-            self.amount, tensor_size)
+            self.amount, tensor_size
+        )
         # This should raise an error if the number of units to prune is larger
         # than the number of units in the tensor
         # noinspection PyProtectedMember
-        torch.nn.utils.prune._validate_pruning_amount(nparams_toprune,
-                                                      tensor_size)
+        torch.nn.utils.prune._validate_pruning_amount(nparams_toprune, tensor_size)
 
         mask = default_mask.clone(memory_format=torch.contiguous_format)
 
         if nparams_toprune != 0:  # k=0 not supported by torch.kthvalue
             # largest=True --> top k; largest=False --> bottom k
             # Prune the smallest k
-            topk = torch.topk(torch.abs(t).view(-1), k=nparams_toprune,
-                              largest=False)
+            topk = torch.topk(torch.abs(t).view(-1), k=nparams_toprune, largest=False)
             # topk will have .indices and .values
             mask.view(-1)[topk.indices] = 0
 
@@ -73,17 +73,20 @@ class ThresholdScheduler(object):
         self.thres_end = thres_end
         if thres_beg < thres_end:
             self.thres_min = thres_beg
-            self.thres_range = (thres_end - thres_beg)
+            self.thres_range = thres_end - thres_beg
             self.descend = False
 
         else:
             self.thres_min = thres_end
-            self.thres_range = (thres_beg - thres_end)
+            self.thres_range = thres_beg - thres_end
             self.descend = True
 
         self.pruning_schedule = tfmot.sparsity.keras.PolynomialDecay(
-            initial_sparsity=0, final_sparsity=0.9999999,
-            begin_step=self.step_beg, end_step=self.step_end)
+            initial_sparsity=0,
+            final_sparsity=0.9999999,
+            begin_step=self.step_beg,
+            end_step=self.step_end,
+        )
         self.global_step = 0
 
     def step(self):

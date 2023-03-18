@@ -4,9 +4,9 @@ import torchquantum as tq
 from abc import ABCMeta
 
 __all__ = [
-    'QuantumModule',
-    'QuantumModuleList',
-    'QuantumModuleDict',
+    "QuantumModule",
+    "QuantumModuleList",
+    "QuantumModuleDict",
 ]
 
 
@@ -48,8 +48,7 @@ class QuantumModule(nn.Module):
             self.graph = tq.QuantumGraph()
 
         for module in self.children():
-            if isinstance(module, nn.ModuleList) or isinstance(module,
-                                                               nn.ModuleDict):
+            if isinstance(module, nn.ModuleList) or isinstance(module, nn.ModuleDict):
                 # if QuantumModuleList or QuantumModuleDict, its graph will
                 # be the same as the parent graph because ModuleList and
                 # ModuleDict do not call the forward function
@@ -128,5 +127,5 @@ def test():
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test()

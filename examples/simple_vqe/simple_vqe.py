@@ -15,33 +15,44 @@ class QVQEModel(tq.QuantumModule):
         super().__init__()
         self.arch = arch
         self.hamil_info = hamil_info
-        self.n_wires = hamil_info['n_wires']
-        self.n_blocks = arch['n_blocks']
+        self.n_wires = hamil_info["n_wires"]
+        self.n_blocks = arch["n_blocks"]
         self.u3_layers = tq.QuantumModuleList()
         self.cu3_layers = tq.QuantumModuleList()
         for _ in range(self.n_blocks):
-            self.u3_layers.append(tq.Op1QAllLayer(op=tq.U3,
-                                                  n_wires=self.n_wires,
-                                                  has_params=True,
-                                                  trainable=True,
-                                                  ))
-            self.cu3_layers.append(tq.Op2QAllLayer(op=tq.CU3,
-                                                   n_wires=self.n_wires,
-                                                   has_params=True,
-                                                   trainable=True,
-                                                   circular=True
-                                                   ))
+            self.u3_layers.append(
+                tq.Op1QAllLayer(
+                    op=tq.U3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                )
+            )
+            self.cu3_layers.append(
+                tq.Op2QAllLayer(
+                    op=tq.CU3,
+                    n_wires=self.n_wires,
+                    has_params=True,
+                    trainable=True,
+                    circular=True,
+                )
+            )
 
     def forward(self):
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=1, device=next(self.parameters()).device)
+        qdev = tq.QuantumDevice(
+            n_wires=self.n_wires, bsz=1, device=next(self.parameters()).device
+        )
 
         for k in range(self.n_blocks):
             self.u3_layers[k](qdev)
             self.cu3_layers[k](qdev)
-        
+
         expval = 0
-        for hamil in self.hamil_info['hamil_list']:
-            expval += expval_joint_analytical(qdev, observable=hamil["pauli_string"]) * hamil["coeff"]
+        for hamil in self.hamil_info["hamil_list"]:
+            expval += (
+                expval_joint_analytical(qdev, observable=hamil["pauli_string"])
+                * hamil["coeff"]
+            )
 
         return expval
 
@@ -63,42 +74,52 @@ def valid_test(model):
 
 
 def process_hamil_info(hamil_info):
-    hamil_list = hamil_info['hamil_list']
+    hamil_list = hamil_info["hamil_list"]
     n_wires = hamil_info["n_wires"]
     all_info = []
 
     for hamil in hamil_list:
         pauli_string = ""
         for i in range(n_wires):
-            if i in hamil['wires']:
-                wire = hamil['wires'].index(i)
-                pauli_string += (hamil['observables'][wire].upper())
+            if i in hamil["wires"]:
+                wire = hamil["wires"].index(i)
+                pauli_string += hamil["observables"][wire].upper()
             else:
                 pauli_string += "I"
-        all_info.append({"pauli_string": pauli_string,
-                            "coeff": hamil['coefficient']})
-    hamil_info['hamil_list'] = all_info
+        all_info.append({"pauli_string": pauli_string, "coeff": hamil["coefficient"]})
+    hamil_info["hamil_list"] = all_info
     return hamil_info
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pdb', action='store_true', help='debug with pdb')
-    parser.add_argument('--n_blocks', type=int, default=2,
-                        help='number of blocks, each contain one layer of '
-                             'U3 gates and one layer of CU3 with '
-                             'ring connections')
-    parser.add_argument('--steps_per_epoch', type=int, default=10,
-                        help='number of training epochs')
-    parser.add_argument('--epochs', type=int, default=100,
-                        help='number of training epochs')
-    parser.add_argument('--hamil_filename', type=str, default='./h2.txt',
-                        help='number of training epochs')
+    parser.add_argument("--pdb", action="store_true", help="debug with pdb")
+    parser.add_argument(
+        "--n_blocks",
+        type=int,
+        default=2,
+        help="number of blocks, each contain one layer of "
+        "U3 gates and one layer of CU3 with "
+        "ring connections",
+    )
+    parser.add_argument(
+        "--steps_per_epoch", type=int, default=10, help="number of training epochs"
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=100, help="number of training epochs"
+    )
+    parser.add_argument(
+        "--hamil_filename",
+        type=str,
+        default="./h2.txt",
+        help="number of training epochs",
+    )
 
     args = parser.parse_args()
 
     if args.pdb:
         import pdb
+
         pdb.set_trace()
 
     seed = 0
@@ -129,5 +150,5 @@ def main():
     valid_test(model)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

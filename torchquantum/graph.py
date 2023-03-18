@@ -10,11 +10,11 @@ from torchpack.utils.logging import logger
 
 
 def encode_w(wires):
-    return '.'.join(list(map(str, wires)))
+    return ".".join(list(map(str, wires)))
 
 
 def decode_w(w):
-    return list(map(eval, w.split('.')))
+    return list(map(eval, w.split(".")))
 
 
 def static_support(f):
@@ -29,6 +29,7 @@ def static_support(f):
             args[0].static_forward(args[0].q_device)
 
         return res
+
     return forward_register_graph
 
 
@@ -59,8 +60,9 @@ class QuantumGraph(object):
             # graph construction is finished, no need to do anything.
             pass
 
-    def add_func(self, name, wires, parent_graph, params=None, n_wires=None,
-                 inverse=False):
+    def add_func(
+        self, name, wires, parent_graph, params=None, n_wires=None, inverse=False
+    ):
         if not self.is_list_finish:
             # graph construction is not finished, build a new operation and
             # add the operation to the graph
@@ -112,14 +114,13 @@ class QuantumGraph(object):
             if name in tq.Operator.fixed_ops:
                 if name not in self.static_matrix_dict.keys():
                     # fixed operator, all share one static matrix
-                    self.static_matrix_dict[module.name] = \
-                        module.matrix.to(self.device)
+                    self.static_matrix_dict[module.name] = module.matrix.to(self.device)
             elif name in tq.Operator.parameterized_ops and name not in [
-                'QubitUnitary',
-                'QubitUnitaryFast',
-                'TrainableUnitary',
-                'TrainableUnitaryStrict',
-                'MultiRZ',
+                "QubitUnitary",
+                "QubitUnitaryFast",
+                "TrainableUnitary",
+                "TrainableUnitaryStrict",
+                "MultiRZ",
             ]:
                 # parameterized operators
                 if name in matrix_params:
@@ -127,11 +128,11 @@ class QuantumGraph(object):
                 else:
                     matrix_params[name] = [module.params]
             elif name in [
-                'QubitUnitary',
-                'QubitUnitaryFast',
-                'TrainableUnitary',
-                'TrainableUnitaryStrict',
-                'MultiRZ',
+                "QubitUnitary",
+                "QubitUnitaryFast",
+                "TrainableUnitary",
+                "TrainableUnitaryStrict",
+                "MultiRZ",
             ]:
                 pass
             else:
@@ -140,12 +141,14 @@ class QuantumGraph(object):
         ptrs = {}
         for name, param in matrix_params.items():
             param_cat = torch.cat(param, dim=0)
-            self.static_matrix_dict[name] = tq.mat_dict[name.lower()](
-                param_cat).to(self.device)
+            self.static_matrix_dict[name] = tq.mat_dict[name.lower()](param_cat).to(
+                self.device
+            )
             if self.static_matrix_dict[name].dim() == 2:
                 # in case there is only one matrix in this type of op
-                self.static_matrix_dict[name] = self.static_matrix_dict[
-                    name].unsqueeze(0)
+                self.static_matrix_dict[name] = self.static_matrix_dict[name].unsqueeze(
+                    0
+                )
             ptrs[name] = 0
 
         # for wire_modules in self.wire_module_list:
@@ -154,28 +157,30 @@ class QuantumGraph(object):
             if name in tq.Operator.fixed_ops:
                 module.static_matrix = self.static_matrix_dict[name]
             elif name in tq.Operator.parameterized_ops and name not in [
-                'QubitUnitary',
-                'QubitUnitaryFast',
-                'TrainableUnitary',
-                'TrainableUnitaryStrict',
-                'MultiRZ'
+                "QubitUnitary",
+                "QubitUnitaryFast",
+                "TrainableUnitary",
+                "TrainableUnitaryStrict",
+                "MultiRZ",
             ]:
                 shape0 = module.params.shape[0]
                 module.static_matrix = self.static_matrix_dict[name][
-                                       ptrs[name]: ptrs[name] + shape0]
+                    ptrs[name] : ptrs[name] + shape0
+                ]
                 ptrs[name] += shape0
                 if shape0 == 1:
                     module.static_matrix = module.static_matrix.squeeze(0)
             elif name in [
-                'QubitUnitary',
-                'QubitUnitaryFast',
-                'TrainableUnitary',
-                'TrainableUnitaryStrict',
+                "QubitUnitary",
+                "QubitUnitaryFast",
+                "TrainableUnitary",
+                "TrainableUnitaryStrict",
             ]:
                 module.static_matrix = module.params.squeeze(0)
-            elif name in ['MultiRZ']:
+            elif name in ["MultiRZ"]:
                 module.static_matrix = tq.mat_dict[name.lower()](
-                    module.params, module.n_wires)
+                    module.params, module.n_wires
+                )
             else:
                 raise NotImplementedError(f"Module {name} not in list")
 
@@ -195,11 +200,11 @@ class QuantumGraph(object):
         if module_list is None:
             module_list = self.module_list
         for module in module_list:
-            if len(module.graph.module_list) == 0 and not \
-                    isinstance(module, tq.Operator):
+            if len(module.graph.module_list) == 0 and not isinstance(
+                module, tq.Operator
+            ):
                 logger.warning(f"Module with no operations exists!")
-            if len(module.graph.module_list) == 0 and isinstance(module,
-                                                                 tq.Operator):
+            if len(module.graph.module_list) == 0 and isinstance(module, tq.Operator):
                 # leaf node
                 self.flat_module_list.append(module)
             else:
@@ -219,16 +224,15 @@ class QuantumGraph(object):
         # block. The block contains wires_per_block wires as a hyper-parameter
         n_wires = len(self.wire_module_list)
         module_ptrs = [0] * n_wires
-        wire_module_len = [len(wire_module) for wire_module in
-                           self.wire_module_list]
+        wire_module_len = [len(wire_module) for wire_module in self.wire_module_list]
 
         def schedule_finish():
-            return all([module_ptrs[k] == wire_module_len[k] for k in
-                        range(len(module_ptrs))])
+            return all(
+                [module_ptrs[k] == wire_module_len[k] for k in range(len(module_ptrs))]
+            )
 
         def is_front(wires, ptrs):
-            return len(set([id(self.wire_module_list[w][ptrs[w]]) for w in
-                            wires])) == 1
+            return len(set([id(self.wire_module_list[w][ptrs[w]]) for w in wires])) == 1
 
         def add_front_large_qubit_gate(ptrs, sches):
             # deal with the case when the number of wires in a block is
@@ -244,10 +248,11 @@ class QuantumGraph(object):
                     pass
                 else:
                     # check whether the large gate are in the front
-                    local_ws = [self.global2local_wire_mapping[wi]
-                                for wi in module.wires]
+                    local_ws = [
+                        self.global2local_wire_mapping[wi] for wi in module.wires
+                    ]
                     if is_front(local_ws, ptrs):
-                        sches.append({'wires': local_ws, 'modules': [module]})
+                        sches.append({"wires": local_ws, "modules": [module]})
                         for local_w in local_ws:
                             ptrs[local_w] += 1
 
@@ -267,8 +272,9 @@ class QuantumGraph(object):
             max_module_per_block = -1
             max_ptrs = None
             max_schedule = None
-            for comb in itertools.combinations(list(range(n_wires)),
-                                               min(wires_per_block, n_wires)):
+            for comb in itertools.combinations(
+                list(range(n_wires)), min(wires_per_block, n_wires)
+            ):
                 comb = list(comb)
                 comb_module_per_block = 0
                 comb_ptrs = module_ptrs.copy()
@@ -281,9 +287,11 @@ class QuantumGraph(object):
                             continue
                         m = self.wire_module_list[wire][comb_ptrs[wire]]
                         module_wires = [
-                            self.global2local_wire_mapping[w] for w in m.wires]
-                        if is_front(module_wires, comb_ptrs) and \
-                                wires_in_comb(module_wires, comb):
+                            self.global2local_wire_mapping[w] for w in m.wires
+                        ]
+                        if is_front(module_wires, comb_ptrs) and wires_in_comb(
+                            module_wires, comb
+                        ):
                             comb_module_per_block += 1
                             for w in module_wires:
                                 comb_ptrs[w] += 1
@@ -300,7 +308,7 @@ class QuantumGraph(object):
                     max_ptrs = comb_ptrs
                     max_schedule = comb_schedule
 
-            schedules.append({'wires': max_comb, 'modules': max_schedule})
+            schedules.append({"wires": max_comb, "modules": max_schedule})
             module_ptrs = max_ptrs.copy()
 
         return schedules
@@ -311,12 +319,12 @@ class QuantumGraph(object):
         n_wires = len(self.wire_module_list)
         module_ptrs = [0] * n_wires
 
-        wire_module_len = [len(wire_module) for wire_module in
-                           self.wire_module_list]
+        wire_module_len = [len(wire_module) for wire_module in self.wire_module_list]
 
         def schedule_finish():
-            return all([module_ptrs[k] == wire_module_len[k] for k in
-                        range(len(module_ptrs))])
+            return all(
+                [module_ptrs[k] == wire_module_len[k] for k in range(len(module_ptrs))]
+            )
 
         def is_front(op, ptrs):
             ws = [self.global2local_wire_mapping[w] for w in op.wires]
@@ -349,10 +357,12 @@ class QuantumGraph(object):
                 while module_ptrs[wire] < wire_module_len[wire]:
                     # loop to add multiple op to the same wire
                     current_op = self.wire_module_list[wire][module_ptrs[wire]]
-                    op_wires = [self.global2local_wire_mapping[w] for w in
-                                current_op.wires]
-                    if is_front(current_op, module_ptrs) and \
-                            not has_conflict(schedule.keys(), op_wires):
+                    op_wires = [
+                        self.global2local_wire_mapping[w] for w in current_op.wires
+                    ]
+                    if is_front(current_op, module_ptrs) and not has_conflict(
+                        schedule.keys(), op_wires
+                    ):
                         key = encode_w(op_wires)
                         if key in schedule:
                             schedule[key].append(current_op)
@@ -393,29 +403,29 @@ class QuantumGraph(object):
                 module_matrix = module_matrix.permute(1, 0)
 
         if n_device_wires > 1:
-            module_matrix = module_matrix.view(shape_extension +
-                                               [2] * n_device_wires * 2)
+            module_matrix = module_matrix.view(
+                shape_extension + [2] * n_device_wires * 2
+            )
 
         # tensor indices for the quantum unitary
         n_block_letters = n_block_wires * 2
-        unitary_indices = ABC[: n_block_letters]
+        unitary_indices = ABC[:n_block_letters]
 
         # indices of the quantum unitary affected by this operation
         locations_dim0 = [wires.index(wi) for wi in module.wires]
         affected_indices = "".join(ABC_ARRAY[locations_dim0].tolist())
 
-        new_indices = ABC[n_block_letters: n_block_letters +
-                          n_device_wires]
+        new_indices = ABC[n_block_letters : n_block_letters + n_device_wires]
         try:
             assert n_block_letters + n_device_wires < 26
         except AssertionError:
-            logger.exception(f"Einsum letters insufficient, please switch to "
-                             f"bmm implementation.")
+            logger.exception(
+                f"Einsum letters insufficient, please switch to " f"bmm implementation."
+            )
             raise AssertionError
 
         new_unitary_indices = functools.reduce(
-            lambda old_string, idx_pair: old_string.replace(idx_pair[0],
-                                                            idx_pair[1]),
+            lambda old_string, idx_pair: old_string.replace(idx_pair[0], idx_pair[1]),
             zip(affected_indices, new_indices),
             unitary_indices,
         )
@@ -429,8 +439,10 @@ class QuantumGraph(object):
         if is_u_batch or is_module_matrix_batch:
             new_unitary_indices = ABC[-1] + new_unitary_indices
 
-        einsum_indices = f"{new_indices}{affected_indices}," \
-                         f"{unitary_indices}->{new_unitary_indices}"
+        einsum_indices = (
+            f"{new_indices}{affected_indices},"
+            f"{unitary_indices}->{new_unitary_indices}"
+        )
 
         new_unitary = torch.einsum(einsum_indices, module_matrix, u)
 
@@ -476,11 +488,13 @@ class QuantumGraph(object):
         original_shape = u.shape
 
         if is_u_batch:
-            u = u.permute(permute_to).reshape([u.shape[0], -1, 2 ** len(
-                m_global_wires), 2 ** len(m_global_wires)])
+            u = u.permute(permute_to).reshape(
+                [u.shape[0], -1, 2 ** len(m_global_wires), 2 ** len(m_global_wires)]
+            )
         else:
-            u = u.permute(permute_to).reshape([-1, 2 ** len(m_global_wires),
-                                               2 ** len(m_global_wires)])
+            u = u.permute(permute_to).reshape(
+                [-1, 2 ** len(m_global_wires), 2 ** len(m_global_wires)]
+            )
             if u.dim() == 2:
                 u = u.unsqueeze(0)
 
@@ -519,43 +533,41 @@ class QuantumGraph(object):
 
     def get_schedule_unitary(self, schedule):
         # here some front large gates will need a larger unitary
-        unitary = torch.eye(2 ** self.q_device.n_wires, dtype=C_DTYPE,
-                            device=self.device).view(
-            [2] * self.q_device.n_wires * 2)
+        unitary = torch.eye(
+            2**self.q_device.n_wires, dtype=C_DTYPE, device=self.device
+        ).view([2] * self.q_device.n_wires * 2)
 
         # global_wires = [self.local2global_wire_mapping[w] for w in comb]
-        for m in schedule['modules']:
-            unitary = self.acc_m_unitary_bmm(unitary, list(range(
-                self.q_device.n_wires)), m)
+        for m in schedule["modules"]:
+            unitary = self.acc_m_unitary_bmm(
+                unitary, list(range(self.q_device.n_wires)), m
+            )
         if unitary.dim() % 2 == 1:
             unitary = unitary.reshape(
-                unitary.shape[0],
-                2 ** self.q_device.n_wires,
-                2 ** self.q_device.n_wires)
+                unitary.shape[0], 2**self.q_device.n_wires, 2**self.q_device.n_wires
+            )
         else:
-            unitary = unitary.reshape(2 ** self.q_device.n_wires,
-                                      2 ** self.q_device.n_wires)
+            unitary = unitary.reshape(
+                2**self.q_device.n_wires, 2**self.q_device.n_wires
+            )
         return unitary
 
     def apply_unitary(self):
         for schedule in self.schedules:
-            comb = schedule['wires']
+            comb = schedule["wires"]
             # here some front large gates will need a larger unitary
-            unitary = torch.eye(2 ** len(comb), dtype=C_DTYPE,
-                                device=self.device).view([2] *
-                                                         len(comb) * 2)
+            unitary = torch.eye(2 ** len(comb), dtype=C_DTYPE, device=self.device).view(
+                [2] * len(comb) * 2
+            )
 
             global_wires = [self.local2global_wire_mapping[w] for w in comb]
-            for m in schedule['modules']:
+            for m in schedule["modules"]:
                 unitary = self.acc_m_unitary_bmm(unitary, global_wires, m)
             if unitary.dim() % 2 == 1:
                 unitary = unitary.reshape(
-                    unitary.shape[0],
-                    2 ** len(comb),
-                    2 ** len(comb))
+                    unitary.shape[0], 2 ** len(comb), 2 ** len(comb)
+                )
             else:
-                unitary = unitary.reshape(2 ** len(comb),
-                                          2 ** len(comb))
+                unitary = unitary.reshape(2 ** len(comb), 2 ** len(comb))
 
-            tqf.qubitunitaryfast(self.q_device, wires=global_wires,
-                                 params=unitary)
+            tqf.qubitunitaryfast(self.q_device, wires=global_wires, params=unitary)
