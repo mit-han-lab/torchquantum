@@ -1,3 +1,117 @@
+# # pylint: disable=line-too-long
+# from qiskit.algorithms import VQE
+# from qiskit_nature.algorithms import (GroundStateEigensolver,
+#                                       NumPyMinimumEigensolverFactory)
+# from qiskit_nature.drivers import Molecule
+# from qiskit_nature.drivers.second_quantization import (
+#     ElectronicStructureMoleculeDriver, ElectronicStructureDriverType)
+# from qiskit_nature.transformers.second_quantization.electronic import FreezeCoreTransformer
+# from qiskit_nature.problems.second_quantization import ElectronicStructureProblem
+# from qiskit_nature.converters.second_quantization import QubitConverter
+# from qiskit_nature.mappers.second_quantization import ParityMapper
+# # pylint: enable=line-too-long
+#
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from qiskit_nature.circuit.library import UCCSD, HartreeFock
+# from qiskit.circuit.library import EfficientSU2
+# from qiskit.algorithms.optimizers import COBYLA, SPSA, SLSQP
+# from qiskit.opflow import TwoQubitReduction
+# from qiskit import BasicAer, Aer
+# from qiskit.utils import QuantumInstance
+# from qiskit.utils.mitigation import CompleteMeasFitter
+# from qiskit.providers.aer.noise import NoiseModel
+#
+# import qiskit_nature
+#
+# qiskit_nature.settings.dict_aux_operators = False
+#
+#
+#
+# import pdb
+# pdb.set_trace()
+#
+# def get_qubit_op(dist):
+#     # Define Molecule
+#     molecule = Molecule(
+#         # Coordinates in Angstrom
+#         geometry=[
+#             ["Li", [0.0, 0.0, 0.0]],
+#             ["H", [dist, 0.0, 0.0]]
+#         ],
+#         multiplicity=1,  # = 2*spin + 1
+#         charge=0,
+#     )
+#
+#     driver = ElectronicStructureMoleculeDriver(
+#         molecule=molecule,
+#         basis="sto3g",
+#         driver_type=ElectronicStructureDriverType.PYSCF)
+#
+#     # Get properties
+#     properties = driver.run()
+#     num_particles = (properties
+#                         .get_property("ParticleNumber")
+#                         .num_particles)
+#     num_spin_orbitals = int(properties
+#                             .get_property("ParticleNumber")
+#                             .num_spin_orbitals)
+#
+#     # Define Problem, Use freeze core approximation, remove orbitals.
+#     problem = ElectronicStructureProblem(
+#         driver,
+#         [FreezeCoreTransformer(freeze_core=True,
+#                                remove_orbitals=[-3,-2])])
+#
+#     second_q_ops = problem.second_q_ops()  # Get 2nd Quant OP
+#     num_spin_orbitals = problem.num_spin_orbitals
+#     num_particles = problem.num_particles
+#
+#     mapper = ParityMapper()  # Set Mapper
+#     hamiltonian = second_q_ops[0]  # Set Hamiltonian
+#     # Do two qubit reduction
+#     converter = QubitConverter(mapper,two_qubit_reduction=True)
+#     reducer = TwoQubitReduction(num_particles)
+#     qubit_op = converter.convert(hamiltonian)
+#     qubit_op = reducer.convert(qubit_op)
+#
+#     return qubit_op, num_particles, num_spin_orbitals, problem, converter
+#
+#
+# def exact_solver(problem, converter):
+#     solver = NumPyMinimumEigensolverFactory()
+#     calc = GroundStateEigensolver(converter, solver)
+#     result = calc.solve(problem)
+#     return result
+#
+#
+# backend = BasicAer.get_backend("statevector_simulator")
+# distances = np.arange(0.5, 4.0, 0.2)
+# exact_energies = []
+# vqe_energies = []
+# optimizer = SLSQP(maxiter=5)
+#
+# # pylint: disable=undefined-loop-variable
+# for dist in distances:
+#     (qubit_op, num_particles, num_spin_orbitals,
+#                              problem, converter) = get_qubit_op(dist)
+#     result = exact_solver(problem,converter)
+#     exact_energies.append(result.total_energies[0].real)
+#     init_state = HartreeFock(num_spin_orbitals, num_particles, converter)
+#     var_form = UCCSD(converter,
+#                      num_particles,
+#                      num_spin_orbitals,
+#                      initial_state=init_state)
+#     vqe = VQE(var_form, optimizer, quantum_instance=backend)
+#     vqe_calc = vqe.compute_minimum_eigenvalue(qubit_op)
+#     vqe_result = problem.interpret(vqe_calc).total_energies[0].real
+#     vqe_energies.append(vqe_result)
+#     print(f"Interatomic Distance: {np.round(dist, 2)}",
+#           f"VQE Result: {vqe_result:.5f}",
+#           f"Exact Energy: {exact_energies[-1]:.5f}")
+#
+# print("All energies have been calculated")
+
 import numpy as np
 import torch
 import torchquantum as tq
@@ -7,37 +121,48 @@ from qiskit.providers.aer.noise import NoiseModel
 from torchquantum.utils import get_provider
 
 
-__all__ = ['NoiseModelTQ',
-           'NoiseModelTQActivation',
-           'NoiseModelTQPhase',
-           'NoiseModelTQReadoutOnly',
-           'NoiseModelTQActivationReadout',
-           'NoiseModelTQPhaseReadout',
-           'NoiseModelTQQErrorOnly'
-           ]
+__all__ = [
+    "NoiseModelTQ",
+    "NoiseModelTQActivation",
+    "NoiseModelTQPhase",
+    "NoiseModelTQReadoutOnly",
+    "NoiseModelTQActivationReadout",
+    "NoiseModelTQPhaseReadout",
+    "NoiseModelTQQErrorOnly",
+]
 
 
-def cos_adjust_noise(current_epoch, n_epochs, prob_schedule,
-                     prob_schedule_separator, orig_noise_total_prob):
+def cos_adjust_noise(
+    current_epoch,
+    n_epochs,
+    prob_schedule,
+    prob_schedule_separator,
+    orig_noise_total_prob,
+):
     if prob_schedule is None:
         noise_total_prob = orig_noise_total_prob
-    elif prob_schedule == 'increase':
+    elif prob_schedule == "increase":
         # scale the cos
         if current_epoch <= prob_schedule_separator:
             noise_total_prob = orig_noise_total_prob * (
-                    -np.cos(current_epoch / prob_schedule_separator *
-                            np.pi) / 2 + 0.5)
+                -np.cos(current_epoch / prob_schedule_separator * np.pi) / 2 + 0.5
+            )
         else:
             noise_total_prob = orig_noise_total_prob
-    elif prob_schedule == 'decrease':
+    elif prob_schedule == "decrease":
         if current_epoch >= prob_schedule_separator:
             noise_total_prob = orig_noise_total_prob * (
-                    np.cos((current_epoch - prob_schedule_separator) /
-                           (n_epochs - prob_schedule_separator) *
-                           np.pi) / 2 + 0.5)
+                np.cos(
+                    (current_epoch - prob_schedule_separator)
+                    / (n_epochs - prob_schedule_separator)
+                    * np.pi
+                )
+                / 2
+                + 0.5
+            )
         else:
             noise_total_prob = orig_noise_total_prob
-    elif prob_schedule == 'increase_decrease':
+    elif prob_schedule == "increase_decrease":
         # if current_epoch <= self.prob_schedule_separator:
         #     self.noise_total_prob = self.orig_noise_total_prob * \
         #         1 / (1 + np.exp(-(current_epoch - (
@@ -49,16 +174,22 @@ def cos_adjust_noise(current_epoch, n_epochs, prob_schedule,
         #                 10))
         if current_epoch <= prob_schedule_separator:
             noise_total_prob = orig_noise_total_prob * (
-                    -np.cos(current_epoch / prob_schedule_separator *
-                            np.pi) / 2 + 0.5)
+                -np.cos(current_epoch / prob_schedule_separator * np.pi) / 2 + 0.5
+            )
         else:
             noise_total_prob = orig_noise_total_prob * (
-                    np.cos((current_epoch - prob_schedule_separator) /
-                           (n_epochs - prob_schedule_separator) *
-                           np.pi) / 2 + 0.5)
+                np.cos(
+                    (current_epoch - prob_schedule_separator)
+                    / (n_epochs - prob_schedule_separator)
+                    * np.pi
+                )
+                / 2
+                + 0.5
+            )
     else:
-        logger.warning(f"Not implemented schedule{prob_schedule}, "
-                       f"will not change prob!")
+        logger.warning(
+            f"Not implemented schedule{prob_schedule}, " f"will not change prob!"
+        )
         noise_total_prob = orig_noise_total_prob
 
     return noise_total_prob
@@ -76,29 +207,25 @@ def apply_readout_error_func(x, c2p_mapping, measure_info):
 
     for k in range(x.shape[-1]):
         p_wire = [c2p_mapping[k]]
-        noisy_0_to_0_prob_all.append(measure_info[tuple(p_wire)][
-                                         'probabilities'][0][0])
-        noisy_0_to_1_prob_all.append(measure_info[tuple(p_wire)][
-                                         'probabilities'][0][1])
-        noisy_1_to_0_prob_all.append(measure_info[tuple(p_wire)][
-                                         'probabilities'][1][0])
-        noisy_1_to_1_prob_all.append(measure_info[tuple(p_wire)][
-                                         'probabilities'][1][1])
+        noisy_0_to_0_prob_all.append(measure_info[tuple(p_wire)]["probabilities"][0][0])
+        noisy_0_to_1_prob_all.append(measure_info[tuple(p_wire)]["probabilities"][0][1])
+        noisy_1_to_0_prob_all.append(measure_info[tuple(p_wire)]["probabilities"][1][0])
+        noisy_1_to_1_prob_all.append(measure_info[tuple(p_wire)]["probabilities"][1][1])
 
-    noisy_0_to_0_prob_all = torch.tensor(noisy_0_to_0_prob_all,
-                                         device=x.device)
-    noisy_0_to_1_prob_all = torch.tensor(noisy_0_to_1_prob_all,
-                                         device=x.device)
-    noisy_1_to_0_prob_all = torch.tensor(noisy_1_to_0_prob_all,
-                                         device=x.device)
-    noisy_1_to_1_prob_all = torch.tensor(noisy_1_to_1_prob_all,
-                                         device=x.device)
+    noisy_0_to_0_prob_all = torch.tensor(noisy_0_to_0_prob_all, device=x.device)
+    noisy_0_to_1_prob_all = torch.tensor(noisy_0_to_1_prob_all, device=x.device)
+    noisy_1_to_0_prob_all = torch.tensor(noisy_1_to_0_prob_all, device=x.device)
+    noisy_1_to_1_prob_all = torch.tensor(noisy_1_to_1_prob_all, device=x.device)
 
-    noisy_measured_0 = noise_free_0_probs * noisy_0_to_0_prob_all + \
-        noise_free_1_probs * noisy_1_to_0_prob_all
+    noisy_measured_0 = (
+        noise_free_0_probs * noisy_0_to_0_prob_all
+        + noise_free_1_probs * noisy_1_to_0_prob_all
+    )
 
-    noisy_measured_1 = noise_free_0_probs * noisy_0_to_1_prob_all + \
-        noise_free_1_probs * noisy_1_to_1_prob_all
+    noisy_measured_1 = (
+        noise_free_0_probs * noisy_0_to_1_prob_all
+        + noise_free_1_probs * noisy_1_to_1_prob_all
+    )
     noisy_expectation = noisy_measured_0 * 1 + noisy_measured_1 * (-1)
 
     return noisy_expectation
@@ -108,22 +235,25 @@ class NoiseModelTQ(object):
     """
     apply gate insertion and readout
     """
-    def __init__(self,
-                 noise_model_name,
-                 n_epochs,
-                 noise_total_prob=None,
-                 ignored_ops=('id', 'kraus', 'reset'),
-                 prob_schedule=None,
-                 prob_schedule_separator=None,
-                 factor=None,
-                 add_thermal=True,
-                 ):
+
+    def __init__(
+        self,
+        noise_model_name,
+        n_epochs,
+        noise_total_prob=None,
+        ignored_ops=("id", "kraus", "reset"),
+        prob_schedule=None,
+        prob_schedule_separator=None,
+        factor=None,
+        add_thermal=True,
+    ):
         self.noise_model_name = noise_model_name
         provider = get_provider(backend_name=noise_model_name)
         backend = provider.get_backend(noise_model_name)
 
         self.noise_model = NoiseModel.from_backend(
-            backend, thermal_relaxation=add_thermal)
+            backend, thermal_relaxation=add_thermal
+        )
         self.noise_model_dict = self.noise_model.to_dict()
         self.is_add_noise = True
         self.v_c_reg_mapping = None
@@ -131,12 +261,13 @@ class NoiseModelTQ(object):
         self.p_v_reg_mapping = None
         self.orig_noise_total_prob = noise_total_prob
         self.noise_total_prob = noise_total_prob
-        self.mode = 'train'
+        self.mode = "train"
         self.ignored_ops = ignored_ops
 
         self.parsed_dict = self.parse_noise_model_dict(self.noise_model_dict)
         self.parsed_dict = self.clean_parsed_noise_model_dict(
-            self.parsed_dict, ignored_ops)
+            self.parsed_dict, ignored_ops
+        )
         self.n_epochs = n_epochs
         self.prob_schedule = prob_schedule
         self.prob_schedule_separator = prob_schedule_separator
@@ -158,40 +289,41 @@ class NoiseModelTQ(object):
             for qubit, qubit_info in operation_info.items():
                 inst_all = []
                 prob_all = []
-                if qubit_info['type'] == 'qerror':
-                    for inst, prob in zip(qubit_info['instructions'],
-                                          qubit_info['probabilities']):
-                        if any([inst_one['name'] in ignored_ops for inst_one
-                                in inst]):
+                if qubit_info["type"] == "qerror":
+                    for inst, prob in zip(
+                        qubit_info["instructions"], qubit_info["probabilities"]
+                    ):
+                        if any([inst_one["name"] in ignored_ops for inst_one in inst]):
                             continue
                         else:
                             inst_all.append(inst)
                             prob_all.append(prob)
-                    nm_dict[operation][qubit]['instructions'] = inst_all
-                    nm_dict[operation][qubit]['probabilities'] = prob_all
+                    nm_dict[operation][qubit]["instructions"] = inst_all
+                    nm_dict[operation][qubit]["probabilities"] = prob_all
         return nm_dict
 
     @staticmethod
     def parse_noise_model_dict(nm_dict):
         # the qubits here are physical (p) qubits
         parsed = {}
-        nm_list = nm_dict['errors']
+        nm_list = nm_dict["errors"]
 
         for info in nm_list:
             val_dict = {
-                'type': info['type'],
-                'instructions': info.get('instructions', None),
-                'probabilities': info['probabilities'],
+                "type": info["type"],
+                "instructions": info.get("instructions", None),
+                "probabilities": info["probabilities"],
             }
 
-            if info['operations'][0] not in parsed.keys():
-                parsed[info['operations'][0]] = {
-                    tuple(info['gate_qubits'][0]): val_dict
+            if info["operations"][0] not in parsed.keys():
+                parsed[info["operations"][0]] = {
+                    tuple(info["gate_qubits"][0]): val_dict
                 }
-            elif tuple(info['gate_qubits'][0]) not in parsed[
-                    info['operations'][0]].keys():
-                parsed[info['operations'][0]][tuple(info['gate_qubits'][0])]\
-                    = val_dict
+            elif (
+                tuple(info["gate_qubits"][0])
+                not in parsed[info["operations"][0]].keys()
+            ):
+                parsed[info["operations"][0]][tuple(info["gate_qubits"][0])] = val_dict
             else:
                 raise ValueError
 
@@ -210,17 +342,17 @@ class NoiseModelTQ(object):
         return probs
 
     def sample_noise_op(self, op_in):
-        if not (self.mode == 'train' and self.is_add_noise):
+        if not (self.mode == "train" and self.is_add_noise):
             return []
 
         op_name = op_in.name.lower()
-        if op_name == 'paulix':
-            op_name = 'x'
-        elif op_name == 'cnot':
-            op_name = 'cx'
-        elif op_name in ['sx', 'id']:
+        if op_name == "paulix":
+            op_name = "x"
+        elif op_name == "cnot":
+            op_name = "cx"
+        elif op_name in ["sx", "id"]:
             pass
-        elif op_name == 'rz':
+        elif op_name == "rz":
             # no noise
             return []
         else:
@@ -228,7 +360,7 @@ class NoiseModelTQ(object):
 
         wires = op_in.wires
 
-        p_wires = [self.p_v_reg_mapping['v2p'][wire] for wire in wires]
+        p_wires = [self.p_v_reg_mapping["v2p"][wire] for wire in wires]
 
         if tuple(p_wires) in self.parsed_dict[op_name].keys():
             inst_prob = self.parsed_dict[op_name][tuple(p_wires)]
@@ -239,16 +371,17 @@ class NoiseModelTQ(object):
             elif len(p_wires) == 2:
                 inst_prob = self.parsed_dict[op_name][(0, 1)]
 
-        inst = inst_prob['instructions']
+        inst = inst_prob["instructions"]
         if len(inst) == 0:
             return []
 
-        probs = inst_prob['probabilities']
+        probs = inst_prob["probabilities"]
 
         magnified_probs = self.magnify_probs(probs)
 
-        idx = np.random.choice(list(range(len(inst) + 1)),
-                               p=magnified_probs + [1 - sum(magnified_probs)])
+        idx = np.random.choice(
+            list(range(len(inst) + 1)), p=magnified_probs + [1 - sum(magnified_probs)]
+        )
         if idx == len(inst):
             return []
 
@@ -256,15 +389,16 @@ class NoiseModelTQ(object):
 
         ops = []
         for instruction in instructions:
-            v_wires = [self.p_v_reg_mapping['p2v'][qubit] for qubit in
-                       instruction['qubits']]
-            if instruction['name'] == 'x':
+            v_wires = [
+                self.p_v_reg_mapping["p2v"][qubit] for qubit in instruction["qubits"]
+            ]
+            if instruction["name"] == "x":
                 op = tq.PauliX(wires=v_wires)
-            elif instruction['name'] == 'y':
+            elif instruction["name"] == "y":
                 op = tq.PauliY(wires=v_wires)
-            elif instruction['name'] == 'z':
+            elif instruction["name"] == "z":
                 op = tq.PauliZ(wires=v_wires)
-            elif instruction['name'] == 'reset':
+            elif instruction["name"] == "reset":
                 op = tq.Reset(wires=v_wires)
             else:
                 # ignore operations specified by self.ignored_ops
@@ -275,8 +409,8 @@ class NoiseModelTQ(object):
         return ops
 
     def apply_readout_error(self, x):
-        c2p_mapping = self.p_c_reg_mapping['c2p']
-        measure_info = self.parsed_dict['measure']
+        c2p_mapping = self.p_c_reg_mapping["c2p"]
+        measure_info = self.parsed_dict["measure"]
 
         return apply_readout_error_func(x, c2p_mapping, measure_info)
 
@@ -285,19 +419,21 @@ class NoiseModelTQActivation(object):
     """
     add noise to the activations
     """
-    def __init__(self,
-                 mean=(0.,),
-                 std=(1.,),
-                 n_epochs=200,
-                 prob_schedule=None,
-                 prob_schedule_separator=None,
-                 after_norm=False,
-                 factor=None
-                 ):
+
+    def __init__(
+        self,
+        mean=(0.0,),
+        std=(1.0,),
+        n_epochs=200,
+        prob_schedule=None,
+        prob_schedule_separator=None,
+        after_norm=False,
+        factor=None,
+    ):
         self.mean = mean
         self.std = std
         self.is_add_noise = True
-        self.mode = 'train'
+        self.mode = "train"
         self.after_norm = after_norm
 
         self.orig_std = std
@@ -320,7 +456,7 @@ class NoiseModelTQActivation(object):
             n_epochs=self.n_epochs,
             prob_schedule=self.prob_schedule,
             prob_schedule_separator=self.prob_schedule_separator,
-            orig_noise_total_prob=self.orig_std
+            orig_noise_total_prob=self.orig_std,
         )
 
     def sample_noise_op(self, op_in):
@@ -330,17 +466,20 @@ class NoiseModelTQActivation(object):
         return x
 
     def add_noise(self, x, node_id, is_after_norm=False):
-        if (self.after_norm and is_after_norm) or \
-                (not self.after_norm and not is_after_norm):
-            if self.mode == 'train' and self.is_add_noise:
+        if (self.after_norm and is_after_norm) or (
+            not self.after_norm and not is_after_norm
+        ):
+            if self.mode == "train" and self.is_add_noise:
                 if self.factor is None:
                     factor = 1
                 else:
                     factor = self.factor
 
-                x = x + torch.randn(
-                    x.shape, device=x.device) * self.std[node_id] * factor + \
-                    self.mean[node_id]
+                x = (
+                    x
+                    + torch.randn(x.shape, device=x.device) * self.std[node_id] * factor
+                    + self.mean[node_id]
+                )
 
         return x
 
@@ -349,18 +488,20 @@ class NoiseModelTQPhase(object):
     """
     add noise to rotation parameters
     """
-    def __init__(self,
-                 mean=0.,
-                 std=1.,
-                 n_epochs=200,
-                 prob_schedule=None,
-                 prob_schedule_separator=None,
-                 factor=None
-                 ):
+
+    def __init__(
+        self,
+        mean=0.0,
+        std=1.0,
+        n_epochs=200,
+        prob_schedule=None,
+        prob_schedule_separator=None,
+        factor=None,
+    ):
         self.mean = mean
         self.std = std
         self.is_add_noise = True
-        self.mode = 'train'
+        self.mode = "train"
 
         self.orig_std = std
         self.n_epochs = n_epochs
@@ -382,7 +523,7 @@ class NoiseModelTQPhase(object):
             n_epochs=self.n_epochs,
             prob_schedule=self.prob_schedule,
             prob_schedule_separator=self.prob_schedule_separator,
-            orig_noise_total_prob=self.orig_std
+            orig_noise_total_prob=self.orig_std,
         )
 
     def sample_noise_op(self, op_in):
@@ -392,13 +533,16 @@ class NoiseModelTQPhase(object):
         return x
 
     def add_noise(self, phase):
-        if self.mode == 'train' and self.is_add_noise:
+        if self.mode == "train" and self.is_add_noise:
             if self.factor is None:
                 factor = 1
             else:
                 factor = self.factor
-            phase = phase + torch.randn(phase.shape, device=phase.device) * \
-                self.std * factor + self.mean
+            phase = (
+                phase
+                + torch.randn(phase.shape, device=phase.device) * self.std * factor
+                + self.mean
+            )
 
         return phase
 
@@ -414,16 +558,17 @@ class NoiseModelTQQErrorOnly(NoiseModelTQ):
 
 
 class NoiseModelTQActivationReadout(NoiseModelTQActivation):
-    def __init__(self,
-                 noise_model_name,
-                 mean=0.,
-                 std=1.,
-                 n_epochs=200,
-                 prob_schedule=None,
-                 prob_schedule_separator=None,
-                 after_norm=False,
-                 factor=None
-                 ):
+    def __init__(
+        self,
+        noise_model_name,
+        mean=0.0,
+        std=1.0,
+        n_epochs=200,
+        prob_schedule=None,
+        prob_schedule_separator=None,
+        after_norm=False,
+        factor=None,
+    ):
         super().__init__(
             mean=mean,
             std=std,
@@ -443,33 +588,33 @@ class NoiseModelTQActivationReadout(NoiseModelTQActivation):
         self.p_c_reg_mapping = None
         self.p_v_reg_mapping = None
 
-        self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(
-            self.noise_model_dict)
+        self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(self.noise_model_dict)
 
     def apply_readout_error(self, x):
-        c2p_mapping = self.p_c_reg_mapping['c2p']
-        measure_info = self.parsed_dict['measure']
+        c2p_mapping = self.p_c_reg_mapping["c2p"]
+        measure_info = self.parsed_dict["measure"]
 
         return apply_readout_error_func(x, c2p_mapping, measure_info)
 
 
 class NoiseModelTQPhaseReadout(NoiseModelTQPhase):
-    def __init__(self,
-                 noise_model_name,
-                 mean=0.,
-                 std=1.,
-                 n_epochs=200,
-                 prob_schedule=None,
-                 prob_schedule_separator=None,
-                 factor=None
-                 ):
+    def __init__(
+        self,
+        noise_model_name,
+        mean=0.0,
+        std=1.0,
+        n_epochs=200,
+        prob_schedule=None,
+        prob_schedule_separator=None,
+        factor=None,
+    ):
         super().__init__(
             mean=mean,
             std=std,
             n_epochs=n_epochs,
             prob_schedule=prob_schedule,
             prob_schedule_separator=prob_schedule_separator,
-            factor=factor
+            factor=factor,
         )
         provider = get_provider(backend_name=noise_model_name)
         backend = provider.get_backend(noise_model_name)
@@ -481,11 +626,10 @@ class NoiseModelTQPhaseReadout(NoiseModelTQPhase):
         self.p_c_reg_mapping = None
         self.p_v_reg_mapping = None
 
-        self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(
-            self.noise_model_dict)
+        self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(self.noise_model_dict)
 
     def apply_readout_error(self, x):
-        c2p_mapping = self.p_c_reg_mapping['c2p']
-        measure_info = self.parsed_dict['measure']
+        c2p_mapping = self.p_c_reg_mapping["c2p"]
+        measure_info = self.parsed_dict["measure"]
 
         return apply_readout_error_func(x, c2p_mapping, measure_info)

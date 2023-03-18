@@ -1,3 +1,42 @@
+# import torchquantum as tq
+#
+# from torchquantum.plugins import op_history2qiskit
+# from qiskit import Aer, transpile
+# import numpy as np
+#
+# def test_measure():
+#
+#     n_shots = 10000
+#     qdev = tq.QuantumDevice(n_wires=3, bsz=1, record_op=True)
+#     qdev.x(wires=2) # type: ignore
+#     qdev.x(wires=1) # type: ignore
+#     qdev.ry(wires=0, params=0.98) # type: ignore
+#     qdev.rx(wires=1, params=1.2) # type: ignore
+#     qdev.cnot(wires=[0, 2]) # type: ignore
+#
+#     tq_counts = tq.measure(qdev, n_shots=n_shots)
+#
+#     circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
+#     circ.measure_all()
+#     simulator = Aer.get_backend('aer_simulator')
+#     circ = transpile(circ, simulator)
+#     qiskit_res = simulator.run(circ, shots=n_shots).result()
+#     qiskit_counts = qiskit_res.get_counts()
+#
+#     for k, v in tq_counts[0].items():
+#         # need to reverse the bitstring because qiskit is in little endian
+#         qiskit_ratio = qiskit_counts.get(k[::-1], 0) / n_shots
+#         tq_ratio = v / n_shots
+#         print(k, qiskit_ratio, tq_ratio)
+#         assert np.isclose(qiskit_ratio, tq_ratio, atol=0.1)
+#
+#     print("tq.measure test passed")
+#
+# if __name__ == '__main__':
+#     import pdb
+#     pdb.set_trace()
+#     test_measure()
+
 # FIXED parameterization
 
 # This code is part of Qiskit.
@@ -45,12 +84,14 @@ logger = logging.getLogger(__name__)
 class AerBackend(Backend, ABC):
     """Qiskit Aer Backend class."""
 
-    def __init__(self,
-                 configuration,
-                 properties=None,
-                 defaults=None,
-                 backend_options=None,
-                 provider=None):
+    def __init__(
+        self,
+        configuration,
+        properties=None,
+        defaults=None,
+        backend_options=None,
+        provider=None,
+    ):
         """Aer class for backends.
 
         This method should initialize the module and its configuration, and
@@ -97,8 +138,13 @@ class AerBackend(Backend, ABC):
                         # it's already bound and should be skipped
                         if not param.parameters:
                             continue
-                        local_binds = {k: v for k, v in binds.items() if k in param.parameters}
-                        bind_list = [dict(zip(local_binds, t)) for t in zip(*local_binds.values())]
+                        local_binds = {
+                            k: v for k, v in binds.items() if k in param.parameters
+                        }
+                        bind_list = [
+                            dict(zip(local_binds, t))
+                            for t in zip(*local_binds.values())
+                        ]
                         bound_values = [float(param.bind(x)) for x in bind_list]
                         parameterizations.append([[index, bind_pos], bound_values])
         return parameterizations
@@ -106,7 +152,9 @@ class AerBackend(Backend, ABC):
     def _convert_binds(self, circuits, parameter_binds):
         if isinstance(circuits, QuantumCircuit):
             if len(parameter_binds) > 1:
-                raise AerError("More than 1 parameter table provided for a single circuit")
+                raise AerError(
+                    "More than 1 parameter table provided for a single circuit"
+                )
 
             return [self._convert_circuit_binds(circuits, parameter_binds[0])]
         elif len(parameter_binds) != len(circuits):
@@ -115,18 +163,14 @@ class AerBackend(Backend, ABC):
                 "parameter bind dictionaries"
             )
         parameterizations = [
-            self._convert_circuit_binds(
-                circuit, parameter_binds[idx]) for idx, circuit in enumerate(circuits)
+            self._convert_circuit_binds(circuit, parameter_binds[idx])
+            for idx, circuit in enumerate(circuits)
         ]
         return parameterizations
 
     # pylint: disable=arguments-differ
-    @deprecate_arguments({'qobj': 'circuits'})
-    def run(self,
-            circuits,
-            validate=False,
-            parameter_binds=None,
-            **run_options):
+    @deprecate_arguments({"qobj": "circuits"})
+    def run(self, circuits, validate=False, parameter_binds=None, **run_options):
         """Run a qobj on the backend.
 
         Args:
@@ -165,11 +209,13 @@ class AerBackend(Backend, ABC):
         """
         if isinstance(circuits, (QasmQobj, PulseQobj)):
             warnings.warn(
-                'Using a qobj for run() is deprecated as of qiskit-aer 0.9.0'
-                ' and will be removed no sooner than 3 months from that release'
-                ' date. Transpiled circuits should now be passed directly using'
-                ' `backend.run(circuits, **run_options).',
-                DeprecationWarning, stacklevel=2)
+                "Using a qobj for run() is deprecated as of qiskit-aer 0.9.0"
+                " and will be removed no sooner than 3 months from that release"
+                " date. Transpiled circuits should now be passed directly using"
+                " `backend.run(circuits, **run_options).",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             if parameter_binds:
                 raise AerError("Parameter binds can't be used with an input qobj")
             # A work around to support both qobj options and run options until
@@ -186,26 +232,30 @@ class AerBackend(Backend, ABC):
                         run_options[key] = value
             qobj = self._assemble(circuits, **run_options)
         else:
-            qobj = self._assemble(circuits, parameter_binds=parameter_binds, **run_options)
+            qobj = self._assemble(
+                circuits, parameter_binds=parameter_binds, **run_options
+            )
 
         # Optional validation
         if validate:
             self._validate(qobj)
 
         # Get executor from qobj config and delete attribute so qobj can still be serialized
-        executor = getattr(qobj.config, 'executor', None)
-        if hasattr(qobj.config, 'executor'):
-            delattr(qobj.config, 'executor')
+        executor = getattr(qobj.config, "executor", None)
+        if hasattr(qobj.config, "executor"):
+            delattr(qobj.config, "executor")
 
         # Optionally split the job
         experiments = split_qobj(
-            qobj, max_size=getattr(qobj.config, 'max_job_size', None),
-            max_shot_size=getattr(qobj.config, 'max_shot_size', None))
+            qobj,
+            max_size=getattr(qobj.config, "max_job_size", None),
+            max_shot_size=getattr(qobj.config, "max_shot_size", None),
+        )
 
         # Temporarily remove any executor from options so that job submission
         # can work with Dask client executors which can't be pickled
-        opts_executor = getattr(self._options, 'executor', None)
-        if hasattr(self._options, 'executor'):
+        opts_executor = getattr(self._options, "executor", None)
+        if hasattr(self._options, "executor"):
             self._options.executor = None
 
         # Submit job
@@ -217,7 +267,7 @@ class AerBackend(Backend, ABC):
         aer_job.submit()
 
         # Restore removed executor after submission
-        if hasattr(self._options, 'executor'):
+        if hasattr(self._options, "executor"):
             self._options.executor = opts_executor
 
         return aer_job
@@ -233,7 +283,7 @@ class AerBackend(Backend, ABC):
             setattr(config, key, val)
         # If config has custom instructions add them to
         # basis gates to include them for the terra transpiler
-        if hasattr(config, 'custom_instructions'):
+        if hasattr(config, "custom_instructions"):
             config.basis_gates = config.basis_gates + config.custom_instructions
         return config
 
@@ -283,9 +333,10 @@ class AerBackend(Backend, ABC):
             backend_version=self.configuration().backend_version,
             operational=True,
             pending_jobs=0,
-            status_msg='')
+            status_msg="",
+        )
 
-    def _run(self, qobj, job_id='', format_result=True):
+    def _run(self, qobj, job_id="", format_result=True):
         """Run a job"""
         # Start timer
         start = time.time()
@@ -297,9 +348,8 @@ class AerBackend(Backend, ABC):
         if not isinstance(output, dict):
             logger.error("%s: simulation failed.", self.name())
             if output:
-                logger.error('Output: %s', output)
-            raise AerError(
-                "simulation terminated without returning valid output.")
+                logger.error("Output: %s", output)
+            raise AerError("simulation terminated without returning valid output.")
 
         # Format results
         output["job_id"] = job_id
@@ -330,7 +380,9 @@ class AerBackend(Backend, ABC):
             save_subtypes = metadata.get("result_subtypes", {})
             for key, val in data.items():
                 if key in save_types:
-                    data[key] = format_save_type(val, save_types[key], save_subtypes[key])
+                    data[key] = format_save_type(
+                        val, save_types[key], save_subtypes[key]
+                    )
         return Result.from_dict(output)
 
     def _assemble(self, circuits, parameter_binds=None, **run_options):
@@ -346,13 +398,13 @@ class AerBackend(Backend, ABC):
 
             # Compile Qasm3 instructions
             circuits, optypes = compile_circuit(
-                circuits,
-                basis_gates=self.configuration().basis_gates,
-                optypes=optypes)
+                circuits, basis_gates=self.configuration().basis_gates, optypes=optypes
+            )
 
             # run option noise model
             circuits, optypes, run_options = self._assemble_noise_model(
-                circuits, optypes, **run_options)
+                circuits, optypes, **run_options
+            )
 
             if parameter_binds:
                 # Handle parameter binding
@@ -373,7 +425,8 @@ class AerBackend(Backend, ABC):
             # We convert to strings to avoid pybinding of types
             qobj.config.optypes = [
                 set(i.__name__ for i in optype) if optype else set()
-                for optype in optypes]
+                for optype in optypes
+            ]
 
         # Add options
         for key, val in self.options.__dict__.items():
@@ -399,12 +452,15 @@ class AerBackend(Backend, ABC):
         # that do not contain a quantum error
         updated_noise = False
         noise_model = run_options.get(
-            'noise_model', getattr(self.options, 'noise_model', None))
+            "noise_model", getattr(self.options, "noise_model", None)
+        )
 
         # Add custom pass noise only to QuantumCircuit objects that contain delay
         # instructions since this is the only instruction handled by the noise pass
         # at present
-        if noise_model and all(isinstance(circ, QuantumCircuit) for circ in run_circuits):
+        if noise_model and all(
+            isinstance(circ, QuantumCircuit) for circ in run_circuits
+        ):
             npm = noise_model._pass_manager()
             if npm is not None:
                 # Get indicies of circuits that need noise transpiling
@@ -425,7 +481,8 @@ class AerBackend(Backend, ABC):
         # Check if circuits contain quantum error instructions
         for idx, circ in enumerate(run_circuits):
             if QuantumChannelInstruction in optypes[idx] and not isinstance(
-                    circ, (Schedule, ScheduleBlock)):
+                circ, (Schedule, ScheduleBlock)
+            ):
                 updated_circ = False
                 new_data = []
                 for inst, qargs, cargs in circ.data:
@@ -456,17 +513,17 @@ class AerBackend(Backend, ABC):
 
         # If we modified the existing noise model, add it to the run options
         if updated_noise:
-            run_options['noise_model'] = noise_model
+            run_options["noise_model"] = noise_model
 
         # Return the possibly updated circuits and noise model
         return run_circuits, optypes, run_options
 
     def _get_executor(self, **run_options):
         """Get the executor"""
-        if 'executor' in run_options:
-            return run_options['executor']
+        if "executor" in run_options:
+            return run_options["executor"]
         else:
-            return getattr(self._options, 'executor', None)
+            return getattr(self._options, "executor", None)
 
     @abstractmethod
     def _execute(self, qobj):
@@ -549,4 +606,4 @@ class AerBackend(Backend, ABC):
         """String representation of an AerBackend."""
         name = self.__class__.__name__
         display = f"'{self.name()}'"
-        return f'{name}({display})'
+        return f"{name}({display})"

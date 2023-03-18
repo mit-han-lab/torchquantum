@@ -6,6 +6,7 @@ from qiskit.test.mock import FakeQuito, FakeArmonk, FakeBogota
 from qiskit.compiler import assemble, schedule
 from .qiskit_macros import IBMQ_PNAMES
 
+
 def circ2pulse(circuits, name):
     if name in IBMQ_PNAMES:
         backend = name()

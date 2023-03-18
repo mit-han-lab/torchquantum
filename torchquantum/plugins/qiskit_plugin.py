@@ -1,3 +1,20 @@
+# import torch
+# import torchquantum as tq
+# from qiskit import pulse, QuantumCircuit
+# from qiskit.pulse import library
+# from qiskit.test.mock import FakeQuito, FakeArmonk, FakeBogota
+# from qiskit.compiler import assemble, schedule
+# from .qiskit_macros import IBMQ_PNAMES
+#
+# def circ2pulse(circuits, name):
+#     if name in IBMQ_PNAMES:
+#         backend = name()
+#         with pulse.build(backend) as pulse_tq:
+#             qc = circuits
+#             qc.measure_all()
+#             pulse.call(qc)
+#         pulse_tq.draw()
+
 import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
@@ -8,24 +25,29 @@ from qiskit import QuantumCircuit
 from qiskit import Aer, execute
 from qiskit.circuit import Parameter
 from torchpack.utils.logging import logger
-from torchquantum.utils import (switch_little_big_endian_matrix,
-                                find_global_phase,
-                                switch_little_big_endian_state,
-                                )
+from torchquantum.utils import (
+    switch_little_big_endian_matrix,
+    find_global_phase,
+    switch_little_big_endian_state,
+)
 from typing import Iterable, List
 from torchquantum.functional import mat_dict
 
 
-__all__ = ['tq2qiskit', 'tq2qiskit_parameterized', 'qiskit2tq',
-           'tq2qiskit_measurement', 'tq2qiskit_expand_params',
-           'qiskit_assemble_circs',
-           'tq2qiskit_initialize',
-           'append_parameterized_gate',
-           'append_fixed_gate',
-           'op_history2qiskit',
-           'op_history2qiskit_expand_params',
-           'op_history2qasm',
-           ]
+__all__ = [
+    "tq2qiskit",
+    "tq2qiskit_parameterized",
+    "qiskit2tq",
+    "tq2qiskit_measurement",
+    "tq2qiskit_expand_params",
+    "qiskit_assemble_circs",
+    "tq2qiskit_initialize",
+    "append_parameterized_gate",
+    "append_fixed_gate",
+    "op_history2qiskit",
+    "op_history2qiskit_expand_params",
+    "op_history2qasm",
+]
 
 
 def qiskit_assemble_circs(encoders, fixed_layer, measurement):
@@ -39,142 +61,155 @@ def qiskit_assemble_circs(encoders, fixed_layer, measurement):
 
 
 def append_parameterized_gate(func, circ, input_idx, params, wires):
-    if func == 'rx':
+    if func == "rx":
         circ.rx(theta=params[input_idx[0]], qubit=wires[0])
-    elif func == 'ry':
+    elif func == "ry":
         circ.ry(theta=params[input_idx[0]], qubit=wires[0])
-    elif func == 'rz':
+    elif func == "rz":
         circ.rz(phi=params[input_idx[0]], qubit=wires[0])
-    elif func == 'rxx':
-        circ.rxx(theta=params[input_idx[0]], qubit1=wires[0],
-                 qubit2=wires[1])
-    elif func == 'ryy':
-        circ.ryy(theta=params[input_idx[0]], qubit1=wires[0],
-                 qubit2=wires[1])
-    elif func == 'rzz':
-        circ.rzz(theta=params[input_idx[0]], qubit1=wires[0],
-                 qubit2=wires[1])
-    elif func == 'rzx':
-        circ.rzx(theta=params[input_idx[0]], qubit1=wires[0],
-                 qubit2=wires[1])
-    elif func == 'phaseshift':
+    elif func == "rxx":
+        circ.rxx(theta=params[input_idx[0]], qubit1=wires[0], qubit2=wires[1])
+    elif func == "ryy":
+        circ.ryy(theta=params[input_idx[0]], qubit1=wires[0], qubit2=wires[1])
+    elif func == "rzz":
+        circ.rzz(theta=params[input_idx[0]], qubit1=wires[0], qubit2=wires[1])
+    elif func == "rzx":
+        circ.rzx(theta=params[input_idx[0]], qubit1=wires[0], qubit2=wires[1])
+    elif func == "phaseshift":
         circ.p(theta=params[input_idx[0]], qubit=wires[0])
-    elif func == 'crx':
-        circ.crx(theta=params[input_idx[0]], control_qubit=wires[0],
-                 target_qubit=wires[1])
-    elif func == 'cry':
-        circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
-                 target_qubit=wires[1])
-    elif func == 'crz':
-        circ.cry(theta=params[input_idx[0]], control_qubit=wires[0],
-                 target_qubit=wires[1])
-    elif func == 'u1':
+    elif func == "crx":
+        circ.crx(
+            theta=params[input_idx[0]], control_qubit=wires[0], target_qubit=wires[1]
+        )
+    elif func == "cry":
+        circ.cry(
+            theta=params[input_idx[0]], control_qubit=wires[0], target_qubit=wires[1]
+        )
+    elif func == "crz":
+        circ.cry(
+            theta=params[input_idx[0]], control_qubit=wires[0], target_qubit=wires[1]
+        )
+    elif func == "u1":
         circ.p(theta=params[input_idx[0]], qubit=wires[0])
-    elif func == 'cu1':
-        circ.cu1(theta=params[input_idx[0]], control_qubit=wires[0],
-                 target_qubit=wires[1])
-    elif func == 'u2':
-        circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]],
-                qubit=wires[0])
-    elif func == 'u3':
-        circ.u3(theta=params[input_idx[0]], phi=params[input_idx[1]],
-                lam=params[input_idx[2]], qubit=wires[0])
-    elif func == 'cu3':
-        circ.cu3(theta=params[input_idx[0]], phi=params[input_idx[1]],
-                 lam=params[input_idx[2]], qubit=wires[0])
+    elif func == "cu1":
+        circ.cu1(
+            theta=params[input_idx[0]], control_qubit=wires[0], target_qubit=wires[1]
+        )
+    elif func == "u2":
+        circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]], qubit=wires[0])
+    elif func == "u3":
+        circ.u3(
+            theta=params[input_idx[0]],
+            phi=params[input_idx[1]],
+            lam=params[input_idx[2]],
+            qubit=wires[0],
+        )
+    elif func == "cu3":
+        circ.cu3(
+            theta=params[input_idx[0]],
+            phi=params[input_idx[1]],
+            lam=params[input_idx[2]],
+            qubit=wires[0],
+        )
     else:
-        raise NotImplementedError(f"{func} cannot be converted to "
-                                  f"parameterized Qiskit QuantumCircuit")
+        raise NotImplementedError(
+            f"{func} cannot be converted to " f"parameterized Qiskit QuantumCircuit"
+        )
 
 
 def append_fixed_gate(circ, func, params, wires, inverse):
     if not isinstance(wires, Iterable):
         wires = [wires]
     # if not isinstance(params, Iterable):
-        # params = [params]
-    
-    if func in ['hadamard', 'h']:
+    # params = [params]
+
+    if func in ["hadamard", "h"]:
         circ.h(*wires)
-    elif func in ['shadamard', 'sh']:
+    elif func in ["shadamard", "sh"]:
         circ.ry(np.pi / 4, *wires)
-    elif func in ['paulix', 'x']:
+    elif func in ["paulix", "x"]:
         circ.x(*wires)
-    elif func in ['pauliy', 'y']:
+    elif func in ["pauliy", "y"]:
         circ.y(*wires)
-    elif func in ['pauliz', 'z']:
+    elif func in ["pauliz", "z"]:
         circ.z(*wires)
-    elif func == 's':
+    elif func == "s":
         circ.s(*wires)
-    elif func == 't':
+    elif func == "t":
         circ.t(*wires)
-    elif func == 'sx':
+    elif func == "sx":
         circ.sx(*wires)
-    elif func in ['cnot', 'cx']:
+    elif func in ["cnot", "cx"]:
         circ.cnot(*wires)
-    elif func == 'cz':
+    elif func == "cz":
         circ.cz(*wires)
-    elif func == 'cy':
+    elif func == "cy":
         circ.cy(*wires)
-    elif func == 'rx':
+    elif func == "rx":
         circ.rx(params, *wires)
-    elif func == 'ry':
+    elif func == "ry":
         circ.ry(params, *wires)
-    elif func == 'rz':
+    elif func == "rz":
         circ.rz(params, *wires)
-    elif func in ['rxx', 'xx']:
+    elif func in ["rxx", "xx"]:
         circ.rxx(params, *wires)
-    elif func in ['ryy', 'yy']:
+    elif func in ["ryy", "yy"]:
         circ.ryy(params, *wires)
-    elif func in ['rzz', 'zz']:
+    elif func in ["rzz", "zz"]:
         circ.rzz(params, *wires)
-    elif func == ['rzx', 'zx']:
+    elif func == ["rzx", "zx"]:
         circ.rzx(params, *wires)
-    elif func == 'swap':
+    elif func == "swap":
         circ.swap(*wires)
-    elif func == 'sswap':
+    elif func == "sswap":
         # square root of swap
         from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
-        mat = mat_dict['sswap'].detach().cpu().numpy()
+
+        mat = mat_dict["sswap"].detach().cpu().numpy()
         mat = switch_little_big_endian_matrix(mat)
         circ.append(UnitaryGate(mat), *wires, [])
-    elif func == 'cswap':
+    elif func == "cswap":
         circ.cswap(*wires)
-    elif func in ['toffoli', 'ccx']:
+    elif func in ["toffoli", "ccx"]:
         circ.ccx(*wires)
-    elif func in ['phaseshift', 'p']:
+    elif func in ["phaseshift", "p"]:
         circ.p(params, *wires)
-    elif func == 'crx':
+    elif func == "crx":
         circ.crx(params, *wires)
-    elif func == 'cry':
+    elif func == "cry":
         circ.cry(params, *wires)
-    elif func == 'crz':
+    elif func == "crz":
         circ.crz(params, *wires)
-    elif func == 'u1':
+    elif func == "u1":
         circ.u1(params, *wires)
-    elif func in ['cu1', 'cp', 'cr', 'cphase']:
+    elif func in ["cu1", "cp", "cr", "cphase"]:
         circ.cu1(params, *wires)
-    elif func == 'u2':
+    elif func == "u2":
         circ.u2(*list(params), *wires)
-    elif func == 'u3':
+    elif func == "u3":
         circ.u3(*list(params), *wires)
-    elif func == 'cu3':
+    elif func == "cu3":
         circ.cu3(*list(params), *wires)
-    elif func == 'qubitunitary' or \
-            func == 'qubitunitaryfast' or \
-            func == 'qubitunitarystrict':
+    elif (
+        func == "qubitunitary"
+        or func == "qubitunitaryfast"
+        or func == "qubitunitarystrict"
+    ):
         from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
+
         mat = np.array(params)
         mat = switch_little_big_endian_matrix(mat)
         circ.append(UnitaryGate(mat), wires, [])
-    elif func == 'multicnot':
-        circ.mcx(wires[:-1], wires[-1]) # type: ignore
-    elif func == 'multixcnot':
-        controls = wires[:-1] # type: ignore
-        target = wires[-1] # type: ignore
+    elif func == "multicnot":
+        circ.mcx(wires[:-1], wires[-1])  # type: ignore
+    elif func == "multixcnot":
+        controls = wires[:-1]  # type: ignore
+        target = wires[-1]  # type: ignore
         num_ctrl_qubits = len(controls)
 
-        gate = qiskit_gate.MCXGrayCode(num_ctrl_qubits,
-                                        ctrl_state='0' * num_ctrl_qubits)
+        gate = qiskit_gate.MCXGrayCode(
+            num_ctrl_qubits, ctrl_state="0" * num_ctrl_qubits
+        )
         circ.append(gate, controls + [target], [])
     else:
         logger.exception(f"{func} cannot be converted to Qiskit.")
@@ -203,7 +238,7 @@ def tq2qiskit_initialize(q_device: tq.QuantumDevice, all_states):
         circ = QuantumCircuit(q_device.n_wires)
         state = all_states[k]
         state = np.complex128(state)
-        state = state / (np.absolute(state)**2).sum()
+        state = state / (np.absolute(state) ** 2).sum()
         state = switch_little_big_endian_state(state)
         qiskit.circuit.library.data_preparation.state_preparation._EPS = 1e-7
         circ.initialize(state, circ.qubits)
@@ -211,10 +246,11 @@ def tq2qiskit_initialize(q_device: tq.QuantumDevice, all_states):
     return circ_all
 
 
-def tq2qiskit_expand_params(q_device: tq.QuantumDevice,
-                            x: torch.Tensor,
-                            func_list,
-                            ):
+def tq2qiskit_expand_params(
+    q_device: tq.QuantumDevice,
+    x: torch.Tensor,
+    func_list,
+):
     """Expand the input classical values to fixed rotation angles in gates. No
         Qiskit.circuit.Parameter is used. All rotations are hard coded in
         gates. This will solve the issue of qiskit bugs.
@@ -237,11 +273,10 @@ def tq2qiskit_expand_params(q_device: tq.QuantumDevice,
         classical_values = x[k].detach().cpu().numpy()
         circ = QuantumCircuit(q_device.n_wires)
         for info in func_list:
-            input_idx = info['input_idx']
-            func = info['func']
-            wires = info['wires']
-            append_parameterized_gate(func, circ, input_idx,
-                                      classical_values, wires)
+            input_idx = info["input_idx"]
+            func = info["func"]
+            wires = info["wires"]
+            append_parameterized_gate(func, circ, input_idx, classical_values, wires)
 
         circ_all.append(circ)
 
@@ -249,8 +284,14 @@ def tq2qiskit_expand_params(q_device: tq.QuantumDevice,
 
 
 # construct a QuantumCircuit object according to the tq module
-def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
-              draw=False, remove_ops=False, remove_ops_thres=1e-4):
+def tq2qiskit(
+    q_device: tq.QuantumDevice,
+    m: tq.QuantumModule,
+    x=None,
+    draw=False,
+    remove_ops=False,
+    remove_ops_thres=1e-4,
+):
     # build the module list without changing the statevector of QuantumDevice
     original_wires_per_block = m.wires_per_block
     original_static_mode = m.static_mode
@@ -280,7 +321,7 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
         try:
             # no params in module or batch size == 1, because we will
             # generate only one qiskit QuantumCircuit
-            assert (module.params is None or module.params.shape[0] == 1)
+            assert module.params is None or module.params.shape[0] == 1
         except AssertionError:
             logger.exception(f"Cannot convert batch model tq module")
 
@@ -288,19 +329,21 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
 
     for module in module_list:
         if remove_ops:
-            if module.name in ['RX',
-                               'RY',
-                               'RZ',
-                               'RXX',
-                               'RYY',
-                               'RZZ',
-                               'RZX',
-                               'PhaseShift',
-                               'CRX',
-                               'CRY',
-                               'CRZ',
-                               'U1',
-                               'CU1']:
+            if module.name in [
+                "RX",
+                "RY",
+                "RZ",
+                "RXX",
+                "RYY",
+                "RZZ",
+                "RZX",
+                "PhaseShift",
+                "CRX",
+                "CRY",
+                "CRZ",
+                "U1",
+                "CU1",
+            ]:
                 param = module.params[0][0].item()
                 param = param % (4 * np.pi)
                 param = param - 4 * np.pi if param > 2 * np.pi else param
@@ -308,9 +351,7 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
                     n_removed_ops += 1
                     continue
 
-            elif module.name in ['U2',
-                                 'U3',
-                                 'CU3']:
+            elif module.name in ["U2", "U3", "CU3"]:
                 param = module.params[0].data.cpu().numpy()
                 param = param % (4 * np.pi)
                 param[param > 2 * np.pi] -= 4 * np.pi
@@ -318,89 +359,94 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
                     n_removed_ops += 1
                     continue
 
-        if module.name == 'Hadamard':
+        if module.name == "Hadamard":
             circ.h(*module.wires)
-        elif module.name == 'SHadamard':
+        elif module.name == "SHadamard":
             circ.ry(np.pi / 4, *module.wires)
-        elif module.name == 'PauliX':
+        elif module.name == "PauliX":
             circ.x(*module.wires)
-        elif module.name == 'PauliY':
+        elif module.name == "PauliY":
             circ.y(*module.wires)
-        elif module.name == 'PauliZ':
+        elif module.name == "PauliZ":
             circ.z(*module.wires)
-        elif module.name == 'S':
+        elif module.name == "S":
             circ.s(*module.wires)
-        elif module.name == 'T':
+        elif module.name == "T":
             circ.t(*module.wires)
-        elif module.name == 'SX':
+        elif module.name == "SX":
             circ.sx(*module.wires)
-        elif module.name == 'CNOT':
+        elif module.name == "CNOT":
             circ.cnot(*module.wires)
-        elif module.name == 'CZ':
+        elif module.name == "CZ":
             circ.cz(*module.wires)
-        elif module.name == 'CY':
+        elif module.name == "CY":
             circ.cy(*module.wires)
-        elif module.name == 'RX':
+        elif module.name == "RX":
             circ.rx(module.params[0][0].item(), *module.wires)
-        elif module.name == 'RY':
+        elif module.name == "RY":
             circ.ry(module.params[0][0].item(), *module.wires)
-        elif module.name == 'RZ':
+        elif module.name == "RZ":
             circ.rz(module.params[0][0].item(), *module.wires)
-        elif module.name == 'RXX':
+        elif module.name == "RXX":
             circ.rxx(module.params[0][0].item(), *module.wires)
-        elif module.name == 'RYY':
+        elif module.name == "RYY":
             circ.ryy(module.params[0][0].item(), *module.wires)
-        elif module.name == 'RZZ':
+        elif module.name == "RZZ":
             circ.rzz(module.params[0][0].item(), *module.wires)
-        elif module.name == 'RZX':
+        elif module.name == "RZX":
             circ.rzx(module.params[0][0].item(), *module.wires)
-        elif module.name == 'SWAP':
+        elif module.name == "SWAP":
             circ.swap(*module.wires)
-        elif module.name == 'SSWAP':
+        elif module.name == "SSWAP":
             # square root of swap
             from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
+
             mat = module.matrix.data.cpu().numpy()
             mat = switch_little_big_endian_matrix(mat)
             circ.append(UnitaryGate(mat), module.wires, [])
-        elif module.name == 'CSWAP':
+        elif module.name == "CSWAP":
             circ.cswap(*module.wires)
-        elif module.name == 'Toffoli':
+        elif module.name == "Toffoli":
             circ.ccx(*module.wires)
-        elif module.name == 'PhaseShift':
+        elif module.name == "PhaseShift":
             circ.p(module.params[0][0].item(), *module.wires)
-        elif module.name == 'CRX':
+        elif module.name == "CRX":
             circ.crx(module.params[0][0].item(), *module.wires)
-        elif module.name == 'CRY':
+        elif module.name == "CRY":
             circ.cry(module.params[0][0].item(), *module.wires)
-        elif module.name == 'CRZ':
+        elif module.name == "CRZ":
             circ.crz(module.params[0][0].item(), *module.wires)
-        elif module.name == 'U1':
+        elif module.name == "U1":
             circ.u1(module.params[0][0].item(), *module.wires)
-        elif module.name == 'CU1':
+        elif module.name == "CU1":
             circ.cu1(module.params[0][0].item(), *module.wires)
-        elif module.name == 'U2':
+        elif module.name == "U2":
             circ.u2(*list(module.params[0].data.cpu().numpy()), *module.wires)
-        elif module.name == 'U3':
+        elif module.name == "U3":
             circ.u3(*list(module.params[0].data.cpu().numpy()), *module.wires)
-        elif module.name == 'CU3':
+        elif module.name == "CU3":
             circ.cu3(*list(module.params[0].data.cpu().numpy()), *module.wires)
-        elif module.name == 'QubitUnitary' or \
-                module.name == 'QubitUnitaryFast' or \
-                module.name == 'TrainableUnitary' or \
-                module.name == 'TrainableUnitaryStrict':
+        elif (
+            module.name == "QubitUnitary"
+            or module.name == "QubitUnitaryFast"
+            or module.name == "TrainableUnitary"
+            or module.name == "TrainableUnitaryStrict"
+        ):
             from torchquantum.plugins.qiskit_unitary_gate import UnitaryGate
+
             mat = module.params[0].data.cpu().numpy()
             mat = switch_little_big_endian_matrix(mat)
             circ.append(UnitaryGate(mat), module.wires, [])
-        elif module.name == 'MultiCNOT':
+        elif module.name == "MultiCNOT":
             circ.mcx(module.wires[:-1], module.wires[-1])
-        elif module.name == 'MultiXCNOT':
+        elif module.name == "MultiXCNOT":
             controls = module.wires[:-1]
             target = module.wires[-1]
             num_ctrl_qubits = len(controls)
 
-            gate = qiskit_gate.MCXGrayCode(num_ctrl_qubits,
-                                           ctrl_state='0' * num_ctrl_qubits)
+            gate = qiskit_gate.MCXGrayCode(
+                num_ctrl_qubits, ctrl_state="0" * num_ctrl_qubits
+            )
             circ.append(gate, controls + [target], [])
         else:
             logger.exception(f"{module.name} cannot be converted to Qiskit.")
@@ -412,12 +458,14 @@ def tq2qiskit(q_device: tq.QuantumDevice, m: tq.QuantumModule, x=None,
             circ.data.append(tuple([data[0].inverse()] + data[1:]))
     if draw:
         import matplotlib.pyplot as plt
+
         circ.draw()
         plt.show()
 
     if n_removed_ops > 0:
-        logger.warning(f"Remove {n_removed_ops} operations with small "
-                       f"parameter magnitude.")
+        logger.warning(
+            f"Remove {n_removed_ops} operations with small " f"parameter magnitude."
+        )
 
     return circ
 
@@ -427,11 +475,10 @@ def tq2qiskit_measurement(q_device: tq.QuantumDevice, q_layer_measure):
     v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
 
     if v_c_reg_mapping is not None:
-        for q_reg, c_reg in v_c_reg_mapping['v2c'].items():
+        for q_reg, c_reg in v_c_reg_mapping["v2c"].items():
             circ.measure(q_reg, c_reg)
     else:
-        circ.measure(list(range(q_device.n_wires)), list(range(
-            q_device.n_wires)))
+        circ.measure(list(range(q_device.n_wires)), list(range(q_device.n_wires)))
     return circ
 
 
@@ -445,13 +492,13 @@ def tq2qiskit_parameterized(q_device: tq.QuantumDevice, func_list):
 
     params = {}
     for info in func_list:
-        input_idx = info['input_idx']
+        input_idx = info["input_idx"]
         for idx in input_idx:
             param = Parameter(f"param{idx}")
             params[idx] = param
 
-        func = info['func']
-        wires = info['wires']
+        func = info["func"]
+        wires = info["wires"]
         wires = wires if isinstance(wires, Iterable) else [wires]
 
         append_parameterized_gate(func, circ, input_idx, params, wires)
@@ -469,7 +516,7 @@ def op_history2qiskit(n_wires, op_history):
     """
     circ = QuantumCircuit(n_wires)
     for op in op_history:
-        append_fixed_gate(circ, op['name'], op['params'], op['wires'], op['inverse'])
+        append_fixed_gate(circ, op["name"], op["params"], op["wires"], op["inverse"])
     return circ
 
 
@@ -494,12 +541,14 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
     Returns:
         a qiskit QuantumCircuit object
     """
-    assert bsz == len(op_history[0]['params'])
+    assert bsz == len(op_history[0]["params"])
     circs_all = []
     for i in range(bsz):
         circ = QuantumCircuit(n_wires)
         for op in op_history:
-            append_fixed_gate(circ, op['name'], op['params'][i], op['wires'], op['inverse'])
+            append_fixed_gate(
+                circ, op["name"], op["params"][i], op["wires"], op["inverse"]
+            )
 
         circs_all.append(circ)
 
@@ -509,11 +558,11 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit
 # object
 def qiskit2tq(circ: QuantumCircuit):
-    if getattr(circ, '_layout', None) is not None:
+    if getattr(circ, "_layout", None) is not None:
         p2v_orig = circ._layout.get_physical_bits().copy()
         p2v = {}
         for p, v in p2v_orig.items():
-            if v.register.name == 'q':
+            if v.register.name == "q":
                 p2v[p] = v.index
             else:
                 p2v[p] = f"{v.register.name}.{v.index}"
@@ -528,52 +577,60 @@ def qiskit2tq(circ: QuantumCircuit):
         wires = list(map(lambda x: x.index, gate[1]))
         wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
-        init_params = list(map(float, gate[0].params)) if len(
-            gate[0].params) > 0 else None
+        init_params = (
+            list(map(float, gate[0].params)) if len(gate[0].params) > 0 else None
+        )
 
-        if op_name in ['h',
-                       'x',
-                       'y',
-                       'z',
-                       's',
-                       't',
-                       'sx',
-                       'cx',
-                       'cz',
-                       'cy',
-                       'swap',
-                       'cswap',
-                       'ccx',
-                       ]:
+        if op_name in [
+            "h",
+            "x",
+            "y",
+            "z",
+            "s",
+            "t",
+            "sx",
+            "cx",
+            "cz",
+            "cy",
+            "swap",
+            "cswap",
+            "ccx",
+        ]:
             ops.append(tq.op_name_dict[op_name](wires=wires))
-        elif op_name in ['rx',
-                         'ry',
-                         'rz',
-                         'rxx',
-                         'xx',
-                         'ryy',
-                         'yy',
-                         'rzz',
-                         'zz',
-                         'rzx',
-                         'zx',
-                         'p',
-                         'cp',
-                         'crx',
-                         'cry',
-                         'crz',
-                         'u1',
-                         'cu1',
-                         'u2',
-                         'u3',
-                         'cu3',
-                         'u',
-                         'cu']:
-            ops.append(tq.op_name_dict[op_name](has_params=True,
-                                                trainable=True,
-                                                init_params=init_params,
-                                                wires=wires))
-        elif op_name in ['barrier', 'measure']:
+        elif op_name in [
+            "rx",
+            "ry",
+            "rz",
+            "rxx",
+            "xx",
+            "ryy",
+            "yy",
+            "rzz",
+            "zz",
+            "rzx",
+            "zx",
+            "p",
+            "cp",
+            "crx",
+            "cry",
+            "crz",
+            "u1",
+            "cu1",
+            "u2",
+            "u3",
+            "cu3",
+            "u",
+            "cu",
+        ]:
+            ops.append(
+                tq.op_name_dict[op_name](
+                    has_params=True,
+                    trainable=True,
+                    init_params=init_params,
+                    wires=wires,
+                )
+            )
+        elif op_name in ["barrier", "measure"]:
             continue
         else:
             raise NotImplementedError(
@@ -585,6 +642,7 @@ def qiskit2tq(circ: QuantumCircuit):
 
 def test_qiskit2tq():
     import pdb
+
     pdb.set_trace()
     n_wires = 4
     q_dev = tq.QuantumDevice(n_wires=n_wires)
@@ -612,7 +670,7 @@ def test_qiskit2tq():
 
     m = qiskit2tq(circ)
 
-    simulator = Aer.get_backend('unitary_simulator')
+    simulator = Aer.get_backend("unitary_simulator")
     result = execute(circ, simulator).result()
     unitary_qiskit = result.get_unitary(circ)
 
@@ -681,8 +739,7 @@ class TestModule(tq.QuantumModule):
         self.gate6 = tq.RY(has_params=True, trainable=True)
         self.gate7 = tq.RX()
         self.gate8 = tq.U2(has_params=True, trainable=True)
-        self.gate9 = tq.TrainableUnitary(has_params=True, trainable=True,
-                                         n_wires=3)
+        self.gate9 = tq.TrainableUnitary(has_params=True, trainable=True, n_wires=3)
         self.gate10 = tq.MultiXCNOT(n_wires=5)
         self.gate11 = tq.MultiCNOT(n_wires=3)
 
@@ -700,16 +757,20 @@ class TestModule(tq.QuantumModule):
         self.gate9(q_device, wires=[2, 3, 4])
 
         self.q_layer0(q_device)
-        tqf.qubitunitary(self.q_device, wires=[1, 2], params=[[1, 0, 0, 0],
-                                                              [0, 1, 0, 0],
-                                                              [0, 0, 0, 1],
-                                                              [0, 0, 1, 0]],
-                         static=self.static_mode, parent_graph=self.graph)
-        tqf.qubitunitary(self.q_device, wires=[1, 2], params=[[0, 1, 0, 0],
-                                                              [1, 0, 0, 0],
-                                                              [0, 0, 1, 0],
-                                                              [0, 0, 0, 1]],
-                         static=self.static_mode, parent_graph=self.graph)
+        tqf.qubitunitary(
+            self.q_device,
+            wires=[1, 2],
+            params=[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]],
+            static=self.static_mode,
+            parent_graph=self.graph,
+        )
+        tqf.qubitunitary(
+            self.q_device,
+            wires=[1, 2],
+            params=[[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],
+            static=self.static_mode,
+            parent_graph=self.graph,
+        )
         self.gate10(q_device, wires=[4, 5, 6, 7, 1])
         self.gate11(q_device, wires=[2, 1, 9])
 
@@ -747,14 +808,14 @@ class TestModuleParameterized(tq.QuantumModule):
         #     {'input_idx': [15], 'func': 'ry', 'wires': [3]}
         # ]
         self.func_list = [
-            {'input_idx': [6, 5, 4], 'func': 'u3', 'wires': [1]},
-            {'input_idx': [7], 'func': 'u1', 'wires': [1]},
-            {'input_idx': [0, 1, 2], 'func': 'u3', 'wires': [0]},
-            {'input_idx': [3], 'func': 'u1', 'wires': [0]},
-            {'input_idx': [8, 9, 10], 'func': 'u3', 'wires': [2]},
-            {'input_idx': [11], 'func': 'u1', 'wires': [2]},
-            {'input_idx': [12, 13, 14], 'func': 'u3', 'wires': [3]},
-            {'input_idx': [15], 'func': 'u1', 'wires': [3]},
+            {"input_idx": [6, 5, 4], "func": "u3", "wires": [1]},
+            {"input_idx": [7], "func": "u1", "wires": [1]},
+            {"input_idx": [0, 1, 2], "func": "u3", "wires": [0]},
+            {"input_idx": [3], "func": "u1", "wires": [0]},
+            {"input_idx": [8, 9, 10], "func": "u3", "wires": [2]},
+            {"input_idx": [11], "func": "u1", "wires": [2]},
+            {"input_idx": [12, 13, 14], "func": "u3", "wires": [3]},
+            {"input_idx": [15], "func": "u1", "wires": [3]},
         ]
         self.encoder = tq.GeneralEncoder(self.func_list)
 
@@ -766,6 +827,7 @@ class TestModuleParameterized(tq.QuantumModule):
 
 def test_tq2qiskit():
     import pdb
+
     pdb.set_trace()
     inputs = torch.ones((1, 1)) * 0.42
     q_dev = tq.QuantumDevice(n_wires=10)
@@ -773,7 +835,7 @@ def test_tq2qiskit():
 
     circuit = tq2qiskit(test_module, inputs)
 
-    simulator = Aer.get_backend('unitary_simulator')
+    simulator = Aer.get_backend("unitary_simulator")
     result = execute(circuit, simulator).result()
     unitary_qiskit = result.get_unitary(circuit)
 
@@ -787,6 +849,7 @@ def test_tq2qiskit():
 
 def test_tq2qiskit_parameterized():
     import pdb
+
     pdb.set_trace()
     inputs = torch.randn((1, 16))
     q_dev = tq.QuantumDevice(n_wires=4)
@@ -795,13 +858,12 @@ def test_tq2qiskit_parameterized():
     unitary_tq = test_module.get_unitary(q_dev, inputs)
     unitary_tq = switch_little_big_endian_matrix(unitary_tq.data.numpy())
 
-    circuit, params = tq2qiskit_parameterized(
-        q_dev, test_module.encoder.func_list)
+    circuit, params = tq2qiskit_parameterized(q_dev, test_module.encoder.func_list)
     binds = {}
     for k, x in enumerate(inputs[0]):
         binds[params[k]] = x.item()
 
-    simulator = Aer.get_backend('unitary_simulator')
+    simulator = Aer.get_backend("unitary_simulator")
     result = execute(circuit, simulator, parameter_binds=[binds]).result()
     unitary_qiskit = result.get_unitary(circuit)
 
@@ -810,6 +872,6 @@ def test_tq2qiskit_parameterized():
     assert np.allclose(unitary_qiskit, unitary_tq, atol=1e-6)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # test_tq2qiskit_parameterized()
     test_qiskit2tq()

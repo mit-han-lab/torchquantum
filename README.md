@@ -75,7 +75,7 @@ pip install --editable .
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cpu", record_op=True) # use device='cuda' for GPU 
+qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cpu", record_op=True) # use device='cuda' for GPU
 
 # use qdev.op
 qdev.h(wires=0)
@@ -110,7 +110,7 @@ print(op.params.grad)
 ```
 
 
-<!-- 
+<!--
 ## Basic Usage 2
 
 ```python

@@ -1,3 +1,117 @@
+# # pylint: disable=line-too-long
+# from qiskit.algorithms import VQE
+# from qiskit_nature.algorithms import (GroundStateEigensolver,
+#                                       NumPyMinimumEigensolverFactory)
+# from qiskit_nature.drivers import Molecule
+# from qiskit_nature.drivers.second_quantization import (
+#     ElectronicStructureMoleculeDriver, ElectronicStructureDriverType)
+# from qiskit_nature.transformers.second_quantization.electronic import FreezeCoreTransformer
+# from qiskit_nature.problems.second_quantization import ElectronicStructureProblem
+# from qiskit_nature.converters.second_quantization import QubitConverter
+# from qiskit_nature.mappers.second_quantization import ParityMapper
+# # pylint: enable=line-too-long
+#
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from qiskit_nature.circuit.library import UCCSD, HartreeFock
+# from qiskit.circuit.library import EfficientSU2
+# from qiskit.algorithms.optimizers import COBYLA, SPSA, SLSQP
+# from qiskit.opflow import TwoQubitReduction
+# from qiskit import BasicAer, Aer
+# from qiskit.utils import QuantumInstance
+# from qiskit.utils.mitigation import CompleteMeasFitter
+# from qiskit.providers.aer.noise import NoiseModel
+#
+# import qiskit_nature
+#
+# qiskit_nature.settings.dict_aux_operators = False
+#
+#
+#
+# import pdb
+# pdb.set_trace()
+#
+# def get_qubit_op(dist):
+#     # Define Molecule
+#     molecule = Molecule(
+#         # Coordinates in Angstrom
+#         geometry=[
+#             ["Li", [0.0, 0.0, 0.0]],
+#             ["H", [dist, 0.0, 0.0]]
+#         ],
+#         multiplicity=1,  # = 2*spin + 1
+#         charge=0,
+#     )
+#
+#     driver = ElectronicStructureMoleculeDriver(
+#         molecule=molecule,
+#         basis="sto3g",
+#         driver_type=ElectronicStructureDriverType.PYSCF)
+#
+#     # Get properties
+#     properties = driver.run()
+#     num_particles = (properties
+#                         .get_property("ParticleNumber")
+#                         .num_particles)
+#     num_spin_orbitals = int(properties
+#                             .get_property("ParticleNumber")
+#                             .num_spin_orbitals)
+#
+#     # Define Problem, Use freeze core approximation, remove orbitals.
+#     problem = ElectronicStructureProblem(
+#         driver,
+#         [FreezeCoreTransformer(freeze_core=True,
+#                                remove_orbitals=[-3,-2])])
+#
+#     second_q_ops = problem.second_q_ops()  # Get 2nd Quant OP
+#     num_spin_orbitals = problem.num_spin_orbitals
+#     num_particles = problem.num_particles
+#
+#     mapper = ParityMapper()  # Set Mapper
+#     hamiltonian = second_q_ops[0]  # Set Hamiltonian
+#     # Do two qubit reduction
+#     converter = QubitConverter(mapper,two_qubit_reduction=True)
+#     reducer = TwoQubitReduction(num_particles)
+#     qubit_op = converter.convert(hamiltonian)
+#     qubit_op = reducer.convert(qubit_op)
+#
+#     return qubit_op, num_particles, num_spin_orbitals, problem, converter
+#
+#
+# def exact_solver(problem, converter):
+#     solver = NumPyMinimumEigensolverFactory()
+#     calc = GroundStateEigensolver(converter, solver)
+#     result = calc.solve(problem)
+#     return result
+#
+#
+# backend = BasicAer.get_backend("statevector_simulator")
+# distances = np.arange(0.5, 4.0, 0.2)
+# exact_energies = []
+# vqe_energies = []
+# optimizer = SLSQP(maxiter=5)
+#
+# # pylint: disable=undefined-loop-variable
+# for dist in distances:
+#     (qubit_op, num_particles, num_spin_orbitals,
+#                              problem, converter) = get_qubit_op(dist)
+#     result = exact_solver(problem,converter)
+#     exact_energies.append(result.total_energies[0].real)
+#     init_state = HartreeFock(num_spin_orbitals, num_particles, converter)
+#     var_form = UCCSD(converter,
+#                      num_particles,
+#                      num_spin_orbitals,
+#                      initial_state=init_state)
+#     vqe = VQE(var_form, optimizer, quantum_instance=backend)
+#     vqe_calc = vqe.compute_minimum_eigenvalue(qubit_op)
+#     vqe_result = problem.interpret(vqe_calc).total_energies[0].real
+#     vqe_energies.append(vqe_result)
+#     print(f"Interatomic Distance: {np.round(dist, 2)}",
+#           f"VQE Result: {vqe_result:.5f}",
+#           f"Exact Energy: {exact_energies[-1]:.5f}")
+#
+# print("All energies have been calculated")
+
 import torch
 import torchquantum as tq
 import pathos.multiprocessing as multiprocessing
@@ -7,11 +121,17 @@ from qiskit import Aer, execute, IBMQ, transpile, QuantumCircuit
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
-from torchquantum.plugins import tq2qiskit, tq2qiskit_parameterized, \
-    tq2qiskit_measurement
-from torchquantum.utils import (get_expectations_from_counts, get_provider,
-                                get_provider_hub_group_project,
-                                get_circ_stats)
+from torchquantum.plugins import (
+    tq2qiskit,
+    tq2qiskit_parameterized,
+    tq2qiskit_measurement,
+)
+from torchquantum.utils import (
+    get_expectations_from_counts,
+    get_provider,
+    get_provider_hub_group_project,
+    get_circ_stats,
+)
 from .qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
 from torchpack.utils.logging import logger
@@ -21,13 +141,9 @@ import datetime
 
 from torchquantum.plugins import my_job_monitor
 
+
 class EmptyPassManager(PassManager):
-    def run(
-        self,
-        circuits,
-        output_name: str = None,
-        callback=None
-    ):
+    def run(self, circuits, output_name: str = None, callback=None):
         return circuits
 
 
@@ -55,31 +171,32 @@ def run_job_worker(data):
 
 
 class QiskitProcessor(object):
-    def __init__(self,
-                 use_real_qc=False,
-                 backend_name=None,
-                 backend=None,
-                 noise_model_name=None,
-                 noise_model=None,
-                 coupling_map_name=None,
-                 coupling_map=None,
-                 basis_gates_name=None,
-                 basis_gates=None,
-                 n_shots=8192,
-                 initial_layout=None,
-                 seed_transpiler=42,
-                 seed_simulator=42,
-                 optimization_level=None,
-                 max_jobs=5,
-                 remove_ops=False,
-                 remove_ops_thres=1e-4,
-                 transpile_with_ancilla=True,
-                 hub='ibm-q',
-                 group='open',
-                 project='main',
-                 layout_method=None,
-                 routing_method=None
-                 ):
+    def __init__(
+        self,
+        use_real_qc=False,
+        backend_name=None,
+        backend=None,
+        noise_model_name=None,
+        noise_model=None,
+        coupling_map_name=None,
+        coupling_map=None,
+        basis_gates_name=None,
+        basis_gates=None,
+        n_shots=8192,
+        initial_layout=None,
+        seed_transpiler=42,
+        seed_simulator=42,
+        optimization_level=None,
+        max_jobs=5,
+        remove_ops=False,
+        remove_ops_thres=1e-4,
+        transpile_with_ancilla=True,
+        hub="ibm-q",
+        group="open",
+        project="main",
+        layout_method=None,
+        routing_method=None,
+    ):
         self.use_real_qc = use_real_qc
         self.noise_model_name = noise_model_name
         self.backend_name = backend_name
@@ -129,13 +246,21 @@ class QiskitProcessor(object):
             backend = self.provider.get_backend(name)
             coupling_map = backend.configuration().coupling_map
         else:
-            if name == 'four_all':
-                coupling_map = [[0, 1], [1, 0],
-                                [0, 2], [2, 0],
-                                [0, 3], [3, 0],
-                                [1, 2], [2, 1],
-                                [1, 3], [3, 1],
-                                [2, 3], [3, 2]]
+            if name == "four_all":
+                coupling_map = [
+                    [0, 1],
+                    [1, 0],
+                    [0, 2],
+                    [2, 0],
+                    [0, 3],
+                    [3, 0],
+                    [1, 2],
+                    [2, 1],
+                    [1, 3],
+                    [3, 1],
+                    [2, 3],
+                    [3, 2],
+                ]
             else:
                 coupling_map = None
 
@@ -168,8 +293,9 @@ class QiskitProcessor(object):
                 self.coupling_map = self.get_coupling_map(self.backend_name)
             else:
                 # use simulator
-                self.backend = Aer.get_backend('qasm_simulator',
-                                               max_parallel_experiments=0)
+                self.backend = Aer.get_backend(
+                    "qasm_simulator", max_parallel_experiments=0
+                )
                 self.noise_model = self.get_noise_model(self.noise_model_name)
                 self.coupling_map = self.get_coupling_map(self.coupling_map_name)
                 self.basis_gates = self.get_basis_gates(self.basis_gates_name)
@@ -199,35 +325,41 @@ class QiskitProcessor(object):
                     coupling_map.append(pair)
         else:
             coupling_map = self.coupling_map
-        transpiled_circs = transpile(circuits=circs,
-                                     backend=self.backend,
-                                     basis_gates=self.basis_gates,
-                                     coupling_map=coupling_map,
-                                     initial_layout=self.initial_layout,
-                                     seed_transpiler=self.seed_transpiler,
-                                     optimization_level=self.optimization_level
-                                     )
+        transpiled_circs = transpile(
+            circuits=circs,
+            backend=self.backend,
+            basis_gates=self.basis_gates,
+            coupling_map=coupling_map,
+            initial_layout=self.initial_layout,
+            seed_transpiler=self.seed_transpiler,
+            optimization_level=self.optimization_level,
+        )
         return transpiled_circs
 
-    def preprocess_parameterized(self,
-                                 q_device,
-                                 q_layer_parameterized,
-                                 q_layer_fixed,
-                                 q_layer_measure,
-                                 x,
-                                 ):
+    def preprocess_parameterized(
+        self,
+        q_device,
+        q_layer_parameterized,
+        q_layer_fixed,
+        q_layer_measure,
+        x,
+    ):
         circ_parameterized, params = tq2qiskit_parameterized(
-            q_device, q_layer_parameterized.func_list)
-        circ_fixed = tq2qiskit(q_device, q_layer_fixed,
-                               remove_ops=self.remove_ops,
-                               remove_ops_thres=self.remove_ops_thres)
+            q_device, q_layer_parameterized.func_list
+        )
+        circ_fixed = tq2qiskit(
+            q_device,
+            q_layer_fixed,
+            remove_ops=self.remove_ops,
+            remove_ops_thres=self.remove_ops_thres,
+        )
 
         circ_measurement = tq2qiskit_measurement(q_device, q_layer_measure)
         circ = circ_parameterized + circ_fixed + circ_measurement
 
-        logger.info(f'Before transpile: {get_circ_stats(circ)}')
+        logger.info(f"Before transpile: {get_circ_stats(circ)}")
         transpiled_circ = self.transpile(circ)
-        logger.info(f'After transpile: {get_circ_stats(transpiled_circ)}')
+        logger.info(f"After transpile: {get_circ_stats(transpiled_circ)}")
         self.transpiled_circs = [transpiled_circ]
         # construct the parameter_binds
         binds_all = []
@@ -239,12 +371,15 @@ class QiskitProcessor(object):
 
         return transpiled_circ, binds_all
 
-    def process_parameterized(self, q_device: tq.QuantumDevice,
-                              q_layer_parameterized: tq.QuantumModule,
-                              q_layer_fixed: tq.QuantumModule,
-                              q_layer_measure: tq.QuantumModule,
-                              x,
-                              parallel=True):
+    def process_parameterized(
+        self,
+        q_device: tq.QuantumDevice,
+        q_layer_parameterized: tq.QuantumModule,
+        q_layer_fixed: tq.QuantumModule,
+        q_layer_measure: tq.QuantumModule,
+        x,
+        parallel=True,
+    ):
         """
         separate the conversion, encoder part will be converted to a
         parameterized Qiskit QuantumCircuit. The remaining part will be a
@@ -257,11 +392,11 @@ class QiskitProcessor(object):
         JobManager has bugs when submitting job, so use multiprocessing instead
         """
         transpiled_circ, binds_all = self.preprocess_parameterized(
-            q_device, q_layer_parameterized, q_layer_fixed,
-            q_layer_measure, x)
+            q_device, q_layer_parameterized, q_layer_fixed, q_layer_measure, x
+        )
 
         if parallel:
-            if hasattr(self.backend.configuration(), 'max_experiments'):
+            if hasattr(self.backend.configuration(), "max_experiments"):
                 chunk_size = self.backend.configuration().max_experiments
             else:
                 # using simulator, apply multithreading
@@ -270,20 +405,22 @@ class QiskitProcessor(object):
             if chunk_size == 0:
                 split_binds = [binds_all]
             else:
-                split_binds = [binds_all[i:i + chunk_size] for i in range(
-                    0, len(binds_all), chunk_size)]
+                split_binds = [
+                    binds_all[i : i + chunk_size]
+                    for i in range(0, len(binds_all), chunk_size)
+                ]
 
             qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_bind in split_binds:
                 feed_dict = {
-                    'experiments': transpiled_circ,
-                    'backend': self.backend,
-                    'pass_manager': self.empty_pass_manager,
-                    'shots': self.n_shots,
-                    'seed_simulator': self.seed_simulator,
-                    'noise_model': self.noise_model,
-                    'parameter_binds': split_bind,
+                    "experiments": transpiled_circ,
+                    "backend": self.backend,
+                    "pass_manager": self.empty_pass_manager,
+                    "shots": self.n_shots,
+                    "seed_simulator": self.seed_simulator,
+                    "noise_model": self.noise_model,
+                    "parameter_binds": split_bind,
                 }
                 feed_dicts.append([feed_dict, qiskit_verbose])
 
@@ -298,39 +435,45 @@ class QiskitProcessor(object):
                     results[-1] = [results[-1]]
                 counts = list(itertools.chain(*results))
         else:
-            job = execute(experiments=transpiled_circ,
-                          backend=self.backend,
-                          pass_manager=self.empty_pass_manager,
-                          shots=self.n_shots,
-                          seed_simulator=self.seed_simulator,
-                          noise_model=self.noise_model,
-                          parameter_binds=binds_all
-                          )
+            job = execute(
+                experiments=transpiled_circ,
+                backend=self.backend,
+                pass_manager=self.empty_pass_manager,
+                shots=self.n_shots,
+                seed_simulator=self.seed_simulator,
+                noise_model=self.noise_model,
+                parameter_binds=binds_all,
+            )
             job_monitor(job, interval=1)
 
             result = job.result()
             counts = result.get_counts()
 
-        measured_qiskit = get_expectations_from_counts(
-            counts, n_wires=q_device.n_wires)
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
         return measured_qiskit
 
-    def preprocess_parameterized_and_shift(self,
-                                 q_device,
-                                 q_layer_parameterized,
-                                 q_layer_fixed,
-                                 q_layer_measure,
-                                 x,
-                                 shift_encoder,
-                                 shift_this_step):
+    def preprocess_parameterized_and_shift(
+        self,
+        q_device,
+        q_layer_parameterized,
+        q_layer_fixed,
+        q_layer_measure,
+        x,
+        shift_encoder,
+        shift_this_step,
+    ):
         circ_parameterized, params = tq2qiskit_parameterized(
-            q_device, q_layer_parameterized.func_list)
+            q_device, q_layer_parameterized.func_list
+        )
         circ_fixed_list = []
-        circ_fixed = tq2qiskit(q_device, q_layer_fixed,
-                               remove_ops=self.remove_ops,
-                               remove_ops_thres=self.remove_ops_thres)
+        circ_fixed = tq2qiskit(
+            q_device,
+            q_layer_fixed,
+            remove_ops=self.remove_ops,
+            remove_ops_thres=self.remove_ops_thres,
+        )
         circ_fixed_list.append(circ_fixed)
 
         # not shift encoder ==> shift fixed layer
@@ -338,24 +481,35 @@ class QiskitProcessor(object):
             for i, named_param in enumerate(q_layer_fixed.named_parameters()):
                 if shift_this_step[i]:
                     param = named_param[-1]
-                    param.copy_(param + np.pi*0.5)
-                    circ_fixed = tq2qiskit(q_device, q_layer_fixed, remove_ops=self.remove_ops, remove_ops_thres=self.remove_ops_thres)
+                    param.copy_(param + np.pi * 0.5)
+                    circ_fixed = tq2qiskit(
+                        q_device,
+                        q_layer_fixed,
+                        remove_ops=self.remove_ops,
+                        remove_ops_thres=self.remove_ops_thres,
+                    )
                     circ_fixed_list.append(circ_fixed)
                     param.copy_(param - np.pi)
-                    circ_fixed = tq2qiskit(q_device, q_layer_fixed, remove_ops=self.remove_ops, remove_ops_thres=self.remove_ops_thres)
+                    circ_fixed = tq2qiskit(
+                        q_device,
+                        q_layer_fixed,
+                        remove_ops=self.remove_ops,
+                        remove_ops_thres=self.remove_ops_thres,
+                    )
                     circ_fixed_list.append(circ_fixed)
-                    param.copy_(param + np.pi*0.5)
-        
+                    param.copy_(param + np.pi * 0.5)
+
         self.transpiled_circs = []
         for circ_fixed in circ_fixed_list:
             circ = circ_parameterized + circ_fixed
             v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
             if v_c_reg_mapping is not None:
-                for q_reg, c_reg in v_c_reg_mapping['v2c'].items():
+                for q_reg, c_reg in v_c_reg_mapping["v2c"].items():
                     circ.measure(q_reg, c_reg)
             else:
-                circ.measure(list(range(q_device.n_wires)), list(range(
-                    q_device.n_wires)))
+                circ.measure(
+                    list(range(q_device.n_wires)), list(range(q_device.n_wires))
+                )
 
             transpiled_circ = self.transpile(circ)
             self.transpiled_circs.append(transpiled_circ)
@@ -369,14 +523,14 @@ class QiskitProcessor(object):
                     for k, input_single in enumerate(inputs_single):
                         binds[params[k]] = input_single.item()
                     binds_all.append(binds)
-                
+
                 x[:, idx] -= np.pi
                 for inputs_single in x:
                     binds = {}
                     for k, input_single in enumerate(inputs_single):
                         binds[params[k]] = input_single.item()
                     binds_all.append(binds)
-                
+
                 x[:, idx] += np.pi * 0.5
         else:
             for inputs_single in x:
@@ -385,18 +539,19 @@ class QiskitProcessor(object):
                     binds[params[k]] = input_single.item()
                 binds_all.append(binds)
 
-
         return self.transpiled_circs, binds_all
 
-
-    def process_parameterized_and_shift(self, q_device: tq.QuantumDevice,
-                              q_layer_parameterized: tq.QuantumModule,
-                              q_layer_fixed: tq.QuantumModule,
-                              q_layer_measure: tq.QuantumModule,
-                              x,
-                              shift_encoder=False,
-                              parallel=True,
-                              shift_this_step=None):
+    def process_parameterized_and_shift(
+        self,
+        q_device: tq.QuantumDevice,
+        q_layer_parameterized: tq.QuantumModule,
+        q_layer_fixed: tq.QuantumModule,
+        q_layer_measure: tq.QuantumModule,
+        x,
+        shift_encoder=False,
+        parallel=True,
+        shift_this_step=None,
+    ):
         """
         separate the conversion, encoder part will be converted to a
         parameterized Qiskit QuantumCircuit. The remaining part will be a
@@ -409,32 +564,40 @@ class QiskitProcessor(object):
         JobManager has bugs when submitting job, so use multiprocessing instead
         """
         transpiled_circs, binds_all = self.preprocess_parameterized_and_shift(
-            q_device, q_layer_parameterized, q_layer_fixed,
-            q_layer_measure, x, shift_encoder, shift_this_step)
-        
+            q_device,
+            q_layer_parameterized,
+            q_layer_fixed,
+            q_layer_measure,
+            x,
+            shift_encoder,
+            shift_this_step,
+        )
+
         time_spent_list = []
 
         if parallel:
-            if hasattr(self.backend.configuration(), 'max_experiments'):
+            if hasattr(self.backend.configuration(), "max_experiments"):
                 chunk_size = self.backend.configuration().max_experiments
             else:
                 # using simulator, apply multithreading
                 chunk_size = len(binds_all) // self.max_jobs
 
-            split_binds = [binds_all[i:i + chunk_size] for i in range(
-                0, len(binds_all), chunk_size)]
+            split_binds = [
+                binds_all[i : i + chunk_size]
+                for i in range(0, len(binds_all), chunk_size)
+            ]
 
             qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_bind in split_binds:
                 feed_dict = {
-                    'experiments': transpiled_circs,
-                    'backend': self.backend,
-                    'pass_manager': self.empty_pass_manager,
-                    'shots': self.n_shots,
-                    'seed_simulator': self.seed_simulator,
-                    'noise_model': self.noise_model,
-                    'parameter_binds': split_bind,
+                    "experiments": transpiled_circs,
+                    "backend": self.backend,
+                    "pass_manager": self.empty_pass_manager,
+                    "shots": self.n_shots,
+                    "seed_simulator": self.seed_simulator,
+                    "noise_model": self.noise_model,
+                    "parameter_binds": split_bind,
                 }
                 feed_dicts.append([feed_dict, qiskit_verbose])
 
@@ -450,23 +613,29 @@ class QiskitProcessor(object):
                 counts = list(itertools.chain(*results))
         else:
             chunk_size = 75 // len(binds_all)
-            split_circs = [transpiled_circs[i:i + chunk_size] for i in range(0, len(transpiled_circs), chunk_size)]
+            split_circs = [
+                transpiled_circs[i : i + chunk_size]
+                for i in range(0, len(transpiled_circs), chunk_size)
+            ]
             counts = []
             total_time_spent = datetime.timedelta()
             total_cont = 0
             for circ in split_circs:
                 while True:
                     try:
-                        job = execute(experiments=circ,
-                                    backend=self.backend,
-                                    pass_manager=self.empty_pass_manager,
-                                    shots=self.n_shots,
-                                    seed_simulator=self.seed_simulator,
-                                    noise_model=self.noise_model,
-                                    parameter_binds=binds_all
-                                    )
+                        job = execute(
+                            experiments=circ,
+                            backend=self.backend,
+                            pass_manager=self.empty_pass_manager,
+                            shots=self.n_shots,
+                            seed_simulator=self.seed_simulator,
+                            noise_model=self.noise_model,
+                            parameter_binds=binds_all,
+                        )
                         job_monitor(job, interval=1)
-                        result = job.result()#qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
+                        result = (
+                            job.result()
+                        )  # qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
                         counts = counts + result.get_counts()
                         # time_per_step = job.time_per_step()
                         # time_spent = time_per_step['COMPLETED'] - time_per_step['RUNNING'] + time_per_step['QUEUED'] - job.time_per_step()['CREATING']
@@ -477,38 +646,40 @@ class QiskitProcessor(object):
                         # print(total_time_spent / total_cont)
                         break
                     except (QiskitError) as e:
-                        logger.warning('Job failed, rerun now.')
+                        logger.warning("Job failed, rerun now.")
                         print(e.message)
 
-        measured_qiskit = get_expectations_from_counts(
-            counts, n_wires=q_device.n_wires)
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
         return measured_qiskit, time_spent_list
 
-
-    def process_multi_measure(self,
-                              q_device: tq.QuantumDevice,
-                              q_layer: tq.QuantumModule,
-                              q_layer_measure: tq.QuantumModule,):
+    def process_multi_measure(
+        self,
+        q_device: tq.QuantumDevice,
+        q_layer: tq.QuantumModule,
+        q_layer_measure: tq.QuantumModule,
+    ):
         obs_list = q_layer_measure.obs_list
-        circ_fixed = tq2qiskit(q_device, q_layer,
-                               remove_ops=self.remove_ops,
-                               remove_ops_thres=self.remove_ops_thres)
+        circ_fixed = tq2qiskit(
+            q_device,
+            q_layer,
+            remove_ops=self.remove_ops,
+            remove_ops_thres=self.remove_ops_thres,
+        )
 
         transpiled_circ_fixed = self.transpile(circ_fixed)
 
         circ_all = []
 
         for hamil in obs_list:
-            circ_diagonalize = QuantumCircuit(q_device.n_wires,
-                                              q_device.n_wires)
+            circ_diagonalize = QuantumCircuit(q_device.n_wires, q_device.n_wires)
 
             # diagonalize the measurements
-            for wire, observable in zip(hamil['wires'], hamil['observables']):
-                if observable == 'x':
+            for wire, observable in zip(hamil["wires"], hamil["observables"]):
+                if observable == "x":
                     circ_diagonalize.h(qubit=wire)
-                elif observable == 'y':
+                elif observable == "y":
                     circ_diagonalize.z(qubit=wire)
                     circ_diagonalize.s(qubit=wire)
                     circ_diagonalize.h(qubit=wire)
@@ -518,30 +689,30 @@ class QiskitProcessor(object):
             circ_diagonalize = circ_diagonalize + circ_measurement
 
             transpiled_circ_diagonalize = self.transpile(circ_diagonalize)
-            circ_all.append(transpiled_circ_fixed +
-                            transpiled_circ_diagonalize)
+            circ_all.append(transpiled_circ_fixed + transpiled_circ_diagonalize)
 
         self.transpiled_circs = circ_all
 
-        if hasattr(self.backend.configuration(), 'max_experiments'):
+        if hasattr(self.backend.configuration(), "max_experiments"):
             chunk_size = self.backend.configuration().max_experiments
         else:
             # using simulator, apply multithreading
             chunk_size = len(circ_all) // self.max_jobs
 
-        split_circs = [circ_all[i:i + chunk_size] for i in range(
-            0, len(circ_all), chunk_size)]
+        split_circs = [
+            circ_all[i : i + chunk_size] for i in range(0, len(circ_all), chunk_size)
+        ]
 
         qiskit_verbose = self.max_jobs <= 2
         feed_dicts = []
         for split_circ in split_circs:
             feed_dict = {
-                'experiments': split_circ,
-                'backend': self.backend,
-                'pass_manager': self.empty_pass_manager,
-                'shots': self.n_shots,
-                'seed_simulator': self.seed_simulator,
-                'noise_model': self.noise_model,
+                "experiments": split_circ,
+                "backend": self.backend,
+                "pass_manager": self.empty_pass_manager,
+                "shots": self.n_shots,
+                "seed_simulator": self.seed_simulator,
+                "noise_model": self.noise_model,
             }
             feed_dicts.append([feed_dict, qiskit_verbose])
 
@@ -556,16 +727,19 @@ class QiskitProcessor(object):
                 results[-1] = [results[-1]]
             counts = list(itertools.chain(*results))
 
-        measured_qiskit = get_expectations_from_counts(
-            counts, n_wires=q_device.n_wires)
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
 
-        measured_qiskit = torch.tensor(measured_qiskit,
-                                       device=q_device.state.device)
+        measured_qiskit = torch.tensor(measured_qiskit, device=q_device.state.device)
 
         return measured_qiskit
 
-    def process(self, q_device: tq.QuantumDevice, q_layer: tq.QuantumModule,
-                q_layer_measure: tq.QuantumModule, x):
+    def process(
+        self,
+        q_device: tq.QuantumDevice,
+        q_layer: tq.QuantumModule,
+        q_layer_measure: tq.QuantumModule,
+        x,
+    ):
         circs = []
         for i, x_single in tqdm(enumerate(x)):
             circ = tq2qiskit(q_device, q_layer, x_single.unsqueeze(0))
@@ -577,24 +751,24 @@ class QiskitProcessor(object):
         transpiled_circs = self.transpile(circs)
         self.transpiled_circs = transpiled_circs
 
-        job = execute(experiments=transpiled_circs,
-                      backend=self.backend,
-                      shots=self.n_shots,
-                      # initial_layout=self.initial_layout,
-                      seed_transpiler=self.seed_transpiler,
-                      seed_simulator=self.seed_simulator,
-                      coupling_map=self.coupling_map,
-                      basis_gates=self.basis_gates,
-                      noise_model=self.noise_model,
-                      optimization_level=self.optimization_level,
-                      )
+        job = execute(
+            experiments=transpiled_circs,
+            backend=self.backend,
+            shots=self.n_shots,
+            # initial_layout=self.initial_layout,
+            seed_transpiler=self.seed_transpiler,
+            seed_simulator=self.seed_simulator,
+            coupling_map=self.coupling_map,
+            basis_gates=self.basis_gates,
+            noise_model=self.noise_model,
+            optimization_level=self.optimization_level,
+        )
         job_monitor(job, interval=1)
 
         result = job.result()
         counts = result.get_counts()
 
-        measured_qiskit = get_expectations_from_counts(
-            counts, n_wires=q_device.n_wires)
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
         measured_qiskit = torch.tensor(measured_qiskit, device=x.device)
 
         return measured_qiskit
@@ -607,7 +781,7 @@ class QiskitProcessor(object):
         circs_all = circs_all_transpiled
 
         if parallel:
-            if hasattr(self.backend.configuration(), 'max_experiments'):
+            if hasattr(self.backend.configuration(), "max_experiments"):
                 chunk_size = self.backend.configuration().max_experiments
             else:
                 # using simulator, apply multithreading
@@ -615,19 +789,21 @@ class QiskitProcessor(object):
                 if chunk_size == 0:
                     chunk_size = 1
 
-            split_circs = [circs_all[i:i + chunk_size] for i in range(
-                0, len(circs_all), chunk_size)]
+            split_circs = [
+                circs_all[i : i + chunk_size]
+                for i in range(0, len(circs_all), chunk_size)
+            ]
 
             qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_circ in split_circs:
                 feed_dict = {
-                    'experiments': split_circ,
-                    'backend': self.backend,
-                    'pass_manager': self.empty_pass_manager,
-                    'shots': self.n_shots,
-                    'seed_simulator': self.seed_simulator,
-                    'noise_model': self.noise_model,
+                    "experiments": split_circ,
+                    "backend": self.backend,
+                    "pass_manager": self.empty_pass_manager,
+                    "shots": self.n_shots,
+                    "seed_simulator": self.seed_simulator,
+                    "noise_model": self.noise_model,
                 }
                 feed_dicts.append([feed_dict, qiskit_verbose])
 
@@ -642,20 +818,20 @@ class QiskitProcessor(object):
                     results[-1] = [results[-1]]
                 counts = list(itertools.chain(*results))
         else:
-            job = execute(experiments=circs_all,
-                          backend=self.backend,
-                          pass_manager=self.empty_pass_manager,
-                          shots=self.n_shots,
-                          seed_simulator=self.seed_simulator,
-                          noise_model=self.noise_model,
-                          )
+            job = execute(
+                experiments=circs_all,
+                backend=self.backend,
+                pass_manager=self.empty_pass_manager,
+                shots=self.n_shots,
+                seed_simulator=self.seed_simulator,
+                noise_model=self.noise_model,
+            )
             job_monitor(job, interval=1)
 
             result = job.result()
             counts = result.get_counts()
 
-        measured_qiskit = get_expectations_from_counts(
-            counts, n_wires=q_device.n_wires)
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
         measured_torch = torch.tensor(measured_qiskit)
 
         return measured_torch

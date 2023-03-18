@@ -1,4 +1,3 @@
-
 import torchquantum as tq
 import torchquantum.functional as tqf
 
@@ -17,10 +16,13 @@ class QuanvolutionFilter(tq.QuantumModule):
         super().__init__()
         self.n_wires = 4
         self.encoder = tq.GeneralEncoder(
-        [   {'input_idx': [0], 'func': 'ry', 'wires': [0]},
-            {'input_idx': [1], 'func': 'ry', 'wires': [1]},
-            {'input_idx': [2], 'func': 'ry', 'wires': [2]},
-            {'input_idx': [3], 'func': 'ry', 'wires': [3]},])
+            [
+                {"input_idx": [0], "func": "ry", "wires": [0]},
+                {"input_idx": [1], "func": "ry", "wires": [1]},
+                {"input_idx": [2], "func": "ry", "wires": [2]},
+                {"input_idx": [3], "func": "ry", "wires": [3]},
+            ]
+        )
 
         self.q_layer = tq.RandomLayer(n_ops=8, wires=list(range(self.n_wires)))
         self.measure = tq.MeasureAll(tq.PauliZ)
@@ -35,31 +37,38 @@ class QuanvolutionFilter(tq.QuantumModule):
 
         for c in range(0, size, 2):
             for r in range(0, size, 2):
-                data = torch.transpose(torch.cat((x[:, c, r], x[:, c, r+1], x[:, c+1, r], x[:, c+1, r+1])).view(4, bsz), 0, 1)
+                data = torch.transpose(
+                    torch.cat(
+                        (x[:, c, r], x[:, c, r + 1], x[:, c + 1, r], x[:, c + 1, r + 1])
+                    ).view(4, bsz),
+                    0,
+                    1,
+                )
                 if use_qiskit:
                     data = self.qiskit_processor.process_parameterized(
-                        qdev, self.encoder, self.q_layer, self.measure, data)
+                        qdev, self.encoder, self.q_layer, self.measure, data
+                    )
                 else:
                     self.encoder(qdev, data)
                     self.q_layer(qdev)
                     data = self.measure(qdev)
 
                 data_list.append(data.view(bsz, 4))
-        
+
         result = torch.cat(data_list, dim=1).float()
-        
+
         return result
-    
+
 
 class HybridModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.qf = QuanvolutionFilter()
-        self.linear = torch.nn.Linear(4*14*14, 10)
-    
+        self.linear = torch.nn.Linear(4 * 14 * 14, 10)
+
     def forward(self, x, use_qiskit=False):
         with torch.no_grad():
-          x = self.qf(x, use_qiskit)
+            x = self.qf(x, use_qiskit)
         x = self.linear(x)
         return F.log_softmax(x, -1)
 
@@ -67,25 +76,25 @@ class HybridModel(torch.nn.Module):
 class HybridModel_without_qf(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear = torch.nn.Linear(28*28, 10)
-    
+        self.linear = torch.nn.Linear(28 * 28, 10)
+
     def forward(self, x, use_qiskit=False):
-        x = x.view(-1, 28*28)
+        x = x.view(-1, 28 * 28)
         x = self.linear(x)
         return F.log_softmax(x, -1)
 
 
 def train(dataflow, model, device, optimizer):
-    for feed_dict in dataflow['train']:
-        inputs = feed_dict['image'].to(device)
-        targets = feed_dict['digit'].to(device)
+    for feed_dict in dataflow["train"]:
+        inputs = feed_dict["image"].to(device)
+        targets = feed_dict["digit"].to(device)
 
         outputs = model(inputs)
         loss = F.nll_loss(outputs, targets)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print(f"loss: {loss.item()}", end='\r')
+        print(f"loss: {loss.item()}", end="\r")
 
 
 def valid_test(dataflow, split, model, device, qiskit=False):
@@ -93,8 +102,8 @@ def valid_test(dataflow, split, model, device, qiskit=False):
     output_all = []
     with torch.no_grad():
         for feed_dict in dataflow[split]:
-            inputs = feed_dict['image'].to(device)
-            targets = feed_dict['digit'].to(device)
+            inputs = feed_dict["image"].to(device)
+            targets = feed_dict["digit"].to(device)
 
             outputs = model(inputs, use_qiskit=qiskit)
 
@@ -116,7 +125,6 @@ def valid_test(dataflow, split, model, device, qiskit=False):
     return accuracy, loss
 
 
-
 def main():
     train_model_without_qf = True
     n_epochs = 15
@@ -125,7 +133,7 @@ def main():
     np.random.seed(42)
     torch.manual_seed(42)
     dataset = MNIST(
-        root='./mnist_data',
+        root="./mnist_data",
         train_valid_split_ratio=[0.9, 0.1],
         n_test_samples=300,
         n_train_samples=500,
@@ -139,8 +147,9 @@ def main():
             batch_size=10,
             sampler=sampler,
             num_workers=8,
-            pin_memory=True)
-        
+            pin_memory=True,
+        )
+
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     model = HybridModel().to(device)
@@ -156,51 +165,61 @@ def main():
         # train
         print(f"Epoch {epoch}:")
         train(dataflow, model, device, optimizer)
-        print(optimizer.param_groups[0]['lr'])
+        print(optimizer.param_groups[0]["lr"])
 
         # valid
-        accu, loss = valid_test(dataflow, 'test', model, device, )
+        accu, loss = valid_test(
+            dataflow,
+            "test",
+            model,
+            device,
+        )
         accu_list1.append(accu)
         loss_list1.append(loss)
         scheduler.step()
-    
+
     if train_model_without_qf:
-        optimizer = optim.Adam(model_without_qf.parameters(), lr=5e-3, weight_decay=1e-4)
+        optimizer = optim.Adam(
+            model_without_qf.parameters(), lr=5e-3, weight_decay=1e-4
+        )
         scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
         for epoch in range(1, n_epochs + 1):
             # train
             print(f"Epoch {epoch}:")
             train(dataflow, model_without_qf, device, optimizer)
-            print(optimizer.param_groups[0]['lr'])
+            print(optimizer.param_groups[0]["lr"])
 
             # valid
-            accu, loss = valid_test(dataflow, 'test', model_without_qf, device)
+            accu, loss = valid_test(dataflow, "test", model_without_qf, device)
             accu_list2.append(accu)
             loss_list2.append(loss)
 
             scheduler.step()
-    
+
     # run on real QC
     try:
         from qiskit import IBMQ
         from torchquantum.plugins import QiskitProcessor
+
         # firstly perform simulate
         print(f"\nTest with Qiskit Simulator")
         processor_simulation = QiskitProcessor(use_real_qc=False)
         model.qf.set_qiskit_processor(processor_simulation)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
+        valid_test(dataflow, "test", model, device, qiskit=True)
         # then try to run on REAL QC
-        backend_name = 'ibmq_quito'
+        backend_name = "ibmq_quito"
         print(f"\nTest on Real Quantum Computer {backend_name}")
         processor_real_qc = QiskitProcessor(use_real_qc=True, backend_name=backend_name)
         model.qf.set_qiskit_processor(processor_real_qc)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
+        valid_test(dataflow, "test", model, device, qiskit=True)
     except ImportError:
-        print("Please install qiskit, create an IBM Q Experience Account and "
+        print(
+            "Please install qiskit, create an IBM Q Experience Account and "
             "save the account token according to the instruction at "
             "'https://github.com/Qiskit/qiskit-ibmq-provider', "
-            "then try again.")
+            "then try again."
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

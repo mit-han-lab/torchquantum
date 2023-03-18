@@ -6,12 +6,14 @@ import argparse
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-from torchquantum.plugins import (tq2qiskit_expand_params,
-                                  tq2qiskit,
-                                  tq2qiskit_measurement,
-                                  qiskit_assemble_circs,
-                                  op_history2qiskit,
-                                  op_history2qiskit_expand_params)
+from torchquantum.plugins import (
+    tq2qiskit_expand_params,
+    tq2qiskit,
+    tq2qiskit_measurement,
+    qiskit_assemble_circs,
+    op_history2qiskit,
+    op_history2qiskit_expand_params,
+)
 
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -25,8 +27,9 @@ class QFCModel(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.random_layer = tq.RandomLayer(n_ops=50,
-                                               wires=list(range(self.n_wires)))
+            self.random_layer = tq.RandomLayer(
+                n_ops=50, wires=list(range(self.n_wires))
+            )
 
             # gates with trainable parameters
             self.rx0 = tq.RX(has_params=True, trainable=True)
@@ -57,35 +60,40 @@ class QFCModel(tq.QuantumModule):
             qdev.h(wires=3, static=self.static_mode, parent_graph=self.graph)
             qdev.sx(wires=2, static=self.static_mode, parent_graph=self.graph)
             qdev.cnot(wires=[3, 0], static=self.static_mode, parent_graph=self.graph)
-            qdev.rx(wires=1, params=torch.tensor([0.1]), static=self.static_mode, parent_graph=self.graph)
+            qdev.rx(
+                wires=1,
+                params=torch.tensor([0.1]),
+                static=self.static_mode,
+                parent_graph=self.graph,
+            )
 
     def __init__(self):
         super().__init__()
         self.n_wires = 4
-        self.encoder = tq.GeneralEncoder(
-            tq.encoder_op_list_name_dict['4x4_u3rx'])
+        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_u3rx"])
 
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True)
+        qdev = tq.QuantumDevice(
+            n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True
+        )
 
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         devi = x.device
 
         if use_qiskit:
-            encoder_circs = tq2qiskit_expand_params(qdev, x,
-                                                    self.encoder.func_list)
+            encoder_circs = tq2qiskit_expand_params(qdev, x, self.encoder.func_list)
             q_layer_circ = tq2qiskit(qdev, self.q_layer)
-            measurement_circ = tq2qiskit_measurement(qdev,
-                                                     self.measure)
-            assembled_circs = qiskit_assemble_circs(encoder_circs,
-                                                    q_layer_circ,
-                                                    measurement_circ)
-            x0 = self.qiskit_processor.process_ready_circs(
-                qdev, assembled_circs).to(devi)
+            measurement_circ = tq2qiskit_measurement(qdev, self.measure)
+            assembled_circs = qiskit_assemble_circs(
+                encoder_circs, q_layer_circ, measurement_circ
+            )
+            x0 = self.qiskit_processor.process_ready_circs(qdev, assembled_circs).to(
+                devi
+            )
             x = x0
 
         else:
@@ -106,16 +114,16 @@ class QFCModel(tq.QuantumModule):
 
 
 def train(dataflow, model, device, optimizer):
-    for feed_dict in dataflow['train']:
-        inputs = feed_dict['image'].to(device)
-        targets = feed_dict['digit'].to(device)
+    for feed_dict in dataflow["train"]:
+        inputs = feed_dict["image"].to(device)
+        targets = feed_dict["digit"].to(device)
 
         outputs = model(inputs)
         loss = F.nll_loss(outputs, targets)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print(f"loss: {loss.item()}", end='\r')
+        print(f"loss: {loss.item()}", end="\r")
 
 
 def valid_test(dataflow, split, model, device, qiskit=False):
@@ -123,8 +131,8 @@ def valid_test(dataflow, split, model, device, qiskit=False):
     output_all = []
     with torch.no_grad():
         for feed_dict in dataflow[split]:
-            inputs = feed_dict['image'].to(device)
-            targets = feed_dict['digit'].to(device)
+            inputs = feed_dict["image"].to(device)
+            targets = feed_dict["digit"].to(device)
 
             outputs = model(inputs, use_qiskit=qiskit)
 
@@ -146,18 +154,22 @@ def valid_test(dataflow, split, model, device, qiskit=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--static', action='store_true', help='compute with '
-                                                              'static mode')
-    parser.add_argument('--pdb', action='store_true', help='debug with pdb')
-    parser.add_argument('--wires-per-block', type=int, default=2,
-                        help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=5,
-                        help='number of training epochs')
+    parser.add_argument(
+        "--static", action="store_true", help="compute with " "static mode"
+    )
+    parser.add_argument("--pdb", action="store_true", help="debug with pdb")
+    parser.add_argument(
+        "--wires-per-block", type=int, default=2, help="wires per block int static mode"
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=5, help="number of training epochs"
+    )
 
     args = parser.parse_args()
 
     if args.pdb:
         import pdb
+
         pdb.set_trace()
 
     seed = 0
@@ -166,7 +178,7 @@ def main():
     torch.manual_seed(seed)
 
     dataset = MNIST(
-        root='./mnist_data',
+        root="./mnist_data",
         train_valid_split_ratio=[0.9, 0.1],
         digits_of_interest=[3, 6],
         n_test_samples=75,
@@ -180,7 +192,8 @@ def main():
             batch_size=256,
             sampler=sampler,
             num_workers=8,
-            pin_memory=True)
+            pin_memory=True,
+        )
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -200,14 +213,14 @@ def main():
         # train
         print(f"Epoch {epoch}:")
         train(dataflow, model, device, optimizer)
-        print(optimizer.param_groups[0]['lr'])
+        print(optimizer.param_groups[0]["lr"])
 
         # valid
-        valid_test(dataflow, 'valid', model, device)
+        valid_test(dataflow, "valid", model, device)
         scheduler.step()
 
     # test
-    valid_test(dataflow, 'test', model, device, qiskit=False)
+    valid_test(dataflow, "test", model, device, qiskit=False)
 
     # run on Qiskit simulator and real Quantum Computers
     try:
@@ -218,27 +231,30 @@ def main():
         print(f"\nTest with Qiskit Simulator")
         processor_simulation = QiskitProcessor(use_real_qc=False)
         model.set_qiskit_processor(processor_simulation)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
+        valid_test(dataflow, "test", model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = 'ibmq_lima'
+        backend_name = "ibmq_lima"
         print(f"\nTest on Real Quantum Computer {backend_name}")
         # Please specify your own hub group and project if you have the
         # IBMQ premium plan to access more machines.
-        processor_real_qc = QiskitProcessor(use_real_qc=True,
-                                            backend_name=backend_name,
-                                            hub='ibm-q',
-                                            group='open',
-                                            project='main',
-                                            )
+        processor_real_qc = QiskitProcessor(
+            use_real_qc=True,
+            backend_name=backend_name,
+            hub="ibm-q",
+            group="open",
+            project="main",
+        )
         model.set_qiskit_processor(processor_real_qc)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
+        valid_test(dataflow, "test", model, device, qiskit=True)
     except ImportError:
-        print("Please install qiskit, create an IBM Q Experience Account and "
-              "save the account token according to the instruction at "
-              "'https://github.com/Qiskit/qiskit-ibmq-provider', "
-              "then try again.")
+        print(
+            "Please install qiskit, create an IBM Q Experience Account and "
+            "save the account token according to the instruction at "
+            "'https://github.com/Qiskit/qiskit-ibmq-provider', "
+            "then try again."
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

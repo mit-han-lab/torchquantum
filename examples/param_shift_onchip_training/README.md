@@ -36,4 +36,3 @@ Previously, our quantum model was based on qiskit and pytorch. Once we did an in
 ![](intro1.png)
 ![](intro2.png)
 ![](intro3.png)
-

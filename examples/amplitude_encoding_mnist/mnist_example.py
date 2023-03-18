@@ -1,3 +1,70 @@
+# import torch
+# import torch.nn.functional as F
+# import torch.optim as optim
+# import numpy as np
+#
+# import torchquantum as tq
+# import torchquantum.functional as tqf
+# from torchquantum.layers import SethLayer0
+#
+# from torchquantum.datasets import MNIST
+# from torch.optim.lr_scheduler import CosineAnnealingLR
+#
+# class QFCModel(tq.QuantumModule):
+#     def __init__(self):
+#         super().__init__()
+#         self.n_wires = 4
+#         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+#         self.encoder = tq.GeneralEncoder(
+#             tq.encoder_op_list_name_dict['4x4_ryzxy'])
+#
+#         self.arch = {'n_wires': self.n_wires, 'n_blocks': 2, 'n_layers_per_block': 2}
+#         self.q_layer = SethLayer0(self.arch)
+#
+#         self.measure = tq.MeasureAll(tq.PauliZ)
+#
+#     def forward(self, x, use_qiskit=False):
+#         bsz = x.shape[0]
+#         x = F.avg_pool2d(x, 6).view(bsz, 16)
+#
+#         if use_qiskit:
+#             x = self.qiskit_processor.process_parameterized(
+#                 self.q_device, self.encoder, self.q_layer, self.measure, x)
+#         else:
+#             self.encoder(self.q_device, x)
+#             self.q_layer(self.q_device)
+#             x = self.measure(self.q_device)
+#
+#         x = x.reshape(bsz, 4)
+#
+#         return x
+#
+#
+# def shift_and_run(model, inputs, use_qiskit=False):
+#     param_list = []
+#     for param in model.parameters():
+#         param_list.append(param)
+#     grad_list = []
+#     for param in param_list:
+#         param.copy_(param + np.pi * 0.5)
+#         out1 = model(inputs, use_qiskit)
+#         param.copy_(param - np.pi)
+#         out2 = model(inputs, use_qiskit)
+#         param.copy_(param + np.pi * 0.5)
+#         grad = 0.5 * (out1 - out2)
+#         grad_list.append(grad)
+#     return model(inputs, use_qiskit), grad_list
+#
+#
+# def main():
+#     with torch.no_grad():
+#         outputs, grad_list = shift_and_run(QFCModel(), torch.randn(2, 1, 28, 28), use_qiskit=False)
+#     print(outputs, grad_list)
+#
+#
+# if __name__ == '__main__':
+#     main()
+
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -12,13 +79,15 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 import random
 import numpy as np
 
+
 class QFCModel(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.random_layer = tq.RandomLayer(n_ops=50,
-                                               wires=list(range(self.n_wires)))
+            self.random_layer = tq.RandomLayer(
+                n_ops=50, wires=list(range(self.n_wires))
+            )
 
             # gates with trainable parameters
             self.rx0 = tq.RX(has_params=True, trainable=True)
@@ -48,12 +117,18 @@ class QFCModel(tq.QuantumModule):
             self.crx0(self.q_device, wires=[0, 2])
 
             # add some more non-parameterized gates (add on-the-fly)
-            tqf.hadamard(self.q_device, wires=3, static=self.static_mode,
-                         parent_graph=self.graph)
-            tqf.sx(self.q_device, wires=2, static=self.static_mode,
-                   parent_graph=self.graph)
-            tqf.cnot(self.q_device, wires=[3, 0], static=self.static_mode,
-                     parent_graph=self.graph)
+            tqf.hadamard(
+                self.q_device, wires=3, static=self.static_mode, parent_graph=self.graph
+            )
+            tqf.sx(
+                self.q_device, wires=2, static=self.static_mode, parent_graph=self.graph
+            )
+            tqf.cnot(
+                self.q_device,
+                wires=[3, 0],
+                static=self.static_mode,
+                parent_graph=self.graph,
+            )
 
     def __init__(self):
         super().__init__()
@@ -79,16 +154,16 @@ class QFCModel(tq.QuantumModule):
 
 
 def train(dataflow, model, device, optimizer):
-    for feed_dict in dataflow['train']:
-        inputs = feed_dict['image'].to(device)
-        targets = feed_dict['digit'].to(device)
+    for feed_dict in dataflow["train"]:
+        inputs = feed_dict["image"].to(device)
+        targets = feed_dict["digit"].to(device)
 
         outputs = model(inputs)
         loss = F.nll_loss(outputs, targets)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print(f"loss: {loss.item()}", end='\r')
+        print(f"loss: {loss.item()}", end="\r")
 
 
 def valid_test(dataflow, split, model, device, qiskit=False):
@@ -96,8 +171,8 @@ def valid_test(dataflow, split, model, device, qiskit=False):
     output_all = []
     with torch.no_grad():
         for feed_dict in dataflow[split]:
-            inputs = feed_dict['image'].to(device)
-            targets = feed_dict['digit'].to(device)
+            inputs = feed_dict["image"].to(device)
+            targets = feed_dict["digit"].to(device)
 
             outputs = model(inputs, use_qiskit=qiskit)
 
@@ -119,18 +194,22 @@ def valid_test(dataflow, split, model, device, qiskit=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--static', action='store_true', help='compute with '
-                                                              'static mode')
-    parser.add_argument('--pdb', action='store_true', help='debug with pdb')
-    parser.add_argument('--wires-per-block', type=int, default=2,
-                        help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=5,
-                        help='number of training epochs')
+    parser.add_argument(
+        "--static", action="store_true", help="compute with " "static mode"
+    )
+    parser.add_argument("--pdb", action="store_true", help="debug with pdb")
+    parser.add_argument(
+        "--wires-per-block", type=int, default=2, help="wires per block int static mode"
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=5, help="number of training epochs"
+    )
 
     args = parser.parse_args()
 
     if args.pdb:
         import pdb
+
         pdb.set_trace()
 
     seed = 0
@@ -139,7 +218,7 @@ def main():
     torch.manual_seed(seed)
 
     dataset = MNIST(
-        root='./mnist_data',
+        root="./mnist_data",
         train_valid_split_ratio=[0.9, 0.1],
         digits_of_interest=[3, 6],
         n_test_samples=75,
@@ -153,7 +232,8 @@ def main():
             batch_size=256,
             sampler=sampler,
             num_workers=8,
-            pin_memory=True)
+            pin_memory=True,
+        )
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -173,15 +253,15 @@ def main():
         # train
         print(f"Epoch {epoch}:")
         train(dataflow, model, device, optimizer)
-        print(optimizer.param_groups[0]['lr'])
+        print(optimizer.param_groups[0]["lr"])
 
         # valid
-        valid_test(dataflow, 'valid', model, device)
+        valid_test(dataflow, "valid", model, device)
         scheduler.step()
 
     # test
-    valid_test(dataflow, 'test', model, device, qiskit=False)
+    valid_test(dataflow, "test", model, device, qiskit=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

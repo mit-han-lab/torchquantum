@@ -10,7 +10,7 @@ The data_set is stored in raw_data_qasm folder, each data is a list of 3 element
 ```python
 data_set = pickle.load(file)
 data= data_set[0]
-# data[0]: String, the qasm for the circuit, 
+# data[0]: String, the qasm for the circuit,
 # data[1]: Dict, contains the noise information
 # data[2]: Float, probability of successful trials.
 ```

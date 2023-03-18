@@ -1,3 +1,179 @@
+# import torch
+# import torchquantum as tq
+# import torchquantum.functional as tqf
+#
+# import random
+# import numpy as np
+#
+# from torchquantum.functional import mat_dict
+#
+# from torchquantum.plugins import tq2qiskit, qiskit2tq
+# from torchquantum.measurement import expval_joint_analytical
+# from torchquantum.plugins import op_history2qiskit
+#
+# seed = 0
+# random.seed(seed)
+# np.random.seed(seed)
+# torch.manual_seed(seed)
+#
+# class MAXCUT(tq.QuantumModule):
+#     """computes the optimal cut for a given graph.
+#     outputs: the most probable bitstring decides the set {0 or 1} each
+#     node belongs to.
+#     """
+#
+#     def __init__(self, n_wires, input_graph, n_layers):
+#         super().__init__()
+#
+#         self.n_wires = n_wires
+#
+#         self.input_graph = input_graph  # list of edges
+#         self.n_layers = n_layers
+#
+#         self.betas = torch.nn.Parameter(0.01 * torch.rand(self.n_layers))
+#         self.gammas = torch.nn.Parameter(0.01 * torch.rand(self.n_layers))
+#
+#     def mixer(self, qdev, beta):
+#         """
+#         Apply the single rotation and entangling layer of the QAOA ansatz.
+#         mixer = exp(-i * beta * sigma_x)
+#         """
+#         for wire in range(self.n_wires):
+#             qdev.rx(
+#                 wires=wire,
+#                 params=beta.unsqueeze(0),
+#             ) # type: ignore
+#
+#     def entangler(self, qdev, gamma):
+#         """
+#         Apply the single rotation and entangling layer of the QAOA ansatz.
+#         entangler = exp(-i * gamma * (1 - sigma_z * sigma_z)/2)
+#         """
+#         for edge in self.input_graph:
+#             qdev.cx(
+#                 [edge[0], edge[1]],
+#             ) # type: ignore
+#             qdev.rz(
+#                 wires=edge[1],
+#                 params=gamma.unsqueeze(0),
+#             ) # type: ignore
+#             qdev.cx(
+#                 [edge[0], edge[1]],
+#             ) # type: ignore
+#
+#     def edge_to_PauliString(self, edge):
+#         # construct pauli string
+#         pauli_string = ""
+#         for wire in range(self.n_wires):
+#             if wire in edge:
+#                 pauli_string += "Z"
+#             else:
+#                 pauli_string += "I"
+#         return pauli_string
+#
+#     def circuit(self, qdev):
+#         """
+#         execute the quantum circuit
+#         """
+#         # print(self.betas, self.gammas)
+#         for wire in range(self.n_wires):
+#             qdev.h(
+#                 wires=wire,
+#             ) # type: ignore
+#
+#         for i in range(self.n_layers):
+#             self.mixer(qdev, self.betas[i])
+#             self.entangler(qdev, self.gammas[i])
+#
+#     def forward(self, measure_all=False):
+#         """
+#         Apply the QAOA ansatz and only measure the edge qubit on z-basis.
+#         Args:
+#             if edge is None
+#         """
+#         qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device, record_op=False)
+#
+#         self.circuit(qdev)
+#
+#         # turn on the record_op above to print the circuit
+#         # print(op_history2qiskit(self.n_wires, qdev.op_history))
+#
+#         # print(tq.measure(qdev, n_shots=1024))
+#         # compute the expectation value
+#         # print(qdev.get_states_1d())
+#         if measure_all is False:
+#             expVal = 0
+#             for edge in self.input_graph:
+#                 pauli_string = self.edge_to_PauliString(edge)
+#                 expv = expval_joint_analytical(qdev, observable=pauli_string)
+#                 expVal += 0.5 * expv
+#                 # print(pauli_string, expv)
+#             # print(expVal)
+#             return expVal
+#         else:
+#             return tq.measure(qdev, n_shots=1024, draw_id=0)
+#
+# def backprop_optimize(model, n_steps=100, lr=0.1):
+#     """
+#     Optimize the QAOA ansatz over the parameters gamma and beta
+#     Args:
+#         betas (np.array): A list of beta parameters.
+#         gammas (np.array): A list of gamma parameters.
+#         n_steps (int): The number of steps to optimize, defaults to 10.
+#         lr (float): The learning rate, defaults to 0.1.
+#     """
+#     # measure all edges in the input_graph
+#     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+#     print(
+#         "The initial parameters are betas = {} and gammas = {}".format(
+#             *model.parameters()
+#         )
+#     )
+#     # optimize the parameters and return the optimal values
+#     for step in range(n_steps):
+#         optimizer.zero_grad()
+#         loss = model()
+#         loss.backward()
+#         optimizer.step()
+#         if step % 2 == 0:
+#             print("Step: {}, Cost Objective: {}".format(step, loss.item()))
+#
+#     print(
+#         "The optimal parameters are betas = {} and gammas = {}".format(
+#             *model.parameters()
+#         )
+#     )
+#     return model(measure_all=True)
+#
+# def main():
+#     # create a input_graph
+#     input_graph = [(0, 1), (0, 3), (1, 2), (2, 3)]
+#     n_wires = 4
+#     n_layers = 3
+#     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
+#     # model.to("cuda")
+#     # model.to(torch.device("cuda"))
+#     # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
+#     # print(circ)
+#     # print("The circuit is", circ.draw(output="mpl"))
+#     # circ.draw(output="mpl")
+#     # use backprop
+#     backprop_optimize(model, n_steps=300, lr=0.01)
+#     # use parameter shift rule
+#     # param_shift_optimize(model, n_steps=500, step_size=100000)
+#
+# """
+# Notes:
+# 1. input_graph = [(0, 1), (3, 0), (1, 2), (2, 3)], mixer 1st & entangler 2nd, n_layers >= 2, answer is correct.
+#
+# """
+#
+# if __name__ == "__main__":
+#     # import pdb
+#     # pdb.set_trace()
+#
+#     main()
+
 import functools
 import torch
 import numpy as np
@@ -10,72 +186,72 @@ from torchpack.utils.logging import logger
 from torchquantum.utils import normalize_statevector
 
 __all__ = [
-    'func_name_dict',
-    'mat_dict',
-    'apply_unitary_einsum',
-    'apply_unitary_bmm',
-    'hadamard',
-    'Dhadamard',
-    'shadamard',
-    'paulix',
-    'pauliy',
-    'pauliz',
-    'i',
-    's',
-    't',
-    'sx',
-    'cnot',
-    'cz',
-    'cy',
-    'swap',
-    'sswap',
-    'cswap',
-    'toffoli',
-    'multicnot',
-    'multixcnot',
-    'rx',
-    'ry',
-    'rz',
-    'rxx',
-    'ryy',
-    'rzz',
-    'rzx',
-    'phaseshift',
-    'rot',
-    'multirz',
-    'crx',
-    'cry',
-    'crz',
-    'crot',
-    'u1',
-    'u2',
-    'u3',
-    'cu1',
-    'cu2',
-    'cu3',
-    'qubitunitary',
-    'qubitunitaryfast',
-    'qubitunitarystrict',
-    'single_excitation',
-    'h',
-    'sh',
-    'x',
-    'y',
-    'z',
-    'xx',
-    'yy',
-    'zz',
-    'zx',
-    'cx',
-    'ccnot',
-    'ccx',
-    'u',
-    'cu',
-    'p',
-    'cp',
-    'cr',
-    'cphase',
-    'reset',
+    "func_name_dict",
+    "mat_dict",
+    "apply_unitary_einsum",
+    "apply_unitary_bmm",
+    "hadamard",
+    "Dhadamard",
+    "shadamard",
+    "paulix",
+    "pauliy",
+    "pauliz",
+    "i",
+    "s",
+    "t",
+    "sx",
+    "cnot",
+    "cz",
+    "cy",
+    "swap",
+    "sswap",
+    "cswap",
+    "toffoli",
+    "multicnot",
+    "multixcnot",
+    "rx",
+    "ry",
+    "rz",
+    "rxx",
+    "ryy",
+    "rzz",
+    "rzx",
+    "phaseshift",
+    "rot",
+    "multirz",
+    "crx",
+    "cry",
+    "crz",
+    "crot",
+    "u1",
+    "u2",
+    "u3",
+    "cu1",
+    "cu2",
+    "cu3",
+    "qubitunitary",
+    "qubitunitaryfast",
+    "qubitunitarystrict",
+    "single_excitation",
+    "h",
+    "sh",
+    "x",
+    "y",
+    "z",
+    "xx",
+    "yy",
+    "zz",
+    "zx",
+    "cx",
+    "ccnot",
+    "ccx",
+    "u",
+    "cu",
+    "p",
+    "cp",
+    "cr",
+    "cphase",
+    "reset",
 ]
 
 
@@ -91,7 +267,7 @@ def apply_unitary_density_einsum(density, mat, wires):
         torch.Tensor: The new statevector.
     """
     device_wires = wires
-    n_qubit=int((density.dim()-1)/2)
+    n_qubit = int((density.dim() - 1) / 2)
 
     # minus one because of batch
     total_wires = len(density.shape) - 1
@@ -112,37 +288,34 @@ def apply_unitary_density_einsum(density, mat, wires):
     if len(mat.shape) > 2:
         # both matrix and state are in batch mode
         # matdag is the dagger of mat
-        matdag=torch.conj(mat.permute([0,2,1]))
+        matdag = torch.conj(mat.permute([0, 2, 1]))
     else:
         # matrix no batch, state in batch mode
-        matdag=torch.conj(mat.permute([1,0]))
+        matdag = torch.conj(mat.permute([1, 0]))
 
     # Tensor indices of the quantum state
-    density_indices = ABC[: total_wires]
-    print("density_indices",density_indices)
+    density_indices = ABC[:total_wires]
+    print("density_indices", density_indices)
 
     # Indices of the quantum state affected by this operation
     affected_indices = "".join(ABC_ARRAY[list(device_wires)].tolist())
-    print("affected_indices",affected_indices)
-
+    print("affected_indices", affected_indices)
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
-    new_indices = ABC[total_wires: total_wires + len(device_wires)]
-    print("new_indices",new_indices)
-
+    new_indices = ABC[total_wires : total_wires + len(device_wires)]
+    print("new_indices", new_indices)
 
     # The new indices of the state are given by the old ones with the
     # affected indices replaced by the new_indices
     new_density_indices = functools.reduce(
-        lambda old_string, idx_pair: old_string.replace(idx_pair[0],
-                                                        idx_pair[1]),
+        lambda old_string, idx_pair: old_string.replace(idx_pair[0], idx_pair[1]),
         zip(affected_indices, new_indices),
         density_indices,
     )
-    print("new_density_indices",new_density_indices)
+    print("new_density_indices", new_density_indices)
 
-    #Use the last literal as the indice of batch
+    # Use the last literal as the indice of batch
     density_indices = ABC[-1] + density_indices
     new_density_indices = ABC[-1] + new_density_indices
     if is_batch_unitary:
@@ -150,9 +323,10 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     # We now put together the indices in the notation numpy einsum
     # requires
-    einsum_indices = f"{new_indices}{affected_indices}," \
-                     f"{density_indices}->{new_density_indices}"
-    print("einsum_indices",einsum_indices)
+    einsum_indices = (
+        f"{new_indices}{affected_indices}," f"{density_indices}->{new_density_indices}"
+    )
+    print("einsum_indices", einsum_indices)
 
     new_density = torch.einsum(einsum_indices, mat, density)
 
@@ -162,30 +336,28 @@ def apply_unitary_density_einsum(density, mat, wires):
     print("dagger")
 
     # Tensor indices of the quantum state
-    density_indices = ABC[: total_wires]
-    print("density_indices",density_indices)
+    density_indices = ABC[:total_wires]
+    print("density_indices", density_indices)
 
     # Indices of the quantum state affected by this operation
-    affected_indices = "".join(ABC_ARRAY[[x+n_qubit for x in list(device_wires)]].tolist())
-    print("affected_indices",affected_indices)
-
+    affected_indices = "".join(
+        ABC_ARRAY[[x + n_qubit for x in list(device_wires)]].tolist()
+    )
+    print("affected_indices", affected_indices)
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
-    new_indices = ABC[total_wires: total_wires + len(device_wires)]
-    print("new_indices",new_indices)
-
+    new_indices = ABC[total_wires : total_wires + len(device_wires)]
+    print("new_indices", new_indices)
 
     # The new indices of the state are given by the old ones with the
     # affected indices replaced by the new_indices
     new_density_indices = functools.reduce(
-        lambda old_string, idx_pair: old_string.replace(idx_pair[0],
-                                                        idx_pair[1]),
+        lambda old_string, idx_pair: old_string.replace(idx_pair[0], idx_pair[1]),
         zip(affected_indices, new_indices),
         density_indices,
     )
-    print("new_density_indices",new_density_indices)
-
+    print("new_density_indices", new_density_indices)
 
     density_indices = ABC[-1] + density_indices
     new_density_indices = ABC[-1] + new_density_indices
@@ -194,31 +366,28 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     # We now put together the indices in the notation numpy einsum
     # requires
-    einsum_indices =f"{density_indices}," \
-                    f"{affected_indices}{new_indices}->{new_density_indices}"
-    print("einsum_indices",einsum_indices)
+    einsum_indices = (
+        f"{density_indices}," f"{affected_indices}{new_indices}->{new_density_indices}"
+    )
+    print("einsum_indices", einsum_indices)
 
-
-
-    new_density = torch.einsum(einsum_indices,density,matdag)
-
+    new_density = torch.einsum(einsum_indices, density, matdag)
 
     return new_density
 
 
-
 def apply_unitary_density_bmm(density, mat, wires):
     """Apply the unitary to the DensityMatrix using torch.bmm method.
-        Args:
-            state (torch.Tensor): The statevector.
-            mat (torch.Tensor): The unitary matrix of the operation.
-            wires (int or List[int]): Which qubit the operation is applied to.
+    Args:
+        state (torch.Tensor): The statevector.
+        mat (torch.Tensor): The unitary matrix of the operation.
+        wires (int or List[int]): Which qubit the operation is applied to.
 
-        Returns:
-            torch.Tensor: The new statevector.
-        """
+    Returns:
+        torch.Tensor: The new statevector.
+    """
     device_wires = wires
-    n_qubit=int((density.dim()-1)/2)
+    n_qubit = int((density.dim() - 1) / 2)
 
     mat = mat.type(C_DTYPE).to(density.device)
     """
@@ -232,7 +401,8 @@ def apply_unitary_density_bmm(density, mat, wires):
     permute_back = list(np.argsort(permute_to))
     original_shape = density.shape
     permuted = density.permute(permute_to).reshape(
-        [original_shape[0], mat.shape[-1], -1])
+        [original_shape[0], mat.shape[-1], -1]
+    )
     if len(mat.shape) > 2:
         # both matrix and state are in batch mode
         new_density = mat.bmm(permuted)
@@ -249,19 +419,20 @@ def apply_unitary_density_bmm(density, mat, wires):
     permute_to = list(range(density.dim()))
     for d in sorted(devices_dims, reverse=True):
         del permute_to[d]
-    permute_to = permute_to + devices_dims 
+    permute_to = permute_to + devices_dims
     permute_back = list(np.argsort(permute_to))
     original_shape = density.shape
     permuted = new_density.permute(permute_to).reshape(
-        [original_shape[0], -1,mat.shape[-1]])
+        [original_shape[0], -1, mat.shape[-1]]
+    )
     if len(mat.shape) > 2:
         # both matrix and state are in batch mode
         # matdag is the dagger of mat
-        matdag=torch.conj(mat.permute([0,2,1]))
+        matdag = torch.conj(mat.permute([0, 2, 1]))
         new_density = permuted.bmm(matdag)
     else:
         # matrix no batch, state in batch mode
-        matdag=torch.conj(mat.permute([1,0]))
+        matdag = torch.conj(mat.permute([1, 0]))
         bsz = permuted.shape[0]
         expand_shape = [bsz] + list(matdag.shape)
         new_density = permuted.bmm(matdag.expand(expand_shape))
@@ -269,11 +440,18 @@ def apply_unitary_density_bmm(density, mat, wires):
     return new_density
 
 
-
-
-def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
-                 params=None, n_wires=None, static=False, parent_graph=None,
-                 inverse=False):
+def gate_wrapper(
+    name,
+    mat,
+    method,
+    q_device: tq.QuantumDevice,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+):
     """Perform the phaseshift gate.
 
     Args:
@@ -304,7 +482,7 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
             # this is for qubitunitary gate
             params = torch.tensor(params, dtype=C_DTYPE)
 
-        if name in ['qubitunitary', 'qubitunitaryfast', 'qubitunitarystrict']:
+        if name in ["qubitunitary", "qubitunitaryfast", "qubitunitarystrict"]:
             params = params.unsqueeze(0) if params.dim() == 2 else params
         else:
             params = params.unsqueeze(-1) if params.dim() == 1 else params
@@ -313,24 +491,28 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
     if static:
         # in static mode, the function is not computed immediately, instead,
         # the unitary of a module will be computed and then applied
-        parent_graph.add_func(name=name,
-                              wires=wires,
-                              parent_graph=parent_graph,
-                              params=params,
-                              n_wires=n_wires,
-                              inverse=inverse)
+        parent_graph.add_func(
+            name=name,
+            wires=wires,
+            parent_graph=parent_graph,
+            params=params,
+            n_wires=n_wires,
+            inverse=inverse,
+        )
     else:
         # in dynamic mode, the function is computed instantly
         if isinstance(mat, Callable):
-            if n_wires is None or \
-                    name in ['qubitunitary', 'qubitunitaryfast',
-                             'qubitunitarystrict']:
+            if n_wires is None or name in [
+                "qubitunitary",
+                "qubitunitaryfast",
+                "qubitunitarystrict",
+            ]:
                 matrix = mat(params)
-            elif name in ['multicnot', 'multixcnot']:
+            elif name in ["multicnot", "multixcnot"]:
                 # this is for gates that can be applied to arbitrary numbers of
                 # qubits but no params, such as multicnot
                 matrix = mat(n_wires)
-            elif name in ['multirz']:
+            elif name in ["multirz"]:
                 # this is for gates that can be applied to arbitrary numbers of
                 # qubits such as multirz
                 matrix = mat(params, n_wires)
@@ -348,9 +530,9 @@ def gate_wrapper(name, mat, method, q_device: tq.QuantumDevice, wires,
                 matrix = matrix.permute(1, 0)
         print("Computing")
         state = q_device.states
-        if method == 'einsum':
+        if method == "einsum":
             q_device.states = apply_unitary_density_einsum(state, matrix, wires)
-        elif method == 'bmm':
+        elif method == "bmm":
             q_device.states = apply_unitary_density_bmm(state, matrix, wires)
 
 
@@ -380,7 +562,6 @@ def reset(q_device: tq.QuantumDevice, wires, inverse=False):
     q_device.states = normalize_statevector(q_device.states)
 
 
-
 def rx_matrix(params: torch.Tensor) -> torch.Tensor:
     """Compute unitary matrix for rx gate.
 
@@ -393,21 +574,22 @@ def rx_matrix(params: torch.Tensor) -> torch.Tensor:
     """
     theta = params.type(C_DTYPE)
     """
-    Seems to be a pytorch bug. Have to explicitly cast the theta to a 
+    Seems to be a pytorch bug. Have to explicitly cast the theta to a
     complex number. If directly theta = params, then get error:
-    
+
     allow_unreachable=True, accumulate_grad=True)  # allow_unreachable flag
-    RuntimeError: Expected isFloatingType(grad.scalar_type()) || 
-    (input_is_complex == grad_is_complex) to be true, but got false.  
-    (Could this error message be improved?  
+    RuntimeError: Expected isFloatingType(grad.scalar_type()) ||
+    (input_is_complex == grad_is_complex) to be true, but got false.
+    (Could this error message be improved?
     If so, please report an enhancement request to PyTorch.)
-        
+
     """
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(-theta / 2)
 
-    return torch.stack([torch.cat([co, jsi], dim=-1),
-                        torch.cat([jsi, co], dim=-1)], dim=-2).squeeze(0)
+    return torch.stack(
+        [torch.cat([co, jsi], dim=-1), torch.cat([jsi, co], dim=-1)], dim=-2
+    ).squeeze(0)
 
 
 def ry_matrix(params: torch.Tensor) -> torch.Tensor:
@@ -425,8 +607,9 @@ def ry_matrix(params: torch.Tensor) -> torch.Tensor:
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    return torch.stack([torch.cat([co, -si], dim=-1),
-                        torch.cat([si, co], dim=-1)], dim=-2).squeeze(0)
+    return torch.stack(
+        [torch.cat([co, -si], dim=-1), torch.cat([si, co], dim=-1)], dim=-2
+    ).squeeze(0)
 
 
 def rz_matrix(params: torch.Tensor) -> torch.Tensor:
@@ -442,27 +625,34 @@ def rz_matrix(params: torch.Tensor) -> torch.Tensor:
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
-    return torch.stack([torch.cat([exp, torch.zeros(exp.shape,
-                                                    device=params.device)],
-                                  dim=-1),
-                        torch.cat([torch.zeros(exp.shape,
-                                               device=params.device),
-                                   torch.conj(exp)], dim=-1)],
-                       dim=-2).squeeze(0)
+    return torch.stack(
+        [
+            torch.cat([exp, torch.zeros(exp.shape, device=params.device)], dim=-1),
+            torch.cat(
+                [torch.zeros(exp.shape, device=params.device), torch.conj(exp)], dim=-1
+            ),
+        ],
+        dim=-2,
+    ).squeeze(0)
 
 
 def phaseshift_matrix(params):
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
-    return torch.stack([
-        torch.cat([
-            torch.ones(exp.shape, device=params.device),
-            torch.zeros(exp.shape, device=params.device)], dim=-1),
-        torch.cat([
-            torch.zeros(exp.shape, device=params.device),
-            exp], dim=-1)],
-        dim=-2).squeeze(0)
+    return torch.stack(
+        [
+            torch.cat(
+                [
+                    torch.ones(exp.shape, device=params.device),
+                    torch.zeros(exp.shape, device=params.device),
+                ],
+                dim=-1,
+            ),
+            torch.cat([torch.zeros(exp.shape, device=params.device), exp], dim=-1),
+        ],
+        dim=-2,
+    ).squeeze(0)
 
 
 def rot_matrix(params):
@@ -482,14 +672,25 @@ def rot_matrix(params):
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    return torch.stack([
-        torch.cat([
-            torch.exp(-0.5j * (phi + omega)) * co,
-            -torch.exp(0.5j * (phi - omega)) * si], dim=-1),
-        torch.cat([
-            torch.exp(-0.5j * (phi - omega)) * si,
-            torch.exp(0.5j * (phi + omega)) * co], dim=-1)],
-        dim=-2).squeeze(0)
+    return torch.stack(
+        [
+            torch.cat(
+                [
+                    torch.exp(-0.5j * (phi + omega)) * co,
+                    -torch.exp(0.5j * (phi - omega)) * si,
+                ],
+                dim=-1,
+            ),
+            torch.cat(
+                [
+                    torch.exp(-0.5j * (phi - omega)) * si,
+                    torch.exp(0.5j * (phi + omega)) * co,
+                ],
+                dim=-1,
+            ),
+        ],
+        dim=-2,
+    ).squeeze(0)
 
 
 def multirz_eigvals(params, n_wires):
@@ -503,8 +704,9 @@ def multirz_eigvals(params, n_wires):
 
     """
     theta = params.type(C_DTYPE)
-    return torch.exp(-1j * theta / 2 * torch.tensor(pauli_eigs(n_wires)).to(
-        params.device))
+    return torch.exp(
+        -1j * theta / 2 * torch.tensor(pauli_eigs(n_wires)).to(params.device)
+    )
 
 
 def multirz_matrix(params, n_wires):
@@ -538,11 +740,15 @@ def rxx_matrix(params):
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
 
-    matrix = torch.tensor([[0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(co.shape[0], 1, 1)
+    )
 
     matrix[:, 0, 0] = co[:, 0]
     matrix[:, 1, 1] = co[:, 0]
@@ -571,11 +777,15 @@ def ryy_matrix(params):
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
 
-    matrix = torch.tensor([[0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(co.shape[0], 1, 1)
+    )
 
     matrix[:, 0, 0] = co[:, 0]
     matrix[:, 1, 1] = co[:, 0]
@@ -604,11 +814,15 @@ def rzz_matrix(params):
     exp = torch.exp(-0.5j * theta)
     conj_exp = torch.conj(exp)
 
-    matrix = torch.tensor([[0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(exp.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(exp.shape[0], 1, 1)
+    )
 
     matrix[:, 0, 0] = exp[:, 0]
     matrix[:, 1, 1] = conj_exp[:, 0]
@@ -632,11 +846,15 @@ def rzx_matrix(params):
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
 
-    matrix = torch.tensor([[0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(co.shape[0], 1, 1)
+    )
 
     matrix[:, 0, 0] = co[:, 0]
     matrix[:, 0, 1] = -jsi[:, 0]
@@ -667,11 +885,15 @@ def crx_matrix(params):
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(-theta / 2)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(co.shape[0], 1, 1)
+    )
     matrix[:, 2, 2] = co[:, 0]
     matrix[:, 2, 3] = jsi[:, 0]
     matrix[:, 3, 2] = jsi[:, 0]
@@ -694,11 +916,15 @@ def cry_matrix(params):
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(co.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(co.shape[0], 1, 1)
+    )
     matrix[:, 2, 2] = co[:, 0]
     matrix[:, 2, 3] = -si[:, 0]
     matrix[:, 3, 2] = si[:, 0]
@@ -720,11 +946,15 @@ def crz_matrix(params):
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(exp.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(exp.shape[0], 1, 1)
+    )
     matrix[:, 2, 2] = exp[:, 0]
     matrix[:, 3, 3] = torch.conj(exp[:, 0])
 
@@ -748,11 +978,15 @@ def crot_matrix(params):
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(phi.shape[0], 1, 1)
+    )
 
     matrix[:, 2, 2] = torch.exp(-0.5j * (phi + omega)) * co
     matrix[:, 2, 3] = -torch.exp(0.5j * (phi - omega)) * si
@@ -775,14 +1009,19 @@ def u1_matrix(params):
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
-    return torch.stack([
-        torch.cat([
-            torch.ones(exp.shape, device=params.device),
-            torch.zeros(exp.shape, device=params.device)], dim=-1),
-        torch.cat([
-            torch.zeros(exp.shape, device=params.device),
-            exp], dim=-1)],
-        dim=-2).squeeze(0)
+    return torch.stack(
+        [
+            torch.cat(
+                [
+                    torch.ones(exp.shape, device=params.device),
+                    torch.zeros(exp.shape, device=params.device),
+                ],
+                dim=-1,
+            ),
+            torch.cat([torch.zeros(exp.shape, device=params.device), exp], dim=-1),
+        ],
+        dim=-2,
+    ).squeeze(0)
 
 
 def cu1_matrix(params):
@@ -798,11 +1037,15 @@ def cu1_matrix(params):
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(phi.shape[0], 1, 1)
+    )
 
     matrix[:, 3, 3] = exp
 
@@ -822,14 +1065,16 @@ def u2_matrix(params):
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
-    return INV_SQRT2 * torch.stack([
-        torch.cat([
-            torch.ones(phi.shape, device=params.device),
-            -torch.exp(1j * lam)], dim=-1),
-        torch.cat([
-            torch.exp(1j * phi),
-            torch.exp(1j * (phi + lam))], dim=-1)],
-        dim=-2).squeeze(0)
+    return INV_SQRT2 * torch.stack(
+        [
+            torch.cat(
+                [torch.ones(phi.shape, device=params.device), -torch.exp(1j * lam)],
+                dim=-1,
+            ),
+            torch.cat([torch.exp(1j * phi), torch.exp(1j * (phi + lam))], dim=-1),
+        ],
+        dim=-2,
+    ).squeeze(0)
 
 
 def cu2_matrix(params):
@@ -845,11 +1090,15 @@ def cu2_matrix(params):
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(phi.shape[0], 1, 1)
+    )
 
     matrix[:, 2, 3] = -torch.exp(1j * lam)
     matrix[:, 3, 2] = torch.exp(1j * phi)
@@ -875,14 +1124,15 @@ def u3_matrix(params):
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    return torch.stack([
-        torch.cat([
-            co,
-            -si * torch.exp(1j * lam)], dim=-1),
-        torch.cat([
-            si * torch.exp(1j * phi),
-            co * torch.exp(1j * (phi + lam))], dim=-1)],
-        dim=-2).squeeze(0)
+    return torch.stack(
+        [
+            torch.cat([co, -si * torch.exp(1j * lam)], dim=-1),
+            torch.cat(
+                [si * torch.exp(1j * phi), co * torch.exp(1j * (phi + lam))], dim=-1
+            ),
+        ],
+        dim=-2,
+    ).squeeze(0)
 
 
 def cu3_matrix(params):
@@ -902,11 +1152,15 @@ def cu3_matrix(params):
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(phi.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(phi.shape[0], 1, 1)
+    )
 
     matrix[:, 2, 2] = co
     matrix[:, 2, 3] = -si * torch.exp(1j * lam)
@@ -938,12 +1192,17 @@ def qubitunitary_matrix(params):
         if matrix.dim() > 2:
             # batched unitary
             bsz = matrix.shape[0]
-            assert np.allclose(np.matmul(U, np.transpose(U.conj(), [0, 2, 1])),
-                               np.stack([np.identity(U.shape[-1])] * bsz),
-                               atol=1e-5)
+            assert np.allclose(
+                np.matmul(U, np.transpose(U.conj(), [0, 2, 1])),
+                np.stack([np.identity(U.shape[-1])] * bsz),
+                atol=1e-5,
+            )
         else:
-            assert np.allclose(np.matmul(U, np.transpose(U.conj(), [1, 0])),
-                               np.identity(U.shape[0]), atol=1e-5)
+            assert np.allclose(
+                np.matmul(U, np.transpose(U.conj(), [1, 0])),
+                np.identity(U.shape[0]),
+                atol=1e-5,
+            )
     except AssertionError as err:
         logger.exception(f"Operator must be unitary.")
         raise err
@@ -991,7 +1250,7 @@ def multicnot_matrix(n_wires):
         torch.Tensor: The computed unitary matrix.
 
     """
-    mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
+    mat = torch.eye(2**n_wires, dtype=C_DTYPE)
     mat[-1][-1] = 0
     mat[-2][-2] = 0
     mat[-1][-2] = 1
@@ -1011,7 +1270,7 @@ def multixcnot_matrix(n_wires):
 
     """
     # when all control qubits are zero, then the target qubit will flip
-    mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
+    mat = torch.eye(2**n_wires, dtype=C_DTYPE)
     mat[0][0] = 0
     mat[1][1] = 0
     mat[0][1] = 1
@@ -1034,11 +1293,15 @@ def single_excitation_matrix(params):
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
 
-    matrix = torch.tensor([[1, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 1]], dtype=C_DTYPE, device=params.device
-                          ).unsqueeze(0).repeat(theta.shape[0], 1, 1)
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(theta.shape[0], 1, 1)
+    )
 
     matrix[:, 1, 1] = co
     matrix[:, 1, 2] = -si
@@ -1049,92 +1312,109 @@ def single_excitation_matrix(params):
 
 
 mat_dict = {
-    'hadamard': torch.tensor([[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]],
-                             dtype=C_DTYPE),
-    'shadamard': torch.tensor([[np.cos(np.pi / 8), -np.sin(np.pi / 8)],
-                               [np.sin(np.pi / 8), np.cos(np.pi / 8)]],
-                              dtype=C_DTYPE),
-    'paulix': torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
-    'pauliy': torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE),
-    'pauliz': torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE),
-    'i': torch.tensor([[1, 0], [0, 1]], dtype=C_DTYPE),
-    's': torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE),
-    't': torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=C_DTYPE),
-    'sx': 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
-                             dtype=C_DTYPE),
-    'cnot': torch.tensor([[1, 0, 0, 0],
-                          [0, 1, 0, 0],
-                          [0, 0, 0, 1],
-                          [0, 0, 1, 0]], dtype=C_DTYPE),
-    'cz': torch.tensor([[1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, -1]], dtype=C_DTYPE),
-    'cy': torch.tensor([[1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 0, -1j],
-                        [0, 0, 1j, 0]], dtype=C_DTYPE),
-    'swap': torch.tensor([[1, 0, 0, 0],
-                          [0, 0, 1, 0],
-                          [0, 1, 0, 0],
-                          [0, 0, 0, 1]], dtype=C_DTYPE),
-    'sswap': torch.tensor([[1, 0, 0, 0],
-                           [0, (1 + 1j) / 2, (1 - 1j) / 2, 0],
-                           [0, (1 - 1j) / 2, (1 + 1j) / 2, 0],
-                           [0, 0, 0, 1]], dtype=C_DTYPE),
-    'cswap': torch.tensor([[1, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 1, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 1, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 1, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 1, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 1, 0],
-                           [0, 0, 0, 0, 0, 1, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 1]], dtype=C_DTYPE),
-    'toffoli': torch.tensor([[1, 0, 0, 0, 0, 0, 0, 0],
-                             [0, 1, 0, 0, 0, 0, 0, 0],
-                             [0, 0, 1, 0, 0, 0, 0, 0],
-                             [0, 0, 0, 1, 0, 0, 0, 0],
-                             [0, 0, 0, 0, 1, 0, 0, 0],
-                             [0, 0, 0, 0, 0, 1, 0, 0],
-                             [0, 0, 0, 0, 0, 0, 0, 1],
-                             [0, 0, 0, 0, 0, 0, 1, 0]], dtype=C_DTYPE),
-    'rx': rx_matrix,
-    'ry': ry_matrix,
-    'rz': rz_matrix,
-    'rxx': rxx_matrix,
-    'ryy': ryy_matrix,
-    'rzz': rzz_matrix,
-    'rzx': rzx_matrix,
-    'phaseshift': phaseshift_matrix,
-    'rot': rot_matrix,
-    'multirz': multirz_matrix,
-    'crx': crx_matrix,
-    'cry': cry_matrix,
-    'crz': crz_matrix,
-    'crot': crot_matrix,
-    'u1': u1_matrix,
-    'u2': u2_matrix,
-    'u3': u3_matrix,
-    'cu1': cu1_matrix,
-    'cu2': cu2_matrix,
-    'cu3': cu3_matrix,
-    'qubitunitary': qubitunitary_matrix,
-    'qubitunitaryfast': qubitunitaryfast_matrix,
-    'qubitunitarystrict': qubitunitarystrict_matrix,
-    'multicnot': multicnot_matrix,
-    'multixcnot': multixcnot_matrix,
-    'single_excitation': single_excitation_matrix,
+    "hadamard": torch.tensor(
+        [[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]], dtype=C_DTYPE
+    ),
+    "shadamard": torch.tensor(
+        [
+            [np.cos(np.pi / 8), -np.sin(np.pi / 8)],
+            [np.sin(np.pi / 8), np.cos(np.pi / 8)],
+        ],
+        dtype=C_DTYPE,
+    ),
+    "paulix": torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
+    "pauliy": torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE),
+    "pauliz": torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE),
+    "i": torch.tensor([[1, 0], [0, 1]], dtype=C_DTYPE),
+    "s": torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE),
+    "t": torch.tensor([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=C_DTYPE),
+    "sx": 0.5 * torch.tensor([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]], dtype=C_DTYPE),
+    "cnot": torch.tensor(
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=C_DTYPE
+    ),
+    "cz": torch.tensor(
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=C_DTYPE
+    ),
+    "cy": torch.tensor(
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, -1j], [0, 0, 1j, 0]], dtype=C_DTYPE
+    ),
+    "swap": torch.tensor(
+        [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=C_DTYPE
+    ),
+    "sswap": torch.tensor(
+        [
+            [1, 0, 0, 0],
+            [0, (1 + 1j) / 2, (1 - 1j) / 2, 0],
+            [0, (1 - 1j) / 2, (1 + 1j) / 2, 0],
+            [0, 0, 0, 1],
+        ],
+        dtype=C_DTYPE,
+    ),
+    "cswap": torch.tensor(
+        [
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+        ],
+        dtype=C_DTYPE,
+    ),
+    "toffoli": torch.tensor(
+        [
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+        ],
+        dtype=C_DTYPE,
+    ),
+    "rx": rx_matrix,
+    "ry": ry_matrix,
+    "rz": rz_matrix,
+    "rxx": rxx_matrix,
+    "ryy": ryy_matrix,
+    "rzz": rzz_matrix,
+    "rzx": rzx_matrix,
+    "phaseshift": phaseshift_matrix,
+    "rot": rot_matrix,
+    "multirz": multirz_matrix,
+    "crx": crx_matrix,
+    "cry": cry_matrix,
+    "crz": crz_matrix,
+    "crot": crot_matrix,
+    "u1": u1_matrix,
+    "u2": u2_matrix,
+    "u3": u3_matrix,
+    "cu1": cu1_matrix,
+    "cu2": cu2_matrix,
+    "cu3": cu3_matrix,
+    "qubitunitary": qubitunitary_matrix,
+    "qubitunitaryfast": qubitunitaryfast_matrix,
+    "qubitunitarystrict": qubitunitarystrict_matrix,
+    "multicnot": multicnot_matrix,
+    "multixcnot": multixcnot_matrix,
+    "single_excitation": single_excitation_matrix,
 }
 
 
-def hadamard(q_device: tq.QuantumDevice,
-             wires: Union[List[int], int],
-             params: torch.Tensor = None,
-             n_wires: int = None,
-             static: bool = False,
-             parent_graph = None,
-             inverse: bool = False,
-             comp_method: str = 'bmm'):
+def hadamard(
+    q_device: tq.QuantumDevice,
+    wires: Union[List[int], int],
+    params: torch.Tensor = None,
+    n_wires: int = None,
+    static: bool = False,
+    parent_graph=None,
+    inverse: bool = False,
+    comp_method: str = "bmm",
+):
     """Perform the hadamard gate.
 
     Args:
@@ -1142,21 +1422,21 @@ def hadamard(q_device: tq.QuantumDevice,
         wires (Union[List[int], int]): Which qubit(s) to apply the gate.
         params (torch.Tensor, optional): Parameters (if any) of the gate.
             Default to None.
-        n_wires (int, optional): Number of qubits the gate is applied to. 
+        n_wires (int, optional): Number of qubits the gate is applied to.
             Default to None.
-        static (bool, optional): Whether use static mode computation. 
+        static (bool, optional): Whether use static mode computation.
             Default to False.
-        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of 
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
             current operation. Default to None.
         inverse (bool, optional): Whether inverse the gate. Default to False.
-        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform 
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
         matrix vector multiplication. Default to 'bmm'.
 
     Returns:
         None.
 
     """
-    name = 'hadamard'
+    name = "hadamard"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1168,18 +1448,20 @@ def hadamard(q_device: tq.QuantumDevice,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def shadamard(q_device,
-              wires,
-              params=None,
-              n_wires=None,
-              static=False,
-              parent_graph=None,
-              inverse=False,
-              comp_method='bmm'):
+def shadamard(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the shadamard gate.
 
     Args:
@@ -1201,7 +1483,7 @@ def shadamard(q_device,
         None.
 
     """
-    name = 'shadamard'
+    name = "shadamard"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1213,18 +1495,20 @@ def shadamard(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def paulix(q_device,
-           wires,
-           params=None,
-           n_wires=None,
-           static=False,
-           parent_graph=None,
-           inverse=False,
-           comp_method='bmm'):
+def paulix(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the Pauli X gate.
 
     Args:
@@ -1246,7 +1530,7 @@ def paulix(q_device,
         None.
 
     """
-    name = 'paulix'
+    name = "paulix"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1258,18 +1542,20 @@ def paulix(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def pauliy(q_device,
-           wires,
-           params=None,
-           n_wires=None,
-           static=False,
-           parent_graph=None,
-           inverse=False,
-           comp_method='bmm'):
+def pauliy(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the Pauli Y gate.
 
     Args:
@@ -1291,7 +1577,7 @@ def pauliy(q_device,
         None.
 
     """
-    name = 'pauliy'
+    name = "pauliy"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1303,18 +1589,20 @@ def pauliy(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def pauliz(q_device,
-           wires,
-           params=None,
-           n_wires=None,
-           static=False,
-           parent_graph=None,
-           inverse=False,
-           comp_method='bmm'):
+def pauliz(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the Pauli Z gate.
 
     Args:
@@ -1336,7 +1624,7 @@ def pauliz(q_device,
         None.
 
     """
-    name = 'pauliz'
+    name = "pauliz"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1348,18 +1636,20 @@ def pauliz(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def i(q_device,
-      wires,
-      params=None,
-      n_wires=None,
-      static=False,
-      parent_graph=None,
-      inverse=False,
-      comp_method='bmm'):
+def i(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the I gate.
 
     Args:
@@ -1381,7 +1671,7 @@ def i(q_device,
         None.
 
     """
-    name = 'i'
+    name = "i"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1393,18 +1683,20 @@ def i(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def s(q_device,
-      wires,
-      params=None,
-      n_wires=None,
-      static=False,
-      parent_graph=None,
-      inverse=False,
-      comp_method='bmm'):
+def s(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the s gate.
 
     Args:
@@ -1426,7 +1718,7 @@ def s(q_device,
         None.
 
     """
-    name = 's'
+    name = "s"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1438,18 +1730,20 @@ def s(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def t(q_device,
-      wires,
-      params=None,
-      n_wires=None,
-      static=False,
-      parent_graph=None,
-      inverse=False,
-      comp_method='bmm'):
+def t(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the t gate.
 
     Args:
@@ -1471,7 +1765,7 @@ def t(q_device,
         None.
 
     """
-    name = 't'
+    name = "t"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1483,18 +1777,20 @@ def t(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def sx(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def sx(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the sx gate.
 
     Args:
@@ -1516,7 +1812,7 @@ def sx(q_device,
         None.
 
     """
-    name = 'sx'
+    name = "sx"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1528,18 +1824,20 @@ def sx(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cnot(q_device,
-         wires,
-         params=None,
-         n_wires=None,
-         static=False,
-         parent_graph=None,
-         inverse=False,
-         comp_method='bmm'):
+def cnot(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cnot gate.
 
     Args:
@@ -1561,7 +1859,7 @@ def cnot(q_device,
         None.
 
     """
-    name = 'cnot'
+    name = "cnot"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1573,18 +1871,20 @@ def cnot(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cz(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def cz(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cz gate.
 
     Args:
@@ -1606,7 +1906,7 @@ def cz(q_device,
         None.
 
     """
-    name = 'cz'
+    name = "cz"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1618,18 +1918,20 @@ def cz(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cy(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def cy(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cy gate.
 
     Args:
@@ -1651,7 +1953,7 @@ def cy(q_device,
         None.
 
     """
-    name = 'cy'
+    name = "cy"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1663,18 +1965,20 @@ def cy(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def rx(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def rx(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the rx gate.
 
     Args:
@@ -1696,7 +2000,7 @@ def rx(q_device,
         None.
 
     """
-    name = 'rx'
+    name = "rx"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1708,18 +2012,20 @@ def rx(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def ry(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def ry(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the ry gate.
 
     Args:
@@ -1741,7 +2047,7 @@ def ry(q_device,
         None.
 
     """
-    name = 'ry'
+    name = "ry"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1753,18 +2059,20 @@ def ry(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def rz(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def rz(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the rz gate.
 
     Args:
@@ -1786,7 +2094,7 @@ def rz(q_device,
         None.
 
     """
-    name = 'rz'
+    name = "rz"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1798,18 +2106,20 @@ def rz(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def rxx(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def rxx(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the rxx gate.
 
     Args:
@@ -1831,7 +2141,7 @@ def rxx(q_device,
         None.
 
     """
-    name = 'rxx'
+    name = "rxx"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1843,18 +2153,20 @@ def rxx(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def ryy(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def ryy(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the ryy gate.
 
     Args:
@@ -1876,7 +2188,7 @@ def ryy(q_device,
         None.
 
     """
-    name = 'ryy'
+    name = "ryy"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1888,18 +2200,20 @@ def ryy(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def rzz(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def rzz(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the rzz gate.
 
     Args:
@@ -1921,7 +2235,7 @@ def rzz(q_device,
         None.
 
     """
-    name = 'rzz'
+    name = "rzz"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1933,18 +2247,20 @@ def rzz(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def rzx(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def rzx(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the rzx gate.
 
     Args:
@@ -1966,7 +2282,7 @@ def rzx(q_device,
         None.
 
     """
-    name = 'rzx'
+    name = "rzx"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -1978,18 +2294,20 @@ def rzx(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def swap(q_device,
-         wires,
-         params=None,
-         n_wires=None,
-         static=False,
-         parent_graph=None,
-         inverse=False,
-         comp_method='bmm'):
+def swap(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the swap gate.
 
     Args:
@@ -2011,7 +2329,7 @@ def swap(q_device,
         None.
 
     """
-    name = 'swap'
+    name = "swap"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2023,18 +2341,20 @@ def swap(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def sswap(q_device,
-          wires,
-          params=None,
-          n_wires=None,
-          static=False,
-          parent_graph=None,
-          inverse=False,
-          comp_method='bmm'):
+def sswap(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the sswap gate.
 
     Args:
@@ -2056,7 +2376,7 @@ def sswap(q_device,
         None.
 
     """
-    name = 'sswap'
+    name = "sswap"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2068,18 +2388,20 @@ def sswap(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cswap(q_device,
-          wires,
-          params=None,
-          n_wires=None,
-          static=False,
-          parent_graph=None,
-          inverse=False,
-          comp_method='bmm'):
+def cswap(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cswap gate.
 
     Args:
@@ -2101,7 +2423,7 @@ def cswap(q_device,
         None.
 
     """
-    name = 'cswap'
+    name = "cswap"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2113,18 +2435,20 @@ def cswap(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def toffoli(q_device,
-            wires,
-            params=None,
-            n_wires=None,
-            static=False,
-            parent_graph=None,
-            inverse=False,
-            comp_method='bmm'):
+def toffoli(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the toffoli gate.
 
     Args:
@@ -2146,7 +2470,7 @@ def toffoli(q_device,
         None.
 
     """
-    name = 'toffoli'
+    name = "toffoli"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2158,18 +2482,20 @@ def toffoli(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def phaseshift(q_device,
-               wires,
-               params=None,
-               n_wires=None,
-               static=False,
-               parent_graph=None,
-               inverse=False,
-               comp_method='bmm'):
+def phaseshift(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the phaseshift gate.
 
     Args:
@@ -2191,7 +2517,7 @@ def phaseshift(q_device,
         None.
 
     """
-    name = 'phaseshift'
+    name = "phaseshift"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2203,18 +2529,20 @@ def phaseshift(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def rot(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def rot(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the rot gate.
 
     Args:
@@ -2236,7 +2564,7 @@ def rot(q_device,
         None.
 
     """
-    name = 'rot'
+    name = "rot"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2248,18 +2576,20 @@ def rot(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def multirz(q_device,
-            wires,
-            params=None,
-            n_wires=None,
-            static=False,
-            parent_graph=None,
-            inverse=False,
-            comp_method='bmm'):
+def multirz(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the multi qubit RZ gate.
 
     Args:
@@ -2281,7 +2611,7 @@ def multirz(q_device,
         None.
 
     """
-    name = 'multirz'
+    name = "multirz"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2293,18 +2623,20 @@ def multirz(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def crx(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def crx(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the crx gate.
 
     Args:
@@ -2326,7 +2658,7 @@ def crx(q_device,
         None.
 
     """
-    name = 'crx'
+    name = "crx"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2338,18 +2670,20 @@ def crx(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cry(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def cry(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cry gate.
 
     Args:
@@ -2371,7 +2705,7 @@ def cry(q_device,
         None.
 
     """
-    name = 'cry'
+    name = "cry"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2383,18 +2717,20 @@ def cry(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def crz(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def crz(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the crz gate.
 
     Args:
@@ -2416,7 +2752,7 @@ def crz(q_device,
         None.
 
     """
-    name = 'crz'
+    name = "crz"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2428,18 +2764,20 @@ def crz(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def crot(q_device,
-         wires,
-         params=None,
-         n_wires=None,
-         static=False,
-         parent_graph=None,
-         inverse=False,
-         comp_method='bmm'):
+def crot(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the crot gate.
 
     Args:
@@ -2461,7 +2799,7 @@ def crot(q_device,
         None.
 
     """
-    name = 'crot'
+    name = "crot"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2473,18 +2811,20 @@ def crot(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def u1(q_device,
-         wires,
-         params=None,
-         n_wires=None,
-         static=False,
-         parent_graph=None,
-         inverse=False,
-         comp_method='bmm'):
+def u1(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the u1 gate.
 
     Args:
@@ -2506,7 +2846,7 @@ def u1(q_device,
         None.
 
     """
-    name = 'u1'
+    name = "u1"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2518,18 +2858,20 @@ def u1(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def u2(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def u2(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the u2 gate.
 
     Args:
@@ -2551,7 +2893,7 @@ def u2(q_device,
         None.
 
     """
-    name = 'u2'
+    name = "u2"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2563,18 +2905,20 @@ def u2(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def u3(q_device,
-       wires,
-       params=None,
-       n_wires=None,
-       static=False,
-       parent_graph=None,
-       inverse=False,
-       comp_method='bmm'):
+def u3(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the u3 gate.
 
     Args:
@@ -2596,7 +2940,7 @@ def u3(q_device,
         None.
 
     """
-    name = 'u3'
+    name = "u3"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2608,18 +2952,20 @@ def u3(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cu1(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def cu1(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cu1 gate.
 
     Args:
@@ -2641,7 +2987,7 @@ def cu1(q_device,
         None.
 
     """
-    name = 'cu1'
+    name = "cu1"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2653,18 +2999,20 @@ def cu1(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cu2(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def cu2(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cu2 gate.
 
     Args:
@@ -2686,7 +3034,7 @@ def cu2(q_device,
         None.
 
     """
-    name = 'cu2'
+    name = "cu2"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2698,18 +3046,20 @@ def cu2(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def cu3(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method='bmm'):
+def cu3(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the cu3 gate.
 
     Args:
@@ -2731,7 +3081,7 @@ def cu3(q_device,
         None.
 
     """
-    name = 'cu3'
+    name = "cu3"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2743,19 +3093,20 @@ def cu3(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-
-def qubitunitary(q_device,
-                 wires,
-                 params=None,
-                 n_wires=None,
-                 static=False,
-                 parent_graph=None,
-                 inverse=False,
-                 comp_method='bmm'):
+def qubitunitary(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the qubitunitary gate.
 
     Args:
@@ -2777,7 +3128,7 @@ def qubitunitary(q_device,
         None.
 
     """
-    name = 'qubitunitary'
+    name = "qubitunitary"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2789,18 +3140,20 @@ def qubitunitary(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def qubitunitaryfast(q_device,
-                     wires,
-                     params=None,
-                     n_wires=None,
-                     static=False,
-                     parent_graph=None,
-                     inverse=False,
-                     comp_method='bmm'):
+def qubitunitaryfast(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the qubitunitaryfast gate.
 
     Args:
@@ -2822,7 +3175,7 @@ def qubitunitaryfast(q_device,
         None.
 
     """
-    name = 'qubitunitaryfast'
+    name = "qubitunitaryfast"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2834,18 +3187,20 @@ def qubitunitaryfast(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def qubitunitarystrict(q_device,
-                       wires,
-                       params=None,
-                       n_wires=None,
-                       static=False,
-                       parent_graph=None,
-                       inverse=False,
-                       comp_method='bmm'):
+def qubitunitarystrict(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the qubitunitarystrict = gate.
 
     Args:
@@ -2867,7 +3222,7 @@ def qubitunitarystrict(q_device,
         None.
 
     """
-    name = 'qubitunitarystrict'
+    name = "qubitunitarystrict"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2879,18 +3234,20 @@ def qubitunitarystrict(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def multicnot(q_device,
-              wires,
-              params=None,
-              n_wires=None,
-              static=False,
-              parent_graph=None,
-              inverse=False,
-              comp_method='bmm'):
+def multicnot(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the multi qubit cnot gate.
 
     Args:
@@ -2912,7 +3269,7 @@ def multicnot(q_device,
         None.
 
     """
-    name = 'multicnot'
+    name = "multicnot"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2924,18 +3281,20 @@ def multicnot(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def multixcnot(q_device,
-              wires,
-              params=None,
-              n_wires=None,
-              static=False,
-              parent_graph=None,
-              inverse=False,
-              comp_method='bmm'):
+def multixcnot(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the multi qubit xcnot gate.
 
     Args:
@@ -2957,7 +3316,7 @@ def multixcnot(q_device,
         None.
 
     """
-    name = 'multixcnot'
+    name = "multixcnot"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -2969,18 +3328,20 @@ def multixcnot(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
-def single_excitation(q_device,
-                      wires,
-                      params=None,
-                      n_wires=None,
-                      static=False,
-                      parent_graph=None,
-                      inverse=False,
-                      comp_method='bmm'):
+def single_excitation(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     """Perform the single excitation gate.
 
     Args:
@@ -3002,7 +3363,7 @@ def single_excitation(q_device,
         None.
 
     """
-    name = 'single_excitation'
+    name = "single_excitation"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -3014,7 +3375,7 @@ def single_excitation(q_device,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
-        inverse=inverse
+        inverse=inverse,
     )
 
 
@@ -3038,62 +3399,62 @@ cr = cu1
 cphase = cu1
 
 func_name_dict = {
-    'hadamard': hadamard,
-    'sh': shadamard,
-    'paulix': paulix,
-    'pauliy': pauliy,
-    'pauliz': pauliz,
-    'i': i,
-    's': s,
-    't': t,
-    'sx': sx,
-    'cnot': cnot,
-    'cz': cz,
-    'cy': cy,
-    'rx': rx,
-    'ry': ry,
-    'rz': rz,
-    'rxx': rxx,
-    'xx': xx,
-    'ryy': ryy,
-    'yy': yy,
-    'rzz': rzz,
-    'zz': zz,
-    'rzx': rzx,
-    'zx': zx,
-    'swap': swap,
-    'sswap': sswap,
-    'cswap': cswap,
-    'toffoli': toffoli,
-    'phaseshift': phaseshift,
-    'p': p,
-    'cp': cp,
-    'rot': rot,
-    'multirz': multirz,
-    'crx': crx,
-    'cry': cry,
-    'crz': crz,
-    'crot': crot,
-    'u1': u1,
-    'u2': u2,
-    'u3': u3,
-    'u': u,
-    'cu1': cu1,
-    'cphase': cphase,
-    'cr': cr,
-    'cu2': cu2,
-    'cu3': cu3,
-    'cu': cu,
-    'qubitunitary': qubitunitary,
-    'qubitunitaryfast': qubitunitaryfast,
-    'qubitunitarystrict': qubitunitarystrict,
-    'multicnot': multicnot,
-    'multixcnot': multixcnot,
-    'x': x,
-    'y': y,
-    'z': z,
-    'cx': cx,
-    'ccnot': ccnot,
-    'ccx': ccx,
-    'reset': reset,
+    "hadamard": hadamard,
+    "sh": shadamard,
+    "paulix": paulix,
+    "pauliy": pauliy,
+    "pauliz": pauliz,
+    "i": i,
+    "s": s,
+    "t": t,
+    "sx": sx,
+    "cnot": cnot,
+    "cz": cz,
+    "cy": cy,
+    "rx": rx,
+    "ry": ry,
+    "rz": rz,
+    "rxx": rxx,
+    "xx": xx,
+    "ryy": ryy,
+    "yy": yy,
+    "rzz": rzz,
+    "zz": zz,
+    "rzx": rzx,
+    "zx": zx,
+    "swap": swap,
+    "sswap": sswap,
+    "cswap": cswap,
+    "toffoli": toffoli,
+    "phaseshift": phaseshift,
+    "p": p,
+    "cp": cp,
+    "rot": rot,
+    "multirz": multirz,
+    "crx": crx,
+    "cry": cry,
+    "crz": crz,
+    "crot": crot,
+    "u1": u1,
+    "u2": u2,
+    "u3": u3,
+    "u": u,
+    "cu1": cu1,
+    "cphase": cphase,
+    "cr": cr,
+    "cu2": cu2,
+    "cu3": cu3,
+    "cu": cu,
+    "qubitunitary": qubitunitary,
+    "qubitunitaryfast": qubitunitaryfast,
+    "qubitunitarystrict": qubitunitarystrict,
+    "multicnot": multicnot,
+    "multixcnot": multixcnot,
+    "x": x,
+    "y": y,
+    "z": z,
+    "cx": cx,
+    "ccnot": ccnot,
+    "ccx": ccx,
+    "reset": reset,
 }
