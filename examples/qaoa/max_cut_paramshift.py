@@ -15,6 +15,7 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 
+
 class MAXCUT(tq.QuantumModule):
     """computes the optimal cut for a given graph.
     outputs: the most probable bitstring decides the set {0 or 1} each
@@ -42,14 +43,18 @@ class MAXCUT(tq.QuantumModule):
         """
 
         for wire in range(self.n_wires):
-            if self.shift_param_name == 'beta' and self.shift_wire == wire and layer_id == self.shift_layer:
+            if (
+                self.shift_param_name == "beta"
+                and self.shift_wire == wire
+                and layer_id == self.shift_layer
+            ):
                 degree = self.shift_degree
             else:
                 degree = 0
             qdev.rx(
                 wires=wire,
                 params=(beta.unsqueeze(0) + degree),
-            ) # type: ignore
+            )  # type: ignore
 
     def entangler(self, qdev, gamma, layer_id):
         """
@@ -57,21 +62,25 @@ class MAXCUT(tq.QuantumModule):
         entangler = exp(-i * gamma * (1 - sigma_z * sigma_z)/2)
         """
         for edge_id, edge in enumerate(self.input_graph):
-            if self.shift_param_name == 'gamma' and edge_id == self.shift_edge_id and layer_id == self.shift_layer:
+            if (
+                self.shift_param_name == "gamma"
+                and edge_id == self.shift_edge_id
+                and layer_id == self.shift_layer
+            ):
                 degree = self.shift_degree
             else:
                 degree = 0
             qdev.cx(
                 [edge[0], edge[1]],
-            ) # type: ignore 
+            )  # type: ignore
             qdev.rz(
                 wires=edge[1],
                 params=(gamma.unsqueeze(0) + degree),
-            ) # type: ignore
+            )  # type: ignore
             qdev.cx(
                 [edge[0], edge[1]],
-            ) # type: ignore
-    
+            )  # type: ignore
+
     def set_shift_param(self, layer, wire, param_name, degree, edge_id):
         """
         set the shift parameter for the parameter shift rule
@@ -110,7 +119,7 @@ class MAXCUT(tq.QuantumModule):
         for wire in range(self.n_wires):
             qdev.h(
                 wires=wire,
-            ) # type: ignore
+            )  # type: ignore
 
         for i in range(self.n_layers):
             self.mixer(qdev, self.betas[i], i)
@@ -140,6 +149,7 @@ class MAXCUT(tq.QuantumModule):
         else:
             return tq.measure(qdev, n_shots=1024, draw_id=0)
 
+
 def main():
     # create a input_graph
     input_graph = [(0, 1), (0, 3), (1, 2), (2, 3)]
@@ -157,6 +167,7 @@ def main():
     # use parameter shift rule
     param_shift_optimize(model, n_steps=500, step_size=0.01)
 
+
 def shift_and_run(model, use_qiskit=False):
     # flatten the parameters into 1D array
 
@@ -169,24 +180,24 @@ def shift_and_run(model, use_qiskit=False):
     for i in range(n_layers):
         grad_gamma = 0
         for k in range(n_edges):
-            model.set_shift_param(i, None, 'gamma', np.pi * 0.5, k)
+            model.set_shift_param(i, None, "gamma", np.pi * 0.5, k)
             out1 = model(use_qiskit)
             model.reset_shift_param()
 
-            model.set_shift_param(i, None, 'gamma', -np.pi * 0.5, k)
+            model.set_shift_param(i, None, "gamma", -np.pi * 0.5, k)
             out2 = model(use_qiskit)
             model.reset_shift_param()
-            
+
             grad_gamma += 0.5 * (out1 - out2).squeeze().item()
         grad_gammas.append(grad_gamma)
 
         grad_beta = 0
         for j in range(n_wires):
-            model.set_shift_param(i, j, 'beta', np.pi * 0.5, None)
+            model.set_shift_param(i, j, "beta", np.pi * 0.5, None)
             out1 = model(use_qiskit)
             model.reset_shift_param()
-        
-            model.set_shift_param(i, j, 'beta', -np.pi * 0.5, None)
+
+            model.set_shift_param(i, j, "beta", -np.pi * 0.5, None)
             out2 = model(use_qiskit)
             model.reset_shift_param()
 
@@ -200,9 +211,9 @@ def param_shift_optimize(model, n_steps=10, step_size=0.1):
     """finds the optimal cut where parameter shift rule is used to compute the gradient"""
     # optimize the parameters and return the optimal values
     # print(
-        # "The initial parameters are betas = {} and gammas = {}".format(
-            # *model.parameters()
-        # )
+    # "The initial parameters are betas = {} and gammas = {}".format(
+    # *model.parameters()
+    # )
     # )
     n_layers = model.n_layers
     for step in range(n_steps):
@@ -210,9 +221,9 @@ def param_shift_optimize(model, n_steps=10, step_size=0.1):
             loss, grad_list = shift_and_run(model)
         # param_list = list(model.parameters())
         # print(
-            # "The initial parameters are betas = {} and gammas = {}".format(
-                # *model.parameters()
-            # )
+        # "The initial parameters are betas = {} and gammas = {}".format(
+        # *model.parameters()
+        # )
         # )
         # param_list = torch.cat([param.flatten() for param in param_list])
 
@@ -227,10 +238,10 @@ def param_shift_optimize(model, n_steps=10, step_size=0.1):
                 model.gammas[i].copy_(model.gammas[i] - step_size * grad_list[1][i])
 
             # for param, grad in zip(param_list, grad_list):
-                # modify the parameters and ensure that there are no multiple views
-                # param.copy_(param - step_size * grad)
+            # modify the parameters and ensure that there are no multiple views
+            # param.copy_(param - step_size * grad)
         # if step % 5 == 0:
-            # print("Step: {}, Cost Objective: {}".format(step, loss.item()))
+        # print("Step: {}, Cost Objective: {}".format(step, loss.item()))
 
         # print(
         #     "The updated parameters are betas = {} and gammas = {}".format(
@@ -238,6 +249,7 @@ def param_shift_optimize(model, n_steps=10, step_size=0.1):
         #     )
         # )
     return model(measure_all=True)
+
 
 """
 Notes:

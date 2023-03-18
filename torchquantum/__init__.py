@@ -1,5 +1,5 @@
 __version__ = "0.1.6"
-__author__ = 'Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli'
+__author__ = "Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli"
 
 from .macro import *
 from .devices import *
@@ -15,17 +15,18 @@ from .utils import *
 from .noise_model import *
 from .node import *
 from .pulse import *
+
 # from .pulse_utils import *
 
 # here we check whether the Qiskit parameterization bug is fixed, if not, a
 # warning message will be printed
 import qiskit
 import os
+
 path = os.path.abspath(qiskit.__file__)
 # print(path)
 # path for aer provider
-path_provider = path.replace('__init__.py',
-                             'providers/aer/backends/aerbackend.py')
+path_provider = path.replace("__init__.py", "providers/aer/backends/aerbackend.py")
 # print(path_provider)
 
 # with open(path_provider, 'r') as fid:

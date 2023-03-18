@@ -66,7 +66,7 @@ def append_reverse(circuits, n_used, backend):
     results = []
     for circ in circuits:
         appended = circ.compose(circ.inverse())
-        appended = transpile(appended,backend)
+        appended = transpile(appended, backend)
         appended.measure([*range(n_used)], [*range(n_used)])
         results.append(appended)
     return results
@@ -126,6 +126,7 @@ def run_simulation(my_dict, native_circ, backend, n_used):
     fidelity = [count[n_used * "0"] / shots for count in counts]
     return native_circ, my_dict, fidelity
 
+
 def run_real(my_dict, native_circ, backend, n_used):
     # my_dict = get_randomized_mydict(my_dict)
     # backend = get_modified_backend(backend, my_dict)
@@ -136,7 +137,7 @@ def run_real(my_dict, native_circ, backend, n_used):
     #     backend=backend,
     #     shots=shots,
     # )
-    result = backend.run(native_circ,shots = shots).result()
+    result = backend.run(native_circ, shots=shots).result()
     counts = result.get_counts()
     fidelity = counts
     fidelity = [count[n_used * "0"] / shots for count in counts]
@@ -154,15 +155,17 @@ def test():
 def IBMQ_ini(backend_str):
     IBMQ.load_account()
     # provider = IBMQ.get_provider(hub="ibm-q-research", group="MIT-1", project="main")
-    provider = IBMQ.get_provider(hub='ibm-q-ornl', group='anl', project='csc428')
+    provider = IBMQ.get_provider(hub="ibm-q-ornl", group="anl", project="csc428")
     backend = provider.get_backend(backend_str)
     return backend
 
+
 def dump_dt(file_name, data, index):
-    file = open(file_name+index, "wb")
+    file = open(file_name + index, "wb")
     pickle.dump(data, file)
     file.close()
     return 0
+
 
 def main():
 
@@ -189,13 +192,11 @@ def main():
                 mydict, appended, backend, n_used
             )
             data_seg = [
-                [circ, my_dict, fide]
-                for (circ, fide) in zip(native_circs, fidelity)
+                [circ, my_dict, fide] for (circ, fide) in zip(native_circs, fidelity)
             ]
             data = data + data_seg
-            dump_dt(file_name,data,str(n_used)+str(n_gate))
-    dump_dt(file_name,data,'final'+sys.argv[2])
-
+            dump_dt(file_name, data, str(n_used) + str(n_gate))
+    dump_dt(file_name, data, "final" + sys.argv[2])
 
 
 if __name__ == "__main__":

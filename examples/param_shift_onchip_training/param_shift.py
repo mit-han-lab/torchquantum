@@ -10,15 +10,15 @@ from torchquantum.layers import SethLayer0
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+
 class QFCModel(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.encoder = tq.GeneralEncoder(
-            tq.encoder_op_list_name_dict['4x4_ryzxy'])
+        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_ryzxy"])
 
-        self.arch = {'n_wires': self.n_wires, 'n_blocks': 2, 'n_layers_per_block': 2}
+        self.arch = {"n_wires": self.n_wires, "n_blocks": 2, "n_layers_per_block": 2}
         self.q_layer = SethLayer0(self.arch)
 
         self.measure = tq.MeasureAll(tq.PauliZ)
@@ -29,7 +29,8 @@ class QFCModel(tq.QuantumModule):
 
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, self.measure, x)
+                self.q_device, self.encoder, self.q_layer, self.measure, x
+            )
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
@@ -58,9 +59,11 @@ def shift_and_run(model, inputs, use_qiskit=False):
 
 def main():
     with torch.no_grad():
-        outputs, grad_list = shift_and_run(QFCModel(), torch.randn(2, 1, 28, 28), use_qiskit=False)
+        outputs, grad_list = shift_and_run(
+            QFCModel(), torch.randn(2, 1, 28, 28), use_qiskit=False
+        )
     print(outputs, grad_list)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,4 +12,3 @@ To convert classical LSTM to quantum-enhanced LSTM (QLSTM) each of the classical
 ## Authors
 
 - [@MohammadrezaTavasoli](https://github.com/MohammadrezaTavasoli)
-

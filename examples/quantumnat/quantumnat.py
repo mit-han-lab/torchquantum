@@ -9,25 +9,29 @@ import torchquantum.functional as tqf
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchquantum.plugins import tq2qiskit, qiskit2tq
-from torchquantum.utils import (build_module_from_op_list,
-                                build_module_op_list,
-                                get_v_c_reg_mapping,
-                                get_p_c_reg_mapping,
-                                get_p_v_reg_mapping,
-                                get_cared_configs)
+from torchquantum.utils import (
+    build_module_from_op_list,
+    build_module_op_list,
+    get_v_c_reg_mapping,
+    get_p_c_reg_mapping,
+    get_p_v_reg_mapping,
+    get_cared_configs,
+)
 
 from torchquantum.plugins import QiskitProcessor
 
 import random
 import numpy as np
 
+
 class QFCModel(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.random_layer = tq.RandomLayer(n_ops=50,
-                                               wires=list(range(self.n_wires)))
+            self.random_layer = tq.RandomLayer(
+                n_ops=50, wires=list(range(self.n_wires))
+            )
 
             # gates with trainable parameters
             self.rx0 = tq.RX(has_params=True, trainable=True)
@@ -57,19 +61,24 @@ class QFCModel(tq.QuantumModule):
             self.crx0(self.q_device, wires=[0, 2])
 
             # add some more non-parameterized gates (add on-the-fly)
-            tqf.hadamard(self.q_device, wires=3, static=self.static_mode,
-                         parent_graph=self.graph)
-            tqf.sx(self.q_device, wires=2, static=self.static_mode,
-                   parent_graph=self.graph)
-            tqf.cnot(self.q_device, wires=[3, 0], static=self.static_mode,
-                     parent_graph=self.graph)
+            tqf.hadamard(
+                self.q_device, wires=3, static=self.static_mode, parent_graph=self.graph
+            )
+            tqf.sx(
+                self.q_device, wires=2, static=self.static_mode, parent_graph=self.graph
+            )
+            tqf.cnot(
+                self.q_device,
+                wires=[3, 0],
+                static=self.static_mode,
+                parent_graph=self.graph,
+            )
 
     def __init__(self):
         super().__init__()
         self.n_wires = 4
         self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.encoder = tq.GeneralEncoder(
-            tq.encoder_op_list_name_dict['4x4_ryzxy'])
+        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_ryzxy"])
 
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
@@ -80,7 +89,8 @@ class QFCModel(tq.QuantumModule):
 
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, self.measure, x)
+                self.q_device, self.encoder, self.q_layer, self.measure, x
+            )
         else:
             self.encoder(self.q_device, x)
             self.q_layer(self.q_device)
@@ -93,16 +103,16 @@ class QFCModel(tq.QuantumModule):
 
 
 def train(dataflow, model, device, optimizer):
-    for feed_dict in dataflow['train']:
-        inputs = feed_dict['image'].to(device)
-        targets = feed_dict['digit'].to(device)
+    for feed_dict in dataflow["train"]:
+        inputs = feed_dict["image"].to(device)
+        targets = feed_dict["digit"].to(device)
 
         outputs = model(inputs)
         loss = F.nll_loss(outputs, targets)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print(f"loss: {loss.item()}", end='\r')
+        print(f"loss: {loss.item()}", end="\r")
 
 
 def valid_test(dataflow, split, model, device, qiskit=False):
@@ -110,8 +120,8 @@ def valid_test(dataflow, split, model, device, qiskit=False):
     output_all = []
     with torch.no_grad():
         for feed_dict in dataflow[split]:
-            inputs = feed_dict['image'].to(device)
-            targets = feed_dict['digit'].to(device)
+            inputs = feed_dict["image"].to(device)
+            targets = feed_dict["digit"].to(device)
 
             outputs = model(inputs, use_qiskit=qiskit)
 
@@ -133,18 +143,22 @@ def valid_test(dataflow, split, model, device, qiskit=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--static', action='store_true', help='compute with '
-                                                              'static mode')
-    parser.add_argument('--pdb', action='store_true', help='debug with pdb')
-    parser.add_argument('--wires-per-block', type=int, default=2,
-                        help='wires per block int static mode')
-    parser.add_argument('--epochs', type=int, default=30,
-                        help='number of training epochs')
+    parser.add_argument(
+        "--static", action="store_true", help="compute with " "static mode"
+    )
+    parser.add_argument("--pdb", action="store_true", help="debug with pdb")
+    parser.add_argument(
+        "--wires-per-block", type=int, default=2, help="wires per block int static mode"
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=30, help="number of training epochs"
+    )
 
     args = parser.parse_args()
 
     if args.pdb:
         import pdb
+
         pdb.set_trace()
 
     seed = 0
@@ -153,7 +167,7 @@ def main():
     torch.manual_seed(seed)
 
     dataset = MNIST(
-        root='./mnist_data',
+        root="./mnist_data",
         train_valid_split_ratio=[0.9, 0.1],
         digits_of_interest=[3, 6],
         n_test_samples=75,
@@ -167,7 +181,8 @@ def main():
             batch_size=256,
             sampler=sampler,
             num_workers=8,
-            pin_memory=True)
+            pin_memory=True,
+        )
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -179,31 +194,30 @@ def main():
     n_epochs = args.epochs
 
     from qiskit import IBMQ
+
     IBMQ.load_account()
 
     circ = tq2qiskit(model.q_device, model.q_layer)
     """
-    add measure because the transpile process may permute the wires, 
-    so we need to get the final q reg to c reg mapping 
+    add measure because the transpile process may permute the wires,
+    so we need to get the final q reg to c reg mapping
     """
     circ.measure_all()
-    processor = QiskitProcessor(use_real_qc=True,
-                                        backend_name='ibmq_quito')
+    processor = QiskitProcessor(use_real_qc=True, backend_name="ibmq_quito")
 
     circ_transpiled = processor.transpile(circs=circ)
     q_layer = qiskit2tq(circ=circ_transpiled)
 
-    model.measure.set_v_c_reg_mapping(
-        get_v_c_reg_mapping(circ_transpiled))
+    model.measure.set_v_c_reg_mapping(get_v_c_reg_mapping(circ_transpiled))
     model.q_layer = q_layer
 
     noise_model_tq = tq.NoiseModelTQ(
-        noise_model_name='ibmq_quito',
+        noise_model_name="ibmq_quito",
         n_epochs=n_epochs,
         noise_total_prob=0.5,
         # ignored_ops=configs.trainer.ignored_noise_ops,
         factor=0.1,
-        add_thermal=True
+        add_thermal=True,
     )
 
     noise_model_tq.is_add_noise = True
@@ -216,12 +230,9 @@ def main():
     # noise_model_tq.p_v_reg_mapping ={'p2v': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
     #                                   'v2p': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
     #                                   }
-    noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(
-        circ_transpiled)
-    noise_model_tq.p_c_reg_mapping = get_p_c_reg_mapping(
-        circ_transpiled)
-    noise_model_tq.p_v_reg_mapping = get_p_v_reg_mapping(
-        circ_transpiled)
+    noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(circ_transpiled)
+    noise_model_tq.p_c_reg_mapping = get_p_c_reg_mapping(circ_transpiled)
+    noise_model_tq.p_v_reg_mapping = get_p_v_reg_mapping(circ_transpiled)
     model.set_noise_model_tq(noise_model_tq)
 
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
@@ -236,14 +247,14 @@ def main():
         # train
         print(f"Epoch {epoch}:")
         train(dataflow, model, device, optimizer)
-        print(optimizer.param_groups[0]['lr'])
+        print(optimizer.param_groups[0]["lr"])
 
         # valid
-        valid_test(dataflow, 'valid', model, device)
+        valid_test(dataflow, "valid", model, device)
         scheduler.step()
 
     # test
-    valid_test(dataflow, 'test', model, device, qiskit=False)
+    valid_test(dataflow, "test", model, device, qiskit=False)
 
     # run on Qiskit simulator and real Quantum Computers
     try:
@@ -253,23 +264,22 @@ def main():
         print(f"\nTest with Qiskit Simulator")
         processor_simulation = QiskitProcessor(use_real_qc=False)
         model.set_qiskit_processor(processor_simulation)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
+        valid_test(dataflow, "test", model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = 'ibmq_quito'
+        backend_name = "ibmq_quito"
         print(f"\nTest on Real Quantum Computer {backend_name}")
-        processor_real_qc = QiskitProcessor(use_real_qc=True,
-                                            backend_name=backend_name)
+        processor_real_qc = QiskitProcessor(use_real_qc=True, backend_name=backend_name)
         model.set_qiskit_processor(processor_real_qc)
-        valid_test(dataflow, 'test', model, device, qiskit=True)
+        valid_test(dataflow, "test", model, device, qiskit=True)
     except ImportError:
-        print("Please install qiskit, create an IBM Q Experience Account and "
-              "save the account token according to the instruction at "
-              "'https://github.com/Qiskit/qiskit-ibmq-provider', "
-              "then try again.")
+        print(
+            "Please install qiskit, create an IBM Q Experience Account and "
+            "save the account token according to the instruction at "
+            "'https://github.com/Qiskit/qiskit-ibmq-provider', "
+            "then try again."
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
