@@ -5,7 +5,7 @@ import numpy as np
 import torchquantum as tq
 
 from typing import Callable, Union, Optional, List, Dict, TYPE_CHECKING
-from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+from .macro import C_DTYPE, F_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from .utils import pauli_eigs, diag
 from torchpack.utils.logging import logger
 from torchquantum.utils import normalize_statevector
@@ -242,13 +242,21 @@ def gate_wrapper(name, mat, method, q_device: QuantumDevice, wires,
     """
     if params is not None:
         if not isinstance(params, torch.Tensor):
-            # this is for qubitunitary gate
-            params = torch.tensor(params, dtype=C_DTYPE)
+            if name in ['qubitunitary', 'qubitunitaryfast', 'qubitunitarystrict']:
+                # this is for qubitunitary gate
+                params = torch.tensor(params, dtype=C_DTYPE)
+            else:
+                # this is for directly inputting parameters as a number
+                params = torch.tensor(params, dtype=F_DTYPE)
 
         if name in ['qubitunitary', 'qubitunitaryfast', 'qubitunitarystrict']:
             params = params.unsqueeze(0) if params.dim() == 2 else params
         else:
-            params = params.unsqueeze(-1) if params.dim() == 1 else params
+            if params.dim() == 1:
+                params = params.unsqueeze(-1)
+            elif params.dim() == 0:
+                params = params.unsqueeze(-1).unsqueeze(-1)
+            # params = params.unsqueeze(-1) if params.dim() == 1 else params
     wires = [wires] if isinstance(wires, int) else wires
 
     if q_device.record_op:

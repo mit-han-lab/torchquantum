@@ -65,6 +65,7 @@ __all__ = [
     'Reset',
     'SingleExcitation',
     'EchoedCrossResonance',
+    'ECR',
 ]
 
 
