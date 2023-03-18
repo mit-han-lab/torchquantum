@@ -1,15 +1,10 @@
 import torchquantum as tq
-import torchquantum.functional as tqf
 import torch
 import torch.nn.functional as F
 import numpy as np
 import os
-import random
-import datetime
 
-from torchquantum.encoding import encoder_op_list_name_dict
 from torchpack.utils.logging import logger
-from torchquantum.layers import layer_name_dict
 from torchpack.utils.config import configs
 
 
@@ -289,7 +284,7 @@ class QMultiFCModel0(tq.QuantumModule):
             inputs_grad2loss = None
             for input_grad in node.grad_encoder:
                 input_grad2loss = torch.sum(input_grad * grad_output, dim=1).view(-1, 1)
-                if inputs_grad2loss == None:
+                if inputs_grad2loss is None:
                     inputs_grad2loss = input_grad2loss
                 else:
                     inputs_grad2loss = torch.cat((inputs_grad2loss, input_grad2loss), 1)
