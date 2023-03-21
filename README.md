@@ -46,7 +46,7 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 
 ## News
 
-- v0.1.6 Available!
+- v0.1.7 Available!
 - Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ) for real time support!
 - Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
 - Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu)
