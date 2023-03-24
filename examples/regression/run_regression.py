@@ -100,7 +100,9 @@ class QModel(tq.QuantumModule):
             self.fc_layer = torch.nn.Linear(n_wires, 1)
 
     def forward(self, input_states):
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=input_states.shape[0], device=input_states.device)
+        qdev = tq.QuantumDevice(
+            n_wires=self.n_wires, bsz=input_states.shape[0], device=input_states.device
+        )
         # firstly set the qdev states
         qdev.set_states(input_states)
         for k in range(self.n_blocks):
@@ -213,7 +215,9 @@ def main():
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    model = QModel(n_wires=args.n_wires, n_blocks=args.n_blocks, add_fc=args.addfc).to(device)
+    model = QModel(n_wires=args.n_wires, n_blocks=args.n_blocks, add_fc=args.addfc).to(
+        device
+    )
 
     n_epochs = args.epochs
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
@@ -225,11 +229,12 @@ def main():
         train(dataflow, model, device, optimizer)
 
         # valid
-        valid_test(dataflow,"valid", model, device)
+        valid_test(dataflow, "valid", model, device)
         scheduler.step()
 
     # final valid
     valid_test(dataflow, "valid", model, device)
+
 
 if __name__ == "__main__":
     main()

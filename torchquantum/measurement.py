@@ -108,8 +108,8 @@ def expval(
 
 
 class MeasureAll(tq.QuantumModule):
-    """Obtain the expectation value of all the qubits.
-    """
+    """Obtain the expectation value of all the qubits."""
+
     def __init__(self, obs, v_c_reg_mapping=None):
         super().__init__()
         self.obs = obs

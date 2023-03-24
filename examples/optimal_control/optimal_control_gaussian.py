@@ -1,10 +1,7 @@
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
-import argparse
 
 import torchquantum as tq
-import torchquantum.functional as tqf
 import pdb
 import numpy as np
 

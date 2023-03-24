@@ -1,15 +1,12 @@
 import torch
 import torchquantum as tq
-import torchquantum.functional as tqf
 
 import random
 import numpy as np
 
 from torchquantum.functional import mat_dict
 
-from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.measurement import expval_joint_analytical
-from torchquantum.plugins import op_history2qiskit
 
 seed = 0
 random.seed(seed)
