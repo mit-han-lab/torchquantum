@@ -52,7 +52,9 @@ class QFCModel(tq.QuantumModule):
         super().__init__()
         self.n_wires = 2
         # the encoder here is just for illustration purpose, may not be the best choice
-        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["2x8_rxryrzrxryrzrxry"])
+        self.encoder = tq.GeneralEncoder(
+            tq.encoder_op_list_name_dict["2x8_rxryrzrxryrzrxry"]
+        )
 
         self.q_layer = self.QLayer()
 
@@ -70,7 +72,7 @@ class QFCModel(tq.QuantumModule):
         obs_yy = expval_joint_analytical(qdev, "YY")
         obs_zz = expval_joint_analytical(qdev, "ZZ")
         obs_xy = expval_joint_analytical(qdev, "XY")
-        
+
         x = torch.stack([obs_xx, obs_yy, obs_zz, obs_xy], dim=1)
         x = F.log_softmax(x, dim=1)
 
@@ -181,6 +183,7 @@ def main():
 
     # test
     valid_test(dataflow, "test", model, device, qiskit=False)
+
 
 if __name__ == "__main__":
     main()

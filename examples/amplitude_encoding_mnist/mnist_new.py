@@ -6,7 +6,6 @@ import torch
 import torch.nn.functional as F
 
 import torchquantum as tq
-import torchquantum.functional as tqf
 
 from torchquantum.datasets import MNIST
 from torchquantum.operators import op_name_dict
@@ -19,9 +18,9 @@ class TQNet(tq.QuantumModule):
 
         self.encoder = encoder
         self.use_softmax = use_softmax
-        
+
         self.layers = tq.QuantumModuleList()
-        
+
         for layer in layers:
             self.layers.append(layer)
 
@@ -31,7 +30,7 @@ class TQNet(tq.QuantumModule):
     def forward(self, device, x):
         bsz = x.shape[0]
         device.reset_states(bsz)
-        
+
         x = F.avg_pool2d(x, 6)
         x = x.view(bsz, 16)
 
@@ -45,23 +44,25 @@ class TQNet(tq.QuantumModule):
 
         if self.use_softmax:
             meas = F.log_softmax(meas, dim=1)
-        
+
         return meas
+
 
 class TQLayer(tq.QuantumModule):
     def __init__(self, gates: List[tq.QuantumModule]):
         super().__init__()
-        
+
         self.service = "TorchQuantum"
 
         self.layer = tq.QuantumModuleList()
         for gate in gates:
             self.layer.append(gate)
-    
+
     @tq.static_support
     def forward(self, q_device):
         for gate in self.layer:
             gate(q_device)
+
 
 def train_tq(model, device, train_dl, epochs, loss_fn, optimizer):
     losses = []
@@ -69,16 +70,16 @@ def train_tq(model, device, train_dl, epochs, loss_fn, optimizer):
         running_loss = 0.0
         batches = 0
         for batch_dict in train_dl:
-            x = batch_dict['image']
-            y = batch_dict['digit']
-            
-            y = y.to(torch.long)  
+            x = batch_dict["image"]
+            y = batch_dict["digit"]
+
+            y = y.to(torch.long)
 
             x = x.to(torch_device)
             y = y.to(torch_device)
-            
+
             optimizer.zero_grad()
-            
+
             preds = model(device, x)
 
             loss = loss_fn(preds, y)
@@ -90,24 +91,27 @@ def train_tq(model, device, train_dl, epochs, loss_fn, optimizer):
             batches += 1
 
             print(f"Epoch {epoch + 1} | Loss: {running_loss/batches}", end="\r")
-        
+
         print(f"Epoch {epoch + 1} | Loss: {running_loss/batches}")
-        losses.append(running_loss/batches)
+        losses.append(running_loss / batches)
 
     return losses
+
 
 torch_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # encoder = None
 # encoder = tq.AmplitudeEncoder()
-encoder = tq.MultiPhaseEncoder(['u3', 'u3', 'u3', 'u3'])
+encoder = tq.MultiPhaseEncoder(["u3", "u3", "u3", "u3"])
 
 
 random_layer = tq.RandomLayer(n_ops=50, wires=list(range(4)))
-trainable_layer = [op_name_dict['rx'](trainable=True, has_params=True, wires=[0]),
-                   op_name_dict['ry'](trainable=True, has_params=True, wires=[1]),
-                   op_name_dict['rz'](trainable=True, has_params=True, wires=[3]),
-                   op_name_dict['crx'](trainable=True, has_params=True, wires=[0,2])]
+trainable_layer = [
+    op_name_dict["rx"](trainable=True, has_params=True, wires=[0]),
+    op_name_dict["ry"](trainable=True, has_params=True, wires=[1]),
+    op_name_dict["rz"](trainable=True, has_params=True, wires=[3]),
+    op_name_dict["crx"](trainable=True, has_params=True, wires=[0, 2]),
+]
 trainable_layer = TQLayer(trainable_layer)
 layers = [random_layer, trainable_layer]
 
@@ -119,16 +123,27 @@ loss_fn = F.nll_loss
 optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
 
 dataset = MNIST(
-        root='./mnist_data',
-        train_valid_split_ratio=[.9, .1],
-        digits_of_interest=[0, 1, 3, 6],
-        n_test_samples=200,
-    )
+    root="./mnist_data",
+    train_valid_split_ratio=[0.9, 0.1],
+    digits_of_interest=[0, 1, 3, 6],
+    n_test_samples=200,
+)
 
-train_dl = torch.utils.data.DataLoader(dataset['train'], batch_size=32, sampler=torch.utils.data.RandomSampler(dataset['train']))
-val_dl = torch.utils.data.DataLoader(dataset['valid'], batch_size=32, sampler=torch.utils.data.RandomSampler(dataset['valid']))
-test_dl = torch.utils.data.DataLoader(dataset['test'], batch_size=32, sampler=torch.utils.data.RandomSampler(dataset['test']))
+train_dl = torch.utils.data.DataLoader(
+    dataset["train"],
+    batch_size=32,
+    sampler=torch.utils.data.RandomSampler(dataset["train"]),
+)
+val_dl = torch.utils.data.DataLoader(
+    dataset["valid"],
+    batch_size=32,
+    sampler=torch.utils.data.RandomSampler(dataset["valid"]),
+)
+test_dl = torch.utils.data.DataLoader(
+    dataset["test"],
+    batch_size=32,
+    sampler=torch.utils.data.RandomSampler(dataset["test"]),
+)
 
 print("--Training--")
 train_losses = train_tq(model, device, train_dl, 1, loss_fn, optimizer)
-
