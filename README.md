@@ -56,7 +56,7 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 - Easy construction and simulation of quantum circuits in **PyTorch**
 - **Dynamic computation graph** for easy debugging
 - **Gradient support** via autograd
-- **Batch mode** inference and training on **CPU/GPU**.
+- **Batch mode** inference and training on **CPU/GPU**
 - Easy **deployment on real quantum devices** such as IBMQ
 - **Easy hybrid classical-quantum** model construction
 - (coming soon) **pulse-level simulation**
