@@ -6,15 +6,6 @@ import argparse
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-from torchquantum.plugins import (
-    tq2qiskit_expand_params,
-    tq2qiskit,
-    tq2qiskit_measurement,
-    qiskit_assemble_circs,
-    op_history2qiskit,
-    op_history2qiskit_expand_params,
-)
-
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
@@ -38,7 +29,7 @@ class QFCModel(tq.QuantumModule):
             self.crx0 = tq.CRX(has_params=True, trainable=True)
 
         @tq.static_support
-        def forward(self, qdev: tq.QuantumDevice):
+        def forward(self, q_device: tq.QuantumDevice):
             """
             1. To convert tq QuantumModule to qiskit or run in the static
             model, need to:
@@ -48,19 +39,31 @@ class QFCModel(tq.QuantumModule):
                     parent_graph=self.graph
                     to all the tqf functions, such as tqf.hadamard below
             """
-            self.random_layer(qdev)
+            self.q_device = q_device
+
+            self.random_layer(self.q_device)
 
             # some trainable gates (instantiated ahead of time)
-            self.rx0(qdev, wires=0)
-            self.ry0(qdev, wires=1)
-            self.rz0(qdev, wires=3)
-            self.crx0(qdev, wires=[0, 2])
+            self.rx0(self.q_device, wires=0)
+            self.ry0(self.q_device, wires=1)
+            self.rz0(self.q_device, wires=3)
+            self.crx0(self.q_device, wires=[0, 2])
 
             # add some more non-parameterized gates (add on-the-fly)
-            qdev.h(wires=3, static=self.static_mode, parent_graph=self.graph)
-            qdev.sx(wires=2, static=self.static_mode, parent_graph=self.graph)
-            qdev.cnot(wires=[3, 0], static=self.static_mode, parent_graph=self.graph)
-            qdev.rx(
+            tqf.hadamard(
+                self.q_device, wires=3, static=self.static_mode, parent_graph=self.graph
+            )
+            tqf.sx(
+                self.q_device, wires=2, static=self.static_mode, parent_graph=self.graph
+            )
+            tqf.cnot(
+                self.q_device,
+                wires=[3, 0],
+                static=self.static_mode,
+                parent_graph=self.graph,
+            )
+            tqf.rx(
+                self.q_device,
                 wires=1,
                 params=torch.tensor([0.1]),
                 static=self.static_mode,
@@ -70,42 +73,25 @@ class QFCModel(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.n_wires = 4
-        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_u3rx"])
+        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_ryzxy"])
 
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
-        qdev = tq.QuantumDevice(
-            n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True
-        )
-
+        self.q_device.reset_states(x.shape[0])
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-        devi = x.device
 
         if use_qiskit:
-            encoder_circs = tq2qiskit_expand_params(qdev, x, self.encoder.func_list)
-            q_layer_circ = tq2qiskit(qdev, self.q_layer)
-            measurement_circ = tq2qiskit_measurement(qdev, self.measure)
-            assembled_circs = qiskit_assemble_circs(
-                encoder_circs, q_layer_circ, measurement_circ
+            x = self.qiskit_processor.process_parameterized(
+                self.q_device, self.encoder, self.q_layer, self.measure, x
             )
-            x0 = self.qiskit_processor.process_ready_circs(qdev, assembled_circs).to(
-                devi
-            )
-            x = x0
-
         else:
-            self.encoder(qdev, x)
-            op_history_parameterized = qdev.op_history
-            qdev.reset_op_history()
-            self.q_layer(qdev)
-            op_history_fixed = qdev.op_history
-            x = self.measure(qdev)
-
-        # circs = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
-        # print(op_history2qiskit(self.n_wires, op_history_fixed))
+            self.encoder(self.q_device, x)
+            self.q_layer(self.q_device)
+            x = self.measure(self.q_device)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
