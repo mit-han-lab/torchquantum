@@ -4,7 +4,7 @@ import torchquantum.functional as tqf
 import qiskit.circuit.library.standard_gates as qiskit_gate
 import numpy as np
 
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, ClassicalRegister
 from qiskit import Aer, execute
 from qiskit.circuit import Parameter
 from torchpack.utils.logging import logger
@@ -35,8 +35,14 @@ __all__ = [
 
 def qiskit_assemble_circs(encoders, fixed_layer, measurement):
     circs_all = []
-
+    n_qubits = len(fixed_layer.qubits)
     for encoder in encoders:
+        if len(encoder.cregs) == 0:
+            cregs = ClassicalRegister(n_qubits, "c")
+            encoder.add_register(cregs)
+        if len(fixed_layer.cregs) == 0:
+            cregs = ClassicalRegister(n_qubits, "c")
+            fixed_layer.add_register(cregs)
         circ = encoder.compose(fixed_layer).compose(measurement)
         circs_all.append(circ)
 
