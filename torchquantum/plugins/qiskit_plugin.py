@@ -170,7 +170,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
     elif func == "u2":
         circ.u2(*list(params), *wires)
     elif func == "u3":
-        circ.u3(*list(params), *wires)
+        circ.u(*list(params), *wires)
     elif func == "cu3":
         circ.cu3(*list(params), *wires)
     elif (
