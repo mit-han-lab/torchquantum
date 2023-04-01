@@ -2,13 +2,11 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 import argparse
+import random
+import numpy as np
 
 import torchquantum as tq
-import torchquantum.functional as tqf
-
 from torchquantum.plugins import (
-    tq2qiskit_expand_params,
-    tq2qiskit,
     tq2qiskit_measurement,
     qiskit_assemble_circs,
     op_history2qiskit,
@@ -17,9 +15,6 @@ from torchquantum.plugins import (
 
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
-
-import random
-import numpy as np
 
 
 class QFCModel(tq.QuantumModule):
@@ -37,17 +32,7 @@ class QFCModel(tq.QuantumModule):
             self.rz0 = tq.RZ(has_params=True, trainable=True)
             self.crx0 = tq.CRX(has_params=True, trainable=True)
 
-        @tq.static_support
         def forward(self, qdev: tq.QuantumDevice):
-            """
-            1. To convert tq QuantumModule to qiskit or run in the static
-            model, need to:
-                (1) add @tq.static_support before the forward
-                (2) make sure to add
-                    static=self.static_mode and
-                    parent_graph=self.graph
-                    to all the tqf functions, such as tqf.hadamard below
-            """
             self.random_layer(qdev)
 
             # some trainable gates (instantiated ahead of time)
@@ -57,15 +42,15 @@ class QFCModel(tq.QuantumModule):
             self.crx0(qdev, wires=[0, 2])
 
             # add some more non-parameterized gates (add on-the-fly)
-            qdev.h(wires=3, static=self.static_mode, parent_graph=self.graph)
-            qdev.sx(wires=2, static=self.static_mode, parent_graph=self.graph)
-            qdev.cnot(wires=[3, 0], static=self.static_mode, parent_graph=self.graph)
+            qdev.h(wires=3)  # type: ignore
+            qdev.sx(wires=2)  # type: ignore
+            qdev.cnot(wires=[3, 0])  # type: ignore
             qdev.rx(
                 wires=1,
                 params=torch.tensor([0.1]),
                 static=self.static_mode,
                 parent_graph=self.graph,
-            )
+            )  # type: ignore
 
     def __init__(self):
         super().__init__()
@@ -85,37 +70,38 @@ class QFCModel(tq.QuantumModule):
         devi = x.device
 
         if use_qiskit:
+            # use qiskit to process the circuit
+            # create the qiskit circuit for encoder
             self.encoder(qdev, x)  
             op_history_parameterized = qdev.op_history
             qdev.reset_op_history()
             encoder_circs = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
 
+            # create the qiskit circuit for trainable quantum layers
             self.q_layer(qdev)
             op_history_fixed = qdev.op_history
             qdev.reset_op_history()
             q_layer_circ = op_history2qiskit(self.n_wires, op_history_fixed)
 
-            # encoder_circs = tq2qiskit_expand_params(qdev, x, self.encoder.func_list)
-            # q_layer_circ = tq2qiskit(qdev, self.q_layer)
+            # create the qiskit circuit for measurement
             measurement_circ = tq2qiskit_measurement(qdev, self.measure)
+
+            # assemble the encoder, trainable quantum layers, and measurement circuits
             assembled_circs = qiskit_assemble_circs(
                 encoder_circs, q_layer_circ, measurement_circ
             )
-            x0 = self.qiskit_processor.process_ready_circs(qdev, assembled_circs).to(
+
+            # call the qiskit processor to process the circuit
+            x0 = self.qiskit_processor.process_ready_circs(qdev, assembled_circs).to(  # type: ignore
                 devi
             )
             x = x0
 
         else:
+            # use torchquantum to process the circuit
             self.encoder(qdev, x)
-            op_history_parameterized = qdev.op_history
-            qdev.reset_op_history()
             self.q_layer(qdev)
-            op_history_fixed = qdev.op_history
             x = self.measure(qdev)
-
-        # circs = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
-        # print(op_history2qiskit(self.n_wires, op_history_fixed))
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
