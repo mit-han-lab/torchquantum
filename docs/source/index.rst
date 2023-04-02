@@ -62,7 +62,7 @@ Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine
 👋 Welcome
 =========
 
-- What it is doing
+- What does it do
 Quantum simulation framework based on PyTorch. It supports statevector
 simulation and pulse simulation (coming soon) on GPUs. It can scale up
 to the simulation of 25+ qubits with multiple GPUs. 
@@ -73,7 +73,7 @@ circuit training, quantum optimal control, quantum machine learning,
 quantum neural networks. 
 
 - Differences from Qiskit/Pennylane 
-Dynamic computatioh graph, automatic gradient computation, fast GPU support,
+Dynamic computation graph, automatic gradient computation, fast GPU support,
 batch model tersorized processing.
 
 Features
