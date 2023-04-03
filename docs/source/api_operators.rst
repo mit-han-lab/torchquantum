@@ -61,5 +61,6 @@ Classes
     MultiCNOT
     MultiXCNOT
     Reset
-
-
+    SingleExcitation
+    EchoedCrossResonance
+    ECR
