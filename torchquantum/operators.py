@@ -374,8 +374,9 @@ class Observable(Operator, metaclass=ABCMeta):
         wires=None,
     ):
         """Init function of the Observable class
-
-        has_params (bool, optional): Whether the operations has parameters.
+        
+        Args:
+            has_params (bool, optional): Whether the operations has parameters.
                 Defaults to False.
             trainable (bool, optional): Whether the parameters are trainable
                 (if contains parameters). Defaults to False.
