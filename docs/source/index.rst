@@ -12,7 +12,7 @@
 
    usage_installation
    examples/index.rst
-   
+
 .. raw:: html
 
    <p align="center">
@@ -60,21 +60,36 @@ Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine
 |MIT License| |Read the Docs| |Discourse status| |Website|
 
 👋 Welcome
-=========
+==========
 
-- What does it do
+What it is doing
+^^^^^^^^^^^^^^^^
+
 Quantum simulation framework based on PyTorch. It supports statevector
 simulation and pulse simulation (coming soon) on GPUs. It can scale up
-to the simulation of 25+ qubits with multiple GPUs. 
+to the simulation of 30+ qubits with multiple GPUs. #### Who will
+benefit
 
-- Who will benefit
-Researchers on quantum algorithm design, parameterized quantum
-circuit training, quantum optimal control, quantum machine learning,
-quantum neural networks. 
+Researchers on quantum algorithm design, parameterized quantum circuit
+training, quantum optimal control, quantum machine learning, quantum
+neural networks. #### Differences from Qiskit/Pennylane
 
-- Differences from Qiskit/Pennylane 
-Dynamic computation graph, automatic gradient computation, fast GPU support,
-batch model tersorized processing.
+Dynamic computation graph, automatic gradient computation, fast GPU
+support, batch model tersorized processing.
+
+News
+----
+
+-  v0.1.7 Available!
+-  Join our
+   `Slack <https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ>`__
+   for real time support!
+-  Welcome to contribute! Please contact us or post in the
+   `forum <https://qmlsys.hanruiwang.me>`__ if you want to have new
+   examples implemented by TorchQuantum or any other questions.
+-  Qmlsys website goes online:
+   `qmlsys.mit.edu <https://qmlsys.mit.edu>`__ and
+   `torchquantum.org <https://torchquantum.org>`__
 
 Features
 --------
@@ -82,19 +97,10 @@ Features
 -  Easy construction and simulation of quantum circuits in **PyTorch**
 -  **Dynamic computation graph** for easy debugging
 -  **Gradient support** via autograd
--  **Batch mode** inference and training on **CPU/GPU**.
+-  **Batch mode** inference and training on **CPU/GPU**
 -  Easy **deployment on real quantum devices** such as IBMQ
 -  **Easy hybrid classical-quantum** model construction
 -  (coming soon) **pulse-level simulation**
-
-News
-----
-
--  Welcome to contribute! Please contact us or post in the
-   `forum <https://qmlsys.hanruiwang.me>`__ if you want to have new
-   examples implemented by TorchQuantum or any other questions.
--  Qmlsys website goes online:
-   `qmlsys.mit.edu <https://qmlsys.mit.edu>`__
 
 Installation
 ------------
@@ -113,7 +119,54 @@ Basic Usage
    import torchquantum as tq
    import torchquantum.functional as tqf
 
-   x = tq.QuantumDevice(n_wires=1)
+   qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cpu", record_op=True) # use device='cuda' for GPU
+
+   # use qdev.op
+   qdev.h(wires=0)
+   qdev.cnot(wires=[0, 1])
+
+   # use tqf
+   tqf.h(qdev, wires=1)
+   tqf.x(qdev, wires=1)
+
+   # use tq.Operator
+   op = tq.RX(has_params=True, trainable=True, init_params=0.5)
+   op(qdev, wires=0)
+
+   # print the current state (dynamic computation graph supported)
+   print(qdev)
+
+   # obtain the qasm string
+   from torchquantum.plugins import op_history2qasm
+   print(op_history2qasm(qdev.n_wires, qdev.op_history))
+
+   # measure the state on z basis
+   print(tq.measure(qdev, n_shots=1024))
+
+   # obtain the expval on a observable by stochastic sampling (doable on simulator and real quantum hardware)
+   from torchquantum.measurement import expval_joint_sampling
+   expval_sampling = expval_joint_sampling(qdev, 'ZX', n_shots=1024)
+   print(expval_sampling)
+
+   # obtain the expval on a observable by analytical computation (only doable on classical simulator)
+   from torchquantum.measurement import expval_joint_analytical
+   expval = expval_joint_analytical(qdev, 'ZX')
+   print(expval)
+
+   # obtain gradients of expval w.r.t. trainable parameters
+   expval[0].backward()
+   print(op.params.grad)
+
+.. raw:: html
+
+   <!--
+   ## Basic Usage 2
+
+   ```python
+   import torchquantum as tq
+   import torchquantum.functional as tqf
+
+   x = tq.QuantumDevice(n_wires=2)
 
    tqf.hadamard(x, wires=0)
    tqf.x(x, wires=1)
@@ -121,6 +174,11 @@ Basic Usage
 
    # print the current state (dynamic computation graph supported)
    print(x.states)
+
+   # obtain the classical bitstring distribution
+   print(tq.measure(x, n_shots=2048))
+   ```
+    -->
 
 Guide to the examples
 ---------------------
@@ -143,7 +201,8 @@ Qiskit <examples/converter_tq_qiskit>`__.
 For **expert**, you may check `Parameter Shift on-chip
 Training <examples/param_shift_onchip_training>`__, `VQA Gradient
 Pruning <examples/gradient_pruning>`__, `VQE <examples/simple_vqe>`__,
-`VQA for State Prepration <examples/train_state_prep>`__.
+`VQA for State Prepration <examples/train_state_prep>`__, `QAOA (Quantum
+Approximate Optimization Algorithm) <examples/qaoa>`__.
 
 Usage
 -----
@@ -162,7 +221,6 @@ a normal pytorch model.
      def __init__(self):
        super().__init__()
        self.n_wires = 4
-       self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
        self.measure = tq.MeasureAll(tq.PauliZ)
 
        self.encoder_gates = [tqf.rx] * 4 + [tqf.ry] * 4 + \
@@ -177,30 +235,30 @@ a normal pytorch model.
        # down-sample the image
        x = F.avg_pool2d(x, 6).view(bsz, 16)
 
-       # reset qubit states
-       self.q_device.reset_states(bsz)
+       # create a quantum device to run the gates
+       qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=bsz, device=x.device)
 
        # encode the classical image to quantum domain
        for k, gate in enumerate(self.encoder_gates):
-         gate(self.q_device, wires=k % self.n_wires, params=x[:, k])
+         gate(qdev, wires=k % self.n_wires, params=x[:, k])
 
        # add some trainable gates (need to instantiate ahead of time)
-       self.rx0(self.q_device, wires=0)
-       self.ry0(self.q_device, wires=1)
-       self.rz0(self.q_device, wires=3)
-       self.crx0(self.q_device, wires=[0, 2])
+       self.rx0(qdev, wires=0)
+       self.ry0(qdev, wires=1)
+       self.rz0(qdev, wires=3)
+       self.crx0(qdev, wires=[0, 2])
 
        # add some more non-parameterized gates (add on-the-fly)
-       tqf.hadamard(self.q_device, wires=3)
-       tqf.sx(self.q_device, wires=2)
-       tqf.cnot(self.q_device, wires=[3, 0])
-       tqf.qubitunitary(self.q_device0, wires=[1, 2], params=[[1, 0, 0, 0],
-                                                              [0, 1, 0, 0],
-                                                              [0, 0, 0, 1j],
-                                                              [0, 0, -1j, 0]])
+       qdev.h(wires=3)
+       qdev.sx(wires=2)
+       qdev.cnot(wires=[3, 0])
+       qdev.qubitunitary(wires=[1, 2], params=[[1, 0, 0, 0],
+                                               [0, 1, 0, 0],
+                                               [0, 0, 0, 1j],
+                                               [0, 0, -1j, 0]])
 
        # perform measurement to get expectations (back to classical domain)
-       x = self.measure(self.q_device).reshape(bsz, 2, 2)
+       x = self.measure(qdev).reshape(bsz, 2, 2)
 
        # classification
        x = x.sum(-1).squeeze()
@@ -235,45 +293,104 @@ script:
 Files
 -----
 
-+------------------+--------------------------------------------------+
-| File             | Description                                      |
-+==================+==================================================+
-| devices.py       | QuantumDevice class which stores the statevector |
-+------------------+--------------------------------------------------+
-| encoding.py      | Encoding layers to encode classical values to    |
-|                  | quantum domain                                   |
-+------------------+--------------------------------------------------+
-| functional.py    | Quantum gate functions                           |
-+------------------+--------------------------------------------------+
-| operators.py     | Quantum gate classes                             |
-+------------------+--------------------------------------------------+
-| layers.py        | Layer templates such as RandomLayer              |
-+------------------+--------------------------------------------------+
-| measure.py       | Measurement of quantum states to get classical   |
-|                  | values                                           |
-+------------------+--------------------------------------------------+
-| graph.py         | Quantum gate graph used in static mode           |
-+------------------+--------------------------------------------------+
-| super_layer.py   | Layer templates for SuperCircuits                |
-+------------------+--------------------------------------------------+
-| plugins/qiskit\* | Convertors and processors for easy deployment on |
-|                  | IBMQ                                             |
-+------------------+--------------------------------------------------+
-| examples/        | More examples for training QML and VQE models    |
-+------------------+--------------------------------------------------+
++-----------------------------------+-----------------------------------+
+| File                              | Description                       |
++===================================+===================================+
+| devices.py                        | QuantumDevice class which stores  |
+|                                   | the statevector                   |
++-----------------------------------+-----------------------------------+
+| encoding.py                       | Encoding layers to encode         |
+|                                   | classical values to quantum       |
+|                                   | domain                            |
++-----------------------------------+-----------------------------------+
+| functional.py                     | Quantum gate functions            |
++-----------------------------------+-----------------------------------+
+| operators.py                      | Quantum gate classes              |
++-----------------------------------+-----------------------------------+
+| layers.py                         | Layer templates such as           |
+|                                   | RandomLayer                       |
++-----------------------------------+-----------------------------------+
+| measure.py                        | Measurement of quantum states to  |
+|                                   | get classical values              |
++-----------------------------------+-----------------------------------+
+| graph.py                          | Quantum gate graph used in static |
+|                                   | mode                              |
++-----------------------------------+-----------------------------------+
+| super_layer.py                    | Layer templates for SuperCircuits |
++-----------------------------------+-----------------------------------+
+| plugins/qiskit\*                  | Convertors and processors for     |
+|                                   | easy deployment on IBMQ           |
++-----------------------------------+-----------------------------------+
+| examples/                         | More examples for training QML    |
+|                                   | and VQE models                    |
++-----------------------------------+-----------------------------------+
+
+Coding Style
+------------
+
+torchquantum uses pre-commit hooks to ensure Python style consistency
+and prevent common mistakes in its codebase.
+
+To enable it pre-commit hooks please reproduce:
+
+.. code:: bash
+
+   pip install pre-commit
+   pre-commit install
 
 Papers using TorchQuantum
 -------------------------
 
--  [HPCA’22] `QuantumNAS: Noise-Adaptive Search for Robust Quantum
-   Circuits <artifact>`__
--  [DAC’22] `QuantumNAT: Quantum Noise-Aware Training with Noise
-   Injection, Quantization and
-   Normalization <https://arxiv.org/abs/2110.11331>`__
--  [DAC’22] `QOC: Quantum On-Chip Training with Parameter Shift and
-   Gradient Pruning <https://arxiv.org/abs/2202.13239>`__
--  [QCE’22] `Variational Quantum Pulse
-   Learning <https://arxiv.org/abs/2203.17267>`__
+-  [HPCA’22] `Wang et al., “QuantumNAS: Noise-Adaptive Search for Robust
+   Quantum Circuits” <https://arxiv.org/abs/2107.10845>`__
+-  [DAC’22] `Wang et al., “QuantumNAT: Quantum Noise-Aware Training with
+   Noise Injection, Quantization and
+   Normalization” <https://arxiv.org/abs/2110.11331>`__
+-  [DAC’22] `Wang et al., “QOC: Quantum On-Chip Training with Parameter
+   Shift and Gradient Pruning” <https://arxiv.org/abs/2202.13239>`__
+-  [QCE’22] `Liang et al., “Variational Quantum Pulse
+   Learning” <https://arxiv.org/abs/2203.17267>`__
+-  [ICCAD’22] `Hu et al., “Quantum Neural Network
+   Compression” <https://arxiv.org/abs/2207.01578>`__
+-  [ICCAD’22] `Wang et al., “QuEst: Graph Transformer for Quantum
+   Circuit Reliability Estimation” <https://arxiv.org/abs/2210.16724>`__
+-  [ICML Workshop] `Yun et al., “Slimmable Quantum Federated
+   Learning” <https://dynn-icml2022.github.io/spapers/paper_7.pdf>`__
+-  [IEEE ICDCS] `Yun et al., “Quantum Multi-Agent Reinforcement Learning
+   via Variational Quantum Circuit
+   Design” <https://ieeexplore.ieee.org/document/9912289>`__
+
+   .. raw:: html
+
+      <details>
+
+   .. raw:: html
+
+      <summary>
+
+   Manuscripts
+
+   .. raw:: html
+
+      </summary>
+
+   .. rubric:: Manuscripts
+      :name: manuscripts
+
+   -  `Yun et al., “Projection Valued Measure-based Quantum Machine
+      Learning for Multi-Class
+      Classification” <https://arxiv.org/abs/2210.16731>`__
+   -  `Baek et al., “3D Scalable Quantum Convolutional Neural Networks
+      for Point Cloud Data Processing in Classification
+      Applications” <https://arxiv.org/abs/2210.09728>`__
+   -  `Baek et al., “Scalable Quantum Convolutional Neural
+      Networks” <https://arxiv.org/abs/2209.12372>`__
+   -  `Yun et al., “Quantum Multi-Agent Meta Reinforcement
+      Learning” <https://arxiv.org/abs/2208.11510>`__
+
+.. raw:: html
+
+   </details>
 
 Dependencies
 ------------
@@ -291,6 +408,13 @@ TorchQuantum `Forum <https://qmlsys.hanruiwang.me>`__
 
 Hanrui Wang hanrui@mit.edu
 
+Contributors
+------------
+
+Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zhirui Hu, Zirui Li,
+Zhiding Liang, Pengyu Liu, Yilian Liu, Mohammadreza Tavasoli, Hanrui
+Wang, Zhepeng Wang, Zhuoyang Ye
+
 Citation
 --------
 
@@ -302,12 +426,3 @@ Citation
        booktitle = {The 28th IEEE International Symposium on High-Performance Computer Architecture (HPCA-28)},
        year      = {2022}
    }
-
-.. |MIT License| image:: https://img.shields.io/apm/l/atomic-design-ui.svg?
-   :target: https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE
-.. |Read the Docs| image:: https://img.shields.io/readthedocs/torchquantum
-   :target: https://torchquantum-doc.readthedocs.io/
-.. |Discourse status| image:: https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F
-   :target: https://qmlsys.hanruiwang.me
-.. |Website| image:: https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu
-   :target: https://qmlsys.mit.edu

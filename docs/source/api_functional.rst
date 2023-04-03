@@ -95,4 +95,7 @@ Functions
     ccnot
     ccx
     reset
+    singleexcitation
+    ecr
+    echoedcrossresonance
     
