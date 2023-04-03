@@ -63,7 +63,7 @@ def generate_n_hamiltonian(n_wires: int, n_hamil: int, n_lines: int) -> dict:
 
 
 def test_parse_hamiltonian_file():
-    file = "./examples/data/vqe/h2/h2.txt"
+    file = "../examples/vqe/h2.txt"
     print(parse_hamiltonian_file(file))
 
 
