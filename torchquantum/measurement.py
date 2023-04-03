@@ -2,17 +2,19 @@ import random
 
 import torch
 import torchquantum as tq
+import torchquantum.functional as tqf
 import numpy as np
-import matplotlib.pyplot as plt
-from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+from torchquantum.macro import F_DTYPE
 
 from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
+from torchquantum.operators import op_name_dict
 
 __all__ = [
     "expval_joint_analytical",
+    "expval_joint_sampling",
     "expval",
     "MeasureAll",
     "MeasureMultipleTimes",
@@ -21,6 +23,109 @@ __all__ = [
     "gen_bitstrings",
     "measure",
 ]
+
+
+def gen_bitstrings(n_wires):
+    return ["{:0{}b}".format(k, n_wires) for k in range(2**n_wires)]
+
+
+def measure(qdev, n_shots=1024):
+    """Measure the target state and obtain classical bitstream distribution
+    Args:
+        q_state: input tq.QuantumDevice
+        n_shots: number of simulated shots
+    Returns:
+        distribution of bitstrings
+    """
+    bitstring_candidates = gen_bitstrings(qdev.n_wires)
+
+    state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
+    distri_all = []
+
+    for state_mag_one in state_mag:
+        state_prob_one = np.abs(state_mag_one) ** 2
+        measured = random.choices(
+            population=bitstring_candidates,
+            weights=state_prob_one,
+            k=n_shots,
+        )
+        counter = Counter(measured)
+        counter.update({key: 0 for key in bitstring_candidates})
+        distri = dict(counter)
+        distri = OrderedDict(sorted(distri.items()))
+        distri_all.append(distri)
+
+    # if draw_id is not None:
+    #     plt.bar(distri_all[draw_id].keys(), distri_all[draw_id].values())
+    #     plt.xticks(rotation="vertical")
+    #     plt.xlabel("bitstring [qubit0, qubit1, ..., qubitN]")
+    #     plt.title("distribution of measured bitstrings")
+    #     plt.show()
+    return distri_all
+
+
+def expval_joint_sampling(
+    qdev: tq.QuantumDevice,
+    observable: str,
+    n_shots=1024,
+):
+    """
+    Compute the expectation value of a joint observable from sampling 
+    the measurement bistring
+    Args:
+        qdev: the quantum device
+        observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
+    Returns:
+        the expectation value
+    Examples:
+    >>> import torchquantum as tq
+    >>> import torchquantum.functional as tqf
+    >>> x = tq.QuantumDevice(n_wires=2)
+    >>> tqf.hadamard(x, wires=0)
+    >>> tqf.x(x, wires=1)
+    >>> tqf.cnot(x, wires=[0, 1])
+    >>> print(expval_joint_sampling(x, 'II', n_shots=8192))
+    tensor([[0.9997]])
+    >>> print(expval_joint_sampling(x, 'XX', n_shots=8192))
+    tensor([[0.9991]])
+    >>> print(expval_joint_sampling(x, 'ZZ', n_shots=8192))
+    tensor([[-0.9980]])
+    """
+    # rotation to the desired basis
+    n_wires = qdev.n_wires
+    paulix = op_name_dict["paulix"]
+    pauliy = op_name_dict["pauliy"]
+    pauliz = op_name_dict["pauliz"]
+    iden = op_name_dict["i"]
+    pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
+
+    qdev_clone = tq.QuantumDevice(n_wires=qdev.n_wires, bsz=qdev.bsz, device=qdev.device)
+    qdev_clone.clone_states(qdev.states)
+
+    observable = observable.upper()
+    for wire in range(n_wires):
+        for rotation in pauli_dict[observable[wire]]().diagonalizing_gates():
+            rotation(qdev_clone, wires=wire)
+    
+    mask = np.ones(len(observable), dtype=bool)
+    mask[np.array([*observable]) == "I"] = False
+
+    expval_all = []
+    # measure
+    distributions = measure(qdev_clone, n_shots=n_shots)
+    for distri in distributions:
+        n_eigen_one = 0
+        n_eigen_minus_one = 0
+        for bitstring, n_count in distri.items():
+            if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
+                n_eigen_one += n_count
+            else:
+                n_eigen_minus_one += n_count
+        
+        expval = n_eigen_one / n_shots + (-1) * n_eigen_minus_one / n_shots
+        expval_all.append(expval)
+
+    return torch.tensor(expval_all, dtype=F_DTYPE)
 
 
 def expval_joint_analytical(
@@ -251,41 +356,23 @@ class MeasureMultiQubitPauliSum(tq.QuantumModule):
         return (res_all * self.obs_list[0]["coefficient"]).sum(-1)
 
 
-def gen_bitstrings(n_wires):
-    return ["{:0{}b}".format(k, n_wires) for k in range(2**n_wires)]
+if __name__ == '__main__':
+    import pdb
+    pdb.set_trace()
+    qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cpu", record_op=True) # use device='cuda' for GPU
+    qdev.h(wires=0)
+    qdev.cnot(wires=[0, 1])
+    tqf.h(qdev, wires=1)
+    tqf.x(qdev, wires=1)
+    op = tq.RX(has_params=True, trainable=True, init_params=0.5)
+    op(qdev, wires=0)
+
+    # measure the state on z basis
+    print(tq.measure(qdev, n_shots=1024))
+
+    # obtain the expval on a observable
+    expval = expval_joint_sampling(qdev, 'II', 100000)
+    expval_ana = expval_joint_analytical(qdev, 'II')
+    print(expval, expval_ana)
 
 
-def measure(qdev, n_shots=1024, draw_id=None):
-    """Measure the target state and obtain classical bitstream distribution
-    Args:
-        q_state: input tq.QuantumDevice
-        n_shots: number of simulated shots
-        draw_id: which state to draw
-    Returns:
-        distribution of bitstrings
-    """
-    bitstring_candidates = gen_bitstrings(qdev.n_wires)
-
-    state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
-    distri_all = []
-
-    for state_mag_one in state_mag:
-        state_prob_one = np.abs(state_mag_one) ** 2
-        measured = random.choices(
-            population=bitstring_candidates,
-            weights=state_prob_one,
-            k=n_shots,
-        )
-        counter = Counter(measured)
-        counter.update({key: 0 for key in bitstring_candidates})
-        distri = dict(counter)
-        distri = OrderedDict(sorted(distri.items()))
-        distri_all.append(distri)
-
-    if draw_id is not None:
-        plt.bar(distri_all[draw_id].keys(), distri_all[draw_id].values())
-        plt.xticks(rotation="vertical")
-        plt.xlabel("bitstring [qubit0, qubit1, ..., qubitN]")
-        plt.title("distribution of measured bitstrings")
-        plt.show()
-    return distri_all

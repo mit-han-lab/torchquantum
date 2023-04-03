@@ -99,7 +99,12 @@ print(op_history2qasm(qdev.n_wires, qdev.op_history))
 # measure the state on z basis
 print(tq.measure(qdev, n_shots=1024))
 
-# obtain the expval on a observable
+# obtain the expval on a observable by stochastic sampling (doable on simulator and real quantum hardware)
+from torchquantum.measurement import expval_joint_sampling
+expval_sampling = expval_joint_sampling(qdev, 'ZX', n_shots=1024)
+print(expval_sampling)
+
+# obtain the expval on a observable by analytical computation (only doable on classical simulator)
 from torchquantum.measurement import expval_joint_analytical
 expval = expval_joint_analytical(qdev, 'ZX')
 print(expval)
