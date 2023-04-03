@@ -14,6 +14,7 @@ from torchquantum.operators import op_name_dict
 
 __all__ = [
     "expval_joint_analytical",
+    "expval_joint_sampling",
     "expval",
     "MeasureAll",
     "MeasureMultipleTimes",
