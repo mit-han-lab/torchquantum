@@ -18,7 +18,7 @@ from torchquantum.utils import (
     get_provider_hub_group_project,
     get_circ_stats,
 )
-from .qiskit_macros import IBMQ_NAMES
+from torchquantum.plugins.qiskit_macros import IBMQ_NAMES
 from tqdm import tqdm
 from torchpack.utils.logging import logger
 from qiskit.transpiler import PassManager
@@ -659,7 +659,7 @@ class QiskitProcessor(object):
 
         return measured_qiskit
 
-    def process_ready_circs(self, q_device, circs_all, parallel=True):
+    def process_ready_circs_get_counts(self, circs_all, parallel=True):
         circs_all_transpiled = []
         for circ in tqdm(circs_all):
             circs_all_transpiled.append(self.transpile(circ))
@@ -716,8 +716,84 @@ class QiskitProcessor(object):
 
             result = job.result()
             counts = result.get_counts()
+        return counts
 
+    def process_ready_circs(self, q_device, circs_all, parallel=True):
+        counts = self.process_ready_circs_get_counts(circs_all, parallel=parallel)
         measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
         measured_torch = torch.tensor(measured_qiskit)
-
         return measured_torch
+
+    def process_circs_get_joint_expval(self, circs_all, observable, parallel=True):
+        """
+        This function is used to compute the joint expectation value of a list of observables
+        we add diagonalizing gates before sending them to the backend
+        """
+        observable = observable.upper()
+        circs_all_diagonalized = []
+        for circ_ in circs_all:
+            circ = circ_.copy()
+            for k, obs in enumerate(observable):
+                if obs == 'X':
+                    circ.h(k)
+                elif obs == 'Y':
+                    circ.z(k)
+                    circ.s(k)
+                    circ.h(k)
+            circ.measure_all()
+            circs_all_diagonalized.append(circ)
+
+        expval_all = []
+
+        mask = np.ones(len(observable), dtype=bool)
+        mask[np.array([*observable]) == "I"] = False
+    
+        counts = self.process_ready_circs_get_counts(circs_all_diagonalized, parallel=parallel)
+
+        # here we need to switch the little and big endian of distribution bitstrings
+        distributions = []
+        for count in counts:
+            distribution = {}
+            for k, v in count.items():
+                distribution[k[::-1]] = v
+            distributions.append(distribution)
+
+        for distri in distributions:
+            n_eigen_one = 0
+            n_eigen_minus_one = 0
+            for bitstring, n_count in distri.items():
+                if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
+                    n_eigen_one += n_count
+                else:
+                    n_eigen_minus_one += n_count
+            
+            expval = n_eigen_one / self.n_shots + (-1) * n_eigen_minus_one / self.n_shots
+            expval_all.append(expval)
+
+        return expval_all
+
+
+if __name__ == '__main__':
+    import pdb
+    pdb.set_trace()
+    circ = QuantumCircuit(3)
+    circ.h(0)
+    circ.cx(0, 1)
+    circ.cx(1, 2)
+    circ.rx(0.1, 0)
+
+    qiskit_processor = QiskitProcessor(
+        use_real_qc=False
+    )
+
+    qiskit_processor.process_circs_get_joint_expval([circ], 'XII')
+
+    qdev = tq.QuantumDevice(n_wires=3, bsz=1)
+    qdev.h(0)
+    qdev.cx([0, 1])
+    qdev.cx([1, 2])
+    qdev.rx(0, 0.1)
+
+    from torchquantum.measurement import expval_joint_sampling
+    print(expval_joint_sampling(qdev, 'XII', n_shots=8192))
+
