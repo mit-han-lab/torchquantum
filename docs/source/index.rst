@@ -57,13 +57,7 @@ Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine
 
    </h3>
 
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+|MIT License| |Read the Docs| |Discourse status| |Website|
 
 👋 Welcome
 ==========
