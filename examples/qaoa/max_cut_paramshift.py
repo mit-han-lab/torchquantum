@@ -1,13 +1,9 @@
 import torch
 import torchquantum as tq
-import torchquantum.functional as tqf
 
 import random
 import numpy as np
 
-from torchquantum.functional import mat_dict
-
-from torchquantum.plugins import tq2qiskit, qiskit2tq
 from torchquantum.measurement import expval_joint_analytical
 
 seed = 0
@@ -15,6 +11,9 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 
+from torchquantum.plugins import QiskitProcessor, op_history2qiskit
+
+       
 
 class MAXCUT(tq.QuantumModule):
     """computes the optimal cut for a given graph.
@@ -125,7 +124,7 @@ class MAXCUT(tq.QuantumModule):
             self.mixer(qdev, self.betas[i], i)
             self.entangler(qdev, self.gammas[i], i)
 
-    def forward(self, measure_all=False):
+    def forward(self, use_qiskit):
         """
         Apply the QAOA ansatz and only measure the edge qubit on z-basis.
         Args:
@@ -133,42 +132,37 @@ class MAXCUT(tq.QuantumModule):
         """
         qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device)
 
-        self.circuit(qdev)
         # print(tq.measure(qdev, n_shots=1024))
         # compute the expectation value
         # print(qdev.get_states_1d())
-        if measure_all is False:
+
+        if not use_qiskit:
+            self.circuit(qdev)
             expVal = 0
             for edge in self.input_graph:
                 pauli_string = self.edge_to_PauliString(edge)
                 expv = expval_joint_analytical(qdev, observable=pauli_string)
                 expVal += 0.5 * expv
-                # print(pauli_string, expv)
-            # print(expVal)
-            return expVal
         else:
-            return tq.measure(qdev, n_shots=1024, draw_id=0)
+            # use qiskit to compute the expectation value
+            expVal = 0
+            for edge in self.input_graph:
+                pauli_string = self.edge_to_PauliString(edge)
+
+                with torch.no_grad():
+                    self.circuit(qdev)
+                circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
+
+                expv = self.qiskit_processor.process_circs_get_joint_expval([circ], pauli_string)[0]
+                expVal += 0.5 * expv
+            expVal = torch.Tensor([expVal])
+        return expVal
+    
 
 
-def main():
-    # create a input_graph
-    input_graph = [(0, 1), (0, 3), (1, 2), (2, 3)]
-    n_wires = 4
-    n_layers = 3
-    model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
-    # model.to("cuda")
-    # model.to(torch.device("cuda"))
-    # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
-    # print(circ)
-    # print("The circuit is", circ.draw(output="mpl"))
-    # circ.draw(output="mpl")
-    # use backprop
-    # backprop_optimize(model, n_steps=300, lr=0.01)
-    # use parameter shift rule
-    param_shift_optimize(model, n_steps=500, step_size=0.01)
 
 
-def shift_and_run(model, use_qiskit=False):
+def shift_and_run(model, use_qiskit):
     # flatten the parameters into 1D array
 
     grad_betas = []
@@ -207,7 +201,7 @@ def shift_and_run(model, use_qiskit=False):
     return model(use_qiskit), [grad_betas, grad_gammas]
 
 
-def param_shift_optimize(model, n_steps=10, step_size=0.1):
+def param_shift_optimize(model, n_steps=10, step_size=0.1, use_qiskit=False):
     """finds the optimal cut where parameter shift rule is used to compute the gradient"""
     # optimize the parameters and return the optimal values
     # print(
@@ -218,7 +212,7 @@ def param_shift_optimize(model, n_steps=10, step_size=0.1):
     n_layers = model.n_layers
     for step in range(n_steps):
         with torch.no_grad():
-            loss, grad_list = shift_and_run(model)
+            loss, grad_list = shift_and_run(model, use_qiskit=use_qiskit)
         # param_list = list(model.parameters())
         # print(
         # "The initial parameters are betas = {} and gammas = {}".format(
@@ -257,8 +251,33 @@ Notes:
 
 """
 
+
+def main(use_qiskit):
+    # create a input_graph
+    input_graph = [(0, 1), (0, 3), (1, 2), (2, 3)]
+    n_wires = 4
+    n_layers = 1
+    model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
+    
+    # set the qiskit processor
+    processor_simulation = QiskitProcessor(use_real_qc=False, n_shots=10000)
+    model.set_qiskit_processor(processor_simulation)
+
+     # firstly perform simulate
+    # model.to("cuda")
+    # model.to(torch.device("cuda"))
+    # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
+    # print(circ)
+    # print("The circuit is", circ.draw(output="mpl"))
+    # circ.draw(output="mpl")
+    # use backprop
+    # backprop_optimize(model, n_steps=300, lr=0.01)
+    # use parameter shift rule
+    param_shift_optimize(model, n_steps=500, step_size=0.01, use_qiskit=use_qiskit)
+
+
 if __name__ == "__main__":
     # import pdb
     # pdb.set_trace()
-
-    main()
+    use_qiskit = False
+    main(use_qiskit)
