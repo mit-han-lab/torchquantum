@@ -57,22 +57,54 @@ Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine
 
    </h3>
 
-|MIT License| |Read the Docs| |Discourse status| |Website|
+.. raw:: html
+
+    <embed>
+        <p align="center">
+    <a href="https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE">
+        <img alt="MIT License" src="https://img.shields.io/github/license/mit-han-lab/torchquantum">
+    </a>
+    <a href="https://torchquantum.readthedocs.io/">
+        <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum/master">
+    </a>
+    <a href="https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ">
+        <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
+    </a>
+    <a href="https://qmlsys.hanruiwang.me">
+        <img alt="Forum" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
+    </a>
+    <a href="https://qmlsys.mit.edu">
+        <img alt="Website" src="https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu">
+    </a>
+
+   <a href="https://pypi.org/project/torchquantum/">
+        <img alt="Pypi" src="https://img.shields.io/pypi/v/torchquantum">
+    </a>
+
+</p>
+<br />
+    </embed>
+
 
 👋 Welcome
 ==========
 
-What it is doing
-^^^^^^^^^^^^^^^^
+What it does
+^^^^^^^^^^^^
 
 Quantum simulation framework based on PyTorch. It supports statevector
 simulation and pulse simulation (coming soon) on GPUs. It can scale up
-to the simulation of 30+ qubits with multiple GPUs. #### Who will
-benefit
+to the simulation of 30+ qubits with multiple GPUs. 
+
+Who will benefit
+^^^^^^^^^^^^^^^^
 
 Researchers on quantum algorithm design, parameterized quantum circuit
 training, quantum optimal control, quantum machine learning, quantum
-neural networks. #### Differences from Qiskit/Pennylane
+neural networks. 
+
+Differences from Qiskit/Pennylane
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Dynamic computation graph, automatic gradient computation, fast GPU
 support, batch model tersorized processing.
