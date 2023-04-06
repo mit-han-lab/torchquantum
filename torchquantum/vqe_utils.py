@@ -72,8 +72,6 @@ def test_generate_n_hamiltonian():
 
 
 if __name__ == "__main__":
-    import pdb
 
-    pdb.set_trace()
     test_parse_hamiltonian_file()
     test_generate_n_hamiltonian()
