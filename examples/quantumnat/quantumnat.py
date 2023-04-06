@@ -5,10 +5,17 @@ import argparse
 
 import torchquantum as tq
 import torchquantum.functional as tqf
-
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from torchquantum.plugins import tq2qiskit, qiskit2tq
+from torchquantum.plugins import (
+    tq2qiskit_expand_params,
+    tq2qiskit,
+    qiskit2tq,
+    tq2qiskit_measurement,
+    qiskit_assemble_circs,
+    op_history2qiskit,
+    op_history2qiskit_expand_params,
+)
 from torchquantum.utils import (
     build_module_from_op_list,
     build_module_op_list,
@@ -29,9 +36,9 @@ class QFCModel(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.random_layer = tq.RandomLayer(
-                n_ops=50, wires=list(range(self.n_wires))
-            )
+            self.random_layer = tq.RandomLayer(n_ops=50, wires=list(range(self.n_wires)))
+            # self.arch = {'n_wires': self.n_wires, 'n_blocks': 4, 'n_layers_per_block': 2}
+            # self.random_layer = tq.layers.U3CU3Layer0(self.arch)
 
             # gates with trainable parameters
             self.rx0 = tq.RX(has_params=True, trainable=True)
@@ -40,7 +47,7 @@ class QFCModel(tq.QuantumModule):
             self.crx0 = tq.CRX(has_params=True, trainable=True)
 
         @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice):
+        def forward(self, qdev: tq.QuantumDevice):
             """
             1. To convert tq QuantumModule to qiskit or run in the static
             model, need to:
@@ -50,52 +57,50 @@ class QFCModel(tq.QuantumModule):
                     parent_graph=self.graph
                     to all the tqf functions, such as tqf.hadamard below
             """
-            self.q_device = q_device
-
-            self.random_layer(self.q_device)
+            self.random_layer(qdev)
 
             # some trainable gates (instantiated ahead of time)
-            self.rx0(self.q_device, wires=0)
-            self.ry0(self.q_device, wires=1)
-            self.rz0(self.q_device, wires=3)
-            self.crx0(self.q_device, wires=[0, 2])
+            self.rx0(qdev, wires=0)
+            self.ry0(qdev, wires=1)
+            self.rz0(qdev, wires=3)
+            self.crx0(qdev, wires=[0, 2])
 
             # add some more non-parameterized gates (add on-the-fly)
-            tqf.hadamard(
-                self.q_device, wires=3, static=self.static_mode, parent_graph=self.graph
-            )
-            tqf.sx(
-                self.q_device, wires=2, static=self.static_mode, parent_graph=self.graph
-            )
-            tqf.cnot(
-                self.q_device,
-                wires=[3, 0],
-                static=self.static_mode,
-                parent_graph=self.graph,
-            )
+            tqf.hadamard(qdev, wires=3, static=self.static_mode, parent_graph=self.graph)
+            tqf.sx(qdev, wires=2, static=self.static_mode, parent_graph=self.graph)
+            tqf.cnot(qdev, wires=[3, 0], static=self.static_mode, parent_graph=self.graph)
 
     def __init__(self):
         super().__init__()
         self.n_wires = 4
-        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
         self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_ryzxy"])
 
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
-        self.q_device.reset_states(x.shape[0])
+        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True)
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
+        devi = x.device
 
         if use_qiskit:
-            x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, self.measure, x
-            )
+            self.encoder(qdev, x)
+            op_history_parameterized = qdev.op_history
+            qdev.reset_op_history()
+            encoder_circ = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
+            self.q_layer(qdev)
+            op_history_fixed = qdev.op_history
+            qdev.reset_op_history()
+            q_layer_circ = op_history2qiskit(self.n_wires, op_history_fixed)
+            measurement_circ = tq2qiskit_measurement(qdev, self.measure)
+
+            assembed_circs = qiskit_assemble_circs(encoder_circ, q_layer_circ, measurement_circ)
+            x = self.qiskit_processor.process_ready_circs(qdev, assembed_circs).to(devi)
         else:
-            self.encoder(self.q_device, x)
-            self.q_layer(self.q_device)
-            x = self.measure(self.q_device)
+            self.encoder(qdev, x)
+            self.q_layer(qdev)
+            x = self.measure(qdev)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
@@ -195,18 +200,21 @@ def main():
     n_epochs = args.epochs
 
     from qiskit import IBMQ
-
     IBMQ.load_account()
 
-    circ = tq2qiskit(model.q_device, model.q_layer)
+    qdev = tq.QuantumDevice(n_wires=model.n_wires)
+    circ = tq2qiskit(qdev, model.q_layer)
     """
     add measure because the transpile process may permute the wires,
     so we need to get the final q reg to c reg mapping
     """
     circ.measure_all()
+    # circ.draw(output='mpl', filename='before-transpile.png')
     processor = QiskitProcessor(use_real_qc=True, backend_name="ibmq_quito")
 
     circ_transpiled = processor.transpile(circs=circ)
+    # circ_transpiled.draw(output='mpl', filename='after-transpile.png')
+    
     q_layer = qiskit2tq(circ=circ_transpiled)
 
     model.measure.set_v_c_reg_mapping(get_v_c_reg_mapping(circ_transpiled))
@@ -215,9 +223,9 @@ def main():
     noise_model_tq = tq.NoiseModelTQ(
         noise_model_name="ibmq_quito",
         n_epochs=n_epochs,
-        noise_total_prob=0.5,
+        # noise_total_prob=0.5,
         # ignored_ops=configs.trainer.ignored_noise_ops,
-        factor=0.1,
+        factor=1,
         add_thermal=True,
     )
 
@@ -253,6 +261,7 @@ def main():
         # valid
         valid_test(dataflow, "valid", model, device)
         scheduler.step()
+    print(noise_model_tq.noise_counter)
 
     # test
     valid_test(dataflow, "test", model, device, qiskit=False)
@@ -263,12 +272,13 @@ def main():
 
         # firstly perform simulate
         print(f"\nTest with Qiskit Simulator")
-        processor_simulation = QiskitProcessor(use_real_qc=False)
+        backend_name = "ibmq_quito"
+        processor_simulation = QiskitProcessor(use_real_qc=False, noise_model_name=backend_name)
         model.set_qiskit_processor(processor_simulation)
         valid_test(dataflow, "test", model, device, qiskit=True)
+        # valid_test(dataflow, "valid", model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = "ibmq_quito"
         print(f"\nTest on Real Quantum Computer {backend_name}")
         processor_real_qc = QiskitProcessor(use_real_qc=True, backend_name=backend_name)
         model.set_qiskit_processor(processor_real_qc)

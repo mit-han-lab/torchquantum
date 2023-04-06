@@ -117,6 +117,39 @@ def apply_readout_error_func(x, c2p_mapping, measure_info):
     return noisy_expectation
 
 
+class NoiseCounter:
+    '''count all the pauli error gate being sampled in self.sample_noise_op()
+    '''
+    def __init__(self):
+        self.counter_x = 0
+        self.counter_y = 0
+        self.counter_z = 0
+        self.counter_X = 0
+        self.counter_Y = 0
+        self.counter_Z = 0
+
+    def add(self, error):
+        if error == 'x':
+            self.counter_x += 1
+        elif error == 'y':
+            self.counter_y += 1
+        elif error == 'z':
+            self.counter_z += 1
+        if error == 'X':
+            self.counter_X += 1
+        elif error == 'Y':
+            self.counter_Y += 1
+        elif error == 'Z':
+            self.counter_Z += 1
+        else:
+            pass
+        
+    def __str__(self) -> str:
+        return f'single qubit error: pauli x = {self.counter_x}, pauli y = {self.counter_y}, pauli z = {self.counter_z}\n' + \
+               f'double qubit error: pauli x = {self.counter_X}, pauli y = {self.counter_Y}, pauli z = {self.counter_Z}'
+
+
+
 class NoiseModelTQ(object):
     """
     apply gate insertion and readout
@@ -151,13 +184,12 @@ class NoiseModelTQ(object):
         self.ignored_ops = ignored_ops
 
         self.parsed_dict = self.parse_noise_model_dict(self.noise_model_dict)
-        self.parsed_dict = self.clean_parsed_noise_model_dict(
-            self.parsed_dict, ignored_ops
-        )
+        self.parsed_dict = self.clean_parsed_noise_model_dict(self.parsed_dict, ignored_ops)
         self.n_epochs = n_epochs
         self.prob_schedule = prob_schedule
         self.prob_schedule_separator = prob_schedule_separator
         self.factor = factor
+        self.noise_counter = NoiseCounter()
 
     def adjust_noise(self, current_epoch):
         self.noise_total_prob = cos_adjust_noise(
@@ -170,20 +202,39 @@ class NoiseModelTQ(object):
 
     @staticmethod
     def clean_parsed_noise_model_dict(nm_dict, ignored_ops):
-        # remove the ignored operation in the instructions and probs
+        # remove the ignored operation in the instructions and probs  
+        # --> only get the pauli-x,y,z errors. ignore the thermal relaxation errors (kraus operator)
+
+        def filter_inst(inst_list: list) -> list:
+            new_inst_list = []
+            for inst in inst_list:
+                if inst['name'] in ignored_ops:
+                    continue
+                new_inst_list.append(inst)
+            return new_inst_list
+
+        ignored_ops           = set(ignored_ops)
+        single_depolarization = set(['x', 'y', 'z'])
+        double_depolarization = set(['IX', 'IY', 'IZ', 'XI', 'XX', 'XY', 'XZ', 'YI', 'YX', 'YY', 'YZ', 'ZI', 'ZX', 'ZY', 'ZZ']) # 16 - 1 = 15 combinations
         for operation, operation_info in nm_dict.items():
             for qubit, qubit_info in operation_info.items():
                 inst_all = []
                 prob_all = []
                 if qubit_info["type"] == "qerror":
-                    for inst, prob in zip(
-                        qubit_info["instructions"], qubit_info["probabilities"]
-                    ):
-                        if any([inst_one["name"] in ignored_ops for inst_one in inst]):
-                            continue
+                    for inst, prob in zip(qubit_info["instructions"], qubit_info["probabilities"]):
+                        if operation in ['x', 'sx', 'id', 'reset']:              # single qubit gate
+                            if any([inst_one["name"] in single_depolarization for inst_one in inst]):
+                                inst_all.append(filter_inst(inst))
+                                prob_all.append(prob)
+                        elif operation in ['cx']:                                # double qubit gate
+                            try:
+                                if inst[0]['params'][0] in double_depolarization and (inst[1]['name'] == 'id' or inst[2]['name'] == 'id'):
+                                    inst_all.append(filter_inst(inst))
+                                    prob_all.append(prob)
+                            except:
+                                pass  # don't know how to deal with this case
                         else:
-                            inst_all.append(inst)
-                            prob_all.append(prob)
+                            raise Exception(f'{operation} not considered...')
                     nm_dict[operation][qubit]["instructions"] = inst_all
                     nm_dict[operation][qubit]["probabilities"] = prob_all
         return nm_dict
@@ -202,13 +253,8 @@ class NoiseModelTQ(object):
             }
 
             if info["operations"][0] not in parsed.keys():
-                parsed[info["operations"][0]] = {
-                    tuple(info["gate_qubits"][0]): val_dict
-                }
-            elif (
-                tuple(info["gate_qubits"][0])
-                not in parsed[info["operations"][0]].keys()
-            ):
+                parsed[info["operations"][0]] = {tuple(info["gate_qubits"][0]): val_dict}
+            elif tuple(info["gate_qubits"][0]) not in parsed[info["operations"][0]].keys():
                 parsed[info["operations"][0]][tuple(info["gate_qubits"][0])] = val_dict
             else:
                 raise ValueError
@@ -275,22 +321,36 @@ class NoiseModelTQ(object):
 
         ops = []
         for instruction in instructions:
-            v_wires = [
-                self.p_v_reg_mapping["p2v"][qubit] for qubit in instruction["qubits"]
-            ]
+            v_wires = [self.p_v_reg_mapping["p2v"][qubit] for qubit in instruction["qubits"]]
             if instruction["name"] == "x":
-                op = tq.PauliX(wires=v_wires)
+                ops.append(tq.PauliX(wires=v_wires))
+                self.noise_counter.add('x')
             elif instruction["name"] == "y":
-                op = tq.PauliY(wires=v_wires)
+                ops.append(tq.PauliY(wires=v_wires))
+                self.noise_counter.add('y')
             elif instruction["name"] == "z":
-                op = tq.PauliZ(wires=v_wires)
+                ops.append(tq.PauliZ(wires=v_wires))
+                self.noise_counter.add('z')
             elif instruction["name"] == "reset":
-                op = tq.Reset(wires=v_wires)
+                ops.append(tq.Reset(wires=v_wires))
+            elif instruction["name"] == "pauli":
+                twoqubit_depolarization = list(instruction['params'][0])  # ['XY'] --> ['X', 'Y']
+                for singlequbit_deloparization, v_wire in zip(twoqubit_depolarization, v_wires):
+                    if singlequbit_deloparization == 'X':
+                        ops.append(tq.PauliX(wires=[v_wire]))
+                        self.noise_counter.add('X')
+                    elif singlequbit_deloparization == 'Y':
+                        ops.append(tq.PauliY(wires=[v_wire]))
+                        self.noise_counter.add('Y')
+                    elif singlequbit_deloparization == 'Z':
+                        ops.append(tq.PauliZ(wires=[v_wire]))
+                        self.noise_counter.add('Z')
+                    else:
+                        pass  # 'I' case
             else:
                 # ignore operations specified by self.ignored_ops
                 # logger.warning(f"skip noise operation {instruction['name']}")
                 continue
-            ops.append(op)
 
         return ops
 
