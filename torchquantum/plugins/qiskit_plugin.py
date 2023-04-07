@@ -548,7 +548,10 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
 # object
 def qiskit2tq(circ: QuantumCircuit):
     if getattr(circ, "_layout", None) is not None:
-        p2v_orig = circ._layout.get_physical_bits().copy()
+        try:
+            p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
+        except:
+            p2v_orig = circ._layout.get_physical_bits().copy()
         p2v = {}
         for p, v in p2v_orig.items():
             if v.register.name == "q":

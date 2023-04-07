@@ -339,7 +339,10 @@ def get_p_v_reg_mapping(circ):
     p are physical qubits
     v are logical qubits
     """
-    p2v_orig = circ._layout.get_physical_bits().copy()
+    try:
+        p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
+    except:
+        p2v_orig = circ._layout.get_physical_bits().copy()
     mapping = {
         "p2v": {},
         "v2p": {},
@@ -377,8 +380,10 @@ def get_v_c_reg_mapping(circ):
     c are classical registers
     want to get v2c
     """
-
-    p2v_orig = circ._layout.get_physical_bits().copy()
+    try:
+        p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
+    except:
+        p2v_orig = circ._layout.get_physical_bits().copy()
     p2v = {}
     for p, v in p2v_orig.items():
         if v.register.name == "q":
