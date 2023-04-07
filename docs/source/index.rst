@@ -15,57 +15,16 @@
 
 .. raw:: html
 
-   <p align="center">
+   <embed>
+      <h2> <p align="center"> A PyTorch Library for Quantum Simulation and Quantum Machine Learning</p> </h2>
 
-.. raw:: html
-
-   </p>
-
-.. raw:: html
-
-   <h2>
-
-.. raw:: html
-
-   <p align="center">
-
-A PyTorch Library for Quantum Simulation and Quantum Machine Learning
-
-.. raw:: html
-
-   </p>
-
-.. raw:: html
-
-   </h2>
-
-.. raw:: html
-
-   <h3>
-
-.. raw:: html
-
-   <p align="center">
-
-Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine
-
-.. raw:: html
-
-   </p>
-
-.. raw:: html
-
-   </h3>
-
-.. raw:: html
-
-    <embed>
-        <p align="center">
+      <h3> <p align="center"> Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p> </h3>
+    <p align="center">
     <a href="https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE">
         <img alt="MIT License" src="https://img.shields.io/github/license/mit-han-lab/torchquantum">
     </a>
     <a href="https://torchquantum.readthedocs.io/">
-        <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum/master">
+        <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum/main">
     </a>
     <a href="https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ">
         <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
@@ -80,9 +39,8 @@ Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine
    <a href="https://pypi.org/project/torchquantum/">
         <img alt="Pypi" src="https://img.shields.io/pypi/v/torchquantum">
     </a>
-
-</p>
-<br />
+      </p>
+      <br />
     </embed>
 
 
