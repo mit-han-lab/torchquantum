@@ -272,10 +272,9 @@ def gate_wrapper(
             {
                 "name": name,  # type: ignore
                 "wires": np.array(wires).squeeze().tolist(),
-                "params": params.squeeze().detach().cpu().numpy().tolist()
-                if params is not None
-                else None,
+                "params": params.squeeze().detach().cpu().numpy().tolist() if params is not None else None,
                 "inverse": inverse,
+                "trainable": params.requires_grad if params is not None else False,
             }
         )
 
