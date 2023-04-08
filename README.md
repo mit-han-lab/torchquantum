@@ -220,7 +220,7 @@ python simple_vqe.py
 
 ## MNIST Example
 
-Train a quantum circuit to perform MNIST task and deploy on the real IBM
+Train a quantum circuit to perform MNIST classification task and deploy on the real IBM
 Quito quantum computer as in [mnist_example.py](./examples/simple_mnist/mnist_example_no_binding.py)
 script:
 ```python
