@@ -112,6 +112,19 @@ print(expval)
 # obtain gradients of expval w.r.t. trainable parameters
 expval[0].backward()
 print(op.params.grad)
+
+
+# Apply gates to qdev with tq.QuantumModule
+ops = [
+    {'name': 'hadamard', 'wires': 0}, 
+    {'name': 'cnot', 'wires': [0, 1]},
+    {'name': 'rx', 'wires': 0, 'params': 0.5, 'trainable': True},
+    {'name': 'u3', 'wires': 0, 'params': [0.1, 0.2, 0.3], 'trainable': True},
+    {'name': 'h', 'wires': 1, 'inverse': True}
+]
+
+qmodule = tq.QuantumModule.from_op_history(ops)
+qmodule(qdev)
 ```
 
 
