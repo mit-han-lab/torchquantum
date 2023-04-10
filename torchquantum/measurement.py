@@ -11,8 +11,11 @@ from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
 from torchquantum.operators import op_name_dict
+from copy import deepcopy
 
 __all__ = [
+    "find_observable_groups",
+    "expval_joint_sampling_grouping",
     "expval_joint_analytical",
     "expval_joint_sampling",
     "expval",
@@ -62,6 +65,98 @@ def measure(qdev, n_shots=1024):
     #     plt.title("distribution of measured bitstrings")
     #     plt.show()
     return distri_all
+
+
+
+def find_observable_groups(observables):
+    # the group is not unique
+    # ["XXII", "IIZZ", "ZZII"] can be grouped as ["XXZZ", "ZZII"] or ["ZZZZ", "XXZZ"]
+    groups = {}
+    for observable in observables:
+        matched = False
+        for group, elements in groups.items():
+            group_new = deepcopy(group)
+            for k in range(len(observable)):
+                if (observable[k] == 'I') or (observable[k] == group[k]):  # not finish yet
+                    continue
+                elif observable[k] != group[k]:
+                    if group[k] == "I":
+                        if k < len(observable) - 1:  # not finish yet
+                            group_new = group_new[:k] + observable[k] + group_new[k + 1:]
+                        else:
+                            group_new = group_new[:k] + observable[k]
+                        continue
+                    else:
+                        break
+            else: # for this group, the observable is matched or I be replaced, so no need to try other groups
+                matched = True
+                break
+        if matched:
+            # change the group name of matched one
+            elements = groups[group]
+            del groups[group]
+            elements.append(observable)
+            groups[group_new] = elements
+        else:
+            # no matched group, creata a new one
+            groups[observable] = [observable]
+
+    return groups
+
+
+def expval_joint_sampling_grouping(
+    qdev: tq.QuantumDevice,
+    observables: List[str],
+    n_shots_per_group=1024,
+):
+    assert len(observables) == len(set(observables)), "each observable should be unique"
+    # key is the group, values is the list of sub-observables  
+    obs = []
+    for observable in observables:
+        obs.append(observable.upper())
+    # firstly find the groups
+    groups = find_observable_groups(obs)
+
+    # rotation to the desired basis
+    n_wires = qdev.n_wires
+    paulix = op_name_dict["paulix"]
+    pauliy = op_name_dict["pauliy"]
+    pauliz = op_name_dict["pauliz"]
+    iden = op_name_dict["i"]
+    pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
+
+    expval_all_obs = {}
+    for obs_group, obs_elements in groups.items():
+        # for each group need to clone a new qdev and its states
+        qdev_clone = tq.QuantumDevice(n_wires=qdev.n_wires, bsz=qdev.bsz, device=qdev.device)
+        qdev_clone.clone_states(qdev.states)
+
+        for wire in range(n_wires):
+            for rotation in pauli_dict[obs_group[wire]]().diagonalizing_gates():
+                rotation(qdev_clone, wires=wire)
+        # measure
+        distributions = measure(qdev_clone, n_shots=n_shots_per_group)
+        # interpret the distribution for different observable elements
+        for obs_element in obs_elements:
+            expval_all = []
+            mask = np.ones(len(obs_element), dtype=bool)
+            mask[np.array([*obs_element]) == "I"] = False
+
+            for distri in distributions:
+                n_eigen_one = 0
+                n_eigen_minus_one = 0
+                for bitstring, n_count in distri.items():
+                    if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
+                        n_eigen_one += n_count
+                    else:
+                        n_eigen_minus_one += n_count
+                
+                expval = n_eigen_one / n_shots_per_group + (-1) * n_eigen_minus_one / n_shots_per_group
+
+                expval_all.append(expval)
+            expval_all_obs[obs_element] = torch.tensor(expval_all, dtype=F_DTYPE)
+
+    return expval_all_obs
 
 
 def expval_joint_sampling(
