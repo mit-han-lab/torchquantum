@@ -100,6 +100,7 @@ class QFCModel(tq.QuantumModule):
         else:
             # use torchquantum to process the circuit
             self.encoder(qdev, x)
+            qdev.reset_op_history()
             self.q_layer(qdev)
             x = self.measure(qdev)
 

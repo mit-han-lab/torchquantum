@@ -2,6 +2,7 @@ import torch.nn as nn
 import torchquantum as tq
 
 from abc import ABCMeta
+from typing import Iterable
 
 __all__ = [
     "QuantumModule",
@@ -27,6 +28,55 @@ class QuantumModule(nn.Module):
         self.wires_per_block = None
         self.qiskit_processor = None
         self.noise_model_tq = None
+        self.Operator_list = None
+    
+    def load_op_history(self, op_history):
+        """load operation history
+            {
+                "name": name,  # type: ignore
+                "wires": np.array(wires).squeeze().tolist(),
+                "params": params.squeeze().detach().cpu().numpy().tolist() if params is not None else None,
+                "inverse": inverse,
+                "trainable": params.requires_grad if params is not None else False,
+            }
+
+        """
+        Operator_list = []
+        for op in op_history:
+            Oper = tq.op_name_dict[op["name"]]
+            trainable = op.get("trainable", False)
+            has_params = True if ((op.get("params", None) is not None) or trainable) else False
+            init_params = op.get("params", None)
+            n_wires = len(op["wires"]) if isinstance(op["wires"], Iterable) else 1
+            wires = op['wires']
+            inverse = op.get("inverse", False)
+            Operator_list.append(Oper(
+                has_params=has_params,
+                trainable=trainable,
+                init_params=init_params,
+                n_wires=n_wires,
+                wires=wires,
+                inverse=inverse,
+            ))
+
+        self.Operator_list = tq.QuantumModuleList(Operator_list)
+    
+
+    @classmethod
+    def from_op_history(cls, op_history):
+        """Create a QuantumModule from op_history
+        Args:
+            op_history (list): A list of op in function dict format
+        """
+        qmodule = cls()
+        qmodule.load_op_history(op_history)
+        qmodule.forward = qmodule.forward_Operators_list
+        return qmodule
+
+    def forward_Operators_list(self, qdev):
+        assert self.Operator_list is not None, "Operator_list should not contain nothing"
+        for Oper in self.Operator_list:
+            Oper(qdev)
 
     def set_noise_model_tq(self, noise_model_tq):
         for module in self.modules():
@@ -83,6 +133,12 @@ class QuantumModule(nn.Module):
         #     params=self.unitary
         # )
 
+    def __repr__(self):
+        if self.Operator_list is not None:
+            return f"QuantumModule with Operator_list {self.Operator_list}"
+        else:
+            return "QuantumModule"
+
     def get_unitary(self, q_device: tq.QuantumDevice, x=None):
         original_wires_per_block = self.wires_per_block
         original_static_mode = self.static_mode
@@ -121,6 +177,7 @@ class QuantumModuleList(nn.ModuleList, QuantumModule, metaclass=ABCMeta):
 class QuantumModuleDict(nn.ModuleDict, QuantumModule, metaclass=ABCMeta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
 
 
 def test():

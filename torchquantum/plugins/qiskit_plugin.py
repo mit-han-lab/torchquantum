@@ -85,9 +85,11 @@ def append_parameterized_gate(func, circ, input_idx, params, wires):
             theta=params[input_idx[0]], control_qubit=wires[0], target_qubit=wires[1]
         )
     elif func == "u2":
-        circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]], qubit=wires[0])
+        from qiskit.circuit.library import U2Gate
+        circ.append(U2Gate(phi=params[input_idx[0]], lam=params[input_idx[1]]), wires, [])
+        # circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]], qubit=wires[0])
     elif func == "u3":
-        circ.u3(
+        circ.u(
             theta=params[input_idx[0]],
             phi=params[input_idx[1]],
             lam=params[input_idx[2]],
@@ -174,7 +176,9 @@ def append_fixed_gate(circ, func, params, wires, inverse):
     elif func in ["cu1", "cp", "cr", "cphase"]:
         circ.cu1(params, *wires)
     elif func == "u2":
-        circ.u2(*list(params), *wires)
+        from qiskit.circuit.library import U2Gate
+        circ.append(U2Gate(phi=params[0], lam=params[1]), wires, [])
+        # circ.u2(*list(params), *wires)
     elif func == "u3":
         circ.u(*list(params), *wires)
     elif func == "cu3":
@@ -410,7 +414,9 @@ def tq2qiskit(
         elif module.name == "CU1":
             circ.cu1(module.params[0][0].item(), *module.wires)
         elif module.name == "U2":
-            circ.u2(*list(module.params[0].data.cpu().numpy()), *module.wires)
+            from qiskit.circuit.library import U2Gate
+            circ.append(U2Gate(phi=module.params[0].data.cpu().numpy()[0], lam=module.params[0].data.cpu().numpy()[0]), module.wires, [])
+            # circ.u2(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == "U3":
             circ.u3(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == "CU3":
@@ -546,9 +552,12 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
 
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit
 # object
-def qiskit2tq(circ: QuantumCircuit):
+def qiskit2tq_ops(circ: QuantumCircuit):
     if getattr(circ, "_layout", None) is not None:
-        p2v_orig = circ._layout.get_physical_bits().copy()
+        try:
+            p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
+        except:
+            p2v_orig = circ._layout.get_physical_bits().copy()
         p2v = {}
         for p, v in p2v_orig.items():
             if v.register.name == "q":
@@ -625,7 +634,11 @@ def qiskit2tq(circ: QuantumCircuit):
             raise NotImplementedError(
                 f"{op_name} conversion to tq is currently not supported."
             )
+        return ops
 
+
+def qiskit2tq(circ: QuantumCircuit):
+    ops = qiskit2tq_ops(circ)
     return tq.QuantumModuleFromOps(ops)
 
 

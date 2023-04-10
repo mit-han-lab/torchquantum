@@ -174,6 +174,7 @@ class Operator(tq.QuantumModule):
         init_params=None,
         n_wires=None,
         wires=None,
+        inverse=False
     ):
         """__init__ function for Operator.
 
@@ -199,7 +200,7 @@ class Operator(tq.QuantumModule):
         self._name = self.__class__.__name__
         # for static mode
         self.static_matrix = None
-        self.inverse = False
+        self.inverse = inverse
         self.clifford_quantization = False
 
         try:
@@ -278,7 +279,7 @@ class Operator(tq.QuantumModule):
         self.wires = [wires] if isinstance(wires, int) else wires
 
     def forward(
-        self, q_device: tq.QuantumDevice, wires=None, params=None, inverse=False
+        self, q_device: tq.QuantumDevice, wires=None, params=None, inverse=None
     ):
         """Apply the operator to the quantum device states.
 
@@ -293,6 +294,9 @@ class Operator(tq.QuantumModule):
         Returns:
 
         """
+        if inverse is not None:
+            logger.warning("replace the inverse flag with the input")
+            self.inverse = inverse
         # try:
         #     assert self.name in self.fixed_ops or \
         #            self.has_params ^ (params is not None)
@@ -321,7 +325,7 @@ class Operator(tq.QuantumModule):
             wires = [wires] if isinstance(wires, int) else wires
             self.wires = wires
 
-        self.inverse = inverse
+        # self.inverse = inverse
 
         if self.static_mode:
             self.parent_graph.add_op(self)
@@ -330,9 +334,9 @@ class Operator(tq.QuantumModule):
         # non-parameterized gate
         if self.params is None:
             if self.n_wires is None:
-                self.func(q_device, self.wires, inverse=inverse)
+                self.func(q_device, self.wires, inverse=self.inverse)  # type: ignore
             else:
-                self.func(q_device, self.wires, n_wires=self.n_wires, inverse=inverse)
+                self.func(q_device, self.wires, n_wires=self.n_wires, inverse=self.inverse)  # type: ignore
         else:
             if isinstance(self.noise_model_tq, tq.NoiseModelTQPhase):
                 params = self.noise_model_tq.add_noise(self.params)
@@ -342,14 +346,14 @@ class Operator(tq.QuantumModule):
             if self.clifford_quantization:
                 params = CliffordQuantizer.quantize_sse(params)
             if self.n_wires is None:
-                self.func(q_device, self.wires, params=params, inverse=inverse)
+                self.func(q_device, self.wires, params=params, inverse=self.inverse)
             else:
                 self.func(
                     q_device,
                     self.wires,
                     params=params,
                     n_wires=self.n_wires,
-                    inverse=inverse,
+                    inverse=self.inverse,
                 )
 
         if self.noise_model_tq is not None and self.noise_model_tq.is_add_noise:
@@ -372,6 +376,7 @@ class Observable(Operator, metaclass=ABCMeta):
         init_params=None,
         n_wires=None,
         wires=None,
+        inverse=False,
     ):
         """Init function of the Observable class
         
@@ -392,6 +397,7 @@ class Observable(Operator, metaclass=ABCMeta):
             init_params=init_params,
             n_wires=n_wires,
             wires=wires,
+            inverse=inverse
         )
         self.return_type = None
 
@@ -414,6 +420,7 @@ class Operation(Operator, metaclass=ABCMeta):
         init_params=None,
         n_wires=None,
         wires=None,
+        inverse=False
     ):
         """_summary_
 
@@ -434,6 +441,7 @@ class Operation(Operator, metaclass=ABCMeta):
             init_params=init_params,
             n_wires=n_wires,
             wires=wires,
+            inverse=inverse
         )
         if type(self.num_wires) == int:
             self.n_wires = self.num_wires
