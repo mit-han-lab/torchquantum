@@ -1,15 +1,9 @@
 import torchquantum as tq
-import torch
-from torchquantum.vqe_utils import parse_hamiltonian_file
-import random
-import numpy as np
-import argparse
-import torch.optim as optim
-
-from torch.optim.lr_scheduler import CosineAnnealingLR
-from torchquantum.measurement import expval_joint_analytical
 
 from torchquantum.algorithms import VQE, Hamiltonian
+from qiskit import QuantumCircuit
+
+from torchquantum.plugins import qiskit2tq_op_history
 
 if __name__ == "__main__":
     hamil = Hamiltonian.from_file("./h2.txt")
@@ -24,6 +18,27 @@ if __name__ == "__main__":
         {'name': 'cu3', 'wires': [0, 1], 'trainable': True},
         {'name': 'cu3', 'wires': [1, 0], 'trainable': True},
     ]
+
+    # or alternatively, you can use the following code to generate the ops
+    circ = QuantumCircuit(2)
+    circ.h(0)
+    circ.rx(0.1, 1)
+    circ.cx(0, 1)
+    circ.u(0.1, 0.2, 0.3, 0)
+    circ.u(0.1, 0.2, 0.3, 0)
+    circ.cx(1, 0)
+    circ.u(0.1, 0.2, 0.3, 0)
+    circ.u(0.1, 0.2, 0.3, 0)
+    circ.cx(0, 1)
+    circ.u(0.1, 0.2, 0.3, 0)
+    circ.u(0.1, 0.2, 0.3, 0)
+    circ.cx(1, 0)
+    circ.u(0.1, 0.2, 0.3, 0)
+    circ.u(0.1, 0.2, 0.3, 0)
+
+    ops = qiskit2tq_op_history(circ)
+    print(ops)
+
     ansatz = tq.QuantumModule.from_op_history(ops)
     configs = {
         "n_epochs": 10,
