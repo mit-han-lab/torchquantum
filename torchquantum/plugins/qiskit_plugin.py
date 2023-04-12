@@ -734,7 +734,7 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
 
 
 def qiskit2tq(circ: QuantumCircuit):
-    ops = qiskit2tq_ops(circ)
+    ops = qiskit2tq_Operator(circ)
     return tq.QuantumModuleFromOps(ops)
 
 
