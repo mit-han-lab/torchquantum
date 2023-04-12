@@ -133,11 +133,11 @@ class QuantumModule(nn.Module):
         #     params=self.unitary
         # )
 
-    def __repr__(self):
-        if self.Operator_list is not None:
-            return f"QuantumModule with Operator_list {self.Operator_list}"
-        else:
-            return "QuantumModule"
+    # def __repr__(self):
+    #     if self.Operator_list is not None:
+    #         return f"QuantumModule with Operator_list {self.Operator_list}"
+    #     else:
+    #         return "QuantumModule"
 
     def get_unitary(self, q_device: tq.QuantumDevice, x=None):
         original_wires_per_block = self.wires_per_block

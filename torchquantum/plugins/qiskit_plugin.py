@@ -21,6 +21,8 @@ __all__ = [
     "tq2qiskit",
     "tq2qiskit_parameterized",
     "qiskit2tq",
+    "qiskit2tq_op_history",
+    "qiskit2tq_Operator",
     "tq2qiskit_measurement",
     "tq2qiskit_expand_params",
     "qiskit_assemble_circs",
@@ -31,6 +33,100 @@ __all__ = [
     "op_history2qiskit_expand_params",
     "op_history2qasm",
 ]
+
+
+def qiskit2tq_op_history(circ):
+    if getattr(circ, "_layout", None) is not None:
+        try:
+            p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
+        except:
+            p2v_orig = circ._layout.get_physical_bits().copy()
+        p2v = {}
+        for p, v in p2v_orig.items():
+            if v.register.name == "q":
+                p2v[p] = v.index
+            else:
+                p2v[p] = f"{v.register.name}.{v.index}"
+    else:
+        p2v = {}
+        for p in range(circ.num_qubits):
+            p2v[p] = p
+
+    ops = []
+    for gate in circ.data:
+        op_name = gate[0].name
+        wires = list(map(lambda x: x.index, gate[1]))
+        wires = [p2v[wire] for wire in wires]
+        # sometimes the gate.params is ParameterExpression class
+        init_params = (
+            list(map(float, gate[0].params)) if len(gate[0].params) > 0 else None
+        )
+        print(op_name,)
+
+        if op_name in [
+            "h",
+            "x",
+            "y",
+            "z",
+            "s",
+            "t",
+            "sx",
+            "cx",
+            "cz",
+            "cy",
+            "swap",
+            "cswap",
+            "ccx",
+        ]:
+            ops.append(
+                {
+                "name": op_name,  # type: ignore
+                "wires": np.array(wires),
+                "params": None,
+                "inverse": False,
+                "trainable": False,
+            }
+            )
+        elif op_name in [
+            "rx",
+            "ry",
+            "rz",
+            "rxx",
+            "xx",
+            "ryy",
+            "yy",
+            "rzz",
+            "zz",
+            "rzx",
+            "zx",
+            "p",
+            "cp",
+            "crx",
+            "cry",
+            "crz",
+            "u1",
+            "cu1",
+            "u2",
+            "u3",
+            "cu3",
+            "u",
+            "cu",
+        ]:
+            ops.append(
+                {
+                "name": op_name,  # type: ignore
+                "wires": np.array(wires),
+                "params": init_params,
+                "inverse": False,
+                "trainable": True
+            })
+        elif op_name in ["barrier", "measure"]:
+            continue
+        else:
+            raise NotImplementedError(
+                f"{op_name} conversion to tq is currently not supported."
+            )
+    return ops
 
 
 def qiskit_assemble_circs(encoders, fixed_layer, measurement):
@@ -552,7 +648,7 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
 
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit
 # object
-def qiskit2tq_ops(circ: QuantumCircuit):
+def qiskit2tq_Operator(circ: QuantumCircuit):
     if getattr(circ, "_layout", None) is not None:
         try:
             p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
@@ -638,7 +734,7 @@ def qiskit2tq_ops(circ: QuantumCircuit):
 
 
 def qiskit2tq(circ: QuantumCircuit):
-    ops = qiskit2tq_ops(circ)
+    ops = qiskit2tq_Operator(circ)
     return tq.QuantumModuleFromOps(ops)
 
 
