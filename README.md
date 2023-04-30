@@ -26,6 +26,10 @@
    <a href="https://pypi.org/project/torchquantum/">
         <img alt="Pypi" src="https://img.shields.io/pypi/v/torchquantum">
     </a>
+       <a href="https://unitary.fund/">
+        <img alt="Pypi" src="https://img.shields.io/badge/supported%20by-Unitary%20Fund-green">
+    </a>
+
 
 </p>
 <br />
