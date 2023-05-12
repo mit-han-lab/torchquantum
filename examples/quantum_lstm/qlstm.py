@@ -49,7 +49,7 @@ class QLSTM(nn.Module):
         [   {'input_idx': [0], 'func': 'rx', 'wires': [0]},
             {'input_idx': [1], 'func': 'rx', 'wires': [1]},
             {'input_idx': [2], 'func': 'rx', 'wires': [2]},
-            {'input_idx': [3], 'func': 'rx', 'wires': [2]},
+            {'input_idx': [3], 'func': 'rx', 'wires': [3]},
         ])
             self.rx0 = tq.RX(has_params=True, trainable=True)
             self.rx1 = tq.RX(has_params=True, trainable=True)
@@ -79,7 +79,7 @@ class QLSTM(nn.Module):
         [   {'input_idx': [0], 'func': 'rx', 'wires': [0]},
             {'input_idx': [1], 'func': 'rx', 'wires': [1]},
             {'input_idx': [2], 'func': 'rx', 'wires': [2]},
-            {'input_idx': [3], 'func': 'rx', 'wires': [2]},
+            {'input_idx': [3], 'func': 'rx', 'wires': [3]},
         ])
             self.rx0 = tq.RX(has_params=True, trainable=True)
             self.rx1 = tq.RX(has_params=True, trainable=True)
@@ -109,7 +109,7 @@ class QLSTM(nn.Module):
         [   {'input_idx': [0], 'func': 'rx', 'wires': [0]},
             {'input_idx': [1], 'func': 'rx', 'wires': [1]},
             {'input_idx': [2], 'func': 'rx', 'wires': [2]},
-            {'input_idx': [3], 'func': 'rx', 'wires': [2]},
+            {'input_idx': [3], 'func': 'rx', 'wires': [3]},
         ])
             self.rx0 = tq.RX(has_params=True, trainable=True)
             self.rx1 = tq.RX(has_params=True, trainable=True)
