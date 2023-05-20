@@ -29,7 +29,14 @@
        <a href="https://unitary.fund/">
         <img alt="Pypi" src="https://img.shields.io/badge/supported%20by-Unitary%20Fund-green">
     </a>
-
+   </a>
+       <a href="https://pytorch.org/ecosystem/">
+        <img alt="Pypi" src="https://img.shields.io/badge/integration%20-PyTorch%20Ecosystem-blue">
+    </a>
+    </a>
+       <a href="https://qiskit.org/ecosystem/">
+        <img alt="Pypi" src="https://img.shields.io/badge/integration%20-Qiskit%20Ecosystem-blue">
+    </a>
 
 </p>
 <br />
