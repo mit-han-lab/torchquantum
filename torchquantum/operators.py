@@ -66,6 +66,7 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "SDG",
 ]
 
 
@@ -122,6 +123,7 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "SDG",
     ]
 
     parameterized_ops = [
@@ -1317,10 +1319,23 @@ class ECR(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class sdg(Operation, metaclass=ABCMeta):
+    """Class for SDG Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["sdg"]
+    func = staticmethod(tqf.sdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
 
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
+SDG = sdg 
 
 
 op_name_dict = {
@@ -1388,4 +1403,5 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "sdg": sdg,
 }
