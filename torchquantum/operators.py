@@ -69,7 +69,7 @@ __all__ = [
     "SDG",
     "SXDG",
     "TDG",
-    "ISWAP"
+    "ISWAP",
 ]
 
 
@@ -1472,6 +1472,5 @@ op_name_dict = {
     "sdg": SDG,
     "sxdg": SXDG,
     "tdg": TDG,
-    "iswap":ISWAP,
-    
+    "iswap":ISWAP,   
 }
