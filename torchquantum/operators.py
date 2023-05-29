@@ -67,6 +67,9 @@ __all__ = [
     "EchoedCrossResonance",
     "ECR",
     "SDG",
+    "TDG",
+    'SXDG',
+    "CH",
 ]
 
 
@@ -124,6 +127,9 @@ class Operator(tq.QuantumModule):
         "Reset",
         "EchoedCrossResonance",
         "SDG",
+        "TDG",
+        "SXDG",
+        "CH",
     ]
 
     parameterized_ops = [
@@ -1331,11 +1337,48 @@ class sdg(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class tdg(Operation, metaclass=ABCMeta):
+    """Class for TDG Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["tdg"]
+    func = staticmethod(tqf.tdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class sxdg(Operation, metaclass=ABCMeta):
+    """Class for SXDG Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["sxdg"]
+    func = staticmethod(tqf.sxdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class CH(Operation, metaclass=ABCMeta):
+    """Class for CH Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["ch"]
+    func = staticmethod(tqf.ch)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
 SDG = sdg 
+TDG = tdg
+SXDG = sxdg
 
 
 op_name_dict = {
@@ -1404,4 +1447,7 @@ op_name_dict = {
     "ecr": ECR,
     "echoedcrossresonance": ECR,
     "sdg": sdg,
+    "tdg": tdg,
+    "sxdg": sxdg,
+    "ch": CH,
 }
