@@ -69,6 +69,7 @@ __all__ = [
     "SDG",
     "SXDG",
     "TDG",
+    "ISWAP",
 ]
 
 
@@ -128,6 +129,7 @@ class Operator(tq.QuantumModule):
         "SDG",
         "SXDG",
         "TDG",
+        "ISWAP",
     ]
 
     parameterized_ops = [
@@ -862,6 +864,18 @@ class CSWAP(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+    
+class ISWAP(Operation, metaclass=ABCMeta):
+    """Class for ISWAP Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["iswap"]
+    func = staticmethod(tqf.iswap)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 
 class Toffoli(Operation, metaclass=ABCMeta):
@@ -1458,4 +1472,5 @@ op_name_dict = {
     "sdg": SDG,
     "sxdg": SXDG,
     "tdg": TDG,
+    "iswap":ISWAP,   
 }

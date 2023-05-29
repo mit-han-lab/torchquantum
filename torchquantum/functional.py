@@ -86,6 +86,7 @@ __all__ = [
     "sdg",
     "sxdg",
     "tdg",
+    "iswap"
 ]
 
 
@@ -1203,6 +1204,10 @@ mat_dict = {
         [[1,0],[0,i]], dtype=C_DTYPE),
     "sxdg": 0.5 * torch.tensor([[1 - 1j, 1 + 1j], [1 + 1j, 1 - 1j]], dtype=C_DTYPE),
     "tdg": torch.tensor([[1,0],[0,np.exp(-1j * np.pi / 4)]], dtype=C_DTYPE),
+    "iswap": torch.tensor(
+        [[1, 0, 0, 0], [0, 0, 1j, 0], [0, 1j, 0, 0], [0, 0, 0, 1]], dtype=C_DTYPE
+    ),
+
 }
 
 
@@ -3366,6 +3371,51 @@ def tdg(
         inverse=inverse,
     )
     
+def iswap(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the iswap gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
+    name = "iswap"
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
 
 h = hadamard
 sh = shadamard
@@ -3453,4 +3503,5 @@ func_name_dict = {
     "sdg": sdg,
     "sxdg": sxdg,
     "tdg": tdg,
+    "iswap": iswap,
 }
