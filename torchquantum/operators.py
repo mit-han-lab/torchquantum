@@ -66,6 +66,7 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "SDG",
 ]
 
 
@@ -122,6 +123,7 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "SDG",
     ]
 
     parameterized_ops = [
@@ -575,6 +577,27 @@ class SHadamard(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+
+   
+class SDG(Observable, metaclass=ABCMeta):
+    """Class for S Dagger Gate."""
+
+    num_params = 0
+    num_wires = 1
+    eigvals = torch.tensor([1, -i], dtype=C_DTYPE)
+    matrix = mat_dict["sdg"]
+    func = staticmethod(tqf.sdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+
+    def diagonalizing_gates(self):
+        return []
 
 class PauliX(Observable, metaclass=ABCMeta):
     """Class for Pauli X Gate."""
@@ -1388,4 +1411,5 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "sdg":SDG,
 }
