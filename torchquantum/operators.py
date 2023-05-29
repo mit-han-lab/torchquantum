@@ -70,6 +70,9 @@ __all__ = [
     "SXDG",
     "TDG",
     "ISWAP",
+    "CS",
+    "CSDG",
+    "CSX",
 ]
 
 
@@ -130,6 +133,9 @@ class Operator(tq.QuantumModule):
         "SXDG",
         "TDG",
         "ISWAP",
+        "CS",
+        "CSDG",
+        "CSX",
     ]
 
     parameterized_ops = [
@@ -781,6 +787,53 @@ class SX(Operation, metaclass=ABCMeta):
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
+
+class CS(DiagonalOperation, metaclass=ABCMeta):
+    """Class for CS Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["cs"]
+    eigvals = np.array([1, 1, 1, 1j])
+    func = staticmethod(tqf.cs)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+   
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+    
+class CSDG(DiagonalOperation, metaclass=ABCMeta):
+    """Class for CS Dagger Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["csdg"]
+    eigvals = np.array([1, 1, 1, -1j])
+    func = staticmethod(tqf.csdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+   
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+ 
+class CSX(Operation, metaclass=ABCMeta):
+    """Class for CSX Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["csx"]
+    func = staticmethod(tqf.csx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+   
 
 
 class CNOT(Operation, metaclass=ABCMeta):
@@ -1472,5 +1525,8 @@ op_name_dict = {
     "sdg": SDG,
     "sxdg": SXDG,
     "tdg": TDG,
-    "iswap":ISWAP,   
+    "iswap": ISWAP,   
+    "cs": CS,
+    "csdg": CSDG,
+    "csx": CSX,
 }
