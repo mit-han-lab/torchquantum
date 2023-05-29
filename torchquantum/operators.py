@@ -66,6 +66,9 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "SDG",
+    "SXDG",
+    "TDG",
 ]
 
 
@@ -122,6 +125,10 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "SDG",
+        "SXDG",
+        "TDG",
+        "ISWAP",
     ]
 
     parameterized_ops = [
@@ -576,6 +583,67 @@ class SHadamard(Operation, metaclass=ABCMeta):
         return cls.matrix
 
 
+   
+class SDG(Observable, metaclass=ABCMeta):
+    """Class for S Dagger Gate."""
+
+    num_params = 0
+    num_wires = 1
+    eigvals = torch.tensor([1, -i], dtype=C_DTYPE)
+    matrix = mat_dict["sdg"]
+    func = staticmethod(tqf.sdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+
+    def diagonalizing_gates(self):
+        return []
+    
+class SXDG(Observable, metaclass=ABCMeta):
+    """Class for SX Dagger Gate."""
+
+    num_params = 0
+    num_wires = 1
+    eigvals = torch.tensor([1, -i], dtype=C_DTYPE)
+    matrix = mat_dict["sxdg"]
+    func = staticmethod(tqf.sxdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+
+
+    
+    
+class TDG(Observable, metaclass=ABCMeta):
+    """Class for T Dagger Gate."""
+
+    num_params = 0
+    num_wires = 1
+    eigvals = torch.tensor([1, np.exp(-1j * np.pi / 4)], dtype=C_DTYPE)
+    matrix = mat_dict["tdg"]
+    func = staticmethod(tqf.tdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+    @classmethod
+    def _eigvals(cls, params):
+        return cls.eigvals
+
+    def diagonalizing_gates(self):
+        return []
+
 class PauliX(Observable, metaclass=ABCMeta):
     """Class for Pauli X Gate."""
 
@@ -791,6 +859,18 @@ class CSWAP(Operation, metaclass=ABCMeta):
     num_wires = 3
     matrix = mat_dict["cswap"]
     func = staticmethod(tqf.cswap)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+    
+class ISWAP(Operation, metaclass=ABCMeta):
+    """Class for ISWAP Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["iswap"]
+    func = staticmethod(tqf.iswap)
 
     @classmethod
     def _matrix(cls, params):
@@ -1388,4 +1468,7 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "sdg": SDG,
+    "sxdg": SXDG,
+    "tdg": TDG,
 }
