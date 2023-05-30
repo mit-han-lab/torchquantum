@@ -70,6 +70,8 @@ __all__ = [
     "TDG",
     'SXDG',
     "CH",
+    "CCZ",
+    "ISWAP",
 ]
 
 
@@ -130,6 +132,8 @@ class Operator(tq.QuantumModule):
         "TDG",
         "SXDG",
         "CH",
+        "CCZ",
+        "ISWAP",
     ]
 
     parameterized_ops = [
@@ -1373,6 +1377,30 @@ class CH(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class CCZ(Operation, metaclass=ABCMeta):
+    """Class for CCZ Gate."""
+
+    num_params = 0
+    num_wires = 3
+    matrix = mat_dict["ccz"]
+    func = staticmethod(tqf.ccz)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class ISWAP(Operation, metaclass=ABCMeta):
+    """Class for ISWAP Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["iswap"]
+    func = staticmethod(tqf.iswap)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
@@ -1450,4 +1478,6 @@ op_name_dict = {
     "tdg": tdg,
     "sxdg": sxdg,
     "ch": CH,
+    "ccz": CCZ,
+    "iswap": ISWAP,
 }
