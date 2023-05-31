@@ -1405,8 +1405,8 @@ class ISWAP(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-class cs(Operation, metaclass=ABCMeta):
-    """Class for cs Gate."""
+class CS(Operation, metaclass=ABCMeta):
+    """Class for CS Gate."""
 
     num_params = 0
     num_wires = 2
@@ -1417,8 +1417,8 @@ class cs(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-class csdg(Operation, metaclass=ABCMeta):
-    """Class for csdg Gate."""
+class CSDG(Operation, metaclass=ABCMeta):
+    """Class for CSDG Gate."""
 
     num_params = 0
     num_wires = 2
@@ -1435,8 +1435,7 @@ EchoedCrossResonance = ECR
 SDG = sdg 
 TDG = tdg
 SXDG = sxdg
-CS = cs
-CSDG = csdg
+CSDG = CSDG
 
 
 op_name_dict = {
@@ -1510,6 +1509,6 @@ op_name_dict = {
     "ch": CH,
     "ccz": CCZ,
     "iswap": ISWAP,
-    "cs": cs,
-    "csdg": csdg,
+    "cs": CS,
+    "csdg": CSDG,
 }
