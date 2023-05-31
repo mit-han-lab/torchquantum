@@ -73,6 +73,8 @@ __all__ = [
     "CS",
     "CSDG",
     "CSX",
+    "CH",
+    "CHadamard",
 ]
 
 
@@ -136,6 +138,7 @@ class Operator(tq.QuantumModule):
         "CS",
         "CSDG",
         "CSX",
+        "CHadamard",
     ]
 
     parameterized_ops = [
@@ -1451,11 +1454,22 @@ class ECR(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class CHadamard(Operation, metaclass=ABCMeta):
+    """Class for CHadamard Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["chadamard"]
+    func = staticmethod(tqf.chadamard)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
-
+CH = CHadamard
 
 op_name_dict = {
     "hadamard": Hadamard,
@@ -1529,4 +1543,6 @@ op_name_dict = {
     "cs": CS,
     "csdg": CSDG,
     "csx": CSX,
+    "chadamard": CHadamard,
+    "ch": CHadamard,
 }
