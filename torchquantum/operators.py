@@ -74,6 +74,8 @@ __all__ = [
     "ISWAP",
     "CS",
     "CSDG",
+    "CSX",
+    "R",
 ]
 
 
@@ -138,6 +140,7 @@ class Operator(tq.QuantumModule):
         "ISWAP",
         "CS",
         "CSDG",
+        "CSX",
     ]
 
     parameterized_ops = [
@@ -166,6 +169,7 @@ class Operator(tq.QuantumModule):
         "TrainableUnitary",
         "TrainableUnitaryStrict",
         "SingleExcitation",
+        "R",
     ]
 
     @property
@@ -1429,6 +1433,29 @@ class CSDG(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class CSX(Operation, metaclass=ABCMeta):
+    """Class for CSX Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["csx"]
+    func = staticmethod(tqf.csx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class R(DiagonalOperation, metaclass=ABCMeta):
+    """Class for R Gate."""
+
+    num_params = 1
+    num_wires = 1
+    func = staticmethod(tqf.r)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.r_matrix(params)
+
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
@@ -1436,6 +1463,7 @@ SDG = sdg
 TDG = tdg
 SXDG = sxdg
 CSDG = CSDG
+CSX = CSX
 
 
 op_name_dict = {
@@ -1511,4 +1539,6 @@ op_name_dict = {
     "iswap": ISWAP,
     "cs": CS,
     "csdg": CSDG,
+    "csx": CSX,
+    "r": R,
 }

@@ -91,6 +91,8 @@ __all__ = [
     "iswap",
     "cs",
     "csdg",
+    "r",
+    "csx",
 ]
 
 
@@ -1108,6 +1110,36 @@ def singleexcitation_matrix(params):
 
     return matrix.squeeze(0)
 
+def r_matrix(params: torch.Tensor) -> torch.Tensor:
+    """Compute unitary matrix for R gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
+    theta = params.type(C_DTYPE)
+    phi = params.type(C_DTYPE)
+    exp = torch.exp(-1j * phi)
+    """
+    Seems to be a pytorch bug. Have to explicitly cast the theta to a
+    complex number. If directly theta = params, then get error:
+
+    allow_unreachable=True, accumulate_grad=True)  # allow_unreachable flag
+    RuntimeError: Expected isFloatingType(grad.scalar_type()) ||
+    (input_is_complex == grad_is_complex) to be true, but got false.
+    (Could this error message be improved?
+    If so, please report an enhancement request to PyTorch.)
+
+    """
+    co = torch.cos(theta / 2)
+    jsi = 1j * torch.sin(-theta / 2)
+
+    return torch.stack(
+        [torch.cat([co, exp*jsi], dim=-1), torch.cat([torch.conj(exp)*jsi, co], dim=-1)], dim=-2
+    ).squeeze(0)
 
 mat_dict = {
     "hadamard": torch.tensor(
@@ -1222,6 +1254,12 @@ mat_dict = {
          [0, 1, 0, 0],
          [0, 0, 1, 0],
          [0, 0, 0, -1j]], dtype=C_DTYPE
+    ),
+    "csx": torch.tensor(
+        [[1, 0, 0, 0],
+         [0, 0.5+0.5j, 0, 0.5-0.5j],
+         [0, 0, 1, 0],
+         [0, 0.5-0.5j, 0, 0.5+0.5j]], dtype=C_DTYPE
     )
     / np.sqrt(2),
     "rx": rx_matrix,
@@ -1250,6 +1288,7 @@ mat_dict = {
     "multicnot": multicnot_matrix,
     "multixcnot": multixcnot_matrix,
     "singleexcitation": singleexcitation_matrix,
+    "r": r_matrix,
 }
 
 
@@ -3642,6 +3681,98 @@ def csdg(
         inverse=inverse,
     )
 
+def csx(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the csx gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
+    name = "csx"
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
+
+def r(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the R gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
+    name = "r"
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
+
 h = hadamard
 sh = shadamard
 x = paulix
@@ -3669,6 +3800,7 @@ ccz = ccz
 iswap = iswap
 cs = cs
 csdg = csdg
+csx = csx
 
 func_name_dict = {
     "hadamard": hadamard,
@@ -3741,4 +3873,6 @@ func_name_dict = {
     "iswap": iswap,
     "cs": cs,
     "csdg": csdg,
+    "csx": csx,
+    "rx": rx,
 }
