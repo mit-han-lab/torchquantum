@@ -76,6 +76,7 @@ __all__ = [
     "CH",
     "CHadamard",
     "CCZ",
+    "DCX",
 ]
 
 
@@ -141,6 +142,7 @@ class Operator(tq.QuantumModule):
         "CSX",
         "CHadamard",
         "CCZ",
+        "DCX",
     ]
 
     parameterized_ops = [
@@ -1486,6 +1488,18 @@ class CCZ(DiagonalOperation, metaclass=ABCMeta):
     def _eigvals(cls, params):
         return cls.eigvals
     
+class DCX(Operation, metaclass=ABCMeta):
+    """Class for DCX Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["dcx"]
+    func = staticmethod(tqf.dcx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+    
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
@@ -1566,4 +1580,5 @@ op_name_dict = {
     "chadamard": CHadamard,
     "ch": CHadamard,
     "ccz": CCZ,
+    "dcx":DCX,
 }
