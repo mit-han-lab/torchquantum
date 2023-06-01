@@ -58,6 +58,7 @@ pair_list = [
     {"qiskit": qiskit_gate.CSXGate, "tq": tq.CSX},
     {"qiskit": qiskit_gate.CHGate, "tq": tq.CHadamard},
     {"qiskit": qiskit_gate.CCZGate, "tq": tq.CCZ},
+    {"qiskit": qiskit_gate.DCXGate, "tq": tq.DCX},
 ]
 
 import os
