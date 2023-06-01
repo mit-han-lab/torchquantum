@@ -77,6 +77,7 @@ __all__ = [
     "CHadamard",
     "CCZ",
     "DCX",
+    "XXMINYY",
 ]
 
 
@@ -143,6 +144,7 @@ class Operator(tq.QuantumModule):
         "CHadamard",
         "CCZ",
         "DCX",
+        "XXMINYY",
     ]
 
     parameterized_ops = [
@@ -1500,6 +1502,17 @@ class DCX(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
     
+class XXMINYY(Operation, metaclass=ABCMeta):
+    """Class for XXMinusYY gate."""
+
+    num_params = 3
+    num_wires = 2
+    func = staticmethod(tqf.xxminyy_matrix)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.xxminyy_matrix(params)
+
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
@@ -1581,4 +1594,5 @@ op_name_dict = {
     "ch": CHadamard,
     "ccz": CCZ,
     "dcx":DCX,
+    "xxminyy": XXMINYY,
 }
