@@ -144,7 +144,6 @@ class Operator(tq.QuantumModule):
         "CHadamard",
         "CCZ",
         "DCX",
-        "XXMINYY",
     ]
 
     parameterized_ops = [
@@ -173,6 +172,7 @@ class Operator(tq.QuantumModule):
         "TrainableUnitary",
         "TrainableUnitaryStrict",
         "SingleExcitation",
+        "XXMINYY",
     ]
 
     @property
@@ -1505,7 +1505,7 @@ class DCX(Operation, metaclass=ABCMeta):
 class XXMINYY(Operation, metaclass=ABCMeta):
     """Class for XXMinusYY gate."""
 
-    num_params = 3
+    num_params = 2
     num_wires = 2
     func = staticmethod(tqf.xxminyy_matrix)
 
