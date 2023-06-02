@@ -78,6 +78,7 @@ __all__ = [
     "CCZ",
     "DCX",
     "XXMINYY",
+    "XXPLUSYY",
 ]
 
 
@@ -173,6 +174,7 @@ class Operator(tq.QuantumModule):
         "TrainableUnitaryStrict",
         "SingleExcitation",
         "XXMINYY",
+        "XXPLUSYY",
     ]
 
     @property
@@ -1512,6 +1514,17 @@ class XXMINYY(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.xxminyy_matrix(params)
+    
+class XXPLUSYY(Operation, metaclass=ABCMeta):
+    """Class for XXPlusYY gate."""
+
+    num_params = 2
+    num_wires = 2
+    func = staticmethod(tqf.xxplusyy_matrix)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.xxplusyy_matrix(params)
 
 H = Hadamard
 SH = SHadamard
@@ -1595,4 +1608,5 @@ op_name_dict = {
     "ccz": CCZ,
     "dcx":DCX,
     "xxminyy": XXMINYY,
+    "xxplusyy": XXPLUSYY,
 }
