@@ -361,6 +361,16 @@ def gate_wrapper(
 
 
 def reset(q_device: tq.QuantumDevice, wires, inverse=False):
+    """ Reset the target qubits to 0.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+     Returns:
+        None.
+    """
     # reset the target qubits to 0, non-unitary operation
     state = q_device.states
 
@@ -461,6 +471,14 @@ def rz_matrix(params: torch.Tensor) -> torch.Tensor:
 
 
 def phaseshift_matrix(params):
+    """Compute unitary matrix for phaseshift gate.
+
+        Args:
+            params (torch.Tensor): The rotation angle.
+
+        Returns:
+            torch.Tensor: The computed unitary matrix.
+        """
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -1002,7 +1020,8 @@ def qubitunitary_matrix(params):
 
     Returns:
         torch.Tensor: The computed unitary matrix.
-
+    Raises:
+        AssertionError: If Operator is other than square matrix
     """
     matrix = params.squeeze(0)
     try:

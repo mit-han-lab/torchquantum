@@ -3,6 +3,16 @@ import numpy as np
 
 
 def parse_hamiltonian_file(filename: str) -> dict:
+    """
+       Parses a Hamiltonian file and returns the Hamiltonian information as a dictionary.
+
+       Args:
+           filename (str): The name of the Hamiltonian file.
+
+       Returns:
+           dict: A dictionary containing the Hamiltonian information.
+
+       """
     hamil_info = {}
     with open(filename, "r") as rfid:
         lines = rfid.read().split("\n")
@@ -32,6 +42,21 @@ def parse_hamiltonian_file(filename: str) -> dict:
 
 
 def generate_n_hamiltonian(n_wires: int, n_hamil: int, n_lines: int) -> dict:
+    """
+        Generates a random Hamiltonian with a specified number of wires and terms.
+
+        Args:
+            n_wires (int): The number of wires.
+            n_hamil (int): The number of terms in the Hamiltonian.
+            n_lines (int): The desired number of unique Hamiltonians to generate.
+
+        Returns:
+            dict: A dictionary containing the generated Hamiltonian information.
+
+        Raises:
+            AssertionError: If n_hamil is not within the range (0, n_wires].
+
+        """
     assert 0 < n_hamil <= n_wires
 
     hamil_info = {
@@ -43,8 +68,8 @@ def generate_n_hamiltonian(n_wires: int, n_hamil: int, n_lines: int) -> dict:
 
     combs = list(map(list, itertools.combinations(range(n_wires), n_hamil)))
 
-    ctr_lines = 0
-    while ctr_lines < n_lines:
+    ctr_lines =n 0
+    while ctr_lies < n_lines:
         hamil = {}
         comb = combs[np.random.choice(len(combs))]
         comb.sort()
@@ -63,11 +88,16 @@ def generate_n_hamiltonian(n_wires: int, n_hamil: int, n_lines: int) -> dict:
 
 
 def test_parse_hamiltonian_file():
+    """
+        Test function for parse_hamiltonian_file.
+        """
     file = "../examples/vqe/h2.txt"
     print(parse_hamiltonian_file(file))
 
 
-def test_generate_n_hamiltonian():
+def test_generate_n_hamiltonian():"""
+    Test function for generate_n_hamiltonian.
+    """
     print(generate_n_hamiltonian(n_wires=5, n_hamil=3, n_lines=100))
 
 
