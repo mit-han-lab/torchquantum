@@ -702,7 +702,7 @@ def rzx_matrix(params):
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
-
+    
     matrix = (
         torch.tensor(
             [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
@@ -1278,7 +1278,7 @@ mat_dict = {
     ),
     "csx": torch.tensor(
         [
-            [1, 0, 0, 0],f
+            [1, 0, 0, 0],
             [0, 0.5*(1 + 1j), 0, 0.5*(1 - 1j), 0],
             [0, 0, 1, 0],
             [0, 0.5*(1 - 1j), 0, 0.5*(1 + 1j), 0],
