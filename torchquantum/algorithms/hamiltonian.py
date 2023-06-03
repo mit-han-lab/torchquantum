@@ -26,24 +26,36 @@ class Hamiltonian(object):
         from_file: Create a Hamiltonian from a file.
     """
     
-    def __init__(self, hamil_info) -> None:
+    def __init__(self, hamil_info: dict) -> None:
         """Initialize the Hamiltonian object.
 
         Args:
-            hamil_info (dict): Information about the Hamiltonian
+            hamil_info (dict): Information about the Hamiltonian.
+        
+        Returns:
+            None
+            
+        Examples:
+            >>> hamil_info = {"hamil_list": [...], "n_wires": 3}
+            >>> hamiltonian = Hamiltonian(hamil_info)
         """
         
         self.hamil_info = self.process_hamil_info(hamil_info)
         self.n_wires = hamil_info["n_wires"]
 
-    def process_hamil_info(self, hamil_info):
+    def process_hamil_info(self, hamil_info: dict) -> dict:
         """Process the Hamiltonian information.
 
         Args:
-            hamil_info (dict): Information about the Hamiltonian
+            hamil_info (dict): Information about the Hamiltonian.
 
         Returns:
             dict: processed Hamiltonian information
+            
+        Examples:
+            >>> hamil_info = {"hamil_list": [...], "n_wires": 3}
+            
+            >>> processed_info = self.process_hamil_info(hamil_info)
         """
         
         hamil_list = hamil_info["hamil_list"]
@@ -63,14 +75,20 @@ class Hamiltonian(object):
         return hamil_info
 
     @classmethod
-    def from_file(cls, file_path):
+    def from_file(cls, file_path: str) -> 'Hamiltonian':
         """Create a Hamiltonian object from a file.
 
         Args:
-            file_path (str): Path to the file containing Hamiltonian information
+            file_path (str): Path to the file containing Hamiltonian information.
 
         Returns:
             Hamiltonian: the created Hamiltonian object
+            
+        Examples:
+            >>> file_path = "hamiltonian.txt"
+            >>> hamiltonian = Hamiltonian.from_file(file_path)
+            
+            >>> hamil = Hamiltonian.from_file("hamil_file.txt")
         """
         
         hamil_info = parse_hamiltonian_file(file_path)
