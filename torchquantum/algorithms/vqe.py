@@ -27,6 +27,12 @@ class VQE(object):
         scheduler_name: Name of the learning rate scheduler.
         lr: A float indicating learning rate.
         device: Device to use for training.
+        
+    Methods:
+        __init__: Initialize the VQE object.
+        get_expval: Calculate the expectation value of the Hamiltonian for a given quantum device.
+        get_loss: Calculate the loss function.
+        train: Train the VQE model.
     """
     
     def __init__(self, hamil, ansatz, train_configs) -> None:
