@@ -1112,8 +1112,8 @@ def QFT_matrix(n_wires):
 
     """
     dimension = 2**n_wires
-    mat = torch.zeros((dimension, dimension), dtype=torch.complex12)
-    omega = torch.exp(2 * np.pi * 1j / dimension)
+    mat = torch.zeros((dimension,dimension), dtype=torch.complex64)
+    omega = np.exp(2 * np.pi * 1j / dimension)
 
     for m in range(dimension):
         for n in range(dimension):
