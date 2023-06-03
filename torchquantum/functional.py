@@ -94,6 +94,7 @@ __all__ = [
     "ccz",
     "dcx",
     "xxminyy",
+    "xxplusyy",
 ]
 
 
@@ -492,8 +493,9 @@ def rot_matrix(params):
         ],
         dim=-2,
     ).squeeze(0)
+
 def xxminyy_matrix(params):
-    """Compute unitary matrix for XXminusYYY gate.
+    """Compute unitary matrix for XXminusYY gate.
 
     Args:
         params (torch.Tensor): The rotation angle. (Theta,Beta)
@@ -543,6 +545,64 @@ def xxminyy_matrix(params):
                     torch.tensor([[0]]),
                     torch.tensor([[0]]),
                     co,
+                ],
+                dim=-1,
+            ),
+        ],
+        dim=-2,
+    ).squeeze(0)
+
+def xxplusyy_matrix(params):
+    """Compute unitary matrix for XXplusYY gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle. (Theta,Beta)
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
+    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    beta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    return torch.stack(
+        [
+            torch.cat(
+                [
+                    torch.tensor([[1]]),
+                    torch.tensor([[0]]),
+                    torch.tensor([[0]]),
+                    torch.tensor([[0]]),
+                ],
+                dim=-1,
+            ),
+            torch.cat(
+                [
+                    torch.tensor([[0]]),
+                    co,
+                    (-1j*si*torch.exp(-1j*beta)),
+                   torch.tensor([[0]]),
+                ],
+                dim=-1,
+            ),
+             torch.cat(
+                [
+                    torch.tensor([[0]]),
+                    (-1j*si*torch.exp(1j*beta)),
+                    co,
+                    torch.tensor([[0]]),
+                ],
+                dim=-1,
+            ),
+             torch.cat(
+                [
+                    torch.tensor([[0]]),
+                    torch.tensor([[0]]),
+                    torch.tensor([[0]]),
+                    torch.tensor([[1]]),
                 ],
                 dim=-1,
             ),
@@ -1305,6 +1365,7 @@ mat_dict = {
         [[1, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0, 0], [0, 0, 1, 0]], dtype=C_DTYPE
     ),
     "xxminyy": xxminyy_matrix,
+    "xxplusyy": xxplusyy_matrix,
 }
 
 
@@ -2515,6 +2576,53 @@ def xxminyy(
 
     """
     name = "xxminyy"
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
+
+
+def xxplusyy(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the XXPlusYY gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
+    name = "xxplusyy"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -3925,4 +4033,5 @@ func_name_dict = {
     "ccz": ccz,
     "dcx": dcx,
     "xxminyy":xxminyy_matrix,
+    "xxplusyy": xxplusyy_matrix,
 }
