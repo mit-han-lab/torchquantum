@@ -9,6 +9,8 @@ from torchquantum.utils import switch_little_big_endian_matrix
 from tqdm import tqdm
 
 import qiskit.circuit.library.standard_gates as qiskit_gate
+import qiskit.circuit.library as qiskit_library
+
 
 RND_TIMES = 100
 
@@ -49,6 +51,7 @@ pair_list = [
     # {'qiskit': qiskit_gate.?, 'tq': tq.CU2},
     {"qiskit": qiskit_gate.CU3Gate, "tq": tq.CU3},
     {"qiskit": qiskit_gate.ECRGate, "tq": tq.ECR},
+    {"qiskit": qiskit_library.QFT, "tq": tq.QFT},
 ]
 
 import os
