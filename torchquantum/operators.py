@@ -66,6 +66,7 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "QFT"
 ]
 
 
@@ -122,6 +123,7 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "QFT"
     ]
 
     parameterized_ops = [
@@ -1316,6 +1318,17 @@ class ECR(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+    
+class QFT(Observable, metaclass=ABCMeta):
+    """Class for Quantum Fourier Transform."""
+
+    num_params = 0
+    num_wires = AnyWires
+    func = staticmethod(tqf.QFT)
+
+    @classmethod
+    def _matrix(cls, params, n_wires):
+        return tqf.QFT_matrix(n_wires)
 
 
 H = Hadamard
@@ -1388,4 +1401,5 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "QFT": QFT,
 }
