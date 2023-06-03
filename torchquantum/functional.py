@@ -83,6 +83,7 @@ __all__ = [
     "reset",
     "ecr",
     "echoedcrossresonance",
+    "QFT",
 ]
 
 
@@ -1100,6 +1101,26 @@ def singleexcitation_matrix(params):
 
     return matrix.squeeze(0)
 
+def QFT_matrix(n_wires):
+    """Compute unitary matrix for QFT.
+
+    Args:
+        n_wires: the number of qubits
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
+    dimension = 2**n_wires
+    mat = torch.zeros((dimension, dimension), dtype=torch.complex12)
+    omega = torch.exp(2 * np.pi * 1j / dimension)
+
+    for m in range(dimension):
+        for n in range(dimension):
+            mat[m, n] = omega ** (m * n)
+    mat = mat / np.sqrt(dimension)
+    return mat
+
 
 mat_dict = {
     "hadamard": torch.tensor(
@@ -1196,6 +1217,7 @@ mat_dict = {
     "multicnot": multicnot_matrix,
     "multixcnot": multixcnot_matrix,
     "singleexcitation": singleexcitation_matrix,
+    "QFT": QFT_matrix,
 }
 
 
@@ -3220,6 +3242,34 @@ def ecr(
         inverse=inverse,
     )
 
+def QFT(q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",):
+    
+    name = "QFT"
+    if n_wires == None:
+        wires = [wires] if isinstance(wires, int) else wires
+        n_wires = len(wires)
+   
+    #mat = mat_dict[name]
+    mat = QFT_matrix(n_wires)    
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
 
 h = hadamard
 sh = shadamard
@@ -3304,4 +3354,5 @@ func_name_dict = {
     "singleexcitation": singleexcitation,
     "ecr": ecr,
     "echoedcrossresonance": echoedcrossresonance,
+    "QFT": QFT,
 }
