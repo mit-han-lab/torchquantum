@@ -14,11 +14,53 @@ __all__ = [
 
 
 class QuantumNode(tq.QuantumModule):
-    """
-    a quantum node contains a q device, encoder, q layer and measure
+    """A quantum node contains a q device, encoder, q layer and measure
+    
+    Attributes:
+        arch (dict): The architecture configuration for the node.
+        q_device (tq.QuantumDevice): The quantum device.
+        encoder (tq.GeneralEncoder): The encoder.
+        q_layer (tq.QuantumLayer): The quantum layer.
+        measure (tq.MeasureAll): The measurement operator.
+        act_norm (str): The activation normalization method.
+        x_before_add_noise (torch.Tensor): The input tensor before adding noise.
+        x_before_add_noise_second (torch.Tensor): The input tensor before adding noise (second step).
+        x_before_act_quant (torch.Tensor): The input tensor before activation quantization.
+        x_before_norm (torch.Tensor): The input tensor before normalization.
+        circuit_in (torch.Tensor): The input tensor of the circuit.
+        circuit_out (torch.Tensor): The output tensor of the circuit.
+        shift_this_step (List[bool]): The list indicating whether to shift parameters in each step.
+        cool_down (List[int]): The cooling down values.
+        triger_cd (List[int]): The trigger cooling down values.
+        bn (torch.nn.BatchNorm1d): The batch normalization layer.
+        node_id (int): The ID of the node.
+        pre_specified_mean_std (dict): The pre-specified mean and standard deviation.
+        grad_qlayer (List[Optional[torch.Tensor]]): The gradients of the quantum layer.
+        grad_encoder (List[Optional[torch.Tensor]]): The gradients of the encoder.
+    
+    Methods:
+        __init__(self, arch, act_norm, node_id): Initialize the QuantumNode.
+        forward(self, x, use_qiskit=False, is_last_node=False, parallel=True): Forward pass of the QuantumNode.
+        run_circuit(self, inputs): Run the circuit without applying normalization or noise.
+        shift_and_run(self, x, use_qiskit=False, is_last_node=False, is_first_node=False, parallel=True):
+            Shift the parameters and run the circuit.
     """
 
     def __init__(self, arch, act_norm, node_id):
+        """Initialize the QuantumNode.
+
+        Args:
+            arch (dict): The architecture configuration for the node.
+            act_norm (str): The activation normalization method.
+            node_id (int): The ID of the node.
+
+        Example:
+            >>> arch = {"n_wires": 2, "encoder_op_list_name": "default", "q_layer_name": "default"}
+            >>> act_norm = "batch_norm"
+            >>> node_id = 0
+            >>> node = QuantumNode(arch, act_norm, node_id)
+        """
+        
         super().__init__()
         self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=arch["n_wires"])
@@ -50,6 +92,26 @@ class QuantumNode(tq.QuantumModule):
         self.grad_encoder = None
 
     def forward(self, x, use_qiskit=False, is_last_node=False, parallel=True):
+        """Forward pass of the QuantumNode.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+                Defaults to False.
+            use_qiskit (bool): Whether to use the Qiskit processor.
+                Defaults to False.
+            is_last_node (bool): Whether the node is the last node in the model.
+                Defaults to False.
+            parallel (bool): Whether to run the circuit in parallel.
+                Defaults to True.
+
+        Returns:
+            torch.Tensor: The output tensor.
+
+        Example:
+            >>> x = torch.randn(10, 2)
+            >>> node.forward(x, use_qiskit=True, is_last_node=False, parallel=True)
+        """
+        
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
                 self.q_device,
@@ -121,6 +183,19 @@ class QuantumNode(tq.QuantumModule):
         return x
 
     def run_circuit(self, inputs):
+        """Run the circuit without applying normalization or noise.
+
+        Args:
+            inputs (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The output tensor.
+
+        Example:
+            >>> inputs = torch.randn(10, 2)
+            >>> node.run_circuit(inputs)
+        """
+        
         self.encoder(self.q_device, inputs)
         self.q_layer(self.q_device)
         x = self.measure(self.q_device)
@@ -134,6 +209,28 @@ class QuantumNode(tq.QuantumModule):
         is_first_node=False,
         parallel=True,
     ):
+        """Shift the parameters and run the circuit.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+            use_qiskit (bool): Whether to use the Qiskit processor.
+                Defaults to False.
+            is_last_node (bool): Whether the node is the last node in the model.
+                Defaults to False.
+            is_first_node (bool): Whether the node is the first node in the model.
+                Defaults to False.
+            parallel (bool): Whether to run the circuit in parallel.
+                Defaults to True.
+
+        Returns:
+            torch.Tensor: The output tensor.
+            datetime.timedelta: The time spent during the circuit execution.
+
+        Example:
+            >>> x = torch.randn(10, 2)
+            >>> node.shift_and_run(x, use_qiskit=True, is_last_node=False, is_first_node=False, parallel=True)
+        """
+        
         import numpy as np
 
         self.circuit_in = x
@@ -293,7 +390,23 @@ class QuantumNode(tq.QuantumModule):
         return x, time_spent
 
 
-def build_nodes(node_archs, act_norm=None):
+def build_nodes(node_archs, act_norm=None) -> torchquantum.QuantumModuleList:
+    """Build a list of QuantumNode instances based on the given architectures.
+
+    Args:
+        node_archs (list): The list of node architectures.
+        act_norm (str): The activation normalization method.
+            Defaults to None.
+
+    Returns:
+        torchquantum.QuantumModuleList: The list of QuantumNode instances.
+        
+    Example:
+        >>> node_archs = [...]
+        >>> act_norm = "batch_norm"
+        >>> nodes = build_nodes(node_archs, act_norm)
+    """
+    
     nodes = tq.QuantumModuleList()
     for k, node_arch in enumerate(node_archs):
         nodes.append(QuantumNode(node_arch, act_norm=act_norm, node_id=k))
