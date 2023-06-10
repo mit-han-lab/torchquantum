@@ -6,12 +6,17 @@ import torchquantum.functional as tqf
 import numpy as np
 from torchquantum.macro import F_DTYPE
 
-from typing import Union, List
+from typing import Union, List, TYPE_CHECKING
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
 from torchquantum.operator.operators import op_name_dict
 from copy import deepcopy
+
+if TYPE_CHECKING:
+    from torchquantum.operator import Observable
+else:
+    Observable = None
 
 __all__ = [
     "find_observable_groups",
@@ -295,7 +300,7 @@ def expval_joint_analytical(
 def expval(
     qdev: tq.QuantumDevice,
     wires: Union[int, List[int]],
-    observables: Union[tq.Observable, List[tq.Observable]],
+    observables: Union[Observable, List[Observable]],
 ):
 
     all_dims = np.arange(qdev.states.dim())
