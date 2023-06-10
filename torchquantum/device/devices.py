@@ -100,7 +100,7 @@ class QuantumDevice(nn.Module):
         return self.__class__.__name__
 
     def __repr__(self):
-        return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.state.device} \n recording op history: {self.record_op} \n current states: {self.get_states_1d().cpu().detach().numpy()}"
+        return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.state.device} \n recording op history: {self.record_op} \n current states: {repr(self.get_states_1d().cpu().detach().numpy())}"
 
 
 for func_name, func in func_name_dict.items():
