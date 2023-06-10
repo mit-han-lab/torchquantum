@@ -222,6 +222,24 @@ def expval_joint_sampling(
 
     return torch.tensor(expval_all, dtype=F_DTYPE)
 
+def expval_obs_mat(
+    qdev: tq.QuantumDevice,
+    obs_mat: torch.Tensor,
+):
+    """
+    Compute the expectation value of a joint observable in analytical way, assuming the statevector is available.
+    Args:
+        qdev: the quantum device
+        observable: the joint observable a matrix
+    Returns:
+        the expectation value
+    """
+    states = qdev.get_states_1d()
+    return (
+        (states.conj() * torch.mm(obs_mat, states.transpose(0, 1)).transpose(0, 1))
+        .sum(-1)
+        .real
+    )
 
 def expval_joint_analytical(
     qdev: tq.QuantumDevice,
@@ -249,7 +267,7 @@ def expval_joint_analytical(
     >>> print(expval_joint_analytical(x, 'ZZ'))
     tensor([[-1.0000]])
     """
-    # compute the hamiltonian matrix
+    # compute the obs_mat matrix
     paulix = mat_dict["paulix"]
     pauliy = mat_dict["pauliy"]
     pauliz = mat_dict["pauliz"]
@@ -260,14 +278,14 @@ def expval_joint_analytical(
     assert len(observable) == qdev.n_wires
     states = qdev.get_states_1d()
 
-    hamiltonian = pauli_dict[observable[0]].to(states.device)
+    obs_mat = pauli_dict[observable[0]].to(states.device)
     for op in observable[1:]:
-        hamiltonian = torch.kron(hamiltonian, pauli_dict[op].to(states.device))
+        obs_mat = torch.kron(obs_mat, pauli_dict[op].to(states.device))
 
-    # torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
+    # torch.mm(states, torch.mm(obs_mat, states.conj().transpose(0, 1))).real
 
     return (
-        (states.conj() * torch.mm(hamiltonian, states.transpose(0, 1)).transpose(0, 1))
+        (states.conj() * torch.mm(obs_mat, states.transpose(0, 1)).transpose(0, 1))
         .sum(-1)
         .real
     )
