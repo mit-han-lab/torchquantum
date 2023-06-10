@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 from torchquantum.macro import C_DTYPE
-from torchquantum.functional import func_name_dict
+from torchquantum.functional import func_name_dict, func_name_dict_collect
 
 from typing import Union
 
@@ -104,4 +104,7 @@ class QuantumDevice(nn.Module):
 
 
 for func_name, func in func_name_dict.items():
+    setattr(QuantumDevice, func_name, func)
+
+for func_name, func in func_name_dict_collect.items():
     setattr(QuantumDevice, func_name, func)
