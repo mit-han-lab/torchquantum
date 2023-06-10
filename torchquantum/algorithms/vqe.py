@@ -2,12 +2,9 @@ import torch
 import torch.nn as nn
 import torchquantum as tq
 import torchquantum.functional as tqf
-import numpy as np
 
-from typing import Iterable
-from torchquantum.plugins.qiskit_macros import QISKIT_INCOMPATIBLE_FUNC_NAMES
 from torchpack.utils.logging import logger
-from torchquantum.measurement import expval_joint_analytical
+from torchquantum.measurement import expval_obs_mat
 
 
 __all__ = ["VQE"]
@@ -34,14 +31,7 @@ class VQE(object):
         self.ansatz = self.ansatz.to(self.device)
 
     def get_expval(self, qdev):
-        hamil_list = self.hamil.hamil_info["hamil_list"]
-        expval = 0
-        for hamil in hamil_list:
-            expval += (
-                expval_joint_analytical(qdev, observable=hamil["pauli_string"])
-                * hamil["coeff"]
-            )
-        return expval
+        return expval_obs_mat(qdev, self.hamil.matrix.to(qdev.device))
 
     def get_loss(self):
         qdev = tq.QuantumDevice(
