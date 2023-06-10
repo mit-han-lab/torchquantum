@@ -18,6 +18,7 @@ __all__ = [
     "expval_joint_sampling_grouping",
     "expval_joint_analytical",
     "expval_joint_sampling",
+    "expval_obs_mat",
     "expval",
     "MeasureAll",
     "MeasureMultipleTimes",

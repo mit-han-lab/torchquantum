@@ -725,6 +725,26 @@ def partial_trace_test():
 
     print(mixture)
 
+def pauli_string_to_matrix(pauli: str, device=torch.device('cpu')) -> torch.Tensor:
+    mat_dict = {
+        "paulix": torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
+        "pauliy": torch.tensor([[0, -1j], [1j, 0]], dtype=C_DTYPE),
+        "pauliz": torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE),
+        "i": torch.tensor([[1, 0], [0, 1]], dtype=C_DTYPE),
+    }
+    paulix = mat_dict["paulix"]
+    pauliy = mat_dict["pauliy"]
+    pauliz = mat_dict["pauliz"]
+    iden = mat_dict["i"]
+    pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
+
+    pauli = pauli.upper()
+
+    matrix = pauli_dict[pauli[0]].to(device)
+
+    for op in pauli[1:]:
+        matrix = torch.kron(matrix, pauli_dict[op].to(device))
+    return matrix
 
 if __name__ == "__main__":
     build_module_description_test()
