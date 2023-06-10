@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict
 from torchpack.train import Trainer
 from torchpack.utils.typing import Optimizer, Scheduler
 from torchpack.utils.config import configs
-from torchquantum.utils import get_unitary_loss, build_module_op_list
+from torchquantum.util import get_unitary_loss, build_module_op_list
 from torchpack.utils.logging import logger
 from torchpack.callbacks.writers import TFEventWriter
 from torchpack.train.exception import StopTraining

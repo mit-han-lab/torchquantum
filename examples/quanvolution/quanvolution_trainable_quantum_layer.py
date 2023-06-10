@@ -7,12 +7,12 @@ import torch.optim as optim
 import numpy as np
 import random
 
-from torchquantum.datasets import MNIST
+from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
-from torchquantum.encoding import encoder_op_list_name_dict
-from torchquantum.layers import U3CU3Layer0
+from torchquantum.encoding.encoding import encoder_op_list_name_dict
+from torchquantum.layer import U3CU3Layer0
 
 
 class TrainableQuanvFilter(tq.QuantumModule):

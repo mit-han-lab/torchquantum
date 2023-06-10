@@ -7,8 +7,8 @@ import torch.nn.functional as F
 
 import torchquantum as tq
 
-from torchquantum.datasets import MNIST
-from torchquantum.operators import op_name_dict
+from torchquantum.dataset import MNIST
+from torchquantum.operator import op_name_dict
 from typing import List
 
 

@@ -1,8 +1,8 @@
 from cuquantum import contract
 from cuquantum import CircuitToEinsum
 import torchquantum as tq
-from torchquantum.plugins import op_history2qiskit
-from torchquantum.measurement import expval_joint_analytical
+from torchquantum.plugin import op_history2qiskit
+from torchquantum.measure import expval_joint_analytical
 import cupy as cp
 
 def expval_joint_analytical_cuquantum(qdev, observable):

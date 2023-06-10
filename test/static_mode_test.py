@@ -5,10 +5,10 @@ import torchquantum as tq
 import numpy as np
 
 from torchpack.utils.logging import logger
-from torchquantum.operators import op_name_dict
+from torchquantum.operator.operators import op_name_dict
 from torchquantum.functional import func_name_dict
 from torchquantum.macro import F_DTYPE
-from torchquantum.plugins.qiskit_macros import (
+from torchquantum.plugin.qiskit import (
     QISKIT_INCOMPATIBLE_FUNC_NAMES,
     QISKIT_INCOMPATIBLE_OPS,
 )

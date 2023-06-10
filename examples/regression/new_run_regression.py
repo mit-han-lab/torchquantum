@@ -13,7 +13,7 @@ import numpy as np
 # data is cos(theta)|000> + e^(j * phi)sin(theta) |111>
 
 from torchpack.datasets.dataset import Dataset
-from torchquantum.plugins import (
+from torchquantum.plugin import (
     tq2qiskit_initialize,
     tq2qiskit,
     tq2qiskit_measurement,
@@ -274,7 +274,7 @@ def main():
 
     try:
         from qiskit import IBMQ
-        from torchquantum.plugins import QiskitProcessor
+        from torchquantum.plugin import QiskitProcessor
 
         print(f"\nTest with Qiskit Simulator")
         processor_simulation = QiskitProcessor(use_real_qc=False)

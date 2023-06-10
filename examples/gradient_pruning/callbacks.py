@@ -14,7 +14,7 @@ from torchpack.utils.logging import logger
 from torchpack.utils.typing import Trainer
 from torchpack import distributed as dist
 from torchquantum.super_utils import get_named_sample_arch
-from torchquantum.utils import legalize_unitary
+from torchquantum.util import legalize_unitary
 
 
 __all__ = [

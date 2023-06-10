@@ -2,21 +2,18 @@ __version__ = "0.1.7"
 __author__ = "Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli"
 
 from .macro import *
-from .devices import *
+from .device import *
 from .module import *
-from .operators import *
-from .measurement import *
+from .operator import *
+from .measure import *
 from .functional import *
 from .graph import *
-from .layers import *
+from .layer import *
 from .encoding import *
-from .super_layers import *
-from .utils import *
+from .util import *
 from .noise_model import *
-from .node import *
-# from .pulse.pulse import *
-
-# from .pulse_utils import *
+from .algorithm import *
+from .dataset import *
 
 # here we check whether the Qiskit parameterization bug is fixed, if not, a
 # warning message will be printed

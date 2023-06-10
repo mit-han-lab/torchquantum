@@ -7,7 +7,7 @@ import torch.optim as optim
 import numpy as np
 import random
 
-from torchquantum.datasets import MNIST
+from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
@@ -199,7 +199,7 @@ def main():
     # run on real QC
     try:
         from qiskit import IBMQ
-        from torchquantum.plugins import QiskitProcessor
+        from torchquantum.plugin import QiskitProcessor
 
         # firstly perform simulate
         print(f"\nTest with Qiskit Simulator")

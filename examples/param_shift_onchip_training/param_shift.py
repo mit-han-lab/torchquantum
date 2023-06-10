@@ -5,9 +5,9 @@ import numpy as np
 
 import torchquantum as tq
 import torchquantum.functional as tqf
-from torchquantum.layers import SethLayer0
+from torchquantum.layer import SethLayer0
 
-from torchquantum.datasets import MNIST
+from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 

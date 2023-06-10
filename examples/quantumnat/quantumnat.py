@@ -5,9 +5,9 @@ import argparse
 
 import torchquantum as tq
 import torchquantum.functional as tqf
-from torchquantum.datasets import MNIST
+from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from torchquantum.plugins import (
+from torchquantum.plugin import (
     tq2qiskit_expand_params,
     tq2qiskit,
     qiskit2tq,
@@ -16,7 +16,7 @@ from torchquantum.plugins import (
     op_history2qiskit,
     op_history2qiskit_expand_params,
 )
-from torchquantum.utils import (
+from torchquantum.util import (
     build_module_from_op_list,
     build_module_op_list,
     get_v_c_reg_mapping,
@@ -25,7 +25,7 @@ from torchquantum.utils import (
     get_cared_configs,
 )
 
-from torchquantum.plugins import QiskitProcessor
+from torchquantum.plugin import QiskitProcessor
 
 import random
 import numpy as np

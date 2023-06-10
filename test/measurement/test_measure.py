@@ -1,6 +1,6 @@
 import torchquantum as tq
 
-from torchquantum.plugins import op_history2qiskit
+from torchquantum.plugin import op_history2qiskit
 from qiskit import Aer, transpile
 import numpy as np
 

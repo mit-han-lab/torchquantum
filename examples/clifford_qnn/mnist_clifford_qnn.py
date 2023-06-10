@@ -5,7 +5,7 @@ import argparse
 
 import torchquantum as tq
 
-from torchquantum.datasets import MNIST
+from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 import random
@@ -14,7 +14,7 @@ import numpy as np
 # need to make sure all the gates are RX RY RZ and parameters are 0, pi/2,
 # pi, 3pi/2 four types
 
-from torchquantum.layers import RXYZCXLayer0
+from torchquantum.layer import RXYZCXLayer0
 
 
 class QFCModel(tq.QuantumModule):
@@ -174,7 +174,7 @@ def main():
     # # run on Qiskit simulator and real Quantum Computers
     # try:
     #     from qiskit import IBMQ
-    #     from torchquantum.plugins import QiskitProcessor
+    #     from torchquantum.plugin import QiskitProcessor
     #
     #     # firstly perform simulate
     #     print(f"\nTest with Qiskit Simulator")

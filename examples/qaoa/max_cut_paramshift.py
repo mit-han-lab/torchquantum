@@ -4,14 +4,14 @@ import torchquantum as tq
 import random
 import numpy as np
 
-from torchquantum.measurement import expval_joint_analytical
+from torchquantum.measure import expval_joint_analytical
 
 seed = 0
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 
-from torchquantum.plugins import QiskitProcessor, op_history2qiskit
+from torchquantum.plugin import QiskitProcessor, op_history2qiskit
 
        
 

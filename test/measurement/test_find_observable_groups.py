@@ -1,4 +1,4 @@
-from torchquantum.measurement import find_observable_groups
+from torchquantum.measure import find_observable_groups
 from random import shuffle
 
 def test_find_observable_groups():

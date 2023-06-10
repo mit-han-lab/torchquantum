@@ -97,7 +97,7 @@ op(qdev, wires=0)
 print(qdev)
 
 # obtain the qasm string
-from torchquantum.plugins import op_history2qasm
+from torchquantum.plugin import op_history2qasm
 print(op_history2qasm(qdev.n_wires, qdev.op_history))
 
 # measure the state on z basis

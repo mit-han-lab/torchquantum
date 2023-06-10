@@ -10,7 +10,7 @@ import torchquantum.functional as tqf
 flag = 8
 
 if flag == 1:
-    state = tq.QuantumState(n_wires=3)
+    state = tq.QuantumDevice(n_wires=3)
     print(state)
 
     state.qubitunitaryfast(wires=0, params=[[0, 1], [1, 0]])
@@ -35,7 +35,7 @@ if flag == 1:
 
     print(state)
 
-    state = tq.QuantumState(n_wires=3)
+    state = tq.QuantumDevice(n_wires=3)
     print(state)
 
     gate1 = tq.QubitUnitaryFast(init_params=[[0, 1], [1, 0]], n_wires=1, wires=0)
@@ -69,7 +69,7 @@ if flag == 1:
     print(state)
 
 if flag == 2:
-    state = tq.QuantumState(n_wires=2)
+    state = tq.QuantumDevice(n_wires=2)
     print(state)
     gate0 = tq.PauliX(n_wires=1, wires=0)
     gate = tq.QubitUnitaryFast.from_controlled_operation(
@@ -83,7 +83,7 @@ if flag == 2:
     print(state)
 
 if flag == 3:
-    state = tq.QuantumState(n_wires=2)
+    state = tq.QuantumDevice(n_wires=2)
     print(state)
     gate0 = tq.PauliX(n_wires=1, wires=0)
     gate = tq.QubitUnitaryFast.fromControlledOperation(
@@ -101,7 +101,7 @@ if flag == 3:
 
 
 if flag == 4:
-    state = tq.QuantumState(n_wires=3)
+    state = tq.QuantumDevice(n_wires=3)
     print(state)
     gate0 = tq.PauliX(n_wires=1, wires=0)
     gate1 = tq.PauliX(n_wires=1, wires=1)
@@ -120,7 +120,7 @@ if flag == 4:
 
 
 if flag == 5:
-    state = tq.QuantumState(n_wires=5)
+    state = tq.QuantumDevice(n_wires=5)
     print(state)
     gate0 = tq.PauliX(n_wires=1, wires=1)
     gate1 = tq.PauliX(n_wires=1, wires=0)
@@ -143,7 +143,7 @@ if flag == 5:
 
 
 if flag == 6:
-    state = tq.QuantumState(n_wires=5)
+    state = tq.QuantumDevice(n_wires=5)
     print(state)
     gate0 = tq.PauliX(n_wires=1, wires=0)
     gate1 = tq.PauliX(n_wires=1, wires=1)
@@ -171,7 +171,7 @@ if flag == 6:
     print(state)
 
 if flag == 7:
-    state = tq.QuantumState(n_wires=9)
+    state = tq.QuantumDevice(n_wires=9)
     print(state)
     gate0 = tq.PauliX(n_wires=1, wires=0)
     gate1 = tq.PauliX(n_wires=1, wires=1)
@@ -215,7 +215,7 @@ if flag == 7:
 
 
 if flag == 8:
-    state = tq.QuantumState(n_wires=3)
+    state = tq.QuantumDevice(n_wires=3)
     print(state)
     gate0 = tq.PauliX(n_wires=1, wires=0)
     gate1 = tq.PauliX(n_wires=1, wires=1)

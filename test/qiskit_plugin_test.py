@@ -6,14 +6,14 @@ import numpy as np
 
 from qiskit import Aer, execute
 from torchpack.utils.logging import logger
-from torchquantum.utils import (
+from torchquantum.util import (
     switch_little_big_endian_matrix,
     switch_little_big_endian_state,
     get_expectations_from_counts,
     find_global_phase,
 )
 from test.static_mode_test import QLayer as AllRandomLayer
-from torchquantum.plugins import tq2qiskit
+from torchquantum.plugin import tq2qiskit
 from torchquantum.macro import F_DTYPE
 
 

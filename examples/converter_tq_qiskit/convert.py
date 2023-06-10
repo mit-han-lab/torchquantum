@@ -72,7 +72,7 @@ def main():
 
     q_model = QLayer()
     # convert the tq module to qiskit and draw
-    from torchquantum.plugins import tq2qiskit, qiskit2tq
+    from torchquantum.plugin import tq2qiskit, qiskit2tq
 
     circ = tq2qiskit(tq.QuantumDevice(n_wires=q_model.n_wires), q_model, draw=True)
 
