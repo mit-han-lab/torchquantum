@@ -6,7 +6,7 @@ import numpy as np
 __all__ = ["matrix_exp"]
 
 def matrix_exp(
-    q_device,
+    qdev,
     wires,
     params: Union[torch.Tensor, np.ndarray],
     n_wires=None,
@@ -16,7 +16,7 @@ def matrix_exp(
     """Perform the matrix exponential operation.
 
     Args:
-        q_device (tq.QuantumDevice): The QuantumDevice.
+        qdev (tq.QuantumDevice): The QuantumDevice.
         wires (Union[List[int], int]): Which qubit(s) to apply the gate.
         params (torch.Tensor, optional): Parameters (if any) of the gate.
             Default to None.
@@ -32,8 +32,6 @@ def matrix_exp(
         None.
 
     """
-    name = "matrix_exp"
-
     if isinstance(params, np.ndarray):
         params = torch.from_numpy(params)
 
@@ -44,7 +42,7 @@ def matrix_exp(
         name=name,
         mat=mat,
         method=comp_method,
-        q_device=q_device,
+        q_device=qdev,
         wires=wires,
         n_wires=n_wires,
         inverse=inverse,
