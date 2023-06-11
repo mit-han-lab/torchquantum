@@ -31,7 +31,7 @@ import argparse
 import torch.optim as optim
 
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from torchquantum.measure import expval_joint_analytical
+from torchquantum.measurement import expval_joint_analytical
 
 
 class QVQEModel(tq.QuantumModule):

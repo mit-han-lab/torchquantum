@@ -29,7 +29,7 @@ from .macro import *
 from .device import *
 from .module import *
 from .operator import *
-from .measure import *
+from .measurement import *
 from .functional import *
 from .graph import *
 from .layer import *

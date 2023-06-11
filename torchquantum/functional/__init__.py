@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .functional import *
+from .functionals import *
 
 from .func_mat_exp import *
 from .func_controlled_unitary import *

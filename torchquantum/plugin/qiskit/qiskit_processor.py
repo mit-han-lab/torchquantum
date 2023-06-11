@@ -818,6 +818,6 @@ if __name__ == '__main__':
     qdev.cx([1, 2])
     qdev.rx(0, 0.1)
 
-    from torchquantum.measure import expval_joint_sampling
+    from torchquantum.measurement import expval_joint_sampling
     print(expval_joint_sampling(qdev, 'XII', n_shots=8192))
 

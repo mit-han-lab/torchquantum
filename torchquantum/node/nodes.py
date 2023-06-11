@@ -25,7 +25,7 @@ SOFTWARE.
 import torch
 import torchquantum as tq
 
-from torchquantum.encoding.encoding import encoder_op_list_name_dict
+from torchquantum.encoding import encoder_op_list_name_dict
 from torchquantum.layer import layer_name_dict
 import numpy as np
 import datetime

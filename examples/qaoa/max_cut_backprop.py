@@ -30,7 +30,7 @@ import numpy as np
 
 from torchquantum.functional import mat_dict
 
-from torchquantum.measure import expval_joint_analytical
+from torchquantum.measurement import expval_joint_analytical
 
 seed = 0
 random.seed(seed)

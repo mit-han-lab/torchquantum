@@ -43,8 +43,6 @@ def test_controlled_unitary():
     # gate(state)
     # print(state)
 
-
-
     ############################
     state = tq.QuantumDevice(n_wires=2)
 

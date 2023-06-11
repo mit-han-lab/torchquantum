@@ -24,7 +24,7 @@ SOFTWARE.
 
 import numpy as np
 import torch
-from torchquantum.functional.functional import gate_wrapper
+from torchquantum.functional.functionals import gate_wrapper
 from torchquantum.macro import *
 
 def controlled_unitary(

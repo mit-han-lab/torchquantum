@@ -35,7 +35,7 @@ from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
-from torchquantum.encoding.encoding import encoder_op_list_name_dict
+from torchquantum.encoding import encoder_op_list_name_dict
 from torchquantum.layer import U3CU3Layer0
 
 

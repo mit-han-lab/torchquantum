@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 import torchquantum as tq
-from torchquantum.measure import expval_joint_analytical, expval_joint_sampling_grouping
+from torchquantum.measurement import expval_joint_analytical, expval_joint_sampling_grouping
 
 import numpy as np
 import random

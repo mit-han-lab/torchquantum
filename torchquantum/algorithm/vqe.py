@@ -27,7 +27,7 @@ import torch.nn as nn
 import torchquantum as tq
 
 from torchpack.utils.logging import logger
-from torchquantum.measure import expval_obs_mat
+from torchquantum.measurement import expval_obs_mat
 
 
 __all__ = ["VQE"]

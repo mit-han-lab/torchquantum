@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from torchquantum.measure import find_observable_groups
+from torchquantum.measurement import find_observable_groups
 from random import shuffle
 
 def test_find_observable_groups():

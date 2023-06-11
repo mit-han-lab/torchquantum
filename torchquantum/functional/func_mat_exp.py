@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 import torch
-from .functional import gate_wrapper
+from .functionals import gate_wrapper
 from typing import Union
 import numpy as np
 
