@@ -966,6 +966,7 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitaryfast)
 
+
     def build_params(self, trainable):
         """Build the parameters for the gate.
 
