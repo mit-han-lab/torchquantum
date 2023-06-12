@@ -13,11 +13,21 @@ __all__ = [
 
 
 class QuantumPulse(nn.Module):
-    """
-    The Quantum Pulse simulator
+    """The Quantum Pulse simulator
+    
+    Methods:
+        __init__(self):
+            Initialize the QuantumPulse.
+        forward(self)
     """
 
     def __init__(self):
+        """Initialize the Quantum Pulse simulator.
+        
+        Returns:
+            None.
+        """
+        
         super().__init__()
         pass
 
@@ -33,6 +43,24 @@ class QuantumPulseDirect(QuantumPulse):
         delta_t: float = 1.0,
         initial_shape: List[float] = None,
     ):
+        """Initializes a QuantumPulseDirect object.
+
+        Args:
+            n_steps (int): The number of time steps.
+            hamil: The Hamiltonian.
+            delta_t (float, optional): The time step size.
+                Defaults to 1.0.
+            initial_shape (List[float], optional): The initial shape of the pulse. 
+                Defaults to None.
+
+        Raises:
+            AssertionError: If the length of initial_shape is not equal to n_steps.
+
+        Example:
+            >>> hamiltonian = ...
+            >>> pulse = QuantumPulseDirect(n_steps=10, hamil=hamiltonian, delta_t=0.1)
+        """
+        
         super().__init__()
         self.hamil = torch.tensor(hamil, dtype=torch.complex64)
         if initial_shape is not None:
@@ -45,6 +73,16 @@ class QuantumPulseDirect(QuantumPulse):
         self.delta_t = delta_t
 
     def get_unitary(self):
+        """Computes the unitary evolution operator for the pulse.
+
+        Returns:
+            torch.Tensor: The unitary evolution operator.
+
+        Example:
+            >>> pulse = QuantumPulseDirect(n_steps=10, hamil=hamiltonian, delta_t=0.1)
+            >>> unitary = pulse.get_unitary()
+        """
+        
         unitary_per_step = []
         for k in range(self.n_steps):
             magnitude = self.pulse_shape[k]
@@ -65,6 +103,18 @@ class QuantumPulseDirect(QuantumPulse):
         return u_overall
 
     def __repr__(self):
+        """Returns the string representation of the QuantumPulseDirect object.
+
+        Returns:
+            str: The string representation.
+
+        Example:
+            >>> pulse = QuantumPulseDirect(n_steps=10, hamil=hamiltonian, delta_t=0.1)
+            >>> print(pulse)
+            QuantumPulse Direct
+            shape: tensor([...])
+        """
+        
         return f"QuantumPulse Direct \n shape: {self.pulse_shape}"
 
 
@@ -80,6 +130,32 @@ class QuantumPulseGaussian(QuantumPulse):
         x_max: float = 10,
         initial_params: List[float] = None,
     ):
+        """Initializes a QuantumPulseGaussian object.
+
+        Args:
+            hamil: The Hamiltonian.
+            n_steps (int, optional): The number of time steps.
+                Defaults to 100.
+            delta_t (float, optional): The time step size.
+                Defaults to 1.0.
+            x_min (float, optional): The minimum value of x.
+                Defaults to -10.
+            x_max (float, optional): The maximum value of x.
+                Defaults to 10.
+            initial_params (List[float], optional): The initial parameters of the pulse. 
+                Defaults to None.
+
+        Returns:
+            None.
+
+        Raises:
+            AssertionError: If the length of initial_params is not equal to 3.
+
+        Example:
+            >>> hamiltonian = ...
+            >>> pulse = QuantumPulseGaussian(hamil=hamiltonian, n_steps=100, delta_t=0.1)
+        """
+        
         super(QuantumPulseGaussian, self).__init__()
         self.hamil = torch.tensor(hamil, dtype=torch.complex64)
         self.delta_t = delta_t
@@ -96,6 +172,16 @@ class QuantumPulseGaussian(QuantumPulse):
         self.x_list = torch.tensor(np.arange(x_min, x_max, self.delta_x))
 
     def get_unitary(self):
+        """Computes the unitary evolution operator for the pulse.
+
+        Returns:
+            torch.Tensor: The unitary evolution operator.
+
+        Example:
+            >>> pulse = QuantumPulseGaussian(hamil=hamiltonian, n_steps=100, delta_t=0.1)
+            >>> unitary = pulse.get_unitary()
+        """
+        
         self.mag = self.pulse_params[0]
         self.mu = self.pulse_params[1]
         self.sigma = self.pulse_params[2]
@@ -131,6 +217,17 @@ class QuantumPulseGaussian(QuantumPulse):
         return u_overall
 
     def __repr__(self):
+        """Returns the string representation of the QuantumPulseGaussian object.
+
+        Returns:
+            str: The string representation.
+
+        Example:
+            >>> pulse = QuantumPulseGaussian(hamil=hamiltonian, n_steps=100, delta_t=0.1)
+            >>> print(pulse)
+            QuantumPulse Guassian
+            shape: tensor([...])
+        """
         return f"QuantumPulse Guassian \n shape: {self.pulse_shape}"
 
 
