@@ -3,36 +3,40 @@
 from __future__ import annotations
 from typing import Union, Optional, List, Callable, Any, Sequence
 
-#Change the import files for torchquantum
-from qiskit.circuit.quantumcircuit import QuantumCircuit
-from qiskit.circuit import Gate, Instruction, Parameter
+
+from torchquantum.devices import QuantumDevice
+
+#Gate in qiskit is a unitary gate with argument "instruction". Parameter is an unknown parameter for gates
+# which can possibly be trained. We need to find appropriate replacements
+from qiskit.circuit import Gate, Parameter
+
 
 from .n_local import NLocal
-from ..standard_gates import (
-    IGate,
-    XGate,
-    YGate,
-    ZGate,
-    RXGate,
-    RYGate,
-    RZGate,
-    HGate,
-    SGate,
-    SdgGate,
-    TGate,
-    TdgGate,
-    RXXGate,
-    RYYGate,
-    RZXGate,
-    RZZGate,
-    SwapGate,
-    CXGate,
-    CYGate,
-    CZGate,
-    CRXGate,
-    CRYGate,
-    CRZGate,
-    CHGate,
+from torchquantum.operators import (
+    I,
+    PauliZ,
+    PauliY,
+    PauliZ,
+    RX,
+    RY,
+    RZ,
+    H,
+    S,
+    SDG,
+    T,
+    TDG,
+    RXX,
+    RYY,
+    RZX,
+    RZZ,
+    SWAP,
+    CNOT,
+    CY,
+    CZ,
+    CRX,
+    CRY,
+    CRZ,
+    CH,
 )
 
 class TwoLocal(NLocal):
@@ -42,7 +46,7 @@ class TwoLocal(NLocal):
     entanglement layers. The rotation layers are single qubit gates applied on all qubits.
     The entanglement layer uses two-qubit gates to entangle the qubits according to a strategy set
     using ``entanglement``. Both the rotation and entanglement gates can be specified as
-    string (e.g. ``'ry'`` or ``'cx'``), as gate-type (e.g. ``RYGate`` or ``CXGate``) or
+    string (e.g. ``'ry'`` or ``'cnot'``), as gate-type (e.g. ``RY`` or ``CNOT``) or
     as QuantumCircuit (e.g. a 1-qubit circuit or 2-qubit circuit).
 
     A set of default entanglement strategies is provided:
@@ -52,7 +56,7 @@ class TwoLocal(NLocal):
       for all :math:`i \in \{0, 1, ... , n - 2\}`, where :math:`n` is the total number of qubits.
     * ``'reverse_linear'`` entanglement is qubit :math:`i` entangled with qubit :math:`i + 1`,
       for all :math:`i \in \{n-2, n-3, ... , 1, 0\}`, where :math:`n` is the total number of qubits.
-      Note that if ``entanglement_blocks = 'cx'`` then this option provides the same unitary as
+      Note that if ``entanglement_blocks = 'cnot'`` then this option provides the same unitary as
       ``'full'`` with fewer entangling gates.
     * ``'pairwise'`` entanglement is one layer where qubit :math:`i` is entangled with qubit
       :math:`i + 1`, for all even values of :math:`i`, and then a second layer where qubit :math:`i`
@@ -82,76 +86,16 @@ class TwoLocal(NLocal):
     :class:`~qiskit.circuit.library.ParameterVector`. The name of these parameters can be chosen
     using the ``parameter_prefix``.
 
-    Examples:
-
-        >>> two = TwoLocal(3, 'ry', 'cx', 'linear', reps=2, insert_barriers=True)
-        >>> print(two)  # decompose the layers into standard gates
-             ┌──────────┐ ░            ░ ┌──────────┐ ░            ░ ┌──────────┐
-        q_0: ┤ Ry(θ[0]) ├─░───■────────░─┤ Ry(θ[3]) ├─░───■────────░─┤ Ry(θ[6]) ├
-             ├──────────┤ ░ ┌─┴─┐      ░ ├──────────┤ ░ ┌─┴─┐      ░ ├──────────┤
-        q_1: ┤ Ry(θ[1]) ├─░─┤ X ├──■───░─┤ Ry(θ[4]) ├─░─┤ X ├──■───░─┤ Ry(θ[7]) ├
-             ├──────────┤ ░ └───┘┌─┴─┐ ░ ├──────────┤ ░ └───┘┌─┴─┐ ░ ├──────────┤
-        q_2: ┤ Ry(θ[2]) ├─░──────┤ X ├─░─┤ Ry(θ[5]) ├─░──────┤ X ├─░─┤ Ry(θ[8]) ├
-             └──────────┘ ░      └───┘ ░ └──────────┘ ░      └───┘ ░ └──────────┘
-
-        >>> two = TwoLocal(3, ['ry','rz'], 'cz', 'full', reps=1, insert_barriers=True)
-        >>> qc = QuantumCircuit(3)
-        >>> qc += two
-        >>> print(qc.decompose().draw())
-             ┌──────────┐┌──────────┐ ░           ░ ┌──────────┐ ┌──────────┐
-        q_0: ┤ Ry(θ[0]) ├┤ Rz(θ[3]) ├─░──■──■─────░─┤ Ry(θ[6]) ├─┤ Rz(θ[9]) ├
-             ├──────────┤├──────────┤ ░  │  │     ░ ├──────────┤┌┴──────────┤
-        q_1: ┤ Ry(θ[1]) ├┤ Rz(θ[4]) ├─░──■──┼──■──░─┤ Ry(θ[7]) ├┤ Rz(θ[10]) ├
-             ├──────────┤├──────────┤ ░     │  │  ░ ├──────────┤├───────────┤
-        q_2: ┤ Ry(θ[2]) ├┤ Rz(θ[5]) ├─░─────■──■──░─┤ Ry(θ[8]) ├┤ Rz(θ[11]) ├
-             └──────────┘└──────────┘ ░           ░ └──────────┘└───────────┘
-
-        >>> entangler_map = [[0, 1], [1, 2], [2, 0]]  # circular entanglement for 3 qubits
-        >>> two = TwoLocal(3, 'x', 'crx', entangler_map, reps=1)
-        >>> print(two)  # note: no barriers inserted this time!
-                ┌───┐                             ┌──────────┐┌───┐
-        q_0: |0>┤ X ├─────■───────────────────────┤ Rx(θ[2]) ├┤ X ├
-                ├───┤┌────┴─────┐            ┌───┐└─────┬────┘└───┘
-        q_1: |0>┤ X ├┤ Rx(θ[0]) ├─────■──────┤ X ├──────┼──────────
-                ├───┤└──────────┘┌────┴─────┐└───┘      │     ┌───┐
-        q_2: |0>┤ X ├────────────┤ Rx(θ[1]) ├───────────■─────┤ X ├
-                └───┘            └──────────┘                 └───┘
-
-        >>> entangler_map = [[0, 3], [0, 2]]  # entangle the first and last two-way
-        >>> two = TwoLocal(4, [], 'cry', entangler_map, reps=1)
-        >>> circuit = two + two
-        >>> print(circuit.decompose().draw())  # note, that the parameters are the same!
-        q_0: ─────■───────────■───────────■───────────■──────
-                  │           │           │           │
-        q_1: ─────┼───────────┼───────────┼───────────┼──────
-                  │      ┌────┴─────┐     │      ┌────┴─────┐
-        q_2: ─────┼──────┤ Ry(θ[1]) ├─────┼──────┤ Ry(θ[1]) ├
-             ┌────┴─────┐└──────────┘┌────┴─────┐└──────────┘
-        q_3: ┤ Ry(θ[0]) ├────────────┤ Ry(θ[0]) ├────────────
-             └──────────┘            └──────────┘
-
-        >>> layer_1 = [(0, 1), (0, 2)]
-        >>> layer_2 = [(1, 2)]
-        >>> two = TwoLocal(3, 'x', 'cx', [layer_1, layer_2], reps=2, insert_barriers=True)
-        >>> print(two)
-             ┌───┐ ░            ░ ┌───┐ ░       ░ ┌───┐
-        q_0: ┤ X ├─░───■────■───░─┤ X ├─░───────░─┤ X ├
-             ├───┤ ░ ┌─┴─┐  │   ░ ├───┤ ░       ░ ├───┤
-        q_1: ┤ X ├─░─┤ X ├──┼───░─┤ X ├─░───■───░─┤ X ├
-             ├───┤ ░ └───┘┌─┴─┐ ░ ├───┤ ░ ┌─┴─┐ ░ ├───┤
-        q_2: ┤ X ├─░──────┤ X ├─░─┤ X ├─░─┤ X ├─░─┤ X ├
-             └───┘ ░      └───┘ ░ └───┘ ░ └───┘ ░ └───┘
-
     """
 
     def __init__(
         self,
         num_qubits: Optional[int] = None,
         rotation_blocks: Optional[
-            Union[str, List[str], type, List[type], QuantumCircuit, List[QuantumCircuit]]
+            Union[str, List[str], type, List[type], QuantumDevice, List[QuantumDevice]]
         ] = None,
         entanglement_blocks: Optional[
-            Union[str, List[str], type, List[type], QuantumCircuit, List[QuantumCircuit]]
+            Union[str, List[str], type, List[type], QuantumDevice, List[QuantumDevice]]
         ] = None,
         entanglement: Union[str, List[List[int]], Callable[[int], List[int]]] = "full",
         reps: int = 3,
@@ -212,7 +156,7 @@ class TwoLocal(NLocal):
             name=name,
         )
 
-    def _convert_to_block(self, layer: Union[str, type, Gate, QuantumCircuit]) -> QuantumCircuit:
+    def _convert_to_block(self, layer: Union[str, type, Gate, QuantumDevice]) -> QuantumDevice:
         """For a layer provided as str (e.g. ``'ry'``) or type (e.g. :class:`.RYGate`) this function
          returns the
          according layer type along with the number of parameters (e.g. ``(RYGate, 1)``).
@@ -232,7 +176,7 @@ class TwoLocal(NLocal):
             Outlook: If layers knew their number of parameters as static property, we could also
             allow custom layer types.
         """
-        if isinstance(layer, QuantumCircuit):
+        if isinstance(layer, QuantumDevice):
             return layer
 
         # check the list of valid layers
@@ -240,32 +184,33 @@ class TwoLocal(NLocal):
         # as static types, which might be something they should have anyway
         theta = Parameter("θ")
         valid_layers = {
-            "ch": CHGate(),
-            "cx": CXGate(),
-            "cy": CYGate(),
-            "cz": CZGate(),
-            "crx": CRXGate(theta),
-            "cry": CRYGate(theta),
-            "crz": CRZGate(theta),
-            "h": HGate(),
-            "i": IGate(),
-            "id": IGate(),
-            "iden": IGate(),
-            "rx": RXGate(theta),
-            "rxx": RXXGate(theta),
-            "ry": RYGate(theta),
-            "ryy": RYYGate(theta),
-            "rz": RZGate(theta),
-            "rzx": RZXGate(theta),
-            "rzz": RZZGate(theta),
-            "s": SGate(),
-            "sdg": SdgGate(),
-            "swap": SwapGate(),
-            "x": XGate(),
-            "y": YGate(),
-            "z": ZGate(),
-            "t": TGate(),
-            "tdg": TdgGate(),
+            "ch": CH(),
+            "cx": CNOT(),
+            "cnot": CNOT(),
+            "cy": CY(),
+            "cz": CZ(),
+            "crx": CRX(theta),
+            "cry": CRY(theta),
+            "crz": CRZ(theta),
+            "h": H(),
+            "i": I(),
+            "id": I(),
+            "iden": I(),
+            "rx": RX(theta),
+            "rxx": RXX(theta),
+            "ry": RY(theta),
+            "ryy": RYY(theta),
+            "rz": RZ(theta),
+            "rzx": RZX(theta),
+            "rzz": RZZ(theta),
+            "s": S(),
+            "sdg": SDG(),
+            "swap": SWAP(),
+            "x": X(),
+            "y": Y(),
+            "z": Z(),
+            "t": T(),
+            "tdg": TDG(),
         }
 
         # try to exchange `layer` from a string to a gate instance
@@ -286,13 +231,13 @@ class TwoLocal(NLocal):
                 raise ValueError(f"Unknown layer type`{layer}`.")
             layer = instance
 
-        if isinstance(layer, Instruction):
-            circuit = QuantumCircuit(layer.num_qubits)
+        if isinstance(layer):
+            circuit = QuantumDevice(layer.num_qubits)
             circuit.append(layer, list(range(layer.num_qubits)))
             return circuit
 
         raise TypeError(
-            f"Invalid input type {type(layer)}. " + "`layer` must be a type, str or QuantumCircuit."
+            f"Invalid input type {type(layer)}. " + "`layer` must be a type, str or QuantumDevice."
         )
 
     def get_entangler_map(
