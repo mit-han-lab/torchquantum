@@ -1,15 +1,16 @@
 
 #The efficient SU2 2-local circuit
 
-#Change the import such that we use torchquantum modules instead
 from typing import Union, Optional, List, Tuple, Callable, Any
 from numpy import pi
 
-from qiskit.circuit import QuantumCircuit, Instruction
-from qiskit.circuit.library.standard_gates import RYGate, RZGate, CXGate
+from torchquantum.devices import QuantumDevice
+from torchquantum.operators import RY, RZ, CNOT
 from .two_local import TwoLocal
 
-class class EfficientSU2(TwoLocal):
+class EfficientSU2(TwoLocal):
+
+
     r"""The hardware efficient SU(2) 2-local circuit.
 
     The ``EfficientSU2`` circuit consists of layers of single qubit operations spanned by SU(2)
@@ -21,46 +22,6 @@ class class EfficientSU2(TwoLocal):
 
     On 3 qubits and using the Pauli :math:`Y` and :math:`Z` su2_gates as single qubit gates, the
     hardware efficient SU(2) circuit is represented by:
-
-    .. parsed-literal::
-
-        ┌──────────┐┌──────────┐ ░            ░       ░ ┌───────────┐┌───────────┐
-        ┤ RY(θ[0]) ├┤ RZ(θ[3]) ├─░────────■───░─ ... ─░─┤ RY(θ[12]) ├┤ RZ(θ[15]) ├
-        ├──────────┤├──────────┤ ░      ┌─┴─┐ ░       ░ ├───────────┤├───────────┤
-        ┤ RY(θ[1]) ├┤ RZ(θ[4]) ├─░───■──┤ X ├─░─ ... ─░─┤ RY(θ[13]) ├┤ RZ(θ[16]) ├
-        ├──────────┤├──────────┤ ░ ┌─┴─┐└───┘ ░       ░ ├───────────┤├───────────┤
-        ┤ RY(θ[2]) ├┤ RZ(θ[5]) ├─░─┤ X ├──────░─ ... ─░─┤ RY(θ[14]) ├┤ RZ(θ[17]) ├
-        └──────────┘└──────────┘ ░ └───┘      ░       ░ └───────────┘└───────────┘
-
-    See :class:`~qiskit.circuit.library.RealAmplitudes` for more detail on the possible arguments
-    and options such as skipping unentanglement qubits, which apply here too.
-
-    Examples:
-
-        >>> circuit = EfficientSU2(3, reps=1)
-        >>> print(circuit)
-             ┌──────────┐┌──────────┐          ┌──────────┐┌──────────┐
-        q_0: ┤ RY(θ[0]) ├┤ RZ(θ[3]) ├──■────■──┤ RY(θ[6]) ├┤ RZ(θ[9]) ├─────────────
-             ├──────────┤├──────────┤┌─┴─┐  │  └──────────┘├──────────┤┌───────────┐
-        q_1: ┤ RY(θ[1]) ├┤ RZ(θ[4]) ├┤ X ├──┼───────■──────┤ RY(θ[7]) ├┤ RZ(θ[10]) ├
-             ├──────────┤├──────────┤└───┘┌─┴─┐   ┌─┴─┐    ├──────────┤├───────────┤
-        q_2: ┤ RY(θ[2]) ├┤ RZ(θ[5]) ├─────┤ X ├───┤ X ├────┤ RY(θ[8]) ├┤ RZ(θ[11]) ├
-             └──────────┘└──────────┘     └───┘   └───┘    └──────────┘└───────────┘
-
-        >>> ansatz = EfficientSU2(4, su2_gates=['rx', 'y'], entanglement='circular', reps=1)
-        >>> qc = QuantumCircuit(4)  # create a circuit and append the RY variational form
-        >>> qc.compose(ansatz, inplace=True)
-        >>> qc.draw()
-             ┌──────────┐┌───┐┌───┐     ┌──────────┐   ┌───┐
-        q_0: ┤ RX(θ[0]) ├┤ Y ├┤ X ├──■──┤ RX(θ[4]) ├───┤ Y ├─────────────────────
-             ├──────────┤├───┤└─┬─┘┌─┴─┐└──────────┘┌──┴───┴───┐   ┌───┐
-        q_1: ┤ RX(θ[1]) ├┤ Y ├──┼──┤ X ├─────■──────┤ RX(θ[5]) ├───┤ Y ├─────────
-             ├──────────┤├───┤  │  └───┘   ┌─┴─┐    └──────────┘┌──┴───┴───┐┌───┐
-        q_2: ┤ RX(θ[2]) ├┤ Y ├──┼──────────┤ X ├─────────■──────┤ RX(θ[6]) ├┤ Y ├
-             ├──────────┤├───┤  │          └───┘       ┌─┴─┐    ├──────────┤├───┤
-        q_3: ┤ RX(θ[3]) ├┤ Y ├──■──────────────────────┤ X ├────┤ RX(θ[7]) ├┤ Y ├
-             └──────────┘└───┘                         └───┘    └──────────┘└───┘
-
     """
 
     def __init__(
@@ -70,9 +31,8 @@ class class EfficientSU2(TwoLocal):
             Union[
                 str,
                 type,
-                Instruction,
-                QuantumCircuit,
-                List[Union[str, type, Instruction, QuantumCircuit]],
+                QuantumDevice,
+                List[Union[str, type,QuantumDevice]],
             ]
         ] = None,
         entanglement: Union[str, List[List[int]], Callable[[int], List[int]]] = "reverse_linear",
@@ -101,26 +61,23 @@ class class EfficientSU2(TwoLocal):
                 Default to 'reverse_linear' entanglement.
                 Note that 'reverse_linear' entanglement provides the same unitary as 'full'
                 with fewer entangling gates.
-                See the Examples section of :class:`~qiskit.circuit.library.TwoLocal` for more
-                detail.
-            initial_state: A `QuantumCircuit` object to prepend to the circuit.
+            initial_state: A `QuantumDevice` object to prepend to the circuit.
             skip_unentangled_qubits: If True, the single qubit gates are only applied to qubits
                 that are entangled with another qubit. If False, the single qubit gates are applied
                 to each qubit in the Ansatz. Defaults to False.
             skip_final_rotation_layer: If False, a rotation layer is added at the end of the
                 ansatz. If True, no rotation layer is added.
-            parameter_prefix: The parameterized gates require a parameter to be defined, for which
-                we use :class:`~qiskit.circuit.ParameterVector`.
+            parameter_prefix: The parameterized gates require a parameter to be defined
             insert_barriers: If True, barriers are inserted in between each layer. If False,
                 no barriers are inserted.
 
         """
         if su2_gates is None:
-            su2_gates = [RYGate, RZGate]
+            su2_gates = [RY, RZ]
         super().__init__(
             num_qubits=num_qubits,
             rotation_blocks=su2_gates,
-            entanglement_blocks=CXGate,
+            entanglement_blocks=CNOT    ,
             entanglement=entanglement,
             reps=reps,
             skip_unentangled_qubits=skip_unentangled_qubits,
