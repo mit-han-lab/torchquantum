@@ -4082,5 +4082,5 @@ func_name_dict = {
     "dcx": dcx,
     "xxminyy":xxminyy,
     "xxplusyy": xxplusyy,
-    "c3x",c3x,
+    "c3x":c3x,
 }
