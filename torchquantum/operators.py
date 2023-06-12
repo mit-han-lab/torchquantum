@@ -79,6 +79,7 @@ __all__ = [
     "DCX",
     "XXMINYY",
     "XXPLUSYY",
+    "C3X",
 ]
 
 
@@ -145,6 +146,7 @@ class Operator(tq.QuantumModule):
         "CHadamard",
         "CCZ",
         "DCX",
+        "C3X",
     ]
 
     parameterized_ops = [
@@ -1526,6 +1528,17 @@ class XXPLUSYY(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.xxplusyy_matrix(params)
+    
+class C3X(Operation, metaclass=ABCMeta):
+    """Class for C3X gate."""
+    
+    num_params = 0
+    num_wires = 4
+    func = staticmethod(tqf.c3x)
+    
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.qubitunitary_matrix(mat_dict['toffoli'])
 
 H = Hadamard
 SH = SHadamard
@@ -1610,4 +1623,5 @@ op_name_dict = {
     "dcx":DCX,
     "xxminyy": XXMINYY,
     "xxplusyy": XXPLUSYY,
+    "c3x": C3X,
 }
