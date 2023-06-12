@@ -27,8 +27,14 @@ from torchquantum.module import QuantumModule
 from torchquantum.algorithm import Hamiltonian
 import torchquantum.functional as tqf
 
+from typing import List
 
-__all__ = ['OpHamilExp']
+import numpy as np
+
+__all__ = [
+    'OpHamilExp',
+    'OpPauliExp',
+    ]
 
 
 class OpHamilExp(QuantumModule):
@@ -82,6 +88,61 @@ class OpHamilExp(QuantumModule):
 
         """
         matrix = self.matrix.to(qdev.device)
+        tqf.qubitunitaryfast(
+            q_device=qdev,
+            wires=wires,
+            params=matrix,
+        )
+
+
+class OpPauliExp(OpHamilExp):
+    def __init__(self,
+                 coeffs: List[float],
+                 paulis: List[str],
+                 endianness: str = "big",
+                 trainable: bool = True,
+                 theta: float = 0.0):
+        """Initialize the OpPauliExp module.
+        
+        Args:
+            coeffs: The coefficients of the Hamiltonian.
+            paulis: The operators of the Hamiltonian, described in strings.
+            endianness: The endianness of the operators. Default is big. Qubit 0 is the most significant bit.
+            trainable: Whether the parameters are trainable.
+            theta: The initial value of theta.
+        
+        """
+        self.hamil = Hamiltonian(coeffs, paulis, endianness)
+        super().__init__(
+            hamil=self.hamil,
+            trainable=trainable,
+            theta=theta,
+        )
+        self.coeffs = coeffs
+        self.paulis = paulis
+        self.trainable = trainable
+    
+    def forward(self, qdev, wires):
+        """Forward the OpHamilExp module.
+        Args:
+            qdev: The QuantumDevice.
+            wires: The wires.
+
+        """
+        matrix = self.matrix.to(qdev.device)
+        if qdev.record_op:
+            qdev.op_history.append(
+            {
+                "name": self.__class__.__name__,  # type: ignore
+                "wires": np.array(wires).squeeze().tolist(),
+                "coeffs": self.coeffs,
+                "paulis": self.paulis, 
+                "inverse": False,
+                "trainable": self.trainable,
+                "params": self.theta.item(),
+            }
+        )
+        
         tqf.qubitunitaryfast(
             q_device=qdev,
             wires=wires,

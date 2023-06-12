@@ -26,6 +26,7 @@ import torch
 from .functionals import gate_wrapper
 from typing import Union
 import numpy as np
+import torchquantum.functional as tqf
 
 __all__ = ["matrix_exp"]
 
@@ -62,12 +63,9 @@ def matrix_exp(
     mat = torch.matrix_exp(params)
 
     name = 'qubitunitaryfast'
-    gate_wrapper(
-        name=name,
-        mat=mat,
-        method=comp_method,
+
+    tqf.qubitunitaryfast(
         q_device=qdev,
         wires=wires,
-        n_wires=n_wires,
-        inverse=inverse,
+        params=mat,
     )
