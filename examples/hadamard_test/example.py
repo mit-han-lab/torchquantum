@@ -9,7 +9,7 @@ class QVQEModel(tq.QuantumModule):
         self.gate1 = tq.operator.OpPauliExp(coeffs=[1.0], paulis=["ZZZZ"], theta=0.5, trainable=True)
         self.gate2 = tq.operator.OpPauliExp(coeffs=[1.0], paulis=["ZZII"], theta=0.5, trainable=True)
         self.gate3 = tq.operator.OpPauliExp(coeffs=[1.0], paulis=["ZZXX"], theta=0.5, trainable=True)
-        self.gate4 = tq.operator.OpPauliExp(coeffs=[1.0], paulis=["YXXX"], theta=0.5, trainable=True)
+        self.gate4 = tq.operator.OpPauliExp(coeffs=[1.0], paulis=["YXIX"], theta=0.5, trainable=True)
 
 
     def forward(self):
@@ -17,9 +17,9 @@ class QVQEModel(tq.QuantumModule):
             n_wires=self.n_wires, bsz=1, device='cpu', record_op=True
         )
 
-        self.gate1(qdev, wires=[0, 1, 2, 3])
-        self.gate2(qdev, wires=[0, 1, 2, 3])
-        self.gate3(qdev, wires=[0, 1, 2, 3])
+        # self.gate1(qdev, wires=[0, 1, 2, 3])
+        # self.gate2(qdev, wires=[0, 1, 2, 3])
+        # self.gate3(qdev, wires=[0, 1, 2, 3])
         self.gate4(qdev, wires=[0, 1, 2, 3])
 
         expval = tq.measurement.expval_joint_analytical(qdev, observable="ZZZZ")
