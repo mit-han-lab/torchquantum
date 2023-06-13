@@ -29,14 +29,32 @@ __all__ = [
 
 
 def gen_bitstrings(n_wires):
+    """Generate all possible bitstrings of length `n_wires`.
+
+    Args:
+        n_wires (int): The number of wires or bits.
+
+    Returns:
+        List[str]: A list of all possible bitstrings.
+
+    Example:
+        >>> gen_bitstrings(2)
+        ['00', '01', '10', '11']
+
+        >>> gen_bitstrings(3)
+        ['000', '001', '010', '011', '100', '101', '110', '111']
+    """
+    
     return ["{:0{}b}".format(k, n_wires) for k in range(2**n_wires)]
 
 
 def measure(qdev, n_shots=1024):
     """Measure the target state and obtain classical bitstream distribution
+    
     Args:
         q_state: input tq.QuantumDevice
         n_shots: number of simulated shots
+    
     Returns:
         distribution of bitstrings
     """
@@ -69,8 +87,24 @@ def measure(qdev, n_shots=1024):
 
 
 def find_observable_groups(observables):
-    # the group is not unique
-    # ["XXII", "IIZZ", "ZZII"] can be grouped as ["XXZZ", "ZZII"] or ["ZZZZ", "XXZZ"]
+    """Find groups of observables based on their similarity.
+
+    Some groups are not unique. Observables that can be transformed into each other
+    by swapping or replacing non-identity terms can belong to the same group.
+
+    Args:
+        observables (List[str]): A list of observables.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary where the keys represent the groups
+            and the values are lists of observables in each group.
+
+    Example:
+        # ["XXII", "IIZZ", "ZZII"] can be grouped as ["XXZZ", "ZZII"] or ["ZZZZ", "XXZZ"]
+        >>> observables = ["XXII", "IIZZ", "ZZII"]
+        >>> find_observable_groups(observables)
+    """
+    
     groups = {}
     for observable in observables:
         matched = False
@@ -108,7 +142,23 @@ def expval_joint_sampling_grouping(
     qdev: tq.QuantumDevice,
     observables: List[str],
     n_shots_per_group=1024,
-):
+) -> dict:
+    """Compute the expectation value of observables using joint sampling and grouping.
+
+    Args:
+        qdev (tq.QuantumDevice): The quantum device.
+        observables (List[str]): A list of observable strings.
+        n_shots_per_group (int): Number of shots per group for measurement. Default is 1024.
+
+    Returns:
+        dict: A dictionary where the keys are the observable strings and the values are the expectation values.
+
+    Example:
+        >>> observables = ["XXII", "IIZZ", "ZZII"]
+        >>> qdev = tq.QuantumDevice(n_wires=4)
+        >>> expval_joint_sampling_grouping(qdev, observables)
+    """
+    
     assert len(observables) == len(set(observables)), "each observable should be unique"
     # key is the group, values is the list of sub-observables  
     obs = []
@@ -164,28 +214,31 @@ def expval_joint_sampling(
     observable: str,
     n_shots=1024,
 ):
-    """
-    Compute the expectation value of a joint observable from sampling 
-    the measurement bistring
+    """Compute the expectation value of a joint observable from sampling 
+    the measurement bistring.
+    
     Args:
-        qdev: the quantum device
-        observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
+        qdev (tq.QuantumDevice): The quantum device.
+        observable (str): The joint observable, on the qubit 0, 1, 2, 3, etc in this order.
+        
     Returns:
         the expectation value
+        
     Examples:
-    >>> import torchquantum as tq
-    >>> import torchquantum.functional as tqf
-    >>> x = tq.QuantumDevice(n_wires=2)
-    >>> tqf.hadamard(x, wires=0)
-    >>> tqf.x(x, wires=1)
-    >>> tqf.cnot(x, wires=[0, 1])
-    >>> print(expval_joint_sampling(x, 'II', n_shots=8192))
-    tensor([[0.9997]])
-    >>> print(expval_joint_sampling(x, 'XX', n_shots=8192))
-    tensor([[0.9991]])
-    >>> print(expval_joint_sampling(x, 'ZZ', n_shots=8192))
-    tensor([[-0.9980]])
+        >>> import torchquantum as tq
+        >>> import torchquantum.functional as tqf
+        >>> x = tq.QuantumDevice(n_wires=2)
+        >>> tqf.hadamard(x, wires=0)
+        >>> tqf.x(x, wires=1)
+        >>> tqf.cnot(x, wires=[0, 1])
+        >>> print(expval_joint_sampling(x, 'II', n_shots=8192))
+        tensor([[0.9997]])
+        >>> print(expval_joint_sampling(x, 'XX', n_shots=8192))
+        tensor([[0.9991]])
+        >>> print(expval_joint_sampling(x, 'ZZ', n_shots=8192))
+        tensor([[-0.9980]])
     """
+    
     # rotation to the desired basis
     n_wires = qdev.n_wires
     paulix = op_name_dict["paulix"]
@@ -227,28 +280,31 @@ def expval_joint_analytical(
     qdev: tq.QuantumDevice,
     observable: str,
 ):
-    """
-    Compute the expectation value of a joint observable in analytical way, assuming the
+    """Compute the expectation value of a joint observable in analytical way, assuming the
     statevector is available.
+    
     Args:
-        qdev: the quantum device
-        observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
+        qdev (tq.QuantumDevice): The quantum device.
+        observable (str): The joint observable, on the qubit 0, 1, 2, 3, etc in this order.
+        
     Returns:
         the expectation value
+        
     Examples:
-    >>> import torchquantum as tq
-    >>> import torchquantum.functional as tqf
-    >>> x = tq.QuantumDevice(n_wires=2)
-    >>> tqf.hadamard(x, wires=0)
-    >>> tqf.x(x, wires=1)
-    >>> tqf.cnot(x, wires=[0, 1])
-    >>> print(expval_joint_analytical(x, 'II'))
-    tensor([[1.0000]])
-    >>> print(expval_joint_analytical(x, 'XX'))
-    tensor([[1.0000]])
-    >>> print(expval_joint_analytical(x, 'ZZ'))
-    tensor([[-1.0000]])
+        >>> import torchquantum as tq
+        >>> import torchquantum.functional as tqf
+        >>> x = tq.QuantumDevice(n_wires=2)
+        >>> tqf.hadamard(x, wires=0)
+        >>> tqf.x(x, wires=1)
+        >>> tqf.cnot(x, wires=[0, 1])
+        >>> print(expval_joint_analytical(x, 'II'))
+        tensor([[1.0000]])
+        >>> print(expval_joint_analytical(x, 'XX'))
+        tensor([[1.0000]])
+        >>> print(expval_joint_analytical(x, 'ZZ'))
+        tensor([[-1.0000]])
     """
+    
     # compute the hamiltonian matrix
     paulix = mat_dict["paulix"]
     pauliy = mat_dict["pauliy"]
@@ -277,8 +333,24 @@ def expval(
     qdev: tq.QuantumDevice,
     wires: Union[int, List[int]],
     observables: Union[tq.Observable, List[tq.Observable]],
-):
+) -> torch.Tensor:
+    """Compute the expectation value of observables on specified wires.
 
+    Args:
+        qdev (tq.QuantumDevice): The quantum device.
+        wires (Union[int, List[int]]): The wire indices or a list of wire indices on which to compute the expectation values.
+        observables (Union[tq.Observable, List[tq.Observable]]): The observables or a list of observables to compute the expectation values.
+
+    Returns:
+        torch.Tensor: The expectation values.
+
+    Example:
+        >>> qdev = tq.QuantumDevice(n_wires=3)
+        >>> wires = [0, 1]
+        >>> observables = [tq.PauliX(), tq.PauliY()]
+        >>> expval(qdev, wires, observables)
+    """
+    
     all_dims = np.arange(qdev.states.dim())
     if isinstance(wires, int):
         wires = [wires]
@@ -308,14 +380,49 @@ def expval(
 
 
 class MeasureAll(tq.QuantumModule):
-    """Obtain the expectation value of all the qubits."""
+    """Obtain the expectation value of all the qubits.
 
+    Attributes:
+        obs (tq.Observable): The observable to compute the expectation value.
+        v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+
+    Methods:
+        __init__(obs, v_c_reg_mapping=None): Initialize the MeasureAll module.
+        
+        forward(qdev): Compute the expectation value of the observable on all qubits.
+        
+        set_v_c_reg_mapping(mapping): Set the mapping of classical register indices to virtual qubit indices.
+    """
+    
     def __init__(self, obs, v_c_reg_mapping=None):
+        """Initialize the MeasureAll module.
+
+        Args:
+            obs (tq.Observable): The observable to compute the expectation value.
+            v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+                Defaults to None.
+        """
+        
         super().__init__()
         self.obs = obs
         self.v_c_reg_mapping = v_c_reg_mapping
 
-    def forward(self, qdev: tq.QuantumDevice):
+    def forward(self, qdev: tq.QuantumDevice) -> torch.Tensor:
+        """Compute the expectation value of the observable on all qubits.
+
+        Args:
+            qdev (tq.QuantumDevice): The quantum device.
+
+        Returns:
+            torch.Tensor: The expectation values.
+
+        Example:
+            >>> module = MeasureAll(tq.PauliZ())
+            >>> qdev = tq.QuantumDevice(n_wires=3)
+            >>> result = module(qdev)
+            >>> print(result)
+        """
+        
         x = expval(qdev, list(range(qdev.n_wires)), [self.obs()] * qdev.n_wires)
 
         if self.v_c_reg_mapping is not None:
@@ -334,27 +441,73 @@ class MeasureAll(tq.QuantumModule):
         else:
             return x
 
-    def set_v_c_reg_mapping(self, mapping):
+    def set_v_c_reg_mapping(self, mapping) -> None:
+        """Set the mapping of classical register indices to virtual qubit indices.
+
+        Args:
+            mapping (Dict[int, int]): The mapping dictionary.
+            
+        Returns:
+            None.
+
+        Example:
+            >>> module = MeasureAll(tq.PauliZ())
+            >>> mapping = {0: 2, 1: 0, 2: 1}
+            >>> module.set_v_c_reg_mapping(mapping)
+        """
+        
         self.v_c_reg_mapping = mapping
 
 
 class MeasureMultipleTimes(tq.QuantumModule):
-    """
-    obs list:
-    list of dict: example
-    [{'wires': [0, 2, 3, 1], 'observables': ['x', 'y', 'z', 'i']
-    },
-    {'wires': [0, 2, 3, 1], 'observables': ['x', 'y', 'z', 'i']
-    },
-    ]
+    """A quantum module to measure observables multiple times.
+
+    Attributes:
+        obs_list (List[Dict]): The list of observables and wires to measure.
+        v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+
+    Methods:
+        __init__(obs_list, v_c_reg_mapping=None): Initialize the MeasureMultipleTimes module.
+        forward(qdev): Measure the observables multiple times.
+
+    Examples:
+        obs_list = [
+            {
+                "wires": [0, 2, 3, 1],
+                "observables": ["x", "y", "z", "i"]
+            },
+            {
+                "wires": [0, 2, 3, 1],
+                "observables": ["x", "y", "z", "i"]
+            },
+        ]
+        measure_module = MeasureMultipleTimes(obs_list)
+        result = measure_module(qdev)
     """
 
     def __init__(self, obs_list, v_c_reg_mapping=None):
+        """Initialize the MeasureMultipleTimes module.
+
+        Args:
+            obs_list (List[Dict]): The list of observables and wires to measure.
+            v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+        """
+        
         super().__init__()
         self.obs_list = obs_list
         self.v_c_reg_mapping = v_c_reg_mapping
 
-    def forward(self, qdev: tq.QuantumDevice):
+    def forward(self, qdev: tq.QuantumDevice) -> torch.Tensor:
+        """
+        Measure the observables multiple times.
+
+        Args:
+            qdev (tq.QuantumDevice): The quantum device.
+
+        Returns:
+            torch.Tensor: The measurement results.
+        """
+        
         res_all = []
 
         for layer in self.obs_list:
@@ -395,22 +548,45 @@ class MeasureMultipleTimes(tq.QuantumModule):
 
 
 class MeasureMultiPauliSum(tq.QuantumModule):
-    """
-    similar to qiskit.opflow PauliSumOp
-    obs list:
-    list of dict: example
-    [{'wires': [0, 2, 3, 1],
-    'observables': ['x', 'y', 'z', 'i'],
-    'coefficient': [1, 0.5, 0.4, 0.3]
-    },
-    {'wires': [0, 2, 3, 1],
-    'observables': ['x', 'y', 'z', 'i'],
-    'coefficient': [1, 0.5, 0.4, 0.3]
-    },
-    ]
+    """Measure a sum of multi-qubit Pauli operators.
+    
+    Similar to qiskit.opflow PauliSumOp.
+
+    Attributes:
+        obs_list (List[Dict]): The list of Pauli operators to measure along with their coefficients.
+        v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+        measure_multiple_times (MeasureMultipleTimes): The module for measuring observables multiple times.
+
+    Methods:
+        __init__(obs_list, v_c_reg_mapping=None): Initialize the MeasureMultiPauliSum module.
+        forward(qdev): Measure the sum of multiple Pauli operators.
+
+    Example:
+        obs_list = [
+            {
+                "wires": [0, 2, 3, 1],
+                "observables": ["x", "y", "z", "i"],
+                "coefficient": [1, 0.5, 0.4, 0.3]
+            },
+            {
+                "wires": [0, 2, 3, 1],
+                "observables": ["x", "y", "z", "i"],
+                "coefficient": [1, 0.5, 0.4, 0.3]
+            },
+        ]
+        measure_module = MeasureMultiPauliSum(obs_list)
+        result = measure_module(qdev)
     """
 
     def __init__(self, obs_list, v_c_reg_mapping=None):
+        """
+        Initialize the MeasureMultiPauliSum module.
+
+        Args:
+            obs_list (List[Dict]): The list of dictionaries specifying the observables, wires, and coefficients.
+            v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+        """
+        
         super().__init__()
         self.obs_list = obs_list
         self.v_c_reg_mapping = v_c_reg_mapping
@@ -418,27 +594,65 @@ class MeasureMultiPauliSum(tq.QuantumModule):
             obs_list=obs_list, v_c_reg_mapping=v_c_reg_mapping
         )
 
-    def forward(self, qdev: tq.QuantumDevice):
+    def forward(self, qdev: tq.QuantumDevice) -> torch.Tensor:
+        """
+        Measure the sum of multi-qubit Pauli operators.
+
+        Args:
+            qdev (tq.QuantumDevice): The quantum device.
+
+        Returns:
+            torch.Tensor: The measurement results.
+        """
+        
         res_all = self.measure_multiple_times(qdev)
 
         return res_all.sum(-1)
 
 
 class MeasureMultiQubitPauliSum(tq.QuantumModule):
-    """obs list:
-    list of dict: example
-    [{'coefficient': [0.5, 0.2]},
-    {'wires': [0, 2, 3, 1],
-    'observables': ['x', 'y', 'z', 'i'],
-    },
-    {'wires': [0, 2, 3, 1],
-    'observables': ['y', 'x', 'z', 'i'],
-    },
-    ]
-    Measures 0.5 * <x y z i> + 0.2 * <y x z i>
+    """Measure a multi-qubit Pauli sum.
+
+    Attributes:
+        obs_list (List[Dict]): The list of observables and coefficients to measure.
+        v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+        measure_multiple_times (MeasureMultipleTimes): A module for measuring observables multiple times.
+
+    Methods:
+        __init__(obs_list, v_c_reg_mapping=None): Initialize the MeasureMultiQubitPauliSum module.
+        forward(qdev): Compute the expectation value of the multi-qubit Pauli sum.
+    
+    Examples:
+        obs_list = [
+            {
+                'coefficient': [0.5, 0.2],
+            },
+            {
+                'wires': [0, 2, 3, 1],
+                'observables': ['x', 'y', 'z', 'i'],
+            },
+            {
+                'wires': [0, 2, 3, 1],
+                'observables': ['y', 'x', 'z', 'i'],
+            }
+        ]
+
+        # Measures 0.5 * <x y z i> + 0.2 * <y x z i>
+
+        pauliSum = MeasureMultiQubitPauliSum(obs_list)
+        qdev = tq.QuantumDevice(n_wires=4)
+        result = pauliSum(qdev)
+        print(result)
     """
 
     def __init__(self, obs_list, v_c_reg_mapping=None):
+        """Initialize the MeasureMultiQubitPauliSum module.
+
+        Args:
+            obs_list (List[Dict]): The list of observables and coefficients to measure.
+            v_c_reg_mapping (Optional[Dict[int, int]]): The mapping of classical register indices to virtual qubit indices.
+        """
+        
         super().__init__()
         self.obs_list = obs_list
         self.v_c_reg_mapping = v_c_reg_mapping
@@ -447,6 +661,15 @@ class MeasureMultiQubitPauliSum(tq.QuantumModule):
         )
 
     def forward(self, qdev: tq.QuantumDevice):
+        """Compute the expectation value of the multi-qubit Pauli sum.
+
+        Args:
+            qdev (tq.QuantumDevice): The quantum device.
+
+        Returns:
+            torch.Tensor: The expectation value of the multi-qubit Pauli sum.
+        """
+        
         res_all = self.measure_multiple_times(qdev)
         return (res_all * self.obs_list[0]["coefficient"]).sum(-1)
 
@@ -469,5 +692,3 @@ if __name__ == '__main__':
     expval = expval_joint_sampling(qdev, 'II', 100000)
     expval_ana = expval_joint_analytical(qdev, 'II')
     print(expval, expval_ana)
-
-
