@@ -83,7 +83,7 @@ __all__ = [
     "reset",
     "ecr",
     "echoedcrossresonance",
-    "QFT",
+    "qft",
 ]
 
 
@@ -299,7 +299,7 @@ def gate_wrapper(
                 "qubitunitarystrict",
             ]:
                 matrix = mat(params)
-            elif name in ["multicnot", "multixcnot"]:
+            elif name in ["multicnot", "multixcnot", "qft"]:
                 # this is for gates that can be applied to arbitrary numbers of
                 # qubits but no params, such as multicnot
                 matrix = mat(n_wires)
@@ -1101,7 +1101,7 @@ def singleexcitation_matrix(params):
 
     return matrix.squeeze(0)
 
-def QFT_matrix(n_wires):
+def qft_matrix(n_wires):
     """Compute unitary matrix for QFT.
 
     Args:
@@ -1217,7 +1217,7 @@ mat_dict = {
     "multicnot": multicnot_matrix,
     "multixcnot": multixcnot_matrix,
     "singleexcitation": singleexcitation_matrix,
-    "QFT": QFT_matrix,
+    "qft": qft_matrix,
 }
 
 
@@ -3242,7 +3242,7 @@ def ecr(
         inverse=inverse,
     )
 
-def QFT(q_device,
+def qft(q_device,
     wires,
     params=None,
     n_wires=None,
@@ -3251,13 +3251,13 @@ def QFT(q_device,
     inverse=False,
     comp_method="bmm",):
     
-    name = "QFT"
+    name = "qft"
     if n_wires == None:
         wires = [wires] if isinstance(wires, int) else wires
         n_wires = len(wires)
    
-    #mat = mat_dict[name]
-    mat = QFT_matrix(n_wires)    
+    mat = mat_dict[name]
+    # mat = qft_matrix(n_wires)
     gate_wrapper(
         name=name,
         mat=mat,
@@ -3354,5 +3354,5 @@ func_name_dict = {
     "singleexcitation": singleexcitation,
     "ecr": ecr,
     "echoedcrossresonance": echoedcrossresonance,
-    "QFT": QFT,
+    "qft": qft,
 }
