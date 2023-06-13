@@ -50,6 +50,7 @@ class QuantumDevice(nn.Module):
         self.op_history = []
 
     def reset_op_history(self):
+        """Resets the all Operation of the quantum device"""
         self.op_history = []
 
     def clone_states(self, existing_states: torch.Tensor):
@@ -62,6 +63,7 @@ class QuantumDevice(nn.Module):
         self.states = torch.reshape(states, [bsz] + [2] * self.n_wires)
 
     def reset_states(self, bsz: int):
+        """Reset the States of the quantum device"""
         repeat_times = [bsz] + [1] * len(self.state.shape)
         self.states = self.state.repeat(*repeat_times).to(self.state.device)
 
