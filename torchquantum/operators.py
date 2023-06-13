@@ -1324,11 +1324,11 @@ class QFT(Observable, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = AnyWires
-    func = staticmethod(tqf.QFT)
+    func = staticmethod(tqf.qft)
 
     @classmethod
     def _matrix(cls, params, n_wires):
-        return tqf.QFT_matrix(n_wires)
+        return tqf.qft_matrix(n_wires)
 
 
 H = Hadamard
