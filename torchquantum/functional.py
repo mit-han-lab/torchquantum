@@ -427,6 +427,15 @@ def rz_matrix(params: torch.Tensor) -> torch.Tensor:
 
 
 def phaseshift_matrix(params):
+    """Compute unitary matrix for phaseshift gate.
+
+        Args:
+            params (torch.Tensor): The rotation angle.
+
+        Returns:
+            torch.Tensor: The computed unitary matrix.
+
+        """
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 

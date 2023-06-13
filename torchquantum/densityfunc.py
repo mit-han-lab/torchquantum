@@ -384,7 +384,6 @@ def reset(q_device: tq.QuantumDevice, wires, inverse=False) -> None:
         >>> print(device.states)
         [0., 0., 0., 0., 0., 0., 0., 0.]
     """
-    
     state = q_device.states
 
     wires = [wires] if isinstance(wires, int) else wires
@@ -501,7 +500,6 @@ def phaseshift_matrix(params):
         >>> matrix = phaseshift_matrix(params)
         >>> print(matrix)
     """
-    
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -1042,6 +1040,9 @@ def qubitunitary_matrix(params):
 
     Returns:
         torch.Tensor: The computed unitary matrix.
+        
+    Raises:
+        AssertionError: If Operator is other than square matrix
     """
     
     matrix = params.squeeze(0)
