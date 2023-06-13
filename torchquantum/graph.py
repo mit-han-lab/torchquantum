@@ -1,4 +1,4 @@
- import torch
+import torch
 import torchquantum as tq
 import torchquantum.functional as tqf
 import itertools
