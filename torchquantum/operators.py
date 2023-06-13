@@ -1337,7 +1337,7 @@ class ECR(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-class sdg(Operation, metaclass=ABCMeta):
+class SDG(Operation, metaclass=ABCMeta):
     """Class for SDG Gate."""
 
     num_params = 0
@@ -1349,7 +1349,7 @@ class sdg(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-class tdg(Operation, metaclass=ABCMeta):
+class TDG(Operation, metaclass=ABCMeta):
     """Class for TDG Gate."""
 
     num_params = 0
@@ -1361,7 +1361,7 @@ class tdg(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-class sxdg(Operation, metaclass=ABCMeta):
+class SXDG(Operation, metaclass=ABCMeta):
     """Class for SXDG Gate."""
 
     num_params = 0
@@ -1459,12 +1459,6 @@ class R(DiagonalOperation, metaclass=ABCMeta):
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
-SDG = sdg 
-TDG = tdg
-SXDG = sxdg
-CSDG = CSDG
-CSX = CSX
-
 
 op_name_dict = {
     "hadamard": Hadamard,
@@ -1531,9 +1525,9 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
-    "sdg": sdg,
-    "tdg": tdg,
-    "sxdg": sxdg,
+    "sdg": SDG,
+    "tdg": TDG,
+    "sxdg": SXDG,
     "ch": CH,
     "ccz": CCZ,
     "iswap": ISWAP,
