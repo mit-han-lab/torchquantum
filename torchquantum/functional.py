@@ -3792,15 +3792,6 @@ cp = cu1
 cr = cu1
 cphase = cu1
 echoedcrossresonance = ecr
-sdg = sdg
-tdg = tdg
-sxdg = sxdg
-ch = ch
-ccz = ccz
-iswap = iswap
-cs = cs
-csdg = csdg
-csx = csx
 
 func_name_dict = {
     "hadamard": hadamard,
@@ -3874,5 +3865,5 @@ func_name_dict = {
     "cs": cs,
     "csdg": csdg,
     "csx": csx,
-    "rx": rx,
+    "r": r,
 }
