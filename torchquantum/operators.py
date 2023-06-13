@@ -67,19 +67,21 @@ __all__ = [
     "EchoedCrossResonance",
     "ECR",
     "SDG",
-    "SXDG",
     "TDG",
+    'SXDG',
+    "CH",
+    "CCZ",
     "ISWAP",
     "CS",
     "CSDG",
     "CSX",
-    "CH",
     "CHadamard",
     "CCZ",
     "DCX",
     "XXMINYY",
     "XXPLUSYY",
     "C3X",
+    "R",
 ]
 
 
@@ -137,14 +139,15 @@ class Operator(tq.QuantumModule):
         "Reset",
         "EchoedCrossResonance",
         "SDG",
-        "SXDG",
         "TDG",
+        "SXDG",
+        "CH",
+        "CCZ",
         "ISWAP",
         "CS",
         "CSDG",
         "CSX",
         "CHadamard",
-        "CCZ",
         "DCX",
         "C3X",
     ]
@@ -177,6 +180,7 @@ class Operator(tq.QuantumModule):
         "SingleExcitation",
         "XXMINYY",
         "XXPLUSYY",
+        "R",
     ]
 
     @property
@@ -1349,12 +1353,13 @@ class ECR(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-class SDG(Observable, metaclass=ABCMeta):
-    """Class for S Dagger Gate."""
+
+class SDG(Operation, metaclass=ABCMeta):
+    """Class for SDG Gate."""
 
     num_params = 0
     num_wires = 1
-    eigvals = torch.tensor([1, -i], dtype=C_DTYPE)
+
     matrix = mat_dict["sdg"]
     func = staticmethod(tqf.sdg)
 
@@ -1362,37 +1367,12 @@ class SDG(Observable, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
 
-    def diagonalizing_gates(self):
-        return []
-    
-class SXDG(Observable, metaclass=ABCMeta):
-    """Class for SX Dagger Gate."""
+class TDG(Operation, metaclass=ABCMeta):
+    """Class for TDG Gate."""
 
     num_params = 0
     num_wires = 1
-    eigvals = torch.tensor([1, -i], dtype=C_DTYPE)
-    matrix = mat_dict["sxdg"]
-    func = staticmethod(tqf.sxdg)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
-
-    
-class TDG(Observable, metaclass=ABCMeta):
-    """Class for T Dagger Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, np.exp(-1j * np.pi / 4)], dtype=C_DTYPE)
     matrix = mat_dict["tdg"]
     func = staticmethod(tqf.tdg)
 
@@ -1400,14 +1380,31 @@ class TDG(Observable, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
+class SXDG(Operation, metaclass=ABCMeta):
+    """Class for SXDG Gate."""
 
-    def diagonalizing_gates(self):
-        return []
-    
-    
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["sxdg"]
+    func = staticmethod(tqf.sxdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
+class CCZ(Operation, metaclass=ABCMeta):
+    """Class for CCZ Gate."""
+
+    num_params = 0
+    num_wires = 3
+    matrix = mat_dict["ccz"]
+    func = staticmethod(tqf.ccz)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
 class ISWAP(Operation, metaclass=ABCMeta):
     """Class for ISWAP Gate."""
 
@@ -1419,8 +1416,9 @@ class ISWAP(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
-    
-class CS(DiagonalOperation, metaclass=ABCMeta):
+
+
+class CS(Operation, metaclass=ABCMeta):
     """Class for CS Gate."""
 
     num_params = 0
@@ -1449,7 +1447,7 @@ class CSDG(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
-   
+
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
@@ -1466,7 +1464,6 @@ class CSX(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-    
 class CHadamard(Operation, metaclass=ABCMeta):
     """Class for CHadamard Gate."""
 
@@ -1540,6 +1537,17 @@ class C3X(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return tqf.qubitunitary_matrix(mat_dict['toffoli'])
 
+class R(DiagonalOperation, metaclass=ABCMeta):
+    """Class for R Gate."""
+
+    num_params = 1
+    num_wires = 1
+    func = staticmethod(tqf.r)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.r_matrix(params)
+
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
@@ -1611,17 +1619,19 @@ op_name_dict = {
     "ecr": ECR,
     "echoedcrossresonance": ECR,
     "sdg": SDG,
-    "sxdg": SXDG,
-    "tdg": TDG,
-    "iswap": ISWAP,   
     "cs": CS,
-    "csdg": CSDG,
-    "csx": CSX,
     "chadamard": CHadamard,
-    "ch": CHadamard,
-    "ccz": CCZ,
+    "ch": CH,
     "dcx":DCX,
     "xxminyy": XXMINYY,
     "xxplusyy": XXPLUSYY,
     "c3x": C3X,
+    "tdg": TDG,
+    "sxdg": SXDG,
+    "ch": CH,
+    "ccz": CCZ,
+    "iswap": ISWAP,
+    "csdg": CSDG,
+    "csx": CSX,
+    "r": R,
 }

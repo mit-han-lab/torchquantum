@@ -50,18 +50,19 @@ pair_list = [
     {"qiskit": qiskit_gate.CU3Gate, "tq": tq.CU3},
     {"qiskit": qiskit_gate.ECRGate, "tq": tq.ECR},
     {"qiskit": qiskit_gate.SdgGate, "tq": tq.SDG},
+    {"qiskit": qiskit_gate.TDgGate, "tq": tq.TDG},
     {"qiskit": qiskit_gate.SXdgGate, "tq": tq.SXDG},
-    {"qiskit": qiskit_gate.TdgGate, "tq": tq.TDG},
+    {"qiskit": qiskit_gate.CHGate, "tq": tq.CH},
+    {"qiskit": qiskit_gate.CCZGate, "tq": tq.CCZ},
     {"qiskit": qiskit_gate.iSwapGate, "tq": tq.ISWAP},
     {"qiskit": qiskit_gate.CSGate, "tq": tq.CS},
     {"qiskit": qiskit_gate.CSdgGate, "tq": tq.CSDG},
     {"qiskit": qiskit_gate.CSXGate, "tq": tq.CSX},
-    {"qiskit": qiskit_gate.CHGate, "tq": tq.CHadamard},
-    {"qiskit": qiskit_gate.CCZGate, "tq": tq.CCZ},
     {"qiskit": qiskit_gate.DCXGate, "tq": tq.DCX},
     {'qiskit': qiskit_gate.XXMinusYYGate, 'tq': tq.XXMINYY},
     {'qiskit': qiskit_gate.XXPlusYYGate, 'tq': tq.XXPLUSYY},
     {"qiskit": qiskit_gate.C3XGate, "tq": tq.C3X},
+    {"qiskit": qiskit_gate.RGate, "tq": tq.R},
 ]
 
 import os
