@@ -83,6 +83,7 @@ __all__ = [
     "reset",
     "ecr",
     "echoedcrossresonance",
+    "qft",
     "sdg",
     "iswap",
     "cs",
@@ -313,7 +314,7 @@ def gate_wrapper(
                 "qubitunitarystrict",
             ]:
                 matrix = mat(params)
-            elif name in ["multicnot", "multixcnot"]:
+            elif name in ["multicnot", "multixcnot", "qft"]:
                 # this is for gates that can be applied to arbitrary numbers of
                 # qubits but no params, such as multicnot
                 matrix = mat(n_wires)
@@ -1240,6 +1241,24 @@ def singleexcitation_matrix(params):
 
     return matrix.squeeze(0)
 
+
+def qft_matrix(n_wires):
+    """Compute unitary matrix for QFT.
+
+    Args:
+        n_wires: the number of qubits
+    """
+    dimension = 2**n_wires
+    mat = torch.zeros((dimension,dimension), dtype=torch.complex64)
+    omega = np.exp(2 * np.pi * 1j / dimension)
+
+    for m in range(dimension):
+        for n in range(dimension):
+            mat[m, n] = omega ** (m * n)
+    mat = mat / np.sqrt(dimension)
+    return mat
+
+  
 def r_matrix(params: torch.Tensor) -> torch.Tensor:
     """Compute unitary matrix for R gate.
 
@@ -1250,6 +1269,7 @@ def r_matrix(params: torch.Tensor) -> torch.Tensor:
         torch.Tensor: The computed unitary matrix.
 
     """
+
     theta = params.type(C_DTYPE)
     phi = params.type(C_DTYPE)
     exp = torch.exp(-1j * phi)
@@ -1270,6 +1290,7 @@ def r_matrix(params: torch.Tensor) -> torch.Tensor:
     return torch.stack(
         [torch.cat([co, exp*jsi], dim=-1), torch.cat([torch.conj(exp)*jsi, co], dim=-1)], dim=-2
     ).squeeze(0)
+
 
 mat_dict = {
     "hadamard": torch.tensor(
@@ -1418,6 +1439,7 @@ mat_dict = {
     "multicnot": multicnot_matrix,
     "multixcnot": multixcnot_matrix,
     "singleexcitation": singleexcitation_matrix,
+    "qft": qft_matrix,
     "dcx": torch.tensor(
         [[1, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0, 0], [0, 0, 1, 0]], dtype=C_DTYPE
     ),
@@ -3587,6 +3609,37 @@ def ecr(
         inverse=inverse,
     )
 
+
+def qft(q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",):
+    
+    name = "qft"
+    if n_wires == None:
+        wires = [wires] if isinstance(wires, int) else wires
+        n_wires = len(wires)
+   
+    mat = mat_dict[name]
+    # mat = qft_matrix(n_wires)
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
+    
+
 def sdg(
     q_device: QuantumDevice,
     wires: Union[List[int], int],
@@ -4194,6 +4247,7 @@ func_name_dict = {
     "singleexcitation": singleexcitation,
     "ecr": ecr,
     "echoedcrossresonance": echoedcrossresonance,
+    "qft": qft,
     "sdg": sdg,
     "tdg": tdg,
     "sxdg": sxdg,

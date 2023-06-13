@@ -66,6 +66,7 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "QFT",
     "SDG",
     "TDG",
     'SXDG',
@@ -138,6 +139,7 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "QFT",
         "SDG",
         "TDG",
         "SXDG",
@@ -1352,6 +1354,17 @@ class ECR(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+    
+class QFT(Observable, metaclass=ABCMeta):
+    """Class for Quantum Fourier Transform."""
+
+    num_params = 0
+    num_wires = AnyWires
+    func = staticmethod(tqf.qft)
+
+    @classmethod
+    def _matrix(cls, params, n_wires):
+        return tqf.qft_matrix(n_wires)
 
 
 class SDG(Operation, metaclass=ABCMeta):
@@ -1618,6 +1631,7 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "QFT": QFT,
     "sdg": SDG,
     "cs": CS,
     "chadamard": CHadamard,
