@@ -66,7 +66,7 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
-    "QFT"
+    "QFT",
 ]
 
 
@@ -123,7 +123,7 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
-        "QFT"
+        "QFT",
     ]
 
     parameterized_ops = [
