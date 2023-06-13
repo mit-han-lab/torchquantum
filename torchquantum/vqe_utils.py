@@ -68,8 +68,8 @@ def generate_n_hamiltonian(n_wires: int, n_hamil: int, n_lines: int) -> dict:
 
     combs = list(map(list, itertools.combinations(range(n_wires), n_hamil)))
 
-    ctr_lines =n 0
-    while ctr_lies < n_lines:
+    ctr_lines = 0
+    while ctr_lines < n_lines:
         hamil = {}
         comb = combs[np.random.choice(len(combs))]
         comb.sort()
