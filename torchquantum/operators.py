@@ -66,6 +66,16 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "SDG",
+    "TDG",
+    'SXDG',
+    "CH",
+    "CCZ",
+    "ISWAP",
+    "CS",
+    "CSDG",
+    "CSX",
+    "R",
 ]
 
 
@@ -122,6 +132,15 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "SDG",
+        "TDG",
+        "SXDG",
+        "CH",
+        "CCZ",
+        "ISWAP",
+        "CS",
+        "CSDG",
+        "CSX",
     ]
 
     parameterized_ops = [
@@ -150,6 +169,7 @@ class Operator(tq.QuantumModule):
         "TrainableUnitary",
         "TrainableUnitaryStrict",
         "SingleExcitation",
+        "R",
     ]
 
     @property
@@ -1317,11 +1337,128 @@ class ECR(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class SDG(Operation, metaclass=ABCMeta):
+    """Class for SDG Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["sdg"]
+    func = staticmethod(tqf.sdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class TDG(Operation, metaclass=ABCMeta):
+    """Class for TDG Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["tdg"]
+    func = staticmethod(tqf.tdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class SXDG(Operation, metaclass=ABCMeta):
+    """Class for SXDG Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["sxdg"]
+    func = staticmethod(tqf.sxdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class CH(Operation, metaclass=ABCMeta):
+    """Class for CH Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["ch"]
+    func = staticmethod(tqf.ch)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class CCZ(Operation, metaclass=ABCMeta):
+    """Class for CCZ Gate."""
+
+    num_params = 0
+    num_wires = 3
+    matrix = mat_dict["ccz"]
+    func = staticmethod(tqf.ccz)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class ISWAP(Operation, metaclass=ABCMeta):
+    """Class for ISWAP Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["iswap"]
+    func = staticmethod(tqf.iswap)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class CS(Operation, metaclass=ABCMeta):
+    """Class for CS Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["cs"]
+    func = staticmethod(tqf.cs)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class CSDG(Operation, metaclass=ABCMeta):
+    """Class for CSDG Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["csdg"]
+    func = staticmethod(tqf.csdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class CSX(Operation, metaclass=ABCMeta):
+    """Class for CSX Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["csx"]
+    func = staticmethod(tqf.csx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+class R(DiagonalOperation, metaclass=ABCMeta):
+    """Class for R Gate."""
+
+    num_params = 1
+    num_wires = 1
+    func = staticmethod(tqf.r)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.r_matrix(params)
 
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
-
 
 op_name_dict = {
     "hadamard": Hadamard,
@@ -1388,4 +1525,14 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "sdg": SDG,
+    "tdg": TDG,
+    "sxdg": SXDG,
+    "ch": CH,
+    "ccz": CCZ,
+    "iswap": ISWAP,
+    "cs": CS,
+    "csdg": CSDG,
+    "csx": CSX,
+    "r": R,
 }
