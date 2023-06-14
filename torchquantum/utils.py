@@ -50,6 +50,7 @@ __all__ = [
     "tensor_form",
     "matrix_form",
     "dm_to_mixture_of_state",
+    "parameter_shift_gradient",
 ]
 
 
@@ -979,3 +980,64 @@ if __name__ == "__main__":
     build_module_description_test()
     switch_little_big_endian_matrix_test()
     switch_little_big_endian_state_test()
+
+
+def parameter_shift_gradient(model, input_data, expectation_operator, shift_rate=np.pi*0.5, shots=1024):
+    ''' 
+    This function calculates the gradient of a parametrized circuit using the parameter shift rule to be fed into 
+    a classical optimizer, its formula is given by 
+    gradient for the ith parameter =( expectation_value(the_ith_parameter + shift_rate)-expectation_value(the_ith_parameter - shift_rate) ) *0.5 
+    Args: 
+        model(tq.QuantumModule): the model that you want to use, which includes the quantum device and the parameters
+        input(torch.tensor): the input data that you are using
+        expectation_operator(str): the observable that you want to calculate the expectation value of, usually the Z operator 
+        (i.e 'ZZZ' for 3 qubits or 3 wires)
+        shift_rate(float , optional): the rate that you would like to shift the parameter with at every iteration, by default pi*0.5
+        shots(int , optional): the number of shots to use per parameter ,(for 10 parameters and 1024 shots = 10240 shots in total)
+        by default = 1024.
+    Returns:
+        torch.tensor : An array of the gradients of all the parameters in the circuit. 
+    '''
+    par_num = []
+    for p in model.parameters():#since the model.parameters() Returns an iterator over module parameters,to get the number of parameter i have to iterate over all of them
+        par_num.append(p)
+    gradient_of_par = torch.zeros(len(par_num))
+                                        
+    def clone_model(model_to_clone):#i have to note:this clone_model function was made with GPT 
+        cloned_model = type(model_to_clone)()  # Create a new instance of the same class
+        cloned_model.load_state_dict(model_to_clone.state_dict())  # Copy the state dictionary
+        return cloned_model
+
+    # Clone the models
+    model_plus_shift  = clone_model(model)
+    model_minus_shift = clone_model(model)
+    state_dict_plus_shift  = model_plus_shift.state_dict()
+    state_dict_minus_shift = model_minus_shift.state_dict()
+    #####################
+
+    for idx, key in enumerate(state_dict_plus_shift):
+        if idx < 2:  # Skip the first two keys because they are not paramters
+            continue
+        state_dict_plus_shift[key]  +=  shift_rate
+        state_dict_minus_shift[key] -=  shift_rate
+        
+        model_plus_shift.load_state_dict(state_dict_plus_shift  )
+        model_minus_shift.load_state_dict(state_dict_minus_shift)
+        
+        model_plus_shift.forward(input_data)
+        model_minus_shift.forward(input_data)
+        
+        state_dict_plus_shift  = model_plus_shift.state_dict()
+        state_dict_minus_shift = model_minus_shift.state_dict()
+                
+        
+        
+        expectation_plus_shift = tq.expval_joint_sampling(model_plus_shift.q_device, observable=expectation_operator, n_shots=shots)
+        expectation_minus_shift = tq.expval_joint_sampling(model_minus_shift.q_device, observable=expectation_operator, n_shots=shots)
+
+
+        state_dict_plus_shift[key]  -=  shift_rate
+        state_dict_minus_shift[key] +=  shift_rate
+        
+        gradient_of_par[idx-2] = (expectation_plus_shift - expectation_minus_shift) * 0.5
+    return gradient_of_par
