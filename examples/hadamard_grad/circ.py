@@ -1,5 +1,17 @@
 import torchquantum as tq
 
+op_types=(
+    tq.Hadamard,
+    tq.SHadamard,
+    tq.PauliX,
+    tq.PauliY,
+    tq.PauliZ,
+    tq.S,
+    tq.T,
+    tq.SX,
+    tq.CNOT,
+)
+
 class Circ1(tq.QuantumModule):
     def __init__(self):
         super().__init__()
@@ -39,11 +51,11 @@ class Circ3(tq.QuantumModule):
         self.gate3 = tq.operator.OpPauliExp(coeffs=[1.0, 0.5], paulis=["YXIX", "ZIXZ"], theta=0.2, trainable=True)
         self.gate4 = tq.operator.OpPauliExp(coeffs=[1.0], paulis=["YYYY"], theta=0.5, trainable=True)
 
-        self.random_layer1 = tq.RandomLayer(n_ops=50, wires=list(range(self.n_wires)))
-        self.random_layer2 = tq.RandomLayer(n_ops=50, wires=list(range(self.n_wires)))
-        self.random_layer3 = tq.RandomLayer(n_ops=50, wires=list(range(self.n_wires)))
-        self.random_layer4 = tq.RandomLayer(n_ops=50, wires=list(range(self.n_wires)))
-        self.random_layer5 = tq.RandomLayer(n_ops=50, wires=list(range(self.n_wires)))
+        self.random_layer1 = tq.RandomLayer(op_types=op_types, n_ops=50, wires=list(range(self.n_wires)))
+        self.random_layer2 = tq.RandomLayer(op_types=op_types, n_ops=50, wires=list(range(self.n_wires)))
+        self.random_layer3 = tq.RandomLayer(op_types=op_types, n_ops=50, wires=list(range(self.n_wires)))
+        self.random_layer4 = tq.RandomLayer(op_types=op_types, n_ops=50, wires=list(range(self.n_wires)))
+        self.random_layer5 = tq.RandomLayer(op_types=op_types, n_ops=50, wires=list(range(self.n_wires)))
 
 
     def forward(self):
