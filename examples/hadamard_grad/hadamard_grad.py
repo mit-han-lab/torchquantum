@@ -16,18 +16,24 @@ def gradient_circuit(left, target, right, n_wires, observable):
     Returns:
     - The computed gradient for the target gate, analytical
     '''
-    dev = tq.QuantumDevice(n_wires=n_wires+1, bsz=1, device="cpu") # use device='cuda' for GPU
     ancilla_qubit = n_wires
 
     gradient = 0
     for coeff, pauli in zip(target['coeffs'], target['paulis']):
 
+        dev = tq.QuantumDevice(n_wires=n_wires+1, bsz=1, device="cpu") # use device='cuda' for GPU
         # ancilla
         dev.h(wires=ancilla_qubit)
         # left
         for op_info in left:
-            op = tq.operator.OpPauliExp(coeffs=op_info['coeffs'], paulis=op_info['paulis'], theta=op_info['params'], trainable=False)
-            op(dev, wires=op_info['wires'])
+            if 'coeffs' in op_info:
+                # Evolution
+                op = tq.operator.OpPauliExp(coeffs=op_info['coeffs'], paulis=op_info['paulis'], theta=op_info['params'], trainable=False)
+                op(dev, wires=op_info['wires'])
+            else:
+                # other gates
+                op = tq.QuantumModule.from_op_history([op_info])
+                op(dev)
         # target
         generator = tq.algorithm.Hamiltonian(coeffs=[1.0], paulis=[pauli]) # ZZZZ
         dev.controlled_unitary(params=generator.matrix, c_wires=[ancilla_qubit], t_wires=target['wires'])
@@ -35,8 +41,14 @@ def gradient_circuit(left, target, right, n_wires, observable):
         dev.h(wires=ancilla_qubit)
         # right
         for op_info in right:
-            op = tq.operator.OpPauliExp(coeffs=op_info['coeffs'], paulis=op_info['paulis'], theta=op_info['params'], trainable=False)
-            op(dev, wires=op_info['wires'])
+            if 'coeffs' in op_info:
+                # Evolution
+                op = tq.operator.OpPauliExp(coeffs=op_info['coeffs'], paulis=op_info['paulis'], theta=op_info['params'], trainable=False)
+                op(dev, wires=op_info['wires'])
+            else:
+                # other gates
+                op = tq.QuantumModule.from_op_history([op_info])
+                op(dev)
 
         # measurement
         original_measurement = observable # 'ZZZZ'
