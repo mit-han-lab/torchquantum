@@ -290,26 +290,15 @@ def gate_wrapper(
     wires = [wires] if isinstance(wires, int) else wires
 
     if q_device.record_op:
-        if not name in ["qubitunitary", "qubitunitaryfast", "qubitunitarystrict"]:
-        #     q_device.op_history.append(
-        #     {
-        #         "name": name,  # type: ignore
-        #         "wires": np.array(wires).squeeze().tolist(),
-        #         "params": mat.detach().cpu().numpy().tolist() ,
-        #         "inverse": inverse,
-        #         "trainable": params.requires_grad if params is not None else False,
-        #     }
-        # )
-        # else:
-            q_device.op_history.append(
-                {
-                    "name": name,  # type: ignore
-                    "wires": np.array(wires).squeeze().tolist(),
-                    "params": params.squeeze().detach().cpu().numpy().tolist() if params is not None else None,
-                    "inverse": inverse,
-                    "trainable": params.requires_grad if params is not None else False,
-                }
-            )
+        q_device.op_history.append(
+            {
+                "name": name,  # type: ignore
+                "wires": np.array(wires).squeeze().tolist(),
+                "params": params.squeeze().detach().cpu().numpy().tolist() if params is not None else None,
+                "inverse": inverse,
+                "trainable": params.requires_grad if params is not None else False,
+            }
+        )
 
     if static:
         # in static mode, the function is not computed immediately, instead,
