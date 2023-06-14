@@ -23,8 +23,7 @@ def test_hadamard_grad():
         n_wires = qdev.n_wires
         observable = 'ZZZZ'
         hadamard_grad_result = hadamard_grad(op_history, n_wires, observable)
-        print(hadamard_grad_result)
-        print('*'*30)
+        hadamard_grad_result = [gradient for gradient in hadamard_grad_result if gradient != None]
 
         # backpropagation
         expval.backward()
