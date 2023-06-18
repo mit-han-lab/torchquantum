@@ -4,7 +4,7 @@ import torchquantum as tq
 import random
 import numpy as np
 
-from torchquantum.measurement import expval_joint_analytical
+from torchquantum.measure import expval_joint_analytical
 
 seed = 0
 random.seed(seed)

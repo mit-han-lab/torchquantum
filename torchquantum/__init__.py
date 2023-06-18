@@ -5,7 +5,7 @@ from .macro import *
 from .devices import *
 from .module import *
 from .operators import *
-from .measurement import *
+from .measure import *
 from .functional import *
 from .graph import *
 from .layers import *

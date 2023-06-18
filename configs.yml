@@ -1,0 +1,98 @@
+model:
+  arch:
+    n_wires: 4
+    encoder_op_list_name: 4x4_ryzxy
+    n_blocks: 3
+    n_layers_per_block: 2
+    q_layer_name: u3cu3_s0
+    down_sample_kernel_size: 6
+    n_front_share_blocks: 1
+    n_front_share_wires: 1
+    n_front_share_ops: 1
+  sampler:
+    strategy:
+      name: plain
+  transpile_before_run: False
+  load_op_list: False
+
+dataset:
+  name: mnist
+  input_name: image
+  target_name: digit
+
+optimizer:
+  name: adam
+  lr: 5e-2
+  weight_decay: 1e-4
+  lambda_lr: 1e-2
+
+run:
+  n_epochs: 40
+  bsz: 256
+  workers_per_gpu: 2
+  device: gpu
+
+debug:
+  pdb: False
+  set_seed: True
+  seed: 42
+
+callbacks:
+  - callback: 'InferenceRunner'
+    split: 'valid'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'acc/valid'
+      - metrics: 'NLLError'
+        name: 'loss/valid'
+  - callback: 'InferenceRunner'
+    split: 'test'
+    subcallbacks:
+      - metrics: 'CategoricalAccuracy'
+        name: 'acc/test'
+      - metrics: 'NLLError'
+        name: 'loss/test'
+  - callback: 'MaxSaver'
+    name: 'acc/valid'
+  - callback: 'Saver'
+    max_to_keep: 10
+
+qiskit:
+  use_qiskit: False
+  use_real_qc: False
+  backend_name: null
+  noise_model_name: null
+  basis_gates_name: null
+  n_shots: 8192
+  initial_layout: null
+  seed_transpiler: 42
+  seed_simulator: 42
+  optimization_level: 0
+  est_success_rate: False
+  max_jobs: 1
+
+
+es:
+  random_search: False
+  population_size: 100
+  parent_size: 20
+  mutation_size: 40
+  mutation_prob: 0.5
+  crossover_size: 40
+  n_iterations: 5
+  est_success_rate: False
+  score_mode: loss_succ
+  gene_mask: null
+  eval:
+    use_noise_model: False
+    use_real_qc: False
+    bsz: qiskit_max
+    n_test_samples: 150
+
+
+prune:
+  target_pruning_amount : 0.5
+  init_pruning_amount : 0.1
+  start_epoch : 0
+  end_epoch : 30
+

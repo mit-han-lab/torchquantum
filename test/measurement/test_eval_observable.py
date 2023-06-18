@@ -5,7 +5,7 @@ from qiskit.opflow import StateFn, X, Y, Z, I
 
 import torchquantum as tq
 
-from torchquantum.measurement import expval_joint_analytical, expval_joint_sampling
+from torchquantum.measure import expval_joint_analytical, expval_joint_sampling
 from torchquantum.plugins import op_history2qiskit
 from torchquantum.utils import switch_little_big_endian_state
 

@@ -15,7 +15,7 @@ import argparse
 import torchquantum as tq
 import torchquantum.functional as tqf
 
-from torchquantum.measurement import expval_joint_analytical
+from torchquantum.measure import expval_joint_analytical
 
 from torchquantum.datasets import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
