@@ -20,6 +20,7 @@ if __name__ == "__main__":
             "tqdm>=4.56.0",
             "setuptools>=52.0.0",
             "torch>=1.8.0",
+            "torchdiffeq>=0.2.3",
             "torchpack>=0.3.0",
             "qiskit==0.38.0",
             "matplotlib>=3.3.2",
