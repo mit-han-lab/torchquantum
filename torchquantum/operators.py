@@ -66,6 +66,8 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "DoubleCNOT",
+    "DCX",
 ]
 
 
@@ -122,6 +124,7 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "DoubleCNOT",
     ]
 
     parameterized_ops = [
@@ -1317,11 +1320,22 @@ class ECR(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class DCX(Operation, metaclass=ABCMeta):
+    """Class for Double-CNOT Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["dcx"]
+    func = staticmethod(tqf.dcx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 H = Hadamard
 SH = SHadamard
 EchoedCrossResonance = ECR
-
+DoubleCNOT = DCX
 
 op_name_dict = {
     "hadamard": Hadamard,
@@ -1388,4 +1402,6 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "dcx": DCX,
+    "doublecnot": DCX,
 }
