@@ -67,6 +67,7 @@ __all__ = [
     "EchoedCrossResonance",
     "ECR",
     "RCCX",
+    "RC3X",
 ]
 
 
@@ -124,6 +125,7 @@ class Operator(tq.QuantumModule):
         "Reset",
         "EchoedCrossResonance",
         "RCCX",
+        "RC3X",
     ]
 
     parameterized_ops = [
@@ -895,6 +897,18 @@ class RCCX(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class RC3X(Operation, metaclass=ABCMeta):
+    """Class for RC3X Gate."""
+
+    num_params = 0
+    num_wires = 4
+    matrix = mat_dict["rc3x"]
+    func = staticmethod(tqf.rc3x)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
 class RXX(Operation, metaclass=ABCMeta):
     """Class for RXX Gate."""
 
@@ -1402,4 +1416,5 @@ op_name_dict = {
     "ecr": ECR,
     "echoedcrossresonance": ECR,
     "rccx": RCCX,
+    "rc3x": RC3X,
 }
