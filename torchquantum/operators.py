@@ -66,6 +66,7 @@ __all__ = [
     "SingleExcitation",
     "EchoedCrossResonance",
     "ECR",
+    "RCCX",
 ]
 
 
@@ -122,6 +123,7 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "RCCX",
     ]
 
     parameterized_ops = [
@@ -881,6 +883,17 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
     def _matrix(cls, params, n_wires):
         return tqf.multirz_matrix(params, n_wires)
 
+class RCCX(Operation, metaclass=ABCMeta):
+    """Class for RCCX Gate."""
+
+    num_params = 0
+    num_wires = 3
+    matrix = mat_dict["rccx"]
+    func = staticmethod(tqf.rccx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 class RXX(Operation, metaclass=ABCMeta):
     """Class for RXX Gate."""
@@ -1388,4 +1401,5 @@ op_name_dict = {
     "singleexcitation": SingleExcitation,
     "ecr": ECR,
     "echoedcrossresonance": ECR,
+    "rccx": RCCX,
 }
