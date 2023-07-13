@@ -56,6 +56,7 @@ __all__ = [
     "CU1",
     "CU2",
     "CU3",
+    "CU",
     "QubitUnitary",
     "QubitUnitaryFast",
     "TrainableUnitary",
@@ -145,6 +146,7 @@ class Operator(tq.QuantumModule):
         "CU1",
         "CU2",
         "CU3",
+        "CU",
         "QubitUnitary",
         "QubitUnitaryFast",
         "TrainableUnitary",
@@ -1102,6 +1104,16 @@ class CU3(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return tqf.cu3_matrix(params)
 
+class CU(Operation, metaclass=ABCMeta):
+    """Class for Controlled U gate (4-parameter two-qubit gate)."""
+
+    num_params = 4
+    num_wires = 2
+    func = staticmethod(tqf.cu)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.cu_matrix(params)
 
 class QubitUnitary(Operation, metaclass=ABCMeta):
     """Class for controlled Qubit Unitary gate."""
@@ -1376,7 +1388,7 @@ op_name_dict = {
     "cphase": CU1,
     "cu2": CU2,
     "cu3": CU3,
-    "cu": CU3,
+    "cu": CU,
     "qubitunitary": QubitUnitary,
     "qubitunitarystrict": QubitUnitaryFast,
     "qubitunitaryfast": QubitUnitaryFast,

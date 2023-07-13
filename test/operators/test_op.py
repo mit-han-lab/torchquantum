@@ -48,6 +48,7 @@ pair_list = [
     {"qiskit": qiskit_gate.CU1Gate, "tq": tq.CU1},
     # {'qiskit': qiskit_gate.?, 'tq': tq.CU2},
     {"qiskit": qiskit_gate.CU3Gate, "tq": tq.CU3},
+    {"qiskit": qiskit_gate.CUGate, "tq": tq.CU},
     {"qiskit": qiskit_gate.ECRGate, "tq": tq.ECR},
 ]
 
