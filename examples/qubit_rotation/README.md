@@ -7,4 +7,3 @@ python3 qubit_rotation.py
 ```
 
 Expected to reach a loss of -1 by epoch 160
-
