@@ -83,6 +83,7 @@ __all__ = [
     "reset",
     "ecr",
     "echoedcrossresonance",
+    "globalphase",
 ]
 
 
@@ -1101,6 +1102,29 @@ def singleexcitation_matrix(params):
     return matrix.squeeze(0)
 
 
+def globalphase_matrix(params):
+    """Compute unitary matrix for Multi qubit XCNOT gate.
+
+    Args:
+        params (torch.Tensor): The phase.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
+    phase = params.type(C_DTYPE)
+    exp = torch.exp(1j * phase)
+    matrix = (
+        torch.tensor(
+            [[exp]], 
+            dtype=C_DTYPE, 
+            device=params.device
+        )
+    )
+
+    return matrix
+
+
 mat_dict = {
     "hadamard": torch.tensor(
         [[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]], dtype=C_DTYPE
@@ -1196,6 +1220,7 @@ mat_dict = {
     "multicnot": multicnot_matrix,
     "multixcnot": multixcnot_matrix,
     "singleexcitation": singleexcitation_matrix,
+    "globalphase": globalphase_matrix,
 }
 
 
@@ -3220,6 +3245,52 @@ def ecr(
         inverse=inverse,
     )
 
+def globalphase(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the echoed cross-resonance gate.
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.ECRGate.html
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
+    name = "globalphase"
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
 
 h = hadamard
 sh = shadamard
@@ -3304,4 +3375,5 @@ func_name_dict = {
     "singleexcitation": singleexcitation,
     "ecr": ecr,
     "echoedcrossresonance": echoedcrossresonance,
+    "globalphase": globalphase,
 }
