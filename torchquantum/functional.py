@@ -273,7 +273,9 @@ def gate_wrapper(
             {
                 "name": name,  # type: ignore
                 "wires": np.array(wires).squeeze().tolist(),
-                "params": params.squeeze().detach().cpu().numpy().tolist() if params is not None else None,
+                "params": params.squeeze().detach().cpu().numpy().tolist()
+                if params is not None
+                else None,
                 "inverse": inverse,
                 "trainable": params.requires_grad if params is not None else False,
             }
@@ -1114,13 +1116,7 @@ def globalphase_matrix(params):
     """
     phase = params.type(C_DTYPE)
     exp = torch.exp(1j * phase)
-    matrix = (
-        torch.tensor(
-            [[exp]], 
-            dtype=C_DTYPE, 
-            device=params.device
-        )
-    )
+    matrix = torch.tensor([[exp]], dtype=C_DTYPE, device=params.device)
 
     return matrix
 
@@ -3245,6 +3241,7 @@ def ecr(
         inverse=inverse,
     )
 
+
 def globalphase(
     q_device,
     wires,
@@ -3291,6 +3288,7 @@ def globalphase(
         parent_graph=parent_graph,
         inverse=inverse,
     )
+
 
 h = hadamard
 sh = shadamard

@@ -176,7 +176,7 @@ class Operator(tq.QuantumModule):
         init_params=None,
         n_wires=None,
         wires=None,
-        inverse=False
+        inverse=False,
     ):
         """__init__ function for Operator.
 
@@ -381,7 +381,7 @@ class Observable(Operator, metaclass=ABCMeta):
         inverse=False,
     ):
         """Init function of the Observable class
-        
+
         Args:
             has_params (bool, optional): Whether the operations has parameters.
                 Defaults to False.
@@ -399,7 +399,7 @@ class Observable(Operator, metaclass=ABCMeta):
             init_params=init_params,
             n_wires=n_wires,
             wires=wires,
-            inverse=inverse
+            inverse=inverse,
         )
         self.return_type = None
 
@@ -422,7 +422,7 @@ class Operation(Operator, metaclass=ABCMeta):
         init_params=None,
         n_wires=None,
         wires=None,
-        inverse=False
+        inverse=False,
     ):
         """_summary_
 
@@ -443,7 +443,7 @@ class Operation(Operator, metaclass=ABCMeta):
             init_params=init_params,
             n_wires=n_wires,
             wires=wires,
-            inverse=inverse
+            inverse=inverse,
         )
         if type(self.num_wires) == int:
             self.n_wires = self.num_wires
@@ -1318,6 +1318,7 @@ class ECR(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+
 
 class GlobalPhase(Operation, metaclass=ABCMeta):
     """Class for Global Phase gate."""
