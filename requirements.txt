@@ -3,6 +3,7 @@ matplotlib>=3.3.2
 nbsphinx
 numpy>=1.19.2
 
+opt_einsum
 pathos>=0.2.7
 
 pyscf>=2.0.1
