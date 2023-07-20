@@ -43,6 +43,7 @@ __all__ = [
     "SSWAP",
     "CSWAP",
     "Toffoli",
+    "C4X",
     "PhaseShift",
     "Rot",
     "MultiRZ",
@@ -118,6 +119,7 @@ class Operator(tq.QuantumModule):
         "SSWAP",
         "CSWAP",
         "Toffoli",
+        "C4X",
         "MultiCNOT",
         "MultiXCNOT",
         "Reset",
@@ -809,6 +811,17 @@ class Toffoli(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+class C4X(Operation, metaclass=ABCMeta):
+    """Class for C4X Gate."""
+
+    num_params = 0
+    num_wires = 5
+    matrix = mat_dict["c4x"]
+    func = staticmethod(tqf.c4x)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 class RX(Operation, metaclass=ABCMeta):
     """Class for RX Gate."""
@@ -1358,6 +1371,7 @@ op_name_dict = {
     "cswap": CSWAP,
     "toffoli": Toffoli,
     "ccx": Toffoli,
+    "c4x": C4X,
     "phaseshift": PhaseShift,
     "rot": Rot,
     "multirz": MultiRZ,
