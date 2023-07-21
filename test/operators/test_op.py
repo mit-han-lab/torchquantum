@@ -9,6 +9,7 @@ from torchquantum.utils import switch_little_big_endian_matrix
 from tqdm import tqdm
 
 import qiskit.circuit.library.standard_gates as qiskit_gate
+from qiskit.quantum_info import Operator
 
 RND_TIMES = 100
 
@@ -21,6 +22,7 @@ pair_list = [
     {"qiskit": qiskit_gate.SGate, "tq": tq.S},
     {"qiskit": qiskit_gate.TGate, "tq": tq.T},
     {"qiskit": qiskit_gate.SXGate, "tq": tq.SX},
+    {"qiskit": qiskit_gate.C3SXGate, "tq": tq.C3SX},
     {"qiskit": qiskit_gate.CXGate, "tq": tq.CNOT},
     {"qiskit": qiskit_gate.CYGate, "tq": tq.CY},
     {"qiskit": qiskit_gate.CZGate, "tq": tq.CZ},
@@ -79,6 +81,8 @@ def test_op():
                 if pair["tq"]().name == "SHadamard":
                     """Square root of Hadamard is RY(pi/4)"""
                     qiskit_matrix = qiskit_gate.RYGate(theta=np.pi / 4).to_matrix()
+                elif pair["tq"]().name == "C3SX":
+                    qiskit_matrix = Operator(pair["qiskit"]())
                 else:
                     qiskit_matrix = pair["qiskit"]().to_matrix()
                 tq_matrix = pair["tq"].matrix.numpy()

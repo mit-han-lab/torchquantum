@@ -29,6 +29,7 @@ __all__ = [
     "S",
     "T",
     "SX",
+    "C3SX",
     "CNOT",
     "CZ",
     "CY",
@@ -111,6 +112,7 @@ class Operator(tq.QuantumModule):
         "S",
         "T",
         "SX",
+        "C3SX",
         "CNOT",
         "CZ",
         "CY",
@@ -712,6 +714,19 @@ class SX(Operation, metaclass=ABCMeta):
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
+
+
+class C3SX(Operation, metaclass=ABCMeta):
+    """Class for C3SX Gate."""
+
+    num_params = 0
+    num_wires = 4
+    matrix = mat_dict["c3sx"]
+    func = staticmethod(tqf.c3sx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 
 class CNOT(Operation, metaclass=ABCMeta):
@@ -1338,6 +1353,7 @@ op_name_dict = {
     "s": S,
     "t": T,
     "sx": SX,
+    "c3sx": C3SX,
     "cx": CNOT,
     "cnot": CNOT,
     "cz": CZ,
