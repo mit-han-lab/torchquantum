@@ -149,20 +149,16 @@ class TwoLocal(NLocal):
         skip_final_rotation_layer: bool = False,
     ):
         # if passed as string, determine entanglement type
-        if type(entanglement_layer) == str:
-            match entanglement_layer:
-                case "linear":
-                    entanglement_layer = tq.layers.Op2QAllLayer
-                case "reverse_linear":
-                    entanglement_layer = tq.layers.Op2QAllLayer
-                    entanglement_layer_params = {"wire_reverse": True}
-                case "circular":
-                    entanglement_layer = tq.layers.Op2QAllLayer
-                    entanglement_layer_params = {"circular": True}
-                case "full":
-                    entanglement_layer = tq.layers.Op2QDenseLayer
-                case _:
-                    raise NotImplementedError
+        if entanglement_layer == "linear":
+            entanglement_layer = tq.layers.Op2QAllLayer
+        elif entanglement_layer == "reverse_linear":
+            entanglement_layer = tq.layers.Op2QAllLayer
+            entanglement_layer_params = {"wire_reverse": True}
+        elif entanglement_layer == "circular":
+            entanglement_layer = tq.layers.Op2QAllLayer
+            entanglement_layer_params = {"circular": True}
+        elif entanglement_layer == "full":
+            entanglement_layer = tq.layers.Op2QDenseLayer
 
         # initialize
         super().__init__(
