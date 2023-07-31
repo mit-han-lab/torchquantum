@@ -162,7 +162,7 @@ class TwoLocal(NLocal):
                 case "full":
                     entanglement_layer = tq.layers.Op2QDenseLayer
                 case _:
-                    raise NotImplemented
+                    raise NotImplementedError
 
         # initialize
         super().__init__(
@@ -174,6 +174,35 @@ class TwoLocal(NLocal):
             entanglement_layer=entanglement_layer,
             entanglement_layer_params=entanglement_layer_params,
             initial_circuit=initial_circuit,
+            reps=reps,
+            skip_final_rotation_layer=skip_final_rotation_layer,
+        )
+
+
+class ExcitationPreserving(TwoLocal):
+    """Layer Template for a ExcitationPreserving circuit
+
+    Args:
+        arch (dict): circuit architecture in a dictionary format
+        entanglement_layer (str): type of entanglement layer in a string ("linear", "reverse_linear", "circular", "full") or tq.QuantumModule format
+        reps (int): number of reptitions of the rotation and entanglement layers in a integer format
+        skip_final_rotation_layer (bool): whether or not to add the final rotation layer as a boolean
+    """
+
+    def __init__(
+        self,
+        arch: dict = None,
+        entanglement_layer: str = "full",
+        reps: int = 3,
+        skip_final_rotation_layer: bool = False,
+    ):
+        # construct circuit with rotation layers of RZ and entanglement with RXX and RYY
+        super().__init__(
+            arch=arch,
+            rotation_ops=[tq.RZ],
+            entanglement_ops=[tq.RXX, tq.RYY],
+            entanglement_layer=entanglement_layer,
+            entanglement_layer_params={"has_params": True, "trainable": True},
             reps=reps,
             skip_final_rotation_layer=skip_final_rotation_layer,
         )
