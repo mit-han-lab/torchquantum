@@ -35,6 +35,7 @@ class NLocal(layers.LayerTemplate0):
         arch (dict): circuit architecture in a dictionary format
         rotation_layer (torchquantum.QuantumModule): type of rotation layer in a torchquantum.QuantumModule format
         entanglement_layer (torchquantum.QuantumModule): type of entanglement layer in a torchquantum.QuantumModule format
+        reps (int): number of reptitions of the rotation and entanglement layers in a integer format
         rotation_layer_params (dict): additional parameters for the rotation layer in a dictionary format
         entanglement_layer_params (dict): additional parameters for the entanglement layer in a dictionary format
         initial_circuit (torchquantum.QuantumModule): initial gates or layer in a QuantumModule format
@@ -48,6 +49,7 @@ class NLocal(layers.LayerTemplate0):
         arch: dict = None,
         rotation_layer: tq.QuantumModule = tq.layers.Op1QAllLayer,
         entanglement_layer: tq.QuantumModule = tq.layers.Op2QAllLayer,
+        reps: int = 1,
         rotation_layer_params: dict = {},
         entanglement_layer_params: dict = {},
         initial_circuit: tq.QuantumModule = None,
@@ -66,6 +68,7 @@ class NLocal(layers.LayerTemplate0):
         # extra parameters
         self.initial_circuit = initial_circuit
         self.skip_final_rotation_layer = skip_final_rotation_layer
+        self.reps = reps
 
         # initialize the LayerTemplate0
         super().__init__(arch)
@@ -89,7 +92,7 @@ class NLocal(layers.LayerTemplate0):
                 self.entanglement_layer(
                     op=entanglement,
                     n_wires=self.n_wires,
-                    **self.entanglement_layer_params
+                    **self.entanglement_layer_params,
                 )
             )
         return entanglement_layers
@@ -103,7 +106,7 @@ class NLocal(layers.LayerTemplate0):
             layers_all.append(self.initial_circuit)
 
         # repeat for each rep
-        for _ in range(self.n_blocks):
+        for _ in range(self.reps):
             # add rotation blocks to the qubits
             layers_all.extend(self.build_rotation_block())
 
@@ -116,3 +119,61 @@ class NLocal(layers.LayerTemplate0):
 
         # return QuantumModuleList
         return layers_all
+
+
+class TwoLocal(NLocal):
+    """Layer Template for a TwoLocal Class
+
+    Args:
+        rotation_ops (list): gates for the rotation layer as a list of torchquantum operations
+        entanglement_ops (list): gates for the entanglement layer as a list of torchquantum operations
+        arch (dict): circuit architecture in a dictionary format
+        rotation_layer (torchquantum.QuantumModule): type of rotation layer in a torchquantum.QuantumModule format
+        entanglement_layer (str): type of entanglement layer in a string ("linear", "reverse_linear", "circular", "full") or tq.QuantumModule format
+        reps (int): number of reptitions of the rotation and entanglement layers in a integer format
+        entanglement_layer_params (dict): additional parameters for the entanglement layer in a dictionary forma
+        initial_circuit (torchquantum.QuantumModule): initial gates or layer in a QuantumModule formatt
+        skip_final_rotation_layer (bool): whether or not to add the final rotation layer as a boolean
+    """
+
+    def __init__(
+        self,
+        rotation_ops: list,
+        entanglement_ops: list,
+        arch: dict = None,
+        rotation_layer: tq.QuantumModule = tq.layers.Op1QAllLayer,
+        entanglement_layer: str = "linear",
+        reps: int = 1,
+        entanglement_layer_params: dict = {},
+        initial_circuit: tq.QuantumModule = None,
+        skip_final_rotation_layer: bool = False,
+    ):
+        # if passed as string, determine entanglement type
+        if type(entanglement_layer) == str:
+            match entanglement_layer:
+                case "linear":
+                    entanglement_layer = tq.layers.Op2QAllLayer
+                case "reverse_linear":
+                    entanglement_layer = tq.layers.Op2QAllLayer
+                    entanglement_layer_params = {"wire_reverse": True}
+                case "circular":
+                    entanglement_layer = tq.layers.Op2QAllLayer
+                    entanglement_layer_params = {"circular": True}
+                case "full":
+                    entanglement_layer = tq.layers.Op2QDenseLayer
+                case _:
+                    raise NotImplemented
+
+        # initialize
+        super().__init__(
+            arch=arch,
+            rotation_ops=rotation_ops,
+            rotation_layer=rotation_layer,
+            rotation_layer_params={"has_params": True, "trainable": True},
+            entanglement_ops=entanglement_ops,
+            entanglement_layer=entanglement_layer,
+            entanglement_layer_params=entanglement_layer_params,
+            initial_circuit=initial_circuit,
+            reps=reps,
+            skip_final_rotation_layer=skip_final_rotation_layer,
+        )
