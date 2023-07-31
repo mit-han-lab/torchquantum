@@ -37,6 +37,7 @@ class NLocal(layers.LayerTemplate0):
         entanglement_layer (torchquantum.QuantumModule): type of entanglement layer in a torchquantum.QuantumModule format
         rotation_layer_params (dict): additional parameters for the rotation layer in a dictionary format
         entanglement_layer_params (dict): additional parameters for the entanglement layer in a dictionary format
+        initial_circuit (torchquantum.QuantumModule): initial gates or layer in a QuantumModule format
         skip_final_rotation_layer (bool): whether or not to add the final rotation layer as a boolean
     """
 
@@ -49,6 +50,7 @@ class NLocal(layers.LayerTemplate0):
         entanglement_layer: tq.QuantumModule = tq.layers.Op2QAllLayer,
         rotation_layer_params: dict = {},
         entanglement_layer_params: dict = {},
+        initial_circuit: tq.QuantumModule = None,
         skip_final_rotation_layer: bool = False,
     ):
         # rotation block options
@@ -62,40 +64,55 @@ class NLocal(layers.LayerTemplate0):
         self.entanglement_layer_params = entanglement_layer_params
 
         # extra parameters
+        self.initial_circuit = initial_circuit
         self.skip_final_rotation_layer = skip_final_rotation_layer
-        layers.LayerTemplate0.__init__(self, arch)
+
+        # initialize the LayerTemplate0
+        super().__init__(arch)
+
+    def build_rotation_block(self):
+        """Build rotation block"""
+        rotation_layers = []
+        for rot in self.rotation_ops:
+            rotation_layers.append(
+                self.rotation_layer(
+                    op=rot, n_wires=self.n_wires, **self.rotation_layer_params
+                )
+            )
+        return rotation_layers
+
+    def build_entanglement_block(self):
+        """Build entanglement block"""
+        entanglement_layers = []
+        for entanglement in self.entanglement_ops:
+            entanglement_layers.append(
+                self.entanglement_layer(
+                    op=entanglement,
+                    n_wires=self.n_wires,
+                    **self.entanglement_layer_params
+                )
+            )
+        return entanglement_layers
 
     def build_layers(self):
+        """Build nlocal circuit"""
         layers_all = tq.QuantumModuleList()
+
+        # add the initial circuit
+        if self.initial_circuit is not None:
+            layers_all.append(self.initial_circuit)
 
         # repeat for each rep
         for _ in range(self.n_blocks):
             # add rotation blocks to the qubits
-            for rot in self.rotation_ops:
-                layers_all.append(
-                    self.rotation_layer(
-                        op=rot, n_wires=self.n_wires, *self.rotation_layer_params
-                    )
-                )
+            layers_all.extend(self.build_rotation_block())
 
-            # add entanglement blocks to everything
-            for entanglement in self.entanglement_ops:
-                layers_all.append(
-                    self.entanglement_layer(
-                        op=entanglement,
-                        n_wires=self.n_wires,
-                        *self.entanglement_layer_params
-                    )
-                )
+            # add entanglement blocks to the qubits
+            layers_all.extend(self.build_entanglement_block())
 
         # add final rotation layer
         if not self.skip_final_rotation_layer:
-            for rot in self.rotation_ops:
-                layers_all.append(
-                    self.rotation_layer(
-                        op=rot, n_wires=self.n_wires, *self.rotation_layer_params
-                    )
-                )
+            layers_all.extend(self.build_rotation_block())
 
         # return QuantumModuleList
         return layers_all
