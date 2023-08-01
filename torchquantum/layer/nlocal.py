@@ -202,3 +202,31 @@ class ExcitationPreserving(TwoLocal):
             reps=reps,
             skip_final_rotation_layer=skip_final_rotation_layer,
         )
+
+
+class EfficientSU2(TwoLocal):
+    """Layer Template for a EfficientSU2 circuit
+
+    Args:
+        arch (dict): circuit architecture in a dictionary format
+        entanglement_layer (str): type of entanglement layer in a string ("linear", "reverse_linear", "circular", "full") or tq.QuantumModule format
+        reps (int): number of reptitions of the rotation and entanglement layers in a integer format
+        skip_final_rotation_layer (bool): whether or not to add the final rotation layer as a boolean
+    """
+
+    def __init__(
+        self,
+        arch: dict = None,
+        entanglement_layer: str = "reverse_linear",
+        reps: int = 3,
+        skip_final_rotation_layer: bool = False,
+    ):
+        # construct circuit with rotation layers of RY and RZ and entanglement with CX
+        super().__init__(
+            arch=arch,
+            rotation_ops=[tq.RY, tq.RZ],
+            entanglement_ops=[tq.CNOT],
+            entanglement_layer=entanglement_layer,
+            reps=reps,
+            skip_final_rotation_layer=skip_final_rotation_layer,
+        )
