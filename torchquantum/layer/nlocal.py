@@ -241,13 +241,20 @@ class RealAmplitudes(TwoLocal):
         reps (int): number of reptitions of the rotation and entanglement layers in a integer format
         skip_final_rotation_layer (bool): whether or not to add the final rotation layer as a boolean
     """
-    def __init__(self, arch: dict = None, entanglement_layer: str="reverse_linear", reps: int=3, skip_final_rotation_layer: bool=False):
+
+    def __init__(
+        self,
+        arch: dict = None,
+        entanglement_layer: str = "reverse_linear",
+        reps: int = 3,
+        skip_final_rotation_layer: bool = False,
+    ):
         # construct circuit with rotation layers of RY and entanglement with CX
         super().__init__(
             arch=arch,
-            rotation_ops = [tq.RY],
-            entanglement_ops = [tq.CNOT],
-            entanglement_layer = entanglement_layer,
+            rotation_ops=[tq.RY],
+            entanglement_ops=[tq.CNOT],
+            entanglement_layer=entanglement_layer,
             reps=reps,
-            skip_final_rotation_layer = skip_final_rotation_layer,
+            skip_final_rotation_layer=skip_final_rotation_layer,
         )
