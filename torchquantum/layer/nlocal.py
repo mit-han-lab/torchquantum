@@ -73,6 +73,10 @@ class NLocal(layers.LayerTemplate0):
         # initialize the LayerTemplate0
         super().__init__(arch)
 
+    def build_initial_layer(self):
+        """Build the initial layer"""
+        return self.initial_circuit
+
     def build_rotation_block(self):
         """Build rotation block"""
         rotation_layers = []
@@ -102,8 +106,9 @@ class NLocal(layers.LayerTemplate0):
         layers_all = tq.QuantumModuleList()
 
         # add the initial circuit
-        if self.initial_circuit is not None:
-            layers_all.append(self.initial_circuit)
+        initial_circuit = self.build_initial_layer()
+        if initial_circuit is not None:
+            layers_all.append(initial_circuit)
 
         # repeat for each rep
         for _ in range(self.reps):
