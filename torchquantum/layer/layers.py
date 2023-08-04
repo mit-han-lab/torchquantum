@@ -921,7 +921,7 @@ class QFTLayer(tq.QuantumModule):
         self,
         n_wires: int = None,
         wires: Iterable = None,
-        add_swaps: bool = True,
+        do_swaps: bool = True,
         inverse: bool = False,
     ):
         """
@@ -930,7 +930,7 @@ class QFTLayer(tq.QuantumModule):
         Args:
             n_wires (int): Number of wires for the QFT as an integer
             wires (Iterable): Wires to perform the QFT as an Iterable
-            add_swaps (bool): Whether or not to add the final swaps in a boolean format
+            do_swaps (bool): Whether or not to add the final swaps in a boolean format
             inverse (bool): Whether to create an inverse QFT layer in a boolean format
         """
         super().__init__()
@@ -945,7 +945,7 @@ class QFTLayer(tq.QuantumModule):
 
         self.n_wires = n_wires
         self.wires = wires
-        self.add_swaps = add_swaps
+        self.do_swaps = do_swaps
 
         if inverse:
             self.gates_all = self.build_inverse_circuit()
@@ -955,7 +955,7 @@ class QFTLayer(tq.QuantumModule):
     def build_circuit(self):
         """Construct a QFT circuit."""
 
-        operation_list = nn.ModuleList()
+        operation_list = []
 
         # add the H and CU1 gates
         for top_wire in range(self.n_wires):
@@ -971,7 +971,7 @@ class QFTLayer(tq.QuantumModule):
                 )
 
         # add swaps if specified
-        if self.add_swaps:
+        if self.do_swaps:
             for wire in range(self.n_wires // 2):
                 operation_list.append(
                     {
@@ -991,7 +991,7 @@ class QFTLayer(tq.QuantumModule):
         operation_list = []
 
         # add swaps if specified
-        if self.add_swaps:
+        if self.do_swaps:
             for wire in range(self.n_wires // 2):
                 operation_list.append(
                     {
