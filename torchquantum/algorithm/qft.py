@@ -3,6 +3,7 @@ from typing import Iterable
 
 __all__ = ["QFT"]
 
+
 class QFT(object):
     def __init__(
         self, n_wires: int = None, wires: Iterable = None, do_swaps=True
@@ -23,7 +24,9 @@ class QFT(object):
 
     def construct_qft_circuit(self) -> tq.QuantumModule:
         """Construct the QFT circuit."""
-        return tq.layer.QFTLayer(n_wires=self.n_wires, wires=self.wires, do_swaps=self.do_swaps)
+        return tq.layer.QFTLayer(
+            n_wires=self.n_wires, wires=self.wires, do_swaps=self.do_swaps
+        )
 
     def construct_inverse_qft_circuit(self) -> tq.QuantumModule:
         """Construct the inverse of a QFT circuit."""
