@@ -22,11 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
+import torch
 import torchquantum as tq
-import torchquantum.layers as layers
+from torchquantum.layer.layers import (
+    LayerTemplate0,
+    Op1QAllLayer,
+    Op2QAllLayer,
+    RandomOp1All,
+)
+
+__all__ = [
+    "NLocal",
+    "TwoLocal",
+    "ExcitationPreserving",
+    "EfficientSU2",
+    "RealAmplitudes",
+    "PauliTwoDesign",
+]
 
 
-class NLocal(layers.LayerTemplate0):
+class NLocal(LayerTemplate0):
     """Layer Template for a NLocal Class
 
     Args:
@@ -44,11 +60,11 @@ class NLocal(layers.LayerTemplate0):
 
     def __init__(
         self,
-        rotation_ops: list,
-        entanglement_ops: list,
+        rotation_ops: list = None,
+        entanglement_ops: list = None,
         arch: dict = None,
-        rotation_layer: tq.QuantumModule = tq.layers.Op1QAllLayer,
-        entanglement_layer: tq.QuantumModule = tq.layers.Op2QAllLayer,
+        rotation_layer: tq.QuantumModule = Op1QAllLayer,
+        entanglement_layer: tq.QuantumModule = Op2QAllLayer,
         reps: int = 1,
         rotation_layer_params: dict = {},
         entanglement_layer_params: dict = {},
@@ -143,10 +159,10 @@ class TwoLocal(NLocal):
 
     def __init__(
         self,
-        rotation_ops: list,
-        entanglement_ops: list,
+        rotation_ops: list = None,
+        entanglement_ops: list = None,
         arch: dict = None,
-        rotation_layer: tq.QuantumModule = tq.layers.Op1QAllLayer,
+        rotation_layer: tq.QuantumModule = Op1QAllLayer,
         entanglement_layer: str = "linear",
         reps: int = 1,
         entanglement_layer_params: dict = {},
@@ -155,15 +171,15 @@ class TwoLocal(NLocal):
     ):
         # if passed as string, determine entanglement type
         if entanglement_layer == "linear":
-            entanglement_layer = tq.layers.Op2QAllLayer
+            entanglement_layer = Op2QAllLayer
         elif entanglement_layer == "reverse_linear":
-            entanglement_layer = tq.layers.Op2QAllLayer
+            entanglement_layer = Op2QAllLayer
             entanglement_layer_params = {"wire_reverse": True}
         elif entanglement_layer == "circular":
-            entanglement_layer = tq.layers.Op2QAllLayer
+            entanglement_layer = Op2QAllLayer
             entanglement_layer_params = {"circular": True}
         elif entanglement_layer == "full":
-            entanglement_layer = tq.layers.Op2QDenseLayer
+            entanglement_layer = Op2QDenseLayer
 
         # initialize
         super().__init__(
@@ -263,3 +279,46 @@ class RealAmplitudes(TwoLocal):
             reps=reps,
             skip_final_rotation_layer=skip_final_rotation_layer,
         )
+
+
+class PauliTwoDesign(TwoLocal):
+    """Layer Template for a PauliTwoDesign circuit
+
+    Args:
+        arch (dict): circuit architecture in a dictionary format
+        entanglement_layer (str): type of entanglement layer in a string ("linear", "reverse_linear", "circular", "full") or tq.QuantumModule format
+        reps (int): number of reptitions of the rotation and entanglement layers in a integer format
+        skip_final_rotation_layer (bool): whether or not to add the final rotation layer as a boolean
+    """
+
+    def __init__(
+        self,
+        arch: dict = None,
+        entanglement_layer: str = "reverse_linear",
+        reps: int = 3,
+        skip_final_rotation_layer: bool = False,
+        seed: int = 0,
+    ):
+        # set seed
+        self.seed = seed
+        # construct circuit with entanglement with CX
+        super().__init__(
+            arch=arch,
+            entanglement_ops=[tq.CNOT],
+            entanglement_layer=entanglement_layer,
+            reps=reps,
+            skip_final_rotation_layer=skip_final_rotation_layer,
+        )
+
+    def build_initial_layer(self):
+        # add an initial layer of ry with rotation pi/4
+        return tq.QuantumModule.from_op_history(
+            [
+                {"name": "ry", "wires": wire, "params": torch.pi / 4}
+                for wire in range(self.arch["n_wires"])
+            ]
+        )
+
+    def build_rotation_block(self):
+        # make a random layer of rotations
+        return [RandomOp1All(n_wires=self.n_wires, seed=self.seed)]
