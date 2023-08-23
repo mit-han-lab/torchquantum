@@ -1,27 +1,3 @@
-"""
-MIT License
-
-Copyright (c) 2020-present TorchQuantum Authors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from torchpack.datasets.dataset import Dataset
 
 
@@ -29,16 +5,59 @@ __all__ = ["VQE"]
 
 
 class VQEDataset:
+    """Dataset for VQE.
+    
+    Attributes:
+        split (str): Split of the dataset ("train", "valid", "test").
+        steps_per_epoch (int): Number of steps per epoch.
+    
+    Methods:
+        __getitem__: Get an item from the dataset
+        __len__: Get the length of the dataset
+        
+    Examples:
+        >>> dataset = VQEDataset(split='train', steps_per_epoch=100)
+        >>> instance = dataset[0]
+    """
+    
     def __init__(self, split, steps_per_epoch):
+        """Initialize the VQEDataset.
+
+        Args:
+            split (str): Split of the dataset ("train", "valid", "test")
+            steps_per_epoch (int): Number of steps per epoch
+        """
+        
         self.split = split
         self.steps_per_epoch = steps_per_epoch
 
     def __getitem__(self, index: int):
+        """Get an instance from the dataset.
+        
+        Args:
+            index (int): Index of the item
+
+        Returns:
+            dict: instance containing the input and target
+        
+        Examples:
+            >>> instance = dataset[0]
+        """
+        
         instance = {"input": -1, "target": -1}
 
         return instance
 
     def __len__(self) -> int:
+        """Get the length of the dataset.
+
+        Returns:
+            int: length of the dataset
+            
+        Examples:
+            >>> length = len(dataset)
+        """
+        
         if self.split == "train":
             return self.steps_per_epoch
         else:
@@ -46,7 +65,25 @@ class VQEDataset:
 
 
 class VQE(Dataset):
+    """Dataset for the VQE.
+
+    Attributes:
+        steps_per_epoch (int): Number of steps per epoch
+
+    Methods:
+        __init__: Initialize the VQE dataset
+    
+    Examples:
+        >>> dataset = VQE(steps_per_epoch=100)
+    """
+    
     def __init__(self, steps_per_epoch):
+        """Initialize the VQE dataset.
+
+        Args:
+            steps_per_epoch (int): Number of steps per epoch
+        """
+        
         super().__init__(
             {
                 split: VQEDataset(split=split, steps_per_epoch=steps_per_epoch)
