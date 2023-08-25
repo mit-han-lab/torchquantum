@@ -89,8 +89,8 @@ pair_list = [
     {"qiskit": qiskit_gate.DCXGate, "tq": tq.DCX},
     {"qiskit": qiskit_gate.XXMinusYYGate, "tq": tq.XXMINYY},
     {"qiskit": qiskit_gate.XXPlusYYGate, "tq": tq.XXPLUSYY},
-    # {"qiskit": qiskit_gate.C3XGate, "tq": tq.C3X},
-    # {"qiskit": qiskit_gate.RGate, "tq": tq.R},
+    {"qiskit": qiskit_gate.C3XGate, "tq": tq.C3X},
+    {"qiskit": qiskit_gate.RGate, "tq": tq.R},
 ]
 
 import os

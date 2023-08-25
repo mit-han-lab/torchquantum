@@ -1589,17 +1589,18 @@ class C3X(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 4
+    matrix = mat_dict["c3x"]
     func = staticmethod(tqf.c3x)
 
     @classmethod
     def _matrix(cls, params):
-        return tqf.qubitunitary_matrix(mat_dict["toffoli"])
+        return cls.matrix
 
 
 class R(DiagonalOperation, metaclass=ABCMeta):
     """Class for R Gate."""
 
-    num_params = 1
+    num_params = 2
     num_wires = 1
     func = staticmethod(tqf.r)
 

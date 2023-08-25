@@ -1330,8 +1330,8 @@ def r_matrix(params: torch.Tensor) -> torch.Tensor:
 
     """
 
-    theta = params.type(C_DTYPE)
-    phi = params.type(C_DTYPE)
+    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     exp = torch.exp(-1j * phi)
     """
     Seems to be a pytorch bug. Have to explicitly cast the theta to a
@@ -1354,6 +1354,18 @@ def r_matrix(params: torch.Tensor) -> torch.Tensor:
         ],
         dim=-2,
     ).squeeze(0)
+
+
+def c3x_matrix():
+    """Compute unitary matrix for C3X."""
+
+    mat = torch.eye(16, dtype=C_DTYPE)
+    mat[15][15] = 0
+    mat[14][14] = 0
+    mat[15][14] = 1
+    mat[14][15] = 1
+
+    return mat
 
 
 mat_dict = {
@@ -1421,7 +1433,8 @@ mat_dict = {
         ],
         dtype=C_DTYPE,
     ),
-    "ecr": INV_SQRT2 * torch.tensor(
+    "ecr": INV_SQRT2
+    * torch.tensor(
         [[0, 0, 1, 1j], [0, 0, 1j, 1], [1, -1j, 0, 0], [-1j, 1, 0, 0]], dtype=C_DTYPE
     ),
     "sdg": torch.tensor([[1, 0], [0, -1j]], dtype=C_DTYPE),
@@ -1503,6 +1516,7 @@ mat_dict = {
     "xxminyy": xxminyy_matrix,
     "xxplusyy": xxplusyy_matrix,
     "r": r_matrix,
+    "c3x": c3x_matrix(),
 }
 
 
@@ -3508,7 +3522,7 @@ def c3x(
         None.
 
     """
-    name = "qubitunitary"
+    name = "c3x"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
@@ -3516,7 +3530,7 @@ def c3x(
         method=comp_method,
         q_device=q_device,
         wires=wires,
-        params=mat_dict["toffoli"],
+        params=params,
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
