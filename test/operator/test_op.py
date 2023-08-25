@@ -125,7 +125,7 @@ def test_op():
                     qiskit_matrix = pair["qiskit"]().to_matrix()
                 tq_matrix = pair["tq"].matrix.numpy()
                 tq_matrix = switch_little_big_endian_matrix(tq_matrix)
-                # assert np.allclose(qiskit_matrix, tq_matrix)
+                assert np.allclose(qiskit_matrix, tq_matrix)
             else:
                 for k in tqdm(range(RND_TIMES)):
                     rnd_params = np.random.rand(pair["tq"].num_params).tolist()

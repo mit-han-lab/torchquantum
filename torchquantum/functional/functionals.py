@@ -1421,7 +1421,7 @@ mat_dict = {
         ],
         dtype=C_DTYPE,
     ),
-    "ecr": torch.tensor(
+    "ecr": INV_SQRT2 * torch.tensor(
         [[0, 0, 1, 1j], [0, 0, 1j, 1], [1, -1j, 0, 0], [-1j, 1, 0, 0]], dtype=C_DTYPE
     ),
     "sdg": torch.tensor([[1, 0], [0, -1j]], dtype=C_DTYPE),
@@ -1432,14 +1432,14 @@ mat_dict = {
     "chadamard": torch.tensor(
         [
             [1, 0, 0, 0],
-            [0, INV_SQRT2, 0, INV_SQRT2],
-            [0, 0, 1, 0],
-            [0, INV_SQRT2, 0, -INV_SQRT2],
+            [0, 1, 0, 0],
+            [0, 0, INV_SQRT2, INV_SQRT2],
+            [0, 0, INV_SQRT2, -INV_SQRT2],
         ],
         dtype=C_DTYPE,
     ),
     "iswap": torch.tensor(
-        [[1, 0, 0, 0], [0, 1j, 0, 0], [0, 0, 1j, 0], [0, 0, 0, 1]], dtype=C_DTYPE
+        [[1, 0, 0, 0], [0, 0, 1j, 0], [0, 1j, 0, 0], [0, 0, 0, 1]], dtype=C_DTYPE
     ),
     "ccz": torch.tensor(
         [
@@ -1463,13 +1463,12 @@ mat_dict = {
     "csx": torch.tensor(
         [
             [1, 0, 0, 0],
-            [0, 0.5 + 0.5j, 0, 0.5 - 0.5j],
-            [0, 0, 1, 0],
-            [0, 0.5 - 0.5j, 0, 0.5 + 0.5j],
+            [0, 1, 0, 0],
+            [0, 0, 0.5 + 0.5j, 0.5 - 0.5j],
+            [0, 0, 0.5 - 0.5j, 0.5 + 0.5j],
         ],
         dtype=C_DTYPE,
-    )
-    / np.sqrt(2),
+    ),
     "rx": rx_matrix,
     "ry": ry_matrix,
     "rz": rz_matrix,
@@ -1499,7 +1498,7 @@ mat_dict = {
     "singleexcitation": singleexcitation_matrix,
     "qft": qft_matrix,
     "dcx": torch.tensor(
-        [[1, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0, 0], [0, 0, 1, 0]], dtype=C_DTYPE
+        [[1, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [0, 1, 0, 0]], dtype=C_DTYPE
     ),
     "xxminyy": xxminyy_matrix,
     "xxplusyy": xxplusyy_matrix,
