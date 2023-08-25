@@ -75,7 +75,7 @@ pair_list = [
     {"qiskit": qiskit_gate.CU1Gate, "tq": tq.CU1},
     # {'qiskit': qiskit_gate.?, 'tq': tq.CU2},
     {"qiskit": qiskit_gate.CU3Gate, "tq": tq.CU3},
-    # {"qiskit": qiskit_gate.ECRGate, "tq": tq.ECR},
+    {"qiskit": qiskit_gate.ECRGate, "tq": tq.ECR},
     # {"qiskit": qiskit_library.QFT, "tq": tq.QFT},
     {"qiskit": qiskit_gate.SdgGate, "tq": tq.SDG},
     {"qiskit": qiskit_gate.TdgGate, "tq": tq.TDG},
@@ -88,7 +88,7 @@ pair_list = [
     {"qiskit": qiskit_gate.CSXGate, "tq": tq.CSX},
     {"qiskit": qiskit_gate.DCXGate, "tq": tq.DCX},
     {"qiskit": qiskit_gate.XXMinusYYGate, "tq": tq.XXMINYY},
-    # {"qiskit": qiskit_gate.XXPlusYYGate, "tq": tq.XXPLUSYY},
+    {"qiskit": qiskit_gate.XXPlusYYGate, "tq": tq.XXPLUSYY},
     # {"qiskit": qiskit_gate.C3XGate, "tq": tq.C3X},
     # {"qiskit": qiskit_gate.RGate, "tq": tq.R},
 ]

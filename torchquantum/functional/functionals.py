@@ -623,7 +623,7 @@ def xxplusyy_matrix(params):
                 [
                     torch.tensor([[0]]),
                     co,
-                    (-1j * si * torch.exp(-1j * beta)),
+                    (-1j * si * torch.exp(1j * beta)),
                     torch.tensor([[0]]),
                 ],
                 dim=-1,
@@ -631,7 +631,7 @@ def xxplusyy_matrix(params):
             torch.cat(
                 [
                     torch.tensor([[0]]),
-                    (-1j * si * torch.exp(1j * beta)),
+                    (-1j * si * torch.exp(-1j * beta)),
                     co,
                     torch.tensor([[0]]),
                 ],
