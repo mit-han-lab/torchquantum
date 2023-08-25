@@ -24,4 +24,3 @@ SOFTWARE.
 
 from .layers import *
 from .nlocal import *
-from .n_local import *

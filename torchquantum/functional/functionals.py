@@ -77,6 +77,7 @@ __all__ = [
     "u1",
     "u2",
     "u3",
+    "cu",
     "cu1",
     "cu2",
     "cu3",
@@ -310,7 +311,9 @@ def gate_wrapper(
             {
                 "name": name,  # type: ignore
                 "wires": np.array(wires).squeeze().tolist(),
-                "params": params.squeeze().detach().cpu().numpy().tolist() if params is not None else None,
+                "params": params.squeeze().detach().cpu().numpy().tolist()
+                if params is not None
+                else None,
                 "inverse": inverse,
                 "trainable": params.requires_grad if params is not None else False,
             }
@@ -467,13 +470,13 @@ def rz_matrix(params: torch.Tensor) -> torch.Tensor:
 def phaseshift_matrix(params):
     """Compute unitary matrix for phaseshift gate.
 
-        Args:
-            params (torch.Tensor): The rotation angle.
+    Args:
+        params (torch.Tensor): The rotation angle.
 
-        Returns:
-            torch.Tensor: The computed unitary matrix.
+    Returns:
+        torch.Tensor: The computed unitary matrix.
 
-        """
+    """
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -529,6 +532,7 @@ def rot_matrix(params):
         dim=-2,
     ).squeeze(0)
 
+
 def xxminyy_matrix(params):
     """Compute unitary matrix for XXminusYY gate.
 
@@ -552,7 +556,7 @@ def xxminyy_matrix(params):
                     co,
                     torch.tensor([[0]]),
                     torch.tensor([[0]]),
-                    (-1j*si*torch.exp(-1j*beta)),
+                    (-1j * si * torch.exp(-1j * beta)),
                 ],
                 dim=-1,
             ),
@@ -561,11 +565,11 @@ def xxminyy_matrix(params):
                     torch.tensor([[0]]),
                     torch.tensor([[1]]),
                     torch.tensor([[0]]),
-                   torch.tensor([[0]]),
+                    torch.tensor([[0]]),
                 ],
                 dim=-1,
             ),
-             torch.cat(
+            torch.cat(
                 [
                     torch.tensor([[0]]),
                     torch.tensor([[0]]),
@@ -574,9 +578,9 @@ def xxminyy_matrix(params):
                 ],
                 dim=-1,
             ),
-             torch.cat(
+            torch.cat(
                 [
-                    (-1j*si*torch.exp(1j*beta)),
+                    (-1j * si * torch.exp(1j * beta)),
                     torch.tensor([[0]]),
                     torch.tensor([[0]]),
                     co,
@@ -586,6 +590,7 @@ def xxminyy_matrix(params):
         ],
         dim=-2,
     ).squeeze(0)
+
 
 def xxplusyy_matrix(params):
     """Compute unitary matrix for XXplusYY gate.
@@ -618,21 +623,21 @@ def xxplusyy_matrix(params):
                 [
                     torch.tensor([[0]]),
                     co,
-                    (-1j*si*torch.exp(-1j*beta)),
-                   torch.tensor([[0]]),
+                    (-1j * si * torch.exp(-1j * beta)),
+                    torch.tensor([[0]]),
                 ],
                 dim=-1,
             ),
-             torch.cat(
+            torch.cat(
                 [
                     torch.tensor([[0]]),
-                    (-1j*si*torch.exp(1j*beta)),
+                    (-1j * si * torch.exp(1j * beta)),
                     co,
                     torch.tensor([[0]]),
                 ],
                 dim=-1,
             ),
-             torch.cat(
+            torch.cat(
                 [
                     torch.tensor([[0]]),
                     torch.tensor([[0]]),
@@ -644,6 +649,7 @@ def xxplusyy_matrix(params):
         ],
         dim=-2,
     ).squeeze(0)
+
 
 def multirz_eigvals(params, n_wires):
     """Compute eigenvalue for multiqubit RZ gate.
@@ -797,7 +803,7 @@ def rzx_matrix(params):
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
-    
+
     matrix = (
         torch.tensor(
             [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
@@ -976,6 +982,39 @@ def u1_matrix(params):
     ).squeeze(0)
 
 
+def cu_matrix(params):
+    """Compute unitary matrix for CU gate.
+    Args:
+        params (torch.Tensor): The rotation angle.
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+    """
+    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+    lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
+    gamma = params[:, 3].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    matrix = (
+        torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            dtype=C_DTYPE,
+            device=params.device,
+        )
+        .unsqueeze(0)
+        .repeat(phi.shape[0], 1, 1)
+    )
+
+    matrix[:, 2, 2] = co * torch.exp(1j * gamma)
+    matrix[:, 2, 3] = -si * torch.exp(1j * (lam + gamma))
+    matrix[:, 3, 2] = si * torch.exp(1j * (phi + gamma))
+    matrix[:, 3, 3] = co * torch.exp(1j * (phi + lam + gamma))
+
+    return matrix.squeeze(0)
+
+
 def cu1_matrix(params):
     """Compute unitary matrix for CU1 gate.
 
@@ -1120,7 +1159,6 @@ def cu3_matrix(params):
     matrix[:, 3, 3] = co * torch.exp(1j * (phi + lam))
 
     return matrix.squeeze(0)
-
 
 
 def qubitunitary_matrix(params):
@@ -1271,7 +1309,7 @@ def qft_matrix(n_wires):
         n_wires: the number of qubits
     """
     dimension = 2**n_wires
-    mat = torch.zeros((dimension,dimension), dtype=torch.complex64)
+    mat = torch.zeros((dimension, dimension), dtype=torch.complex64)
     omega = np.exp(2 * np.pi * 1j / dimension)
 
     for m in range(dimension):
@@ -1280,7 +1318,7 @@ def qft_matrix(n_wires):
     mat = mat / np.sqrt(dimension)
     return mat
 
-  
+
 def r_matrix(params: torch.Tensor) -> torch.Tensor:
     """Compute unitary matrix for R gate.
 
@@ -1310,7 +1348,11 @@ def r_matrix(params: torch.Tensor) -> torch.Tensor:
     jsi = 1j * torch.sin(-theta / 2)
 
     return torch.stack(
-        [torch.cat([co, exp*jsi], dim=-1), torch.cat([torch.conj(exp)*jsi, co], dim=-1)], dim=-2
+        [
+            torch.cat([co, exp * jsi], dim=-1),
+            torch.cat([torch.conj(exp) * jsi, co], dim=-1),
+        ],
+        dim=-2,
     ).squeeze(0)
 
 
@@ -1382,26 +1424,22 @@ mat_dict = {
     "ecr": torch.tensor(
         [[0, 0, 1, 1j], [0, 0, 1j, 1], [1, -1j, 0, 0], [-1j, 1, 0, 0]], dtype=C_DTYPE
     ),
-    "sdg": torch.tensor(
-        [[1, 0], [0, -1j]], dtype=C_DTYPE
-    ),
-    "tdg": torch.tensor(
-        [[1, 0], [0, np.exp(-1j * np.pi / 4)]], dtype=C_DTYPE
-    ),
+    "sdg": torch.tensor([[1, 0], [0, -1j]], dtype=C_DTYPE),
+    "tdg": torch.tensor([[1, 0], [0, np.exp(-1j * np.pi / 4)]], dtype=C_DTYPE),
     "sxdg": torch.tensor(
-        [[0.5-0.5j, 0.5+0.5j], [0.5+0.5j, 0.5-0.5j]], dtype=C_DTYPE
-     ),
+        [[0.5 - 0.5j, 0.5 + 0.5j], [0.5 + 0.5j, 0.5 - 0.5j]], dtype=C_DTYPE
+    ),
     "chadamard": torch.tensor(
-        [[1, 0, 0, 0],
-         [0, INV_SQRT2, 0, INV_SQRT2],
-         [0, 0, 1, 0],
-         [0, INV_SQRT2, 0, -INV_SQRT2]], dtype=C_DTYPE
+        [
+            [1, 0, 0, 0],
+            [0, INV_SQRT2, 0, INV_SQRT2],
+            [0, 0, 1, 0],
+            [0, INV_SQRT2, 0, -INV_SQRT2],
+        ],
+        dtype=C_DTYPE,
     ),
     "iswap": torch.tensor(
-        [[1, 0, 0, 0],
-         [0, 1j, 0, 0],
-         [0, 0, 1j, 0],
-         [0, 0, 0, 1]], dtype=C_DTYPE
+        [[1, 0, 0, 0], [0, 1j, 0, 0], [0, 0, 1j, 0], [0, 0, 0, 1]], dtype=C_DTYPE
     ),
     "ccz": torch.tensor(
         [
@@ -1417,22 +1455,19 @@ mat_dict = {
         dtype=C_DTYPE,
     ),
     "cs": torch.tensor(
-        [[1, 0, 0, 0],
-         [0, 1, 0, 0],
-         [0, 0, 1, 0],
-         [0, 0, 0, 1j]], dtype=C_DTYPE
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1j]], dtype=C_DTYPE
     ),
     "csdg": torch.tensor(
-        [[1, 0, 0, 0],
-         [0, 1, 0, 0],
-         [0, 0, 1, 0],
-         [0, 0, 0, -1j]], dtype=C_DTYPE
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1j]], dtype=C_DTYPE
     ),
     "csx": torch.tensor(
-        [[1, 0, 0, 0],
-         [0, 0.5+0.5j, 0, 0.5-0.5j],
-         [0, 0, 1, 0],
-         [0, 0.5-0.5j, 0, 0.5+0.5j]], dtype=C_DTYPE
+        [
+            [1, 0, 0, 0],
+            [0, 0.5 + 0.5j, 0, 0.5 - 0.5j],
+            [0, 0, 1, 0],
+            [0, 0.5 - 0.5j, 0, 0.5 + 0.5j],
+        ],
+        dtype=C_DTYPE,
     )
     / np.sqrt(2),
     "rx": rx_matrix,
@@ -1452,6 +1487,7 @@ mat_dict = {
     "u1": u1_matrix,
     "u2": u2_matrix,
     "u3": u3_matrix,
+    "cu": cu_matrix,
     "cu1": cu1_matrix,
     "cu2": cu2_matrix,
     "cu3": cu3_matrix,
@@ -1800,7 +1836,6 @@ def s(
     )
 
 
-    
 def t(
     q_device,
     wires,
@@ -2646,6 +2681,7 @@ def rot(
         inverse=inverse,
     )
 
+
 def xxminyy(
     q_device,
     wires,
@@ -2738,6 +2774,7 @@ def xxplusyy(
         parent_graph=parent_graph,
         inverse=inverse,
     )
+
 
 def multirz(
     q_device,
@@ -3115,6 +3152,50 @@ def u3(
     )
 
 
+def cu(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the cu gate.
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+    Returns:
+        None.
+    """
+    name = "cu"
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
+
+
 def cu1(
     q_device,
     wires,
@@ -3396,7 +3477,7 @@ def qubitunitarystrict(
         inverse=inverse,
     )
 
-    
+
 def c3x(
     q_device,
     wires,
@@ -3436,12 +3517,13 @@ def c3x(
         method=comp_method,
         q_device=q_device,
         wires=wires,
-        params=mat_dict['toffoli'],
+        params=mat_dict["toffoli"],
         n_wires=n_wires,
         static=static,
         parent_graph=parent_graph,
         inverse=inverse,
     )
+
 
 def multicnot(
     q_device,
@@ -3632,20 +3714,21 @@ def ecr(
     )
 
 
-def qft(q_device,
-        wires,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
-        comp_method="bmm",):
-    
+def qft(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
     name = "qft"
     if n_wires == None:
         wires = [wires] if isinstance(wires, int) else wires
         n_wires = len(wires)
-   
+
     mat = mat_dict[name]
     # mat = qft_matrix(n_wires)
     gate_wrapper(
@@ -3660,7 +3743,7 @@ def qft(q_device,
         parent_graph=parent_graph,
         inverse=inverse,
     )
-    
+
 
 def sdg(
     q_device: QuantumDevice,
@@ -3708,6 +3791,7 @@ def sdg(
         inverse=inverse,
     )
 
+
 def tdg(
     q_device: QuantumDevice,
     wires: Union[List[int], int],
@@ -3753,6 +3837,7 @@ def tdg(
         parent_graph=parent_graph,
         inverse=inverse,
     )
+
 
 def sxdg(
     q_device: QuantumDevice,
@@ -3800,6 +3885,7 @@ def sxdg(
         inverse=inverse,
     )
 
+
 def chadamard(
     q_device,
     wires,
@@ -3810,7 +3896,6 @@ def chadamard(
     inverse=False,
     comp_method="bmm",
 ):
-
     """Perform the chadamard gate.
 
     Args:
@@ -3851,7 +3936,6 @@ def chadamard(
 
 
 def ccz(
-
     q_device,
     wires,
     params=None,
@@ -3861,7 +3945,6 @@ def ccz(
     inverse=False,
     comp_method="bmm",
 ):
-
     """Perform the ccz gate.
 
     Args:
@@ -3945,6 +4028,7 @@ def iswap(
         inverse=inverse,
     )
 
+
 def cs(
     q_device,
     wires,
@@ -3955,7 +4039,6 @@ def cs(
     inverse=False,
     comp_method="bmm",
 ):
-
     """Perform the cs gate.
 
     Args:
@@ -3993,6 +4076,7 @@ def cs(
         inverse=inverse,
     )
 
+
 def csdg(
     q_device,
     wires,
@@ -4003,7 +4087,6 @@ def csdg(
     inverse=False,
     comp_method="bmm",
 ):
-
     """Perform the csdg gate.
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
@@ -4041,6 +4124,7 @@ def csdg(
         inverse=inverse,
     )
 
+
 def csx(
     q_device,
     wires,
@@ -4051,7 +4135,6 @@ def csx(
     inverse=False,
     comp_method="bmm",
 ):
-
     """Perform the csx gate.
 
     Args:
@@ -4088,6 +4171,7 @@ def csx(
         inverse=inverse,
     )
 
+
 def dcx(
     q_device,
     wires,
@@ -4098,7 +4182,6 @@ def dcx(
     inverse=False,
     comp_method="bmm",
 ):
-
     """Perform the dcx gate.
 
     Args:
@@ -4135,7 +4218,7 @@ def dcx(
         inverse=inverse,
     )
 
-    
+
 def r(
     q_device,
     wires,
@@ -4146,9 +4229,8 @@ def r(
     inverse=False,
     comp_method="bmm",
 ):
-
     """Perform the R gate.
-  
+
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
         wires (Union[List[int], int]): Which qubit(s) to apply the gate.
@@ -4197,7 +4279,6 @@ cx = cnot
 ccnot = toffoli
 ccx = toffoli
 u = u3
-cu = cu3
 p = phaseshift
 cp = cu1
 cr = cu1
@@ -4282,8 +4363,8 @@ func_name_dict = {
     "chadamard": chadamard,
     "ccz": ccz,
     "dcx": dcx,
-    "xxminyy":xxminyy,
+    "xxminyy": xxminyy,
     "xxplusyy": xxplusyy,
-    "c3x":c3x,
+    "c3x": c3x,
     "r": r,
 }

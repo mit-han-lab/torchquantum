@@ -77,6 +77,7 @@ __all__ = [
     "U1",
     "U2",
     "U3",
+    "CU",
     "CU1",
     "CU2",
     "CU3",
@@ -93,7 +94,7 @@ __all__ = [
     "QFT",
     "SDG",
     "TDG",
-    'SXDG',
+    "SXDG",
     "CH",
     "CCZ",
     "ISWAP",
@@ -196,6 +197,7 @@ class Operator(tq.QuantumModule):
         "U1",
         "U2",
         "U3",
+        "CU",
         "CU1",
         "CU2",
         "CU3",
@@ -231,7 +233,7 @@ class Operator(tq.QuantumModule):
         init_params=None,
         n_wires=None,
         wires=None,
-        inverse=False
+        inverse=False,
     ):
         """__init__ function for Operator.
 
@@ -436,7 +438,7 @@ class Observable(Operator, metaclass=ABCMeta):
         inverse=False,
     ):
         """Init function of the Observable class
-        
+
         Args:
             has_params (bool, optional): Whether the operations has parameters.
                 Defaults to False.
@@ -454,7 +456,7 @@ class Observable(Operator, metaclass=ABCMeta):
             init_params=init_params,
             n_wires=n_wires,
             wires=wires,
-            inverse=inverse
+            inverse=inverse,
         )
         self.return_type = None
 
@@ -477,7 +479,7 @@ class Operation(Operator, metaclass=ABCMeta):
         init_params=None,
         n_wires=None,
         wires=None,
-        inverse=False
+        inverse=False,
     ):
         """_summary_
 
@@ -498,7 +500,7 @@ class Operation(Operator, metaclass=ABCMeta):
             init_params=init_params,
             n_wires=n_wires,
             wires=wires,
-            inverse=inverse
+            inverse=inverse,
         )
         if type(self.num_wires) == int:
             self.n_wires = self.num_wires
@@ -632,8 +634,6 @@ class SHadamard(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
-
-   
 
 class PauliX(Observable, metaclass=ABCMeta):
     """Class for Pauli X Gate."""
@@ -771,8 +771,6 @@ class SX(Operation, metaclass=ABCMeta):
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
-
-   
 
 
 class CNOT(Operation, metaclass=ABCMeta):
@@ -998,7 +996,6 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
     num_wires = AnyWires
     func = staticmethod(tqf.qubitunitaryfast)
 
-
     def build_params(self, trainable):
         """Build the parameters for the gate.
 
@@ -1103,6 +1100,18 @@ class U1(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.u1_matrix(params)
+
+
+class CU(Operation, metaclass=ABCMeta):
+    """Class for Controlled U gate (4-parameter two-qubit gate)."""
+
+    num_params = 4
+    num_wires = 2
+    func = staticmethod(tqf.cu)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.cu_matrix(params)
 
 
 class CU1(DiagonalOperation, metaclass=ABCMeta):
@@ -1378,7 +1387,8 @@ class ECR(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
-    
+
+
 class QFT(Observable, metaclass=ABCMeta):
     """Class for Quantum Fourier Transform."""
 
@@ -1417,6 +1427,7 @@ class TDG(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+
 class SXDG(Operation, metaclass=ABCMeta):
     """Class for SXDG Gate."""
 
@@ -1441,6 +1452,7 @@ class CCZ(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+
 
 class ISWAP(Operation, metaclass=ABCMeta):
     """Class for ISWAP Gate."""
@@ -1467,11 +1479,12 @@ class CS(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
-   
+
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
-    
+
+
 class CSDG(DiagonalOperation, metaclass=ABCMeta):
     """Class for CS Dagger Gate."""
 
@@ -1488,7 +1501,8 @@ class CSDG(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
- 
+
+
 class CSX(Operation, metaclass=ABCMeta):
     """Class for CSX Gate."""
 
@@ -1500,6 +1514,7 @@ class CSX(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+
 
 class CHadamard(Operation, metaclass=ABCMeta):
     """Class for CHadamard Gate."""
@@ -1513,6 +1528,7 @@ class CHadamard(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+
 class CCZ(DiagonalOperation, metaclass=ABCMeta):
     """Class for CCZ Gate."""
 
@@ -1525,10 +1541,12 @@ class CCZ(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
-    
+
+
 class DCX(Operation, metaclass=ABCMeta):
     """Class for DCX Gate."""
 
@@ -1540,7 +1558,8 @@ class DCX(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
-    
+
+
 class XXMINYY(Operation, metaclass=ABCMeta):
     """Class for XXMinusYY gate."""
 
@@ -1551,7 +1570,8 @@ class XXMINYY(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.xxminyy_matrix(params)
-    
+
+
 class XXPLUSYY(Operation, metaclass=ABCMeta):
     """Class for XXPlusYY gate."""
 
@@ -1562,17 +1582,19 @@ class XXPLUSYY(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.xxplusyy_matrix(params)
-    
+
+
 class C3X(Operation, metaclass=ABCMeta):
     """Class for C3X gate."""
-    
+
     num_params = 0
     num_wires = 4
     func = staticmethod(tqf.c3x)
-    
+
     @classmethod
     def _matrix(cls, params):
-        return tqf.qubitunitary_matrix(mat_dict['toffoli'])
+        return tqf.qubitunitary_matrix(mat_dict["toffoli"])
+
 
 class R(DiagonalOperation, metaclass=ABCMeta):
     """Class for R Gate."""
@@ -1584,6 +1606,7 @@ class R(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.r_matrix(params)
+
 
 H = Hadamard
 SH = SHadamard
@@ -1643,7 +1666,7 @@ op_name_dict = {
     "cphase": CU1,
     "cu2": CU2,
     "cu3": CU3,
-    "cu": CU3,
+    "cu": CU,
     "qubitunitary": QubitUnitary,
     "qubitunitarystrict": QubitUnitaryFast,
     "qubitunitaryfast": QubitUnitaryFast,
@@ -1660,7 +1683,7 @@ op_name_dict = {
     "cs": CS,
     "chadamard": CHadamard,
     "ch": CH,
-    "dcx":DCX,
+    "dcx": DCX,
     "xxminyy": XXMINYY,
     "xxplusyy": XXPLUSYY,
     "c3x": C3X,
