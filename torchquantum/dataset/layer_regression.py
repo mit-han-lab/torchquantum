@@ -57,7 +57,7 @@ class LayerRegressionDatasetV:
             >>> dataset = LayerRegressionDatasetV()
             >>> instance = dataset[0]
         """
-        
+
         instance = {"input": self.input, "output": self.output}
         return instance
 
@@ -71,13 +71,13 @@ class LayerRegressionDatasetV:
             >>> dataset = LayerRegressionDatasetV()
             >>> length = len(dataset)
         """
-        
+
         return self.n_instance
 
 
 class LayerRegressionV(Dataset):
     """Layer Regression Dataset with Variational Input"""
-    
+
     def __init__(
         self,
     ):
@@ -86,7 +86,7 @@ class LayerRegressionV(Dataset):
         Example:
             >>> dataset = LayerRegressionV()
         """
-        
+
         super().__init__(
             {split: LayerRegressionDatasetV() for split in ["train", "valid", "test"]}
         )
@@ -94,20 +94,20 @@ class LayerRegressionV(Dataset):
 
 class LayerRegressionDataset:
     """Layer Regression Dataset
-    
+
     Attributes:
         data: The dataset.
         n_instance (int): The number of instances.
         output: The output data.
     """
-    
+
     def __init__(self):
         """Initializes a LayerRegressionDataset object.
 
         Example:
             >>> dataset = LayerRegressionDataset()
         """
-        
+
         self.data = None
         self.n_instance = 10000
         mat = torch.randn((2**5, 2**5), dtype=torch.complex64)
@@ -128,7 +128,7 @@ class LayerRegressionDataset:
             >>> dataset = LayerRegressionDataset()
             >>> instance = dataset[0]
         """
-        
+
         instance = {"input": self.output, "output": self.output}
         return instance
 
@@ -142,13 +142,13 @@ class LayerRegressionDataset:
             >>> dataset = LayerRegressionDataset()
             >>> length = len(dataset)
         """
-        
+
         return self.n_instance
 
 
 class LayerRegression(Dataset):
     """Layer Regression Dataset"""
-    
+
     def __init__(
         self,
     ):
@@ -157,7 +157,7 @@ class LayerRegression(Dataset):
         Example:
             >>> dataset = LayerRegression()
         """
-        
+
         super().__init__(
             {split: LayerRegressionDataset() for split in ["train", "valid", "test"]}
         )

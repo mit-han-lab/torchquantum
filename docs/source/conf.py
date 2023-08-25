@@ -28,31 +28,32 @@ SOFTWARE.
 # add these directories to sys.path here.
 import sys
 import os
-sys.path.insert(0, os.path.abspath('../..'))
+
+sys.path.insert(0, os.path.abspath("../.."))
 import furo
 
-#import pathlib
-#sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
+# import pathlib
+# sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 
 # -- Project information
 
-project = 'TorchQuantum'
-copyright = '2021, Hanrui Wang'
-author = 'Hanrui Wang'
+project = "TorchQuantum"
+copyright = "2021, Hanrui Wang"
+author = "Hanrui Wang"
 
-release = '0.1'
-version = '0.1.0'
+release = "0.1"
+version = "0.1.0"
 
 # -- General configuration
 
 extensions = [
-    'sphinx.ext.duration',
-    'sphinx.ext.doctest',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.napoleon', # google styled docstring
-    'sphinx.ext.viewcode', # [source] link to view code
+    "sphinx.ext.duration",
+    "sphinx.ext.doctest",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",  # google styled docstring
+    "sphinx.ext.viewcode",  # [source] link to view code
     # 'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
     # 'sphinxcontrib.katex',
@@ -63,19 +64,19 @@ extensions = [
     # 'sphinx.ext.extlinks',
     # 'sphinx_autodoc_typehints',
     # 'jupyter_sphinx',
-    'nbsphinx', # support for including Jupyter Notebook (*.ipynb) file
-    'recommonmark', # support for including markdown (*.md) file
+    "nbsphinx",  # support for including Jupyter Notebook (*.ipynb) file
+    "recommonmark",  # support for including markdown (*.md) file
     # 'sphinx_design',
     # 'sphinx_reredirects'
 ]
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
 }
-intersphinx_disabled_domains = ['std']
+intersphinx_disabled_domains = ["std"]
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # -- Options for HTML output
 
@@ -143,12 +144,12 @@ html_theme_options = {
 }
 """
 
-html_theme = 'furo'
+html_theme = "furo"
 html_theme_options = {
-    'collapse_navigation': False,
-    'display_version': True,
-    'logo_only': False,
-    "index": "page.html"
+    "collapse_navigation": False,
+    "display_version": True,
+    "logo_only": False,
+    "index": "page.html",
 }
 
 # adjust code block style for readthedocs
@@ -160,4 +161,4 @@ display_bitbucket = False
 display_gitlab = False
 show_source = True
 # -- Options for EPUB output
-epub_show_urls = 'footnote'
+epub_show_urls = "footnote"

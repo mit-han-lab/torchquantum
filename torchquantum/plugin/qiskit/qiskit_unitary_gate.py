@@ -190,7 +190,6 @@ class UnitaryGate(Gate):
 
         gates_def = ""
         for gate in self.definition.data:
-
             # add regs from this gate to the overall set of params
             for reg in gate[1] + gate[2]:
                 if reg not in reg_to_qasm:

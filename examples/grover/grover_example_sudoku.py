@@ -32,35 +32,37 @@ from torchquantum.algorithms import Grover
 
 
 # To simplify the process, we can compile this set of comparisons into a list of clauses for convenience.
-clauses = [ [0, 1], [0, 2], [1, 3], [2, 3] ]
+clauses = [[0, 1], [0, 2], [1, 3], [2, 3]]
 
-# This circuit checks if input0 is equal to input1 and stores the output in output. 
+
+# This circuit checks if input0 is equal to input1 and stores the output in output.
 # The output of each comparison is stored in a new bit.
 def XOR(input0, input1, output):
-    op1 = {'name': 'cnot', 'wires': [input0, output]}
-    op2 = {'name': 'cnot', 'wires': [input1, output]}
+    op1 = {"name": "cnot", "wires": [input0, output]}
+    op2 = {"name": "cnot", "wires": [input1, output]}
     return [op1, op2]
-    
-# To verify each clause, we repeat the above circuit for every pairing in the `clauses`. 
+
+
+# To verify each clause, we repeat the above circuit for every pairing in the `clauses`.
 ops = []
 clause_qubits = [4, 5, 6, 7]
 for i, clause in enumerate(clauses):
-	ops += XOR(clause[0], clause[1], clause_qubits[i])
+    ops += XOR(clause[0], clause[1], clause_qubits[i])
 
-# To determine if the assignments of a, b, c, d are a solution to the sudoku, we examine the final state 
-# of the `clause_qubits`. Only when all of these qubits are 1, it indicates that the clauses are satisfied. 
-# To achieve this, we incorporate a multi-controlled Toffoli gate in our checking circuit. This gate 
-# ensures that a single output bit will be set to 1 if and only if all the clauses are satisfied, 
+# To determine if the assignments of a, b, c, d are a solution to the sudoku, we examine the final state
+# of the `clause_qubits`. Only when all of these qubits are 1, it indicates that the clauses are satisfied.
+# To achieve this, we incorporate a multi-controlled Toffoli gate in our checking circuit. This gate
+# ensures that a single output bit will be set to 1 if and only if all the clauses are satisfied,
 # allowing us to easily determine if our assignment is a solution.
-ops += [{'name': 'multicnot', 'n_wires': 5, 'wires': [4,5,6,7,8]}]
+ops += [{"name": "multicnot", "n_wires": 5, "wires": [4, 5, 6, 7, 8]}]
 
-# In order to transform our checking circuit into a Grover oracle, it is crucial to ensure that the `clause_qubits` 
-# are always returned to their initial state after the computation. This guarantees that `clause_qubits` are all 
-# set to 0 once our circuit has finished running. To achieve this, we include a step called "uncomputation" 
-# where we repeat the segment of the circuit that computes the clauses. This uncomputation step ensures the 
+# In order to transform our checking circuit into a Grover oracle, it is crucial to ensure that the `clause_qubits`
+# are always returned to their initial state after the computation. This guarantees that `clause_qubits` are all
+# set to 0 once our circuit has finished running. To achieve this, we include a step called "uncomputation"
+# where we repeat the segment of the circuit that computes the clauses. This uncomputation step ensures the
 # desired state restoration, enabling us to effectively use the circuit as a Grover oracle.
 for qubit, clause in enumerate(clauses):
-	ops += XOR(clause[0], clause[1], qubit + 4)
+    ops += XOR(clause[0], clause[1], qubit + 4)
 
 # Full Algorithm
 # We can combine all the components we have discussed so far
@@ -79,15 +81,17 @@ result = grover.execute(qdev)
 bitstring = result.bitstring[0]
 
 # Extract the top two most likely solutions
-res = {k: v for k, v in sorted(bitstring.items(), key=lambda item: item[1], reverse=True)}
+res = {
+    k: v for k, v in sorted(bitstring.items(), key=lambda item: item[1], reverse=True)
+}
 
 # Print the top two most likely solutions
 top_keys = list(res.keys())[:2]
 print("Top two most likely solutions:")
 for key in top_keys:
-	print("Solution: ", key)
-	print("a = ", key[0])
-	print("b = ", key[1])
-	print("c = ", key[2])
-	print("d = ", key[3])
-	print("")
+    print("Solution: ", key)
+    print("a = ", key[0])
+    print("b = ", key[1])
+    print("c = ", key[2])
+    print("d = ", key[3])
+    print("")

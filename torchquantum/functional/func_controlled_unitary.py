@@ -27,6 +27,7 @@ import torch
 from torchquantum.functional.functionals import gate_wrapper
 from torchquantum.macro import *
 
+
 def controlled_unitary(
     qdev,
     c_wires,
@@ -41,7 +42,7 @@ def controlled_unitary(
         t_wires: can be a list of list of wires, multiple sets
         [[1,2], [3,4]]
         params: the parameters of the unitary
-    
+
     Returns:
         None.
 
@@ -113,19 +114,19 @@ def controlled_unitary(
     unitary[-d_controlled_u:, -d_controlled_u:] = controlled_u
 
     # return cls(
-        # has_params=True,
-        # trainable=trainable,
-        # init_params=unitary,
-        # n_wires=n_wires,
-        # wires=wires,
+    # has_params=True,
+    # trainable=trainable,
+    # init_params=unitary,
+    # n_wires=n_wires,
+    # wires=wires,
     # )
 
-    name = 'qubitunitaryfast'
+    name = "qubitunitaryfast"
     unitary = unitary.to(qdev.device)
     gate_wrapper(
         name=name,
         mat=unitary,
-        method='bmm',
+        method="bmm",
         q_device=qdev,
         wires=wires,
         n_wires=n_wires,

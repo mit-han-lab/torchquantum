@@ -76,7 +76,6 @@ def get_modified_backend(backend, mydict):
 
 
 def get_from(d: dict, key: str):
-
     value = 0
     if key in d:
         value = d[key]

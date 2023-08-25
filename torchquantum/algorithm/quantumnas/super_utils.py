@@ -31,43 +31,44 @@ from torchpack.utils.config import configs
 
 class ArchSampler(object):
     """
-        Architecture sampler for a neural network model.
+    Architecture sampler for a neural network model.
 
-        This class provides methods to sample architectures for a neural network model.
-        It supports different sampling strategies, such as plain random sampling,
-        limiting differences between consecutive architectures, progressive sampling,
-        and more.
+    This class provides methods to sample architectures for a neural network model.
+    It supports different sampling strategies, such as plain random sampling,
+    limiting differences between consecutive architectures, progressive sampling,
+    and more.
 
-        Args:
-            model (nn.Module): The neural network model for which architectures will be sampled.
-            strategy (dict): The sampling strategy configuration.
-            n_layers_per_block (int): The number of layers per block (if the architecture is block-based).
+    Args:
+        model (nn.Module): The neural network model for which architectures will be sampled.
+        strategy (dict): The sampling strategy configuration.
+        n_layers_per_block (int): The number of layers per block (if the architecture is block-based).
 
-        Attributes:
-            model (nn.Module): The neural network model.
-            total_steps (int): The total number of steps.
-            arch_space (list): The architecture space.
-            strategy (dict): The sampling strategy.
-            sample_arch_old (list): The previous sampled architecture.
-            arch_space_stage (None): The architecture space stage.
-            n_ops_smallest (int): The smallest number of operations in the space.
-            n_ops_largest (int): The largest number of operations in the space.
-            is_block_based (bool): Indicates if the architecture is block-based.
-            n_layers_per_block (int): The number of layers per block.
-            n_ops_per_chunk (list): The number of operations per chunk.
-            sample_n_ops (int): The number of operations in the sampled architecture.
-            current_stage (int): The current stage in progressive sampling.
-            current_chunk (int): The current chunk in progressive sampling.
-            step (int): The current step.
+    Attributes:
+        model (nn.Module): The neural network model.
+        total_steps (int): The total number of steps.
+        arch_space (list): The architecture space.
+        strategy (dict): The sampling strategy.
+        sample_arch_old (list): The previous sampled architecture.
+        arch_space_stage (None): The architecture space stage.
+        n_ops_smallest (int): The smallest number of operations in the space.
+        n_ops_largest (int): The largest number of operations in the space.
+        is_block_based (bool): Indicates if the architecture is block-based.
+        n_layers_per_block (int): The number of layers per block.
+        n_ops_per_chunk (list): The number of operations per chunk.
+        sample_n_ops (int): The number of operations in the sampled architecture.
+        current_stage (int): The current stage in progressive sampling.
+        current_chunk (int): The current chunk in progressive sampling.
+        step (int): The current step.
 
-        Methods:
-            set_total_steps(total_steps): Sets the total number of steps.
-            get_n_ops_per_chunk(): Separates the space into several subspaces based on the strategy.
-            get_sample_stats(sample_arch): Calculates the number of operations in a sample architecture.
-            get_space_stats(): Calculates the max and smallest number of operations in the space.
-            get_random_sample_arch(): Generates a random sample architecture.
-            get_uniform_sample_arch(): Generates a sample architecture based on the sampling strategy.
-        """
+    Methods:
+        set_total_steps(total_steps): Sets the total number of steps.
+        get_n_ops_per_chunk(): Separates the space into several subspaces based on the strategy.
+        get_sample_stats(sample_arch): Calculates the number of operations in a sample architecture.
+        get_space_stats(): Calculates the max and smallest number of operations in the space.
+        get_random_sample_arch(): Generates a random sample architecture.
+        get_uniform_sample_arch(): Generates a sample architecture based on the sampling strategy.
+    """
+
     def __init__(self, model: nn.Module, strategy=None, n_layers_per_block=None):
         self.model = model
         self.total_steps = None

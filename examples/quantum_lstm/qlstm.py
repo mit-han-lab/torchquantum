@@ -37,14 +37,16 @@ class QLSTM(nn.Module):
     # use 'qiskit.ibmq' instead to run on hardware
     class QLayer_forget(tq.QuantumModule):
         def __init__(self):
-            super().__init__()    
+            super().__init__()
             self.n_wires = 4
             self.encoder = tq.GeneralEncoder(
-        [   {'input_idx': [0], 'func': 'rx', 'wires': [0]},
-            {'input_idx': [1], 'func': 'rx', 'wires': [1]},
-            {'input_idx': [2], 'func': 'rx', 'wires': [2]},
-            {'input_idx': [3], 'func': 'rx', 'wires': [3]},
-        ])
+                [
+                    {"input_idx": [0], "func": "rx", "wires": [0]},
+                    {"input_idx": [1], "func": "rx", "wires": [1]},
+                    {"input_idx": [2], "func": "rx", "wires": [2]},
+                    {"input_idx": [3], "func": "rx", "wires": [3]},
+                ]
+            )
             self.rx0 = tq.RX(has_params=True, trainable=True)
             self.rx1 = tq.RX(has_params=True, trainable=True)
             self.rx2 = tq.RX(has_params=True, trainable=True)
@@ -52,29 +54,33 @@ class QLSTM(nn.Module):
             self.measure = tq.MeasureAll(tq.PauliZ)
 
         def forward(self, x):
-            qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device)
+            qdev = tq.QuantumDevice(
+                n_wires=self.n_wires, bsz=x.shape[0], device=x.device
+            )
             self.encoder(qdev, x)
             self.rx0(qdev, wires=0)
             self.rx1(qdev, wires=1)
             self.rx2(qdev, wires=2)
             self.rx3(qdev, wires=3)
             for k in range(self.n_wires):
-                if k==self.n_wires-1:
-                    tqf.cnot(qdev, wires=[k, 0]) 
+                if k == self.n_wires - 1:
+                    tqf.cnot(qdev, wires=[k, 0])
                 else:
-                    tqf.cnot(qdev, wires=[k, k+1])
-            return(self.measure(qdev))
-        
+                    tqf.cnot(qdev, wires=[k, k + 1])
+            return self.measure(qdev)
+
     class QLayer_input(tq.QuantumModule):
         def __init__(self):
-            super().__init__()    
+            super().__init__()
             self.n_wires = 4
             self.encoder = tq.GeneralEncoder(
-        [   {'input_idx': [0], 'func': 'rx', 'wires': [0]},
-            {'input_idx': [1], 'func': 'rx', 'wires': [1]},
-            {'input_idx': [2], 'func': 'rx', 'wires': [2]},
-            {'input_idx': [3], 'func': 'rx', 'wires': [3]},
-        ])
+                [
+                    {"input_idx": [0], "func": "rx", "wires": [0]},
+                    {"input_idx": [1], "func": "rx", "wires": [1]},
+                    {"input_idx": [2], "func": "rx", "wires": [2]},
+                    {"input_idx": [3], "func": "rx", "wires": [3]},
+                ]
+            )
             self.rx0 = tq.RX(has_params=True, trainable=True)
             self.rx1 = tq.RX(has_params=True, trainable=True)
             self.rx2 = tq.RX(has_params=True, trainable=True)
@@ -82,29 +88,33 @@ class QLSTM(nn.Module):
             self.measure = tq.MeasureAll(tq.PauliZ)
 
         def forward(self, x):
-            qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device)
+            qdev = tq.QuantumDevice(
+                n_wires=self.n_wires, bsz=x.shape[0], device=x.device
+            )
             self.encoder(qdev, x)
             self.rx0(qdev, wires=0)
             self.rx1(qdev, wires=1)
             self.rx2(qdev, wires=2)
             self.rx3(qdev, wires=3)
             for k in range(self.n_wires):
-                if k==self.n_wires-1:
-                    tqf.cnot(qdev, wires=[k, 0]) 
+                if k == self.n_wires - 1:
+                    tqf.cnot(qdev, wires=[k, 0])
                 else:
-                    tqf.cnot(qdev, wires=[k, k+1])
-            return(self.measure(qdev))
-        
+                    tqf.cnot(qdev, wires=[k, k + 1])
+            return self.measure(qdev)
+
     class QLayer_update(tq.QuantumModule):
         def __init__(self):
-            super().__init__()    
+            super().__init__()
             self.n_wires = 4
             self.encoder = tq.GeneralEncoder(
-        [   {'input_idx': [0], 'func': 'rx', 'wires': [0]},
-            {'input_idx': [1], 'func': 'rx', 'wires': [1]},
-            {'input_idx': [2], 'func': 'rx', 'wires': [2]},
-            {'input_idx': [3], 'func': 'rx', 'wires': [3]},
-        ])
+                [
+                    {"input_idx": [0], "func": "rx", "wires": [0]},
+                    {"input_idx": [1], "func": "rx", "wires": [1]},
+                    {"input_idx": [2], "func": "rx", "wires": [2]},
+                    {"input_idx": [3], "func": "rx", "wires": [3]},
+                ]
+            )
             self.rx0 = tq.RX(has_params=True, trainable=True)
             self.rx1 = tq.RX(has_params=True, trainable=True)
             self.rx2 = tq.RX(has_params=True, trainable=True)
@@ -112,29 +122,33 @@ class QLSTM(nn.Module):
             self.measure = tq.MeasureAll(tq.PauliZ)
 
         def forward(self, x):
-            qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device)
+            qdev = tq.QuantumDevice(
+                n_wires=self.n_wires, bsz=x.shape[0], device=x.device
+            )
             self.encoder(qdev, x)
             self.rx0(qdev, wires=0)
             self.rx1(qdev, wires=1)
             self.rx2(qdev, wires=2)
             self.rx3(qdev, wires=3)
             for k in range(self.n_wires):
-                if k==self.n_wires-1:
-                    tqf.cnot(qdev, wires=[k, 0]) 
+                if k == self.n_wires - 1:
+                    tqf.cnot(qdev, wires=[k, 0])
                 else:
-                    tqf.cnot(qdev, wires=[k, k+1])
-            return(self.measure(qdev))
-        
+                    tqf.cnot(qdev, wires=[k, k + 1])
+            return self.measure(qdev)
+
     class QLayer_output(tq.QuantumModule):
         def __init__(self):
-            super().__init__()    
+            super().__init__()
             self.n_wires = 4
             self.encoder = tq.GeneralEncoder(
-        [   {'input_idx': [0], 'func': 'rx', 'wires': [0]},
-            {'input_idx': [1], 'func': 'rx', 'wires': [1]},
-            {'input_idx': [2], 'func': 'rx', 'wires': [2]},
-            {'input_idx': [3], 'func': 'rx', 'wires': [3]},
-        ])
+                [
+                    {"input_idx": [0], "func": "rx", "wires": [0]},
+                    {"input_idx": [1], "func": "rx", "wires": [1]},
+                    {"input_idx": [2], "func": "rx", "wires": [2]},
+                    {"input_idx": [3], "func": "rx", "wires": [3]},
+                ]
+            )
             self.rx0 = tq.RX(has_params=True, trainable=True)
             self.rx1 = tq.RX(has_params=True, trainable=True)
             self.rx2 = tq.RX(has_params=True, trainable=True)
@@ -142,28 +156,32 @@ class QLSTM(nn.Module):
             self.measure = tq.MeasureAll(tq.PauliZ)
 
         def forward(self, x):
-            qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device)
+            qdev = tq.QuantumDevice(
+                n_wires=self.n_wires, bsz=x.shape[0], device=x.device
+            )
             self.encoder(qdev, x)
             self.rx0(qdev, wires=0)
             self.rx1(qdev, wires=1)
             self.rx2(qdev, wires=2)
             self.rx3(qdev, wires=3)
             for k in range(self.n_wires):
-                if k==self.n_wires-1:
-                    tqf.cnot(qdev, wires=[k, 0]) 
+                if k == self.n_wires - 1:
+                    tqf.cnot(qdev, wires=[k, 0])
                 else:
-                    tqf.cnot(qdev, wires=[k, k+1])
-            return(self.measure(qdev))
-        
-    def __init__(self, 
-                input_size, 
-                hidden_size, 
-                n_qubits=4,
-                n_qlayers=1,
-                batch_first=True,
-                return_sequences=False, 
-                return_state=False,
-                backend="default.qubit"):
+                    tqf.cnot(qdev, wires=[k, k + 1])
+            return self.measure(qdev)
+
+    def __init__(
+        self,
+        input_size,
+        hidden_size,
+        n_qubits=4,
+        n_qlayers=1,
+        batch_first=True,
+        return_sequences=False,
+        return_state=False,
+        backend="default.qubit",
+    ):
         super(QLSTM, self).__init__()
         self.n_inputs = input_size
         self.hidden_size = hidden_size
@@ -178,20 +196,20 @@ class QLSTM(nn.Module):
 
         self.clayer_in = torch.nn.Linear(self.concat_size, n_qubits)
         self.VQC = {
-            'forget':self.QLayer_forget(),
-            'input': self.QLayer_input(),
-            'update':self.QLayer_update(),
-            'output':self.QLayer_output()
+            "forget": self.QLayer_forget(),
+            "input": self.QLayer_input(),
+            "update": self.QLayer_update(),
+            "output": self.QLayer_output(),
         }
         self.clayer_out = torch.nn.Linear(self.n_qubits, self.hidden_size)
-        #self.clayer_out = [torch.nn.Linear(n_qubits, self.hidden_size) for _ in range(4)]
+        # self.clayer_out = [torch.nn.Linear(n_qubits, self.hidden_size) for _ in range(4)]
 
     def forward(self, x, init_states=None):
-        '''
+        """
         x.shape is (batch_size, seq_length, feature_size)
         recurrent_activation -> sigmoid
         activation -> tanh
-        '''
+        """
         if self.batch_first is True:
             batch_size, seq_length, features_size = x.size()
         else:
@@ -211,17 +229,21 @@ class QLSTM(nn.Module):
         for t in range(seq_length):
             # get features from the t-th element in seq, for all entries in the batch
             x_t = x[:, t, :]
-            
+
             # Concatenate input and hidden state
             v_t = torch.cat((h_t, x_t), dim=1)
 
             # match qubit dimension
             y_t = self.clayer_in(v_t)
 
-            f_t = torch.sigmoid(self.clayer_out(self.VQC['forget'](y_t)))  # forget block
-            i_t = torch.sigmoid(self.clayer_out(self.VQC['input'](y_t)))  # input block
-            g_t = torch.tanh(self.clayer_out(self.VQC['update'](y_t)))  # update block
-            o_t = torch.sigmoid(self.clayer_out(self.VQC['output'](y_t))) # output block
+            f_t = torch.sigmoid(
+                self.clayer_out(self.VQC["forget"](y_t))
+            )  # forget block
+            i_t = torch.sigmoid(self.clayer_out(self.VQC["input"](y_t)))  # input block
+            g_t = torch.tanh(self.clayer_out(self.VQC["update"](y_t)))  # update block
+            o_t = torch.sigmoid(
+                self.clayer_out(self.VQC["output"](y_t))
+            )  # output block
 
             c_t = (f_t * c_t) + (i_t * g_t)
             h_t = o_t * torch.tanh(c_t)
@@ -263,14 +285,12 @@ class LSTMTagger(nn.Module):
         tag_scores = F.log_softmax(tag_logits, dim=1)
         return tag_scores
 
+
 def train(model, n_epochs, training_data, word_to_ix, tag_to_ix):
     loss_function = nn.NLLLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
-    history = {
-        'loss': [],
-        'acc': []
-    }
+    history = {"loss": [], "acc": []}
     for epoch in range(n_epochs):
         losses = []
         preds = []
@@ -294,23 +314,26 @@ def train(model, n_epochs, training_data, word_to_ix, tag_to_ix):
             loss.backward()
             optimizer.step()
             losses.append(float(loss))
-            
+
             probs = torch.softmax(tag_scores, dim=-1)
             preds.append(probs.argmax(dim=-1))
             targets.append(labels)
 
         avg_loss = np.mean(losses)
-        history['loss'].append(avg_loss)
-        
+        history["loss"].append(avg_loss)
+
         preds = torch.cat(preds)
         targets = torch.cat(targets)
-        corrects = (preds == targets)
-        accuracy = corrects.sum().float() / float(targets.size(0) )
-        history['acc'].append(accuracy)
+        corrects = preds == targets
+        accuracy = corrects.sum().float() / float(targets.size(0))
+        history["acc"].append(accuracy)
 
-        print(f"Epoch {epoch+1} / {n_epochs}: Loss = {avg_loss:.3f} Acc = {accuracy:.2f}")
+        print(
+            f"Epoch {epoch+1} / {n_epochs}: Loss = {avg_loss:.3f} Acc = {accuracy:.2f}"
+        )
 
     return history
+
 
 def print_result(model, training_data, word_to_ix, ix_to_tag):
     with torch.no_grad():
@@ -325,47 +348,52 @@ def print_result(model, training_data, word_to_ix, ix_to_tag):
         print(f"Labels:    {labels}")
         print(f"Predicted: {tag_labels}")
 
+
 from matplotlib import pyplot as plt
 
+
 def plot_history(history_classical, history_quantum):
-    loss_c = history_classical['loss']
-    acc_c = history_classical['acc']
-    loss_q = history_quantum['loss']
-    acc_q = history_quantum['acc']
+    loss_c = history_classical["loss"]
+    acc_c = history_classical["acc"]
+    loss_q = history_quantum["loss"]
+    acc_q = history_quantum["acc"]
     n_epochs = max([len(loss_c), len(loss_q)])
     x_epochs = [i for i in range(n_epochs)]
-    
+
     fig, ax1 = plt.subplots()
-    
+
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("Loss")
-    ax1.plot(loss_c, label="Classical LSTM loss", color='orange', linestyle='dashed')
-    ax1.plot(loss_q, label="Quantum LSTM loss", color='red', linestyle='solid')
+    ax1.plot(loss_c, label="Classical LSTM loss", color="orange", linestyle="dashed")
+    ax1.plot(loss_q, label="Quantum LSTM loss", color="red", linestyle="solid")
 
     ax2 = ax1.twinx()
     ax2.set_ylabel("Accuracy")
-    ax2.plot(acc_c, label="Classical LSTM accuracy", color='steelblue', linestyle='dashed')
-    ax2.plot(acc_q, label="Quantum LSTM accuracy", color='blue', linestyle='solid')
+    ax2.plot(
+        acc_c, label="Classical LSTM accuracy", color="steelblue", linestyle="dashed"
+    )
+    ax2.plot(acc_q, label="Quantum LSTM accuracy", color="blue", linestyle="solid")
 
     plt.title("Part-of-Speech Tagger Training__torch")
-    plt.ylim(0., 1.1)
-    #plt.legend(loc="upper right")
-    fig.legend(loc="upper right", bbox_to_anchor=(1,0.8), bbox_transform=ax1.transAxes)
+    plt.ylim(0.0, 1.1)
+    # plt.legend(loc="upper right")
+    fig.legend(loc="upper right", bbox_to_anchor=(1, 0.8), bbox_transform=ax1.transAxes)
 
     plt.savefig("pos_training_torch.pdf")
     plt.savefig("pos_training_torch.png")
-    
+
     plt.show()
+
 
 def main():
     tag_to_ix = {"DET": 0, "NN": 1, "V": 2}  # Assign each tag with a unique index
-    ix_to_tag = {i:k for k,i in tag_to_ix.items()}
+    ix_to_tag = {i: k for k, i in tag_to_ix.items()}
 
     training_data = [
-    # Tags are: DET - determiner; NN - noun; V - verb
-    # For example, the word "The" is a determiner
-    ("The dog ate the apple".split(), ["DET", "NN", "V", "DET", "NN"]),
-    ("Everybody read that book".split(), ["NN", "V", "DET", "NN"])
+        # Tags are: DET - determiner; NN - noun; V - verb
+        # For example, the word "The" is a determiner
+        ("The dog ate the apple".split(), ["DET", "NN", "V", "DET", "NN"]),
+        ("Everybody read that book".split(), ["NN", "V", "DET", "NN"]),
     ]
     word_to_ix = {}
 
@@ -373,7 +401,9 @@ def main():
     for sent, tags in training_data:
         for word in sent:
             if word not in word_to_ix:  # word has not been assigned an index yet
-                word_to_ix[word] = len(word_to_ix)  # Assign each word with a unique index
+                word_to_ix[word] = len(
+                    word_to_ix
+                )  # Assign each word with a unique index
 
     print(f"Vocabulary: {word_to_ix}")
     print(f"Entities: {ix_to_tag}")
@@ -382,32 +412,42 @@ def main():
     hidden_dim = 6
     n_epochs = 300
 
-    model_classical = LSTMTagger(embedding_dim, 
-                        hidden_dim, 
-                        vocab_size=len(word_to_ix), 
-                        tagset_size=len(tag_to_ix), 
-                        n_qubits=0)
-    
-    history_classical = train(model_classical, n_epochs, training_data, word_to_ix, tag_to_ix)
+    model_classical = LSTMTagger(
+        embedding_dim,
+        hidden_dim,
+        vocab_size=len(word_to_ix),
+        tagset_size=len(tag_to_ix),
+        n_qubits=0,
+    )
+
+    history_classical = train(
+        model_classical, n_epochs, training_data, word_to_ix, tag_to_ix
+    )
 
     print_result(model_classical, training_data, word_to_ix, ix_to_tag)
 
     n_qubits = 4
 
-    model_quantum = LSTMTagger(embedding_dim, 
-                            hidden_dim, 
-                            vocab_size=len(word_to_ix), 
-                            tagset_size=len(tag_to_ix), 
-                            n_qubits=n_qubits)
-    
-    history_quantum = train(model_quantum, n_epochs, training_data, word_to_ix, tag_to_ix)
+    model_quantum = LSTMTagger(
+        embedding_dim,
+        hidden_dim,
+        vocab_size=len(word_to_ix),
+        tagset_size=len(tag_to_ix),
+        n_qubits=n_qubits,
+    )
+
+    history_quantum = train(
+        model_quantum, n_epochs, training_data, word_to_ix, tag_to_ix
+    )
 
     print_result(model_quantum, training_data, word_to_ix, ix_to_tag)
 
     plot_history(history_classical, history_quantum)
 
+
 if __name__ == "__main__":
     import pdb
+
     pdb.set_trace()
 
     main()

@@ -33,14 +33,14 @@ if __name__ == "__main__":
     hamil = Hamiltonian.from_file("./examples/simple_vqe/h2.txt")
 
     ops = [
-        {'name': 'u3', 'wires': 0, 'trainable': True},
-        {'name': 'u3', 'wires': 1, 'trainable': True},
-        {'name': 'cu3', 'wires': [0, 1], 'trainable': True},
-        {'name': 'cu3', 'wires': [1, 0], 'trainable': True},
-        {'name': 'u3', 'wires': 0, 'trainable': True},
-        {'name': 'u3', 'wires': 1, 'trainable': True},
-        {'name': 'cu3', 'wires': [0, 1], 'trainable': True},
-        {'name': 'cu3', 'wires': [1, 0], 'trainable': True},
+        {"name": "u3", "wires": 0, "trainable": True},
+        {"name": "u3", "wires": 1, "trainable": True},
+        {"name": "cu3", "wires": [0, 1], "trainable": True},
+        {"name": "cu3", "wires": [1, 0], "trainable": True},
+        {"name": "u3", "wires": 0, "trainable": True},
+        {"name": "u3", "wires": 1, "trainable": True},
+        {"name": "cu3", "wires": [0, 1], "trainable": True},
+        {"name": "cu3", "wires": [1, 0], "trainable": True},
     ]
 
     # or alternatively, you can use the following code to generate the ops

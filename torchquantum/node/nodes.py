@@ -39,7 +39,7 @@ __all__ = [
 
 class QuantumNode(tq.QuantumModule):
     """A quantum node contains a q device, encoder, q layer and measure
-    
+
     Attributes:
         arch (dict): The architecture configuration for the node.
         q_device (tq.QuantumDevice): The quantum device.
@@ -61,7 +61,7 @@ class QuantumNode(tq.QuantumModule):
         pre_specified_mean_std (dict): The pre-specified mean and standard deviation.
         grad_qlayer (List[Optional[torch.Tensor]]): The gradients of the quantum layer.
         grad_encoder (List[Optional[torch.Tensor]]): The gradients of the encoder.
-    
+
     Methods:
         __init__(self, arch, act_norm, node_id): Initialize the QuantumNode.
         forward(self, x, use_qiskit=False, is_last_node=False, parallel=True): Forward pass of the QuantumNode.
@@ -84,7 +84,7 @@ class QuantumNode(tq.QuantumModule):
             >>> node_id = 0
             >>> node = QuantumNode(arch, act_norm, node_id)
         """
-        
+
         super().__init__()
         self.arch = arch
         self.q_device = tq.QuantumDevice(n_wires=arch["n_wires"])
@@ -135,7 +135,7 @@ class QuantumNode(tq.QuantumModule):
             >>> x = torch.randn(10, 2)
             >>> node.forward(x, use_qiskit=True, is_last_node=False, parallel=True)
         """
-        
+
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
                 self.q_device,
@@ -181,7 +181,6 @@ class QuantumNode(tq.QuantumModule):
             if not is_last_node:
                 x = (x - x.mean(-1).unsqueeze(-1)) / x.std(-1).unsqueeze(-1)
         elif self.act_norm == "batch_norm_no_last":
-
             if not is_last_node:
                 if self.pre_specified_mean_std is None:
                     x = self.bn(x)
@@ -219,7 +218,7 @@ class QuantumNode(tq.QuantumModule):
             >>> inputs = torch.randn(10, 2)
             >>> node.run_circuit(inputs)
         """
-        
+
         self.encoder(self.q_device, inputs)
         self.q_layer(self.q_device)
         x = self.measure(self.q_device)
@@ -254,7 +253,7 @@ class QuantumNode(tq.QuantumModule):
             >>> x = torch.randn(10, 2)
             >>> node.shift_and_run(x, use_qiskit=True, is_last_node=False, is_first_node=False, parallel=True)
         """
-        
+
         import numpy as np
 
         self.circuit_in = x
@@ -388,7 +387,6 @@ class QuantumNode(tq.QuantumModule):
             if not is_last_node:
                 x = (x - x.mean(-1).unsqueeze(-1)) / x.std(-1).unsqueeze(-1)
         elif self.act_norm == "batch_norm_no_last":
-
             if not is_last_node:
                 if self.pre_specified_mean_std is None:
                     x = self.bn(x)
@@ -424,13 +422,13 @@ def build_nodes(node_archs, act_norm=None) -> torchquantum.QuantumModuleList:
 
     Returns:
         torchquantum.QuantumModuleList: The list of QuantumNode instances.
-        
+
     Example:
         >>> node_archs = [...]
         >>> act_norm = "batch_norm"
         >>> nodes = build_nodes(node_archs, act_norm)
     """
-    
+
     nodes = tq.QuantumModuleList()
     for k, node_arch in enumerate(node_archs):
         nodes.append(QuantumNode(node_arch, act_norm=act_norm, node_id=k))

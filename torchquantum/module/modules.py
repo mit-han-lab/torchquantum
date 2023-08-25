@@ -37,7 +37,7 @@ __all__ = [
 
 class QuantumModule(nn.Module):
     """Module for quantum computations.
-    
+
     Attributes:
         static_mode (bool): Indicates whether the module is in static mode.
         graph (tq.QuantumGraph): The quantum graph representation.
@@ -52,7 +52,7 @@ class QuantumModule(nn.Module):
         qiskit_processor: The Qiskit processor.
         noise_model_tq: The noise model.
         Operator_list (tq.QuantumModuleList): The list of quantum operators.
-    
+
     Methods:
         __init__(self):
             Initialize the QuantumModule.
@@ -61,17 +61,17 @@ class QuantumModule(nn.Module):
         from_op_history(cls, op_history):
             Create a QuantumModule from the operation history.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the QuantumModule.
-        
+
         Returns:
             None.
-            
+
         Examples:
             >>> qmodule = QuantumModule()
         """
-        
+
         super().__init__()
         self.static_mode = False
         self.graph = None
@@ -88,16 +88,16 @@ class QuantumModule(nn.Module):
         self.qiskit_processor = None
         self.noise_model_tq = None
         self.Operator_list = None
-    
+
     def load_op_history(self, op_history):
         """Load the operation history.
-        
+
         Args:
             op_history (list of dict): A list of operations in function dict format.
 
         Returns:
             None.
-            
+
         Examples:
             >>> op_history = [
             ...     {
@@ -115,22 +115,25 @@ class QuantumModule(nn.Module):
         for op in op_history:
             Oper = tq.op_name_dict[op["name"]]
             trainable = op.get("trainable", False)
-            has_params = True if ((op.get("params", None) is not None) or trainable) else False
+            has_params = (
+                True if ((op.get("params", None) is not None) or trainable) else False
+            )
             init_params = op.get("params", None)
             n_wires = len(op["wires"]) if isinstance(op["wires"], Iterable) else 1
-            wires = op['wires']
+            wires = op["wires"]
             inverse = op.get("inverse", False)
-            Operator_list.append(Oper(
-                has_params=has_params,
-                trainable=trainable,
-                init_params=init_params,
-                n_wires=n_wires,
-                wires=wires,
-                inverse=inverse,
-            ))
+            Operator_list.append(
+                Oper(
+                    has_params=has_params,
+                    trainable=trainable,
+                    init_params=init_params,
+                    n_wires=n_wires,
+                    wires=wires,
+                    inverse=inverse,
+                )
+            )
 
         self.Operator_list = tq.QuantumModuleList(Operator_list)
-    
 
     @classmethod
     def from_op_history(cls, op_history):
@@ -141,7 +144,7 @@ class QuantumModule(nn.Module):
 
         Returns:
             QuantumModule: The created QuantumModule.
-        
+
         Examples:
             >>> op_history = [
             ...     {
@@ -154,7 +157,7 @@ class QuantumModule(nn.Module):
             ... ]
             >>> qmodule = QuantumModule.from_op_history(op_history)
         """
-        
+
         qmodule = cls()
         qmodule.load_op_history(op_history)
         qmodule.forward = qmodule.forward_Operators_list
@@ -165,7 +168,7 @@ class QuantumModule(nn.Module):
 
         Args:
             qdev (tq.QuantumDevice): The quantum device.
-        
+
         Returns:
             None.
 
@@ -173,8 +176,10 @@ class QuantumModule(nn.Module):
             >>> qdev = tq.QuantumDevice(n_wires=2)
             >>> qmodule.forward_Operators_list(qdev)
         """
-        
-        assert self.Operator_list is not None, "Operator_list should not contain nothing"
+
+        assert (
+            self.Operator_list is not None
+        ), "Operator_list should not contain nothing"
         for Oper in self.Operator_list:
             Oper(qdev)
 
@@ -183,15 +188,15 @@ class QuantumModule(nn.Module):
 
         Args:
             noise_model_tq: The noise model.
-        
+
         Returns:
             None.
-            
+
         Examples:
             >>> noise_model_tq = ...
             >>> qmodule.set_noise_model_tq(noise_model_tq)
         """
-        
+
         for module in self.modules():
             module.noise_model_tq = noise_model_tq
 
@@ -208,7 +213,7 @@ class QuantumModule(nn.Module):
             >>> processor = ...
             >>> qmodule.set_qiskit_processor(processor)
         """
-        
+
         for module in self.modules():
             module.qiskit_processor = processor
 
@@ -224,7 +229,7 @@ class QuantumModule(nn.Module):
         Examples:
             >>> qmodule.set_wires_per_block(3)
         """
-        
+
         self.wires_per_block = wires_per_block
 
     def static_on(self, is_graph_top=True, wires_per_block=3):
@@ -242,7 +247,7 @@ class QuantumModule(nn.Module):
         Examples:
             >>> qmodule.static_on(wires_per_block=5)
         """
-        
+
         self.wires_per_block = wires_per_block
         # register graph of itself and parent
         self.static_mode = True
@@ -269,7 +274,7 @@ class QuantumModule(nn.Module):
         Examples:
             >>> qmodule.static_off()
         """
-        
+
         self.static_mode = False
         self.graph = None
         for module in self.children():
@@ -278,14 +283,14 @@ class QuantumModule(nn.Module):
 
     def set_graph_build_finish(self):
         """Set the graph build finish flag for the QuantumModule and its sub-modules.
-        
+
         Returns:
-            None.        
+            None.
 
         Examples:
             >>> qmodule.set_graph_build_finish()
         """
-        
+
         self.graph.is_list_finish = True
         for module in self.graph.module_list:
             if not isinstance(module, tq.QuantumDevice):
@@ -296,15 +301,15 @@ class QuantumModule(nn.Module):
 
         Args:
             q_device (tq.QuantumDevice): The quantum device.
-        
+
         Returns:
             None.
-            
+
         Example:
             >>> q_device = tq.QuantumDevice(n_wires=2)
             >>> qmodule.static_forward(q_device)
         """
-        
+
         self.q_device = q_device
         self.device = q_device.states.device
         self.graph.q_device = q_device
@@ -338,7 +343,7 @@ class QuantumModule(nn.Module):
             >>> q_device = tq.QuantumDevice(n_wires=2)
             >>> unitary = qmodule.get_unitary(q_device)
         """
-        
+
         original_wires_per_block = self.wires_per_block
         original_static_mode = self.static_mode
         self.static_off()
@@ -370,26 +375,25 @@ class QuantumModule(nn.Module):
 
 class QuantumModuleList(nn.ModuleList, QuantumModule, metaclass=ABCMeta):
     """A list-based container for QuantumModules."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
 class QuantumModuleDict(nn.ModuleDict, QuantumModule, metaclass=ABCMeta):
     """A dictionary-based container for QuantumModules."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-
 def test():
     """Test function.
-    
+
     Returns:
         None.
     """
-    
+
     pass
 
 

@@ -60,7 +60,9 @@ class QFCModel(tq.QuantumModule):
         def __init__(self):
             super().__init__()
             self.n_wires = 4
-            self.random_layer = tq.RandomLayer(n_ops=50, wires=list(range(self.n_wires)))
+            self.random_layer = tq.RandomLayer(
+                n_ops=50, wires=list(range(self.n_wires))
+            )
             # self.arch = {'n_wires': self.n_wires, 'n_blocks': 4, 'n_layers_per_block': 2}
             # self.random_layer = tq.layers.U3CU3Layer0(self.arch)
 
@@ -90,9 +92,13 @@ class QFCModel(tq.QuantumModule):
             self.crx0(qdev, wires=[0, 2])
 
             # add some more non-parameterized gates (add on-the-fly)
-            tqf.hadamard(qdev, wires=3, static=self.static_mode, parent_graph=self.graph)
+            tqf.hadamard(
+                qdev, wires=3, static=self.static_mode, parent_graph=self.graph
+            )
             tqf.sx(qdev, wires=2, static=self.static_mode, parent_graph=self.graph)
-            tqf.cnot(qdev, wires=[3, 0], static=self.static_mode, parent_graph=self.graph)
+            tqf.cnot(
+                qdev, wires=[3, 0], static=self.static_mode, parent_graph=self.graph
+            )
 
     def __init__(self):
         super().__init__()
@@ -103,7 +109,9 @@ class QFCModel(tq.QuantumModule):
         self.measure = tq.MeasureAll(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True)
+        qdev = tq.QuantumDevice(
+            n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True
+        )
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
         devi = x.device
@@ -112,14 +120,18 @@ class QFCModel(tq.QuantumModule):
             self.encoder(qdev, x)
             op_history_parameterized = qdev.op_history
             qdev.reset_op_history()
-            encoder_circ = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
+            encoder_circ = op_history2qiskit_expand_params(
+                self.n_wires, op_history_parameterized, bsz=bsz
+            )
             self.q_layer(qdev)
             op_history_fixed = qdev.op_history
             qdev.reset_op_history()
             q_layer_circ = op_history2qiskit(self.n_wires, op_history_fixed)
             measurement_circ = tq2qiskit_measurement(qdev, self.measure)
 
-            assembed_circs = qiskit_assemble_circs(encoder_circ, q_layer_circ, measurement_circ)
+            assembed_circs = qiskit_assemble_circs(
+                encoder_circ, q_layer_circ, measurement_circ
+            )
             x = self.qiskit_processor.process_ready_circs(qdev, assembed_circs).to(devi)
         else:
             self.encoder(qdev, x)
@@ -224,6 +236,7 @@ def main():
     n_epochs = args.epochs
 
     from qiskit import IBMQ
+
     IBMQ.load_account()
 
     qdev = tq.QuantumDevice(n_wires=model.n_wires)
@@ -238,7 +251,7 @@ def main():
 
     circ_transpiled = processor.transpile(circs=circ)
     # circ_transpiled.draw(output='mpl', filename='after-transpile.png')
-    
+
     q_layer = qiskit2tq(circ=circ_transpiled)
 
     model.measure.set_v_c_reg_mapping(get_v_c_reg_mapping(circ_transpiled))
@@ -297,7 +310,9 @@ def main():
         # firstly perform simulate
         print(f"\nTest with Qiskit Simulator")
         backend_name = "ibmq_quito"
-        processor_simulation = QiskitProcessor(use_real_qc=False, noise_model_name=backend_name)
+        processor_simulation = QiskitProcessor(
+            use_real_qc=False, noise_model_name=backend_name
+        )
         model.set_qiskit_processor(processor_simulation)
         valid_test(dataflow, "test", model, device, qiskit=True)
         # valid_test(dataflow, "valid", model, device, qiskit=True)

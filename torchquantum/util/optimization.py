@@ -102,7 +102,6 @@ def bayes_opt(
     # Goes into real Bayesian Optimization
     cur_count, cur_best_w, cur_best_y = N_initial, None, 1e10
     while cur_count < N_sim:
-
         # build gaussian process on the normalized data
         wrk_mean, wrk_std = X.mean(axis=0), X.std(axis=0)
         model = GPR(

@@ -46,7 +46,7 @@ def parse_hamiltonian_file(filename: str) -> dict:
         0.39793742484318045 I0 Z1
         -0.39793742484318045 Z0 I1
         -0.01128010425623538 Z0 Z1
-        0.18093119978423156 X0 X1   
+        0.18093119978423156 X0 X1
     """
 
     hamil_info = {}
@@ -75,7 +75,7 @@ def parse_hamiltonian_file(filename: str) -> dict:
                 obs = []
 
                 for observable in info[1:]:
-                    assert observable[0].upper() in ["X", "Y", "Z", "I"]    
+                    assert observable[0].upper() in ["X", "Y", "Z", "I"]
                     wires.append(int(eval(observable[1:])))
                     obs.append(observable[0].upper())
 
@@ -87,16 +87,19 @@ def parse_hamiltonian_file(filename: str) -> dict:
                         pauli_string += "I"
 
                 hamil_info["paulis"].append(pauli_string)
-    
+
     return hamil_info
+
 
 class Hamiltonian(object):
     """Hamiltonian class."""
-    def __init__(self,
-                 coeffs: List[float],
-                 paulis: List[str],
-                 endianness: str = "big",
-                 ) -> None:
+
+    def __init__(
+        self,
+        coeffs: List[float],
+        paulis: List[str],
+        endianness: str = "big",
+    ) -> None:
         """Initialize the Hamiltonian.
         Args:
             coeffs: The coefficients of the Hamiltonian.
@@ -113,26 +116,28 @@ class Hamiltonian(object):
         if endianness not in ["big", "little"]:
             raise ValueError("Endianness must be either big or little.")
         if len(coeffs) != len(paulis):
-            raise ValueError("The number of coefficients and operators must be the same.")
+            raise ValueError(
+                "The number of coefficients and operators must be the same."
+            )
         for op in paulis:
             if len(op) != len(paulis[0]):
                 raise ValueError("The length of each operator must be the same.")
             for char in op:
                 if char not in ["X", "Y", "Z", "I"]:
                     raise ValueError("The operator must be a string of X, Y, Z, and I.")
-        
+
         self.n_wires = len(paulis[0])
         self.coeffs = coeffs
         self.paulis = paulis
         self.endianness = endianness
         if self.endianness == "little":
             self.paulis = [pauli[::-1] for pauli in self.paulis]
-    
+
     @property
     def matrix(self) -> torch.Tensor:
         """Return the matrix of the Hamiltonian."""
         return self.get_matrix()
-    
+
     def get_matrix(self) -> torch.Tensor:
         """Return the matrix of the Hamiltonian."""
         matrix = self.coeffs[0] * pauli_string_to_matrix(self.paulis[0])
@@ -140,15 +145,15 @@ class Hamiltonian(object):
             matrix += coeff * pauli_string_to_matrix(pauli)
 
         return matrix
-    
+
     def __repr__(self) -> str:
         """Return the representation string."""
         return f"{self.__class__.__name__}({self.coeffs}, {self.paulis}, {self.endianness})"
-    
+
     def __len__(self) -> int:
         """Return the number of terms in the Hamiltonian."""
         return len(self.coeffs)
-    
+
     @classmethod
     def from_file(cls, file_path: str) -> Any:
         """Initialize the Hamiltonian from a file.
@@ -165,15 +170,16 @@ class Hamiltonian(object):
         0.39793742484318045 I0 Z1
         -0.39793742484318045 Z0 I1
         -0.01128010425623538 Z0 Z1
-        0.18093119978423156 X0 X1            
+        0.18093119978423156 X0 X1
 
         """
         hamil_info = parse_hamiltonian_file(file_path)
         return cls(hamil_info["coeffs"], hamil_info["paulis"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pdb
+
     pdb.set_trace()
 
     coeffs = [1.0, 1.0]
@@ -193,6 +199,3 @@ if __name__ == '__main__':
 
     hamil = Hamiltonian.from_file("torchquantum/algorithms/h2.txt")
     print(hamil.matrix)
-
-    
-

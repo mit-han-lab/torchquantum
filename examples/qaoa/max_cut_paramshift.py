@@ -37,7 +37,6 @@ torch.manual_seed(seed)
 
 from torchquantum.plugin import QiskitProcessor, op_history2qiskit
 
-       
 
 class MAXCUT(tq.QuantumModule):
     """computes the optimal cut for a given graph.
@@ -177,13 +176,12 @@ class MAXCUT(tq.QuantumModule):
                     self.circuit(qdev)
                 circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
 
-                expv = self.qiskit_processor.process_circs_get_joint_expval([circ], pauli_string)[0]
+                expv = self.qiskit_processor.process_circs_get_joint_expval(
+                    [circ], pauli_string
+                )[0]
                 expVal += 0.5 * expv
             expVal = torch.Tensor([expVal])
         return expVal
-    
-
-
 
 
 def shift_and_run(model, use_qiskit):
@@ -282,12 +280,12 @@ def main(use_qiskit):
     n_wires = 4
     n_layers = 1
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
-    
+
     # set the qiskit processor
     processor_simulation = QiskitProcessor(use_real_qc=False, n_shots=10000)
     model.set_qiskit_processor(processor_simulation)
 
-     # firstly perform simulate
+    # firstly perform simulate
     # model.to("cuda")
     # model.to(torch.device("cuda"))
     # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)

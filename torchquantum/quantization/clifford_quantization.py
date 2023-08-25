@@ -13,7 +13,7 @@ class QuantizeFunction(torch.autograd.Function):
 
         backward(ctx, grad_output): Backward pass of the quantization function.
     """
-    
+
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor) -> Any:
         """
@@ -26,7 +26,7 @@ class QuantizeFunction(torch.autograd.Function):
         Returns:
             Any: Quantized output tensor.
         """
-        
+
         # should be round so that the changes would be small, values close to
         # 2pi should go to 2pi
         return x.round()
@@ -43,7 +43,7 @@ class QuantizeFunction(torch.autograd.Function):
         Returns:
             Any: Gradient of the input tensor.
         """
-        
+
         grad_input = grad_output.clone()
         mean, std = grad_input.mean(), grad_input.std()
         return grad_input.clamp_(mean - 3 * std, mean + 3 * std)
@@ -65,7 +65,7 @@ class CliffordQuantizer(object):
         Returns:
             torch.Tensor: Quantized parameters.
         """
-        
+
         param = params[0][0]
         param = param % (2 * np.pi)
         param = np.pi / 2 * QuantizeFunction.apply(param / (np.pi / 2))

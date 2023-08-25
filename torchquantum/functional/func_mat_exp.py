@@ -30,6 +30,7 @@ import torchquantum.functional as tqf
 
 __all__ = ["matrix_exp"]
 
+
 def matrix_exp(
     qdev,
     wires,
@@ -62,7 +63,7 @@ def matrix_exp(
 
     mat = torch.matrix_exp(params)
 
-    name = 'qubitunitaryfast'
+    name = "qubitunitaryfast"
 
     tqf.qubitunitaryfast(
         q_device=qdev,

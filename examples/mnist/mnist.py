@@ -96,10 +96,12 @@ class QFCModel(tq.QuantumModule):
         if use_qiskit:
             # use qiskit to process the circuit
             # create the qiskit circuit for encoder
-            self.encoder(qdev, x)  
+            self.encoder(qdev, x)
             op_history_parameterized = qdev.op_history
             qdev.reset_op_history()
-            encoder_circs = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
+            encoder_circs = op_history2qiskit_expand_params(
+                self.n_wires, op_history_parameterized, bsz=bsz
+            )
 
             # create the qiskit circuit for trainable quantum layers
             self.q_layer(qdev)

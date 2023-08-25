@@ -24,7 +24,7 @@ def circ2pulse(circuits, name):
         >>> qc.cx(0, 1)
         >>> circ2pulse(qc, 'ibmq_oslo')
     """
-    
+
     if name in IBMQ_PNAMES:
         backend = name()
         with pulse.build(backend) as pulse_tq:

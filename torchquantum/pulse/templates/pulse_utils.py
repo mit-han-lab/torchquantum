@@ -87,7 +87,6 @@ def is_phase_pulse(t0, *inst: Union["Schedule", Instruction]):
 
 
 def extract_phase(pulse_prog):
-
     for _, ShiftPhase in pulse_prog.filter(is_phase_pulse).instructions:
         # print(play.pulse.amp)
         pass
@@ -143,7 +142,6 @@ def map_amp(pulse_ansatz, modified_list):
 
 
 def get_from(d: dict, key: str):
-
     value = 0
     if key in d:
         value = d[key]

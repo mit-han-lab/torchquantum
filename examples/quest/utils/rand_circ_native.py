@@ -123,7 +123,6 @@ def get_modified_backend(backend, mydict):
 
 
 def get_from(d: dict, key: str):
-
     value = 0
     if key in d:
         value = d[key]
@@ -157,7 +156,6 @@ def run_simulation(my_dict, native_circ, backend, n_used):
 
 
 def main():
-
     # Number of qubit 1 - 10
     # Number of gates < 500
     # Number of data points 2000

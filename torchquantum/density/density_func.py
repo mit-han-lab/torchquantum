@@ -114,7 +114,7 @@ def apply_unitary_density_einsum(density, mat, wires):
     Returns:
         torch.Tensor: The new statevector.
     """
-    
+
     device_wires = wires
     n_qubit = int((density.dim() - 1) / 2)
 
@@ -235,7 +235,7 @@ def apply_unitary_density_bmm(density, mat, wires):
     Returns:
         torch.Tensor: The new statevector.
     """
-    
+
     device_wires = wires
     n_qubit = int((density.dim() - 1) / 2)
 
@@ -326,7 +326,7 @@ def gate_wrapper(
     Returns:
         None.
     """
-    
+
     if params is not None:
         if not isinstance(params, torch.Tensor):
             # this is for qubitunitary gate
@@ -392,7 +392,7 @@ def reset(q_device: tq.QuantumDevice, wires, inverse=False) -> None:
     Args:
         q_device (tq.QuantumDevice): The quantum device.
         wires (int or list): The target wire(s) to reset.
-        inverse (bool, optional): If True, performs an inverse reset operation. 
+        inverse (bool, optional): If True, performs an inverse reset operation.
             Defaults to False.
 
     Returns:
@@ -441,7 +441,7 @@ def rx_matrix(params: torch.Tensor) -> torch.Tensor:
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     """
     Seems to be a pytorch bug. Have to explicitly cast the theta to a
@@ -453,7 +453,7 @@ def rx_matrix(params: torch.Tensor) -> torch.Tensor:
     (Could this error message be improved?
     If so, please report an enhancement request to PyTorch.)
     """
-    
+
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(-theta / 2)
 
@@ -471,7 +471,7 @@ def ry_matrix(params: torch.Tensor) -> torch.Tensor:
     Returns:
         The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
 
     co = torch.cos(theta / 2)
@@ -491,7 +491,7 @@ def rz_matrix(params: torch.Tensor) -> torch.Tensor:
     Returns:
         The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
@@ -551,7 +551,7 @@ def rot_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     theta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     omega = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -589,7 +589,7 @@ def multirz_eigvals(params, n_wires):
     Returns:
         torch.Tensor: The computed eigenvalues.
     """
-    
+
     theta = params.type(C_DTYPE)
     return torch.exp(
         -1j * theta / 2 * torch.tensor(pauli_eigs(n_wires)).to(params.device)
@@ -605,7 +605,7 @@ def multirz_matrix(params, n_wires):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     # torch diagonal not available for complex number
     eigvals = multirz_eigvals(params, n_wires)
     dia = diag(eigvals)
@@ -658,7 +658,7 @@ def ryy_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
@@ -695,7 +695,7 @@ def rzz_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
     conj_exp = torch.conj(exp)
@@ -727,7 +727,7 @@ def rzx_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
@@ -797,7 +797,7 @@ def cry_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
@@ -828,7 +828,7 @@ def crz_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
@@ -856,7 +856,7 @@ def crot_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].type(C_DTYPE)
     theta = params[:, 1].type(C_DTYPE)
     omega = params[:, 2].type(C_DTYPE)
@@ -891,7 +891,7 @@ def u1_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -919,7 +919,7 @@ def cu1_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -947,7 +947,7 @@ def u2_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
@@ -972,7 +972,7 @@ def cu2_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
@@ -1002,7 +1002,7 @@ def u3_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -1030,7 +1030,7 @@ def cu3_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -1064,11 +1064,11 @@ def qubitunitary_matrix(params):
 
     Returns:
         torch.Tensor: The computed unitary matrix.
-        
+
     Raises:
         AssertionError: If Operator is other than square matrix
     """
-    
+
     matrix = params.squeeze(0)
     try:
         assert matrix.shape[-1] == matrix.shape[-2]
@@ -1108,7 +1108,7 @@ def qubitunitaryfast_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     return params.squeeze(0)
 
 
@@ -1122,7 +1122,7 @@ def qubitunitarystrict_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     params.squeeze(0)
     mat = params
     U, Sigma, V = torch.svd(mat)
@@ -1138,7 +1138,7 @@ def multicnot_matrix(n_wires):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     mat = torch.eye(2**n_wires, dtype=C_DTYPE)
     mat[-1][-1] = 0
     mat[-2][-2] = 0
@@ -1157,7 +1157,7 @@ def multixcnot_matrix(n_wires):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     # when all control qubits are zero, then the target qubit will flip
     mat = torch.eye(2**n_wires, dtype=C_DTYPE)
     mat[0][0] = 0
@@ -1177,7 +1177,7 @@ def single_excitation_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
@@ -1324,7 +1324,7 @@ def hadamard(
     Returns:
         None.
     """
-    
+
     name = "hadamard"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1371,7 +1371,7 @@ def shadamard(
     Returns:
         None.
     """
-    
+
     name = "shadamard"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1418,7 +1418,7 @@ def paulix(
     Returns:
         None.
     """
-    
+
     name = "paulix"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1465,7 +1465,7 @@ def pauliy(
     Returns:
         None.
     """
-    
+
     name = "pauliy"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1512,7 +1512,7 @@ def pauliz(
     Returns:
         None.
     """
-    
+
     name = "pauliz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1559,7 +1559,7 @@ def i(
     Returns:
         None.
     """
-    
+
     name = "i"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1606,7 +1606,7 @@ def s(
     Returns:
         None.
     """
-    
+
     name = "s"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1653,7 +1653,7 @@ def t(
     Returns:
         None.
     """
-    
+
     name = "t"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1700,7 +1700,7 @@ def sx(
     Returns:
         None.
     """
-    
+
     name = "sx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1747,7 +1747,7 @@ def cnot(
     Returns:
         None.
     """
-    
+
     name = "cnot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1794,7 +1794,7 @@ def cz(
     Returns:
         None.
     """
-    
+
     name = "cz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1841,7 +1841,7 @@ def cy(
     Returns:
         None.
     """
-    
+
     name = "cy"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1888,7 +1888,7 @@ def rx(
     Returns:
         None.
     """
-    
+
     name = "rx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1935,7 +1935,7 @@ def ry(
     Returns:
         None.
     """
-    
+
     name = "ry"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1982,7 +1982,7 @@ def rz(
     Returns:
         None.
     """
-    
+
     name = "rz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2029,7 +2029,7 @@ def rxx(
     Returns:
         None.
     """
-    
+
     name = "rxx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2076,7 +2076,7 @@ def ryy(
     Returns:
         None.
     """
-    
+
     name = "ryy"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2123,7 +2123,7 @@ def rzz(
     Returns:
         None.
     """
-    
+
     name = "rzz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2170,7 +2170,7 @@ def rzx(
     Returns:
         None.
     """
-    
+
     name = "rzx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2217,7 +2217,7 @@ def swap(
     Returns:
         None.
     """
-    
+
     name = "swap"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2264,7 +2264,7 @@ def sswap(
     Returns:
         None.
     """
-    
+
     name = "sswap"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2311,7 +2311,7 @@ def cswap(
     Returns:
         None.
     """
-    
+
     name = "cswap"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2358,7 +2358,7 @@ def toffoli(
     Returns:
         None.
     """
-    
+
     name = "toffoli"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2405,7 +2405,7 @@ def phaseshift(
     Returns:
         None.
     """
-    
+
     name = "phaseshift"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2452,7 +2452,7 @@ def rot(
     Returns:
         None.
     """
-    
+
     name = "rot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2499,7 +2499,7 @@ def multirz(
     Returns:
         None.
     """
-    
+
     name = "multirz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2546,7 +2546,7 @@ def crx(
     Returns:
         None.
     """
-    
+
     name = "crx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2593,7 +2593,7 @@ def cry(
     Returns:
         None.
     """
-    
+
     name = "cry"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2640,7 +2640,7 @@ def crz(
     Returns:
         None.
     """
-    
+
     name = "crz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2687,7 +2687,7 @@ def crot(
     Returns:
         None.
     """
-    
+
     name = "crot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2734,7 +2734,7 @@ def u1(
     Returns:
         None.
     """
-    
+
     name = "u1"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2781,7 +2781,7 @@ def u2(
     Returns:
         None.
     """
-    
+
     name = "u2"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2828,7 +2828,7 @@ def u3(
     Returns:
         None.
     """
-    
+
     name = "u3"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2875,7 +2875,7 @@ def cu1(
     Returns:
         None.
     """
-    
+
     name = "cu1"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2922,7 +2922,7 @@ def cu2(
     Returns:
         None.
     """
-    
+
     name = "cu2"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2969,7 +2969,7 @@ def cu3(
     Returns:
         None.
     """
-    
+
     name = "cu3"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3016,7 +3016,7 @@ def qubitunitary(
     Returns:
         None.
     """
-    
+
     name = "qubitunitary"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3063,7 +3063,7 @@ def qubitunitaryfast(
     Returns:
         None.
     """
-    
+
     name = "qubitunitaryfast"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3110,7 +3110,7 @@ def qubitunitarystrict(
     Returns:
         None.
     """
-    
+
     name = "qubitunitarystrict"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3157,7 +3157,7 @@ def multicnot(
     Returns:
         None.
     """
-    
+
     name = "multicnot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3204,7 +3204,7 @@ def multixcnot(
     Returns:
         None.
     """
-    
+
     name = "multixcnot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3251,7 +3251,7 @@ def single_excitation(
     Returns:
         None.
     """
-    
+
     name = "single_excitation"
     mat = mat_dict[name]
     gate_wrapper(

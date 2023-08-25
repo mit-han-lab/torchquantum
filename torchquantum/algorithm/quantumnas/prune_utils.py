@@ -56,7 +56,7 @@ class PhaseL1UnstructuredPruningMethod(torch.nn.utils.prune.BasePruningMethod):
         Example:
             >>> pruning_method = PhaseL1UnstructuredPruningMethod(0.2)
         """
-        
+
         super().__init__()
         # Check range of validity of pruning amount
         # noinspection PyProtectedMember
