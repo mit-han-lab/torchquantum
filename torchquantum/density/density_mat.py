@@ -751,7 +751,7 @@ class DensityMatrix(nn.Module):
         inverse: bool = False,
         comp_method: str = "bmm",
     ):
-         """Apply a symmetric swap gate on the specified wires.
+        """Apply a symmetric swap gate on the specified wires.
 
         This method applies a symmetric swap gate on the specified wires of the quantum device.
         The gate is applied to all the wires if the inverse flag is set to False.
