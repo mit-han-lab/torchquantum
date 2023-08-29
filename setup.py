@@ -45,7 +45,7 @@ if __name__ == "__main__":
             "setuptools>=52.0.0",
             "torch>=1.8.0",
             "torchpack>=0.3.0",
-            "qiskit==0.38.0",
+            "qiskit>=0.38.0",
             "matplotlib>=3.3.2",
             "pathos>=0.2.7",
             "pylatexenc>=2.10",

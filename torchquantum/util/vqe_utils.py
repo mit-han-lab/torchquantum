@@ -119,7 +119,8 @@ def test_parse_hamiltonian_file():
     print(parse_hamiltonian_file(file))
 
 
-def test_generate_n_hamiltonian():"""
+def test_generate_n_hamiltonian():
+    """
     Test function for generate_n_hamiltonian.
     """
     print(generate_n_hamiltonian(n_wires=5, n_hamil=3, n_lines=100))

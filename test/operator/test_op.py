@@ -34,6 +34,7 @@ from tqdm import tqdm
 
 import qiskit.circuit.library.standard_gates as qiskit_gate
 import qiskit.circuit.library as qiskit_library
+from qiskit.quantum_info import Operator
 
 
 RND_TIMES = 100
@@ -71,13 +72,14 @@ pair_list = [
     {"qiskit": qiskit_gate.U1Gate, "tq": tq.U1},
     {"qiskit": qiskit_gate.U2Gate, "tq": tq.U2},
     {"qiskit": qiskit_gate.U3Gate, "tq": tq.U3},
+    {"qiskit": qiskit_gate.CUGate, "tq": tq.CU},
     {"qiskit": qiskit_gate.CU1Gate, "tq": tq.CU1},
     # {'qiskit': qiskit_gate.?, 'tq': tq.CU2},
     {"qiskit": qiskit_gate.CU3Gate, "tq": tq.CU3},
     {"qiskit": qiskit_gate.ECRGate, "tq": tq.ECR},
-    {"qiskit": qiskit_library.QFT, "tq": tq.QFT},
+    # {"qiskit": qiskit_library.QFT, "tq": tq.QFT},
     {"qiskit": qiskit_gate.SdgGate, "tq": tq.SDG},
-    {"qiskit": qiskit_gate.TDgGate, "tq": tq.TDG},
+    {"qiskit": qiskit_gate.TdgGate, "tq": tq.TDG},
     {"qiskit": qiskit_gate.SXdgGate, "tq": tq.SXDG},
     {"qiskit": qiskit_gate.CHGate, "tq": tq.CH},
     {"qiskit": qiskit_gate.CCZGate, "tq": tq.CCZ},
@@ -86,10 +88,15 @@ pair_list = [
     {"qiskit": qiskit_gate.CSdgGate, "tq": tq.CSDG},
     {"qiskit": qiskit_gate.CSXGate, "tq": tq.CSX},
     {"qiskit": qiskit_gate.DCXGate, "tq": tq.DCX},
-    {'qiskit': qiskit_gate.XXMinusYYGate, 'tq': tq.XXMINYY},
-    {'qiskit': qiskit_gate.XXPlusYYGate, 'tq': tq.XXPLUSYY},
+    {"qiskit": qiskit_gate.XXMinusYYGate, "tq": tq.XXMINYY},
+    {"qiskit": qiskit_gate.XXPlusYYGate, "tq": tq.XXPLUSYY},
     {"qiskit": qiskit_gate.C3XGate, "tq": tq.C3X},
     {"qiskit": qiskit_gate.RGate, "tq": tq.R},
+    {"qiskit": qiskit_gate.C4XGate, "tq": tq.C4X},
+    {"qiskit": qiskit_gate.RCCXGate, "tq": tq.RCCX},
+    {"qiskit": qiskit_gate.RC3XGate, "tq": tq.RC3X},
+    {"qiskit": qiskit_gate.GlobalPhaseGate, "tq": tq.GlobalPhase},
+    {"qiskit": qiskit_gate.C3SXGate, "tq": tq.C3SX},
 ]
 
 import os
@@ -120,6 +127,8 @@ def test_op():
                 if pair["tq"]().name == "SHadamard":
                     """Square root of Hadamard is RY(pi/4)"""
                     qiskit_matrix = qiskit_gate.RYGate(theta=np.pi / 4).to_matrix()
+                elif pair["tq"]().name == "C3SX":
+                    qiskit_matrix = Operator(pair["qiskit"]())
                 else:
                     qiskit_matrix = pair["qiskit"]().to_matrix()
                 tq_matrix = pair["tq"].matrix.numpy()

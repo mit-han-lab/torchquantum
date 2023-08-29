@@ -10,7 +10,7 @@ from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
-from torchquantum.operators import op_name_dict
+from torchquantum.operator import op_name_dict, Observable
 from copy import deepcopy
 
 __all__ = [
@@ -276,7 +276,7 @@ def expval_joint_analytical(
 def expval(
     qdev: tq.QuantumDevice,
     wires: Union[int, List[int]],
-    observables: Union[tq.Observable, List[tq.Observable]],
+    observables: Union[Observable, List[Observable]],
 ):
 
     all_dims = np.arange(qdev.states.dim())
