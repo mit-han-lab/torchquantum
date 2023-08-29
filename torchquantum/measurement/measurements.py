@@ -12,6 +12,7 @@ from collections import Counter, OrderedDict
 from torchquantum.functional import mat_dict
 from torchquantum.operator import op_name_dict, Observable
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 __all__ = [
     "find_observable_groups",
@@ -32,7 +33,7 @@ def gen_bitstrings(n_wires):
     return ["{:0{}b}".format(k, n_wires) for k in range(2**n_wires)]
 
 
-def measure(qdev, n_shots=1024):
+def measure(qdev, n_shots=1024, draw_id=None):
     """Measure the target state and obtain classical bitstream distribution
     Args:
         q_state: input tq.QuantumDevice
@@ -58,12 +59,12 @@ def measure(qdev, n_shots=1024):
         distri = OrderedDict(sorted(distri.items()))
         distri_all.append(distri)
 
-    # if draw_id is not None:
-    #     plt.bar(distri_all[draw_id].keys(), distri_all[draw_id].values())
-    #     plt.xticks(rotation="vertical")
-    #     plt.xlabel("bitstring [qubit0, qubit1, ..., qubitN]")
-    #     plt.title("distribution of measured bitstrings")
-    #     plt.show()
+    if draw_id is not None:
+        plt.bar(distri_all[draw_id].keys(), distri_all[draw_id].values())
+        plt.xticks(rotation="vertical")
+        plt.xlabel("bitstring [qubit0, qubit1, ..., qubitN]")
+        plt.title("distribution of measured bitstrings")
+        plt.show()
     return distri_all
 
 
