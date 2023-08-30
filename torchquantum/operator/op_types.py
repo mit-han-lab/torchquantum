@@ -32,6 +32,23 @@ class Operator(tq.QuantumModule):
         "MultiXCNOT",
         "Reset",
         "EchoedCrossResonance",
+        "QFT",
+        "SDG",
+        "TDG",
+        "SXDG",
+        "CH",
+        "CCZ",
+        "ISWAP",
+        "CS",
+        "CSDG",
+        "CSX",
+        "CHadamard",
+        "DCX",
+        "C3X",
+        "C3SX",
+        "RCCX",
+        "RC3X",
+        "C4X",
     ]
 
     parameterized_ops = [
@@ -52,6 +69,7 @@ class Operator(tq.QuantumModule):
         "U1",
         "U2",
         "U3",
+        "CU",
         "CU1",
         "CU2",
         "CU3",
@@ -60,6 +78,10 @@ class Operator(tq.QuantumModule):
         "TrainableUnitary",
         "TrainableUnitaryStrict",
         "SingleExcitation",
+        "XXMINYY",
+        "XXPLUSYY",
+        "R",
+        "GlobalPhase",
     ]
 
     @property
