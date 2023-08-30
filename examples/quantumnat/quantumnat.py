@@ -54,6 +54,8 @@ from torchquantum.plugin import QiskitProcessor
 import random
 import numpy as np
 
+from quantize import PACTActivationQuantizer
+
 
 class QFCModel(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
@@ -101,6 +103,7 @@ class QFCModel(tq.QuantumModule):
 
         self.q_layer = self.QLayer()
         self.measure = tq.MeasureAll(tq.PauliZ)
+        self.norm = torch.nn.BatchNorm1d(self.n_wires)
 
     def forward(self, x, use_qiskit=False):
         qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True)
@@ -125,9 +128,9 @@ class QFCModel(tq.QuantumModule):
             self.encoder(qdev, x)
             self.q_layer(qdev)
             x = self.measure(qdev)
-
-        x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
-        x = F.log_softmax(x, dim=1)
+        
+        # simplified version of post-measurement normalization, implemented with batch norm
+        x = self.norm(x)
 
         return x
 
@@ -138,6 +141,11 @@ def train(dataflow, model, device, optimizer):
         targets = feed_dict["digit"].to(device)
 
         outputs = model(inputs)
+
+        bsz = outputs.shape[0]
+        outputs = outputs.reshape(bsz, 2, 2).sum(-1).squeeze()
+        outputs = F.log_softmax(outputs, dim=1)
+
         loss = F.nll_loss(outputs, targets)
         optimizer.zero_grad()
         loss.backward()
@@ -154,6 +162,9 @@ def valid_test(dataflow, split, model, device, qiskit=False):
             targets = feed_dict["digit"].to(device)
 
             outputs = model(inputs, use_qiskit=qiskit)
+            bsz = outputs.shape[0]
+            outputs = outputs.reshape(bsz, 2, 2).sum(-1).squeeze()
+            outputs = F.log_softmax(outputs, dim=1)
 
             target_all.append(targets)
             output_all.append(outputs)
@@ -177,9 +188,7 @@ def main():
         "--static", action="store_true", help="compute with " "static mode"
     )
     parser.add_argument("--pdb", action="store_true", help="debug with pdb")
-    parser.add_argument(
-        "--wires-per-block", type=int, default=2, help="wires per block int static mode"
-    )
+
     parser.add_argument(
         "--epochs", type=int, default=30, help="number of training epochs"
     )
@@ -244,76 +253,53 @@ def main():
     model.measure.set_v_c_reg_mapping(get_v_c_reg_mapping(circ_transpiled))
     model.q_layer = q_layer
 
+    # noise inject, initilized this noise model which will inject noise to gates
     noise_model_tq = tq.NoiseModelTQ(
         noise_model_name="ibmq_quito",
         n_epochs=n_epochs,
         # noise_total_prob=0.5,
         # ignored_ops=configs.trainer.ignored_noise_ops,
-        factor=1,
+        factor=10,
         add_thermal=True,
     )
 
     noise_model_tq.is_add_noise = True
-    # noise_model_tq.v_c_reg_mapping = {'v2c': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
-    #                                   'c2v': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
-    #                                   }
-    # noise_model_tq.p_c_reg_mapping = {'p2c': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
-    #                                   'c2p': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
-    #                                   }
-    # noise_model_tq.p_v_reg_mapping ={'p2v': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
-    #                                   'v2p': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},
-    #                                   }
     noise_model_tq.v_c_reg_mapping = get_v_c_reg_mapping(circ_transpiled)
     noise_model_tq.p_c_reg_mapping = get_p_c_reg_mapping(circ_transpiled)
     noise_model_tq.p_v_reg_mapping = get_p_v_reg_mapping(circ_transpiled)
-    model.set_noise_model_tq(noise_model_tq)
+    # model.set_noise_model_tq(noise_model_tq)
 
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
-    if args.static:
-        # optionally to switch to the static mode, which can bring speedup
-        # on training
-        model.q_layer.static_on(wires_per_block=args.wires_per_block)
+    # post-training quantization quantizer, in this model, there is only one node, meaning the output of the quantum layer is not encoded
+    # again in the later quantum layer. post-training quantization is more effective for multi-node models.
+    quantizer = PACTActivationQuantizer(
+                module=model,
+                precision=4,
+                alpha=1.0,
+                backprop_alpha=False,
+                device=device,
+                lower_bound=-5,
+                upper_bound=5,
+    )
 
     for epoch in range(1, n_epochs + 1):
         # train
         print(f"Epoch {epoch}:")
+        quantizer.register_hook()
         train(dataflow, model, device, optimizer)
         print(optimizer.param_groups[0]["lr"])
 
         # valid
         valid_test(dataflow, "valid", model, device)
         scheduler.step()
+        quantizer.remove_hook()
+    
     print(noise_model_tq.noise_counter)
 
     # test
     valid_test(dataflow, "test", model, device, qiskit=False)
-
-    # run on Qiskit simulator and real Quantum Computers
-    try:
-        from qiskit import IBMQ
-
-        # firstly perform simulate
-        print(f"\nTest with Qiskit Simulator")
-        backend_name = "ibmq_quito"
-        processor_simulation = QiskitProcessor(use_real_qc=False, noise_model_name=backend_name)
-        model.set_qiskit_processor(processor_simulation)
-        valid_test(dataflow, "test", model, device, qiskit=True)
-        # valid_test(dataflow, "valid", model, device, qiskit=True)
-
-        # then try to run on REAL QC
-        print(f"\nTest on Real Quantum Computer {backend_name}")
-        processor_real_qc = QiskitProcessor(use_real_qc=True, backend_name=backend_name)
-        model.set_qiskit_processor(processor_real_qc)
-        valid_test(dataflow, "test", model, device, qiskit=True)
-    except ImportError:
-        print(
-            "Please install qiskit, create an IBM Q Experience Account and "
-            "save the account token according to the instruction at "
-            "'https://github.com/Qiskit/qiskit-ibmq-provider', "
-            "then try again."
-        )
 
 
 if __name__ == "__main__":
