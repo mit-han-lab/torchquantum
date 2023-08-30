@@ -99,7 +99,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=1e-2, weight_decay=0)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
-    target_state = torch.tensor(
+    target_unitary = torch.tensor(
     [
         [1, 0, 0, 0],
         [0, 1, 0, 0],
@@ -110,7 +110,7 @@ def main():
 
     for epoch in range(1, n_epochs + 1):
         print(f"Epoch {epoch}, LR: {optimizer.param_groups[0]['lr']}")
-        train(target_state, model, optimizer)
+        train(target_unitary, model, optimizer)
         scheduler.step()
 
 
