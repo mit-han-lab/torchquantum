@@ -1,27 +1,3 @@
-"""
-MIT License
-
-Copyright (c) 2020-present TorchQuantum Authors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 import random
 
 import torch
@@ -30,24 +6,19 @@ import torchquantum.functional as tqf
 import numpy as np
 from torchquantum.macro import F_DTYPE
 
-from typing import Union, List, TYPE_CHECKING
+from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
-from torchquantum.operator.operators import op_name_dict
+from torchquantum.operator import op_name_dict, Observable
 from copy import deepcopy
-
-if TYPE_CHECKING:
-    from torchquantum.operator import Observable
-else:
-    Observable = None
+import matplotlib.pyplot as plt
 
 __all__ = [
     "find_observable_groups",
     "expval_joint_sampling_grouping",
     "expval_joint_analytical",
     "expval_joint_sampling",
-    "expval_obs_mat",
     "expval",
     "MeasureAll",
     "MeasureMultipleTimes",
@@ -62,7 +33,7 @@ def gen_bitstrings(n_wires):
     return ["{:0{}b}".format(k, n_wires) for k in range(2**n_wires)]
 
 
-def measure(qdev, n_shots=1024):
+def measure(qdev, n_shots=1024, draw_id=None):
     """Measure the target state and obtain classical bitstream distribution
     Args:
         q_state: input tq.QuantumDevice
@@ -88,12 +59,12 @@ def measure(qdev, n_shots=1024):
         distri = OrderedDict(sorted(distri.items()))
         distri_all.append(distri)
 
-    # if draw_id is not None:
-    #     plt.bar(distri_all[draw_id].keys(), distri_all[draw_id].values())
-    #     plt.xticks(rotation="vertical")
-    #     plt.xlabel("bitstring [qubit0, qubit1, ..., qubitN]")
-    #     plt.title("distribution of measured bitstrings")
-    #     plt.show()
+    if draw_id is not None:
+        plt.bar(distri_all[draw_id].keys(), distri_all[draw_id].values())
+        plt.xticks(rotation="vertical")
+        plt.xlabel("bitstring [qubit0, qubit1, ..., qubitN]")
+        plt.title("distribution of measured bitstrings")
+        plt.show()
     return distri_all
 
 
@@ -252,24 +223,6 @@ def expval_joint_sampling(
 
     return torch.tensor(expval_all, dtype=F_DTYPE)
 
-def expval_obs_mat(
-    qdev: tq.QuantumDevice,
-    obs_mat: torch.Tensor,
-):
-    """
-    Compute the expectation value of a joint observable in analytical way, assuming the statevector is available.
-    Args:
-        qdev: the quantum device
-        observable: the joint observable a matrix
-    Returns:
-        the expectation value
-    """
-    states = qdev.get_states_1d()
-    return (
-        (states.conj() * torch.mm(obs_mat, states.transpose(0, 1)).transpose(0, 1))
-        .sum(-1)
-        .real
-    )
 
 def expval_joint_analytical(
     qdev: tq.QuantumDevice,
@@ -297,7 +250,7 @@ def expval_joint_analytical(
     >>> print(expval_joint_analytical(x, 'ZZ'))
     tensor([[-1.0000]])
     """
-    # compute the obs_mat matrix
+    # compute the hamiltonian matrix
     paulix = mat_dict["paulix"]
     pauliy = mat_dict["pauliy"]
     pauliz = mat_dict["pauliz"]
@@ -308,14 +261,14 @@ def expval_joint_analytical(
     assert len(observable) == qdev.n_wires
     states = qdev.get_states_1d()
 
-    obs_mat = pauli_dict[observable[0]].to(states.device)
+    hamiltonian = pauli_dict[observable[0]].to(states.device)
     for op in observable[1:]:
-        obs_mat = torch.kron(obs_mat, pauli_dict[op].to(states.device))
+        hamiltonian = torch.kron(hamiltonian, pauli_dict[op].to(states.device))
 
-    # torch.mm(states, torch.mm(obs_mat, states.conj().transpose(0, 1))).real
+    # torch.mm(states, torch.mm(hamiltonian, states.conj().transpose(0, 1))).real
 
     return (
-        (states.conj() * torch.mm(obs_mat, states.transpose(0, 1)).transpose(0, 1))
+        (states.conj() * torch.mm(hamiltonian, states.transpose(0, 1)).transpose(0, 1))
         .sum(-1)
         .real
     )

@@ -754,7 +754,8 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
             raise NotImplementedError(
                 f"{op_name} conversion to tq is currently not supported."
             )
-        return ops
+    
+    return ops
 
 
 def qiskit2tq(circ: QuantumCircuit):

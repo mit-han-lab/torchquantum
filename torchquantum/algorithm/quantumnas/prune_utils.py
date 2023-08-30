@@ -41,13 +41,22 @@ __all__ = ["PhaseL1UnstructuredPruningMethod", "ThresholdScheduler"]
 
 
 class PhaseL1UnstructuredPruningMethod(torch.nn.utils.prune.BasePruningMethod):
-    """
-    Prune rotation phases which is close to -2pi, 0, +2pi, ..
-    """
+    """Prune rotation phases which are close to -2pi, 0, +2pi, etc."""
 
     PRUNING_TYPE = "unstructured"
 
     def __init__(self, amount):
+        """Initializes a PhaseL1UnstructuredPruningMethod object.
+
+        Args:
+            amount (float or int): The pruning amount. If it is a float, it represents the fraction
+                of rotation phases to prune. If it is an integer, it represents the exact number
+                of rotation phases to prune.
+
+        Example:
+            >>> pruning_method = PhaseL1UnstructuredPruningMethod(0.2)
+        """
+        
         super().__init__()
         # Check range of validity of pruning amount
         # noinspection PyProtectedMember
@@ -55,6 +64,19 @@ class PhaseL1UnstructuredPruningMethod(torch.nn.utils.prune.BasePruningMethod):
         self.amount = amount
 
     def compute_mask(self, t, default_mask):
+        """Computes the mask for pruning the rotation phases.
+
+        Args:
+            t (torch.Tensor): The tensor containing the rotation phases.
+            default_mask (torch.Tensor): The default mask.
+
+        Returns:
+            torch.Tensor: The computed mask for pruning.
+
+        Example:
+            >>> mask = pruning_method.compute_mask(tensor, mask)
+        """
+
         t = t % (2 * np.pi)
         t[t > np.pi] -= 2 * np.pi
 
@@ -83,11 +105,21 @@ class PhaseL1UnstructuredPruningMethod(torch.nn.utils.prune.BasePruningMethod):
 
 
 class ThresholdScheduler(object):
-    """
-    Smooth increasing threshold with tensorflow model pruning scheduler
-    """
+    """Smooth increasing threshold with tensorflow model pruning scheduler"""
 
     def __init__(self, step_beg, step_end, thres_beg, thres_end):
+        """Initializes a ThresholdScheduler object.
+
+        Args:
+            step_beg (int): The step at which the threshold begins to change.
+            step_end (int): The step at which the threshold stops changing.
+            thres_beg (float): The initial threshold value.
+            thres_end (float): The final threshold value.
+
+        Example:
+            >>> scheduler = ThresholdScheduler(0, 100, 0.1, 0.9)
+        """
+
         config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         tf.compat.v1.enable_eager_execution(config=config)
@@ -114,6 +146,15 @@ class ThresholdScheduler(object):
         self.global_step = 0
 
     def step(self):
+        """Computes the threshold for the current step.
+
+        Returns:
+            float: The computed threshold.
+
+        Example:
+            >>> threshold = scheduler.step()
+        """
+
         if self.global_step < self.step_beg:
             return self.thres_beg
         elif self.global_step > self.step_end:
