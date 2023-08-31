@@ -41,3 +41,21 @@ class SHadamard(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return cls.matrix
+
+
+class CHadamard(Operation, metaclass=ABCMeta):
+    """Class for CHadamard Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["chadamard"]
+    func = staticmethod(tqf.chadamard)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
+H = Hadamard
+SH = SHadamard
+CH = CHadamard
