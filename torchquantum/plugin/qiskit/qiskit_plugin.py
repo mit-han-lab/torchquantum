@@ -661,10 +661,15 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
     for i in range(bsz):
         circ = QuantumCircuit(n_wires)
         for op in op_history:
+            if "params" in op.keys() and op["params"] is not None:
+                param = op["params"][i]
+            else:
+                param = None
+            
             append_fixed_gate(
-                circ, op["name"], op["params"][i], op["wires"], op["inverse"]
+                circ, op["name"], param, op["wires"], op["inverse"]
             )
-
+            
         circs_all.append(circ)
 
     return circs_all
