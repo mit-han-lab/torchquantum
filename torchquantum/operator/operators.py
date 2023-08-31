@@ -38,6 +38,13 @@ from typing import Iterable, Union, List
 
 from .op_types import *
 from .hadamard import *
+from .paulix import *
+from .pauliy import *
+from .pauliz import *
+from .i import *
+from .s import *
+from .t import *
+from .sx import *
 
 __all__ = [
     "op_name_dict",
@@ -146,144 +153,6 @@ subsystem. It is equivalent to an integer with value 0."""
 AnyWires = WiresEnum.AnyWires
 """IntEnum: An enumeration which represents any wires in the
 subsystem. It is equivalent to an integer with value -1."""
-
-
-class PauliX(Observable, metaclass=ABCMeta):
-    """Class for Pauli X Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = mat_dict["paulix"]
-    func = staticmethod(tqf.paulix)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
-
-    def diagonalizing_gates(self):
-        return [tq.Hadamard()]
-
-
-class PauliY(Observable, metaclass=ABCMeta):
-    """Class for Pauli Y Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = mat_dict["pauliy"]
-    func = staticmethod(tqf.pauliy)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
-
-    def diagonalizing_gates(self):
-        return [tq.PauliZ(), tq.S(), tq.Hadamard()]
-
-
-class PauliZ(Observable, metaclass=ABCMeta):
-    """Class for Pauli Z Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
-    matrix = mat_dict["pauliz"]
-    func = staticmethod(tqf.pauliz)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
-
-    def diagonalizing_gates(self):
-        return []
-
-
-class I(Observable, metaclass=ABCMeta):
-    """Class for Identity Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, 1], dtype=C_DTYPE)
-    matrix = mat_dict["i"]
-    func = staticmethod(tqf.i)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
-
-    def diagonalizing_gates(self):
-        return []
-
-
-class S(DiagonalOperation, metaclass=ABCMeta):
-    """Class for S Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = mat_dict["s"]
-    func = staticmethod(tqf.s)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
-
-
-class T(DiagonalOperation, metaclass=ABCMeta):
-    """Class for T Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = mat_dict["t"]
-    func = staticmethod(tqf.t)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
-
-
-class SX(Operation, metaclass=ABCMeta):
-    """Class for SX Gate."""
-
-    num_params = 0
-    num_wires = 1
-    eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
-    matrix = mat_dict["sx"]
-    func = staticmethod(tqf.sx)
-
-    @classmethod
-    def _matrix(cls, params):
-        return cls.matrix
-
-    @classmethod
-    def _eigvals(cls, params):
-        return cls.eigvals
 
 
 class CNOT(Operation, metaclass=ABCMeta):
