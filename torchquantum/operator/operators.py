@@ -63,7 +63,6 @@ from .xx_min_yy import *
 from .xx_plus_yy import *
 from .reset import *
 from .qubit_unitary import *
-from .u import *
 from .u1 import *
 from .u2 import *
 from .u3 import *
@@ -106,6 +105,7 @@ __all__ = [
     "CRY",
     "CRZ",
     "CRot",
+    "U",
     "U1",
     "U2",
     "U3",
