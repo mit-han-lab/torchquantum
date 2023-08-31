@@ -1,4 +1,4 @@
-from .op_types import DiagonalOperation
+from .op_types import DiagonalOperation, Operation
 from abc import ABCMeta
 from ..macro import C_DTYPE
 import torchquantum as tq
@@ -23,3 +23,16 @@ class T(DiagonalOperation, metaclass=ABCMeta):
     @classmethod
     def _eigvals(cls, params):
         return cls.eigvals
+
+
+class TDG(Operation, metaclass=ABCMeta):
+    """Class for TDG Gate."""
+
+    num_params = 0
+    num_wires = 1
+    matrix = mat_dict["tdg"]
+    func = staticmethod(tqf.tdg)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix

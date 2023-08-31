@@ -1,4 +1,4 @@
-from .op_types import Observable
+from .op_types import Observable, Operation
 from abc import ABCMeta
 from ..macro import C_DTYPE
 import torchquantum as tq
@@ -26,3 +26,16 @@ class PauliY(Observable, metaclass=ABCMeta):
 
     def diagonalizing_gates(self):
         return [tq.PauliZ(), tq.S(), tq.Hadamard()]
+
+
+class CY(Operation, metaclass=ABCMeta):
+    """Class for CY Gate."""
+
+    num_params = 0
+    num_wires = 2
+    matrix = mat_dict["cy"]
+    func = staticmethod(tqf.cy)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix

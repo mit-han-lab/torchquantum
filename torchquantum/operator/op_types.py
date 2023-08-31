@@ -6,6 +6,36 @@ import numpy as np
 from abc import ABCMeta
 from ..macro import C_DTYPE, F_DTYPE
 from typing import Iterable, Union, List
+from enum import IntEnum
+
+
+class WiresEnum(IntEnum):
+    """Integer enumeration class
+    to represent the number of wires
+    an operation acts on."""
+
+    AnyWires = -1
+    AllWires = 0
+
+
+class NParamsEnum(IntEnum):
+    """Integer enumeration class
+    to represent the number of wires
+    an operation acts on"""
+
+    AnyNParams = -1
+
+
+AnyNParams = NParamsEnum.AnyNParams
+
+
+AllWires = WiresEnum.AllWires
+"""IntEnum: An enumeration which represents all wires in the
+subsystem. It is equivalent to an integer with value 0."""
+
+AnyWires = WiresEnum.AnyWires
+"""IntEnum: An enumeration which represents any wires in the
+subsystem. It is equivalent to an integer with value -1."""
 
 
 class Operator(tq.QuantumModule):
