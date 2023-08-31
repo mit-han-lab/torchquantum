@@ -274,7 +274,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
         circ.swap(*wires)
     elif func == "sswap":
         # square root of swap
-        from torchquantum.plugin.qiskit_unitary_gate import UnitaryGate
+        from torchquantum.plugin.qiskit.qiskit_unitary_gate import UnitaryGate
 
         mat = mat_dict["sswap"].detach().cpu().numpy()
         mat = switch_little_big_endian_matrix(mat)
@@ -308,7 +308,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
         or func == "qubitunitaryfast"
         or func == "qubitunitarystrict"
     ):
-        from torchquantum.plugin.qiskit_unitary_gate import UnitaryGate
+        from torchquantum.plugin.qiskit.qiskit_unitary_gate import UnitaryGate
 
         mat = np.array(params)
         mat = switch_little_big_endian_matrix(mat)
@@ -512,7 +512,7 @@ def tq2qiskit(
             circ.swap(*module.wires)
         elif module.name == "SSWAP":
             # square root of swap
-            from torchquantum.plugin.qiskit_unitary_gate import UnitaryGate
+            from torchquantum.plugin.qiskit.qiskit_unitary_gate import UnitaryGate
 
             mat = module.matrix.data.cpu().numpy()
             mat = switch_little_big_endian_matrix(mat)
@@ -547,7 +547,7 @@ def tq2qiskit(
             or module.name == "TrainableUnitary"
             or module.name == "TrainableUnitaryStrict"
         ):
-            from torchquantum.plugin.qiskit_unitary_gate import UnitaryGate
+            from torchquantum.plugin.qiskit.qiskit_unitary_gate import UnitaryGate
 
             mat = module.params[0].data.cpu().numpy()
             mat = switch_little_big_endian_matrix(mat)
