@@ -323,7 +323,7 @@ class QuantumModule(nn.Module):
     #     else:
     #         return "QuantumModule"
 
-    def get_unitary(self, q_device: tq.QuantumDevice, x=None):
+    def get_unitary(self, x=None):
         """Compute the unitary matrix for the QuantumModule with the given quantum device and input.
 
         Args:
@@ -338,32 +338,18 @@ class QuantumModule(nn.Module):
             >>> q_device = tq.QuantumDevice(n_wires=2)
             >>> unitary = qmodule.get_unitary(q_device)
         """
+        assert self.n_wires is not None, "n_wires should not be None, specify it in the Quantum Module \
+            before calling get_unitary()" 
         
-        original_wires_per_block = self.wires_per_block
-        original_static_mode = self.static_mode
-        self.static_off()
-        self.static_on(wires_per_block=q_device.n_wires)
-        self.q_device = q_device
-        self.device = q_device.state.device
-        self.graph.q_device = q_device
-        self.graph.device = q_device.state.device
-
-        self.is_graph_top = False
-        # forward to register all modules to the module list, but do not
-        # apply the unitary to the state vector
+        qdev = tq.QuantumDevice(n_wires=self.n_wires)
+        qdev.reset_identity_states()
+    
         if x is None:
-            self.forward(q_device)
+            self.forward(qdev)
         else:
-            self.forward(q_device, x)
-        self.is_graph_top = True
-
-        self.graph.build(wires_per_block=q_device.n_wires)
-        self.graph.build_static_matrix()
-        unitary = self.graph.get_unitary()
-
-        self.static_off()
-        if original_static_mode:
-            self.static_on(original_wires_per_block)
+            self.forward(qdev, x)
+        
+        unitary = qdev.get_states_1d().T
 
         return unitary
 

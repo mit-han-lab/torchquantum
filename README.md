@@ -165,11 +165,11 @@ print(tq.measure(x, n_shots=2048))
 
 We also prepare many example and tutorials using TorchQuantum.
 
-For **beginning level**, you may check [QNN for MNIST](examples/simple_mnist), [Quantum Convolution (Quanvolution)](examples/quanvolution) and [Quantum Kernel Method](examples/quantum_kernel_method), and [Quantum Regression](examples/regression).
+For **beginning level**, you may check [QNN for MNIST](examples/mnist), [Quantum Convolution (Quanvolution)](examples/quanvolution) and [Quantum Kernel Method](examples/quantum_kernel_method), and [Quantum Regression](examples/regression).
 
 For **intermediate level**, you may check [Amplitude Encoding for MNIST](examples/amplitude_encoding_mnist), [Clifford gate QNN](examples/clifford_qnn), [Save and Load QNN models](examples/save_load_example), [PauliSum Operation](examples/PauliSumOp), [How to convert tq to Qiskit](examples/converter_tq_qiskit).
 
-For **expert**, you may check [Parameter Shift on-chip Training](examples/param_shift_onchip_training), [VQA Gradient Pruning](examples/gradient_pruning), [VQE](examples/simple_vqe),  [VQA for State Prepration](examples/train_state_prep), [QAOA (Quantum Approximate Optimization Algorithm)](examples/qaoa).
+For **expert**, you may check [Parameter Shift on-chip Training](examples/param_shift_onchip_training), [VQA Gradient Pruning](examples/gradient_pruning), [VQE](examples/vqe),  [VQA for State Prepration](examples/train_state_prep), [QAOA (Quantum Approximate Optimization Algorithm)](examples/qaoa).
 
 
 ## Usage
@@ -238,8 +238,8 @@ Train a quantum circuit to perform VQE task.
 Quito quantum computer as in [simple_vqe.py](./examples/simple_vqe/simple_vqe.py)
 script:
 ```python
-cd examples/simple_vqe
-python simple_vqe.py
+cd examples/vqe
+python vqe.py
 ```
 
 ## MNIST Example
@@ -248,8 +248,8 @@ Train a quantum circuit to perform MNIST classification task and deploy on the r
 Quito quantum computer as in [mnist_example.py](./examples/simple_mnist/mnist_example_no_binding.py)
 script:
 ```python
-cd examples/simple_mnist
-python mnist_example.py
+cd examples/mnist
+python mnist.py
 ```
 
 ## Files

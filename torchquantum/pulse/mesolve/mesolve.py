@@ -4,12 +4,13 @@ from ..solver import Solver
 from ..utils import *
 from torchdiffeq import odeint
 
-def sesolve(
-    psi0,
+def mesolve(
+    dens0,
     H=None,
     n_dt=None,
     dt=0.22,
     *,
+    L_ops=None,
     exp_ops=None,
     options=None,
     dtype=None,
@@ -23,26 +24,41 @@ def sesolve(
 
     t_save = torch.tensor(list(range(n_dt)))*dt
 
-    args = (H, psi0, t_save, exp_ops, options)
+    args = (H, dens0, t_save, exp_ops, options)
 
-    solver = SESolver(*args)
+    solver = MESolver(*args, L_ops=L_ops)
 
     solver.run()
 
     psi_save, exp_save = solver.y_save, solver.exp_save
+
     return psi_save, exp_save
 
+def _lindblad_helper(L, rho):
+    Ldag = torch.conj(L)
+    return L @ rho @ Ldag - 0.5 * Ldag @ L @ rho - 0.5 * rho @ Ldag @ L
 
+def lindbladian(H,rho,L_ops):
+    if L_ops is None:
+        return -1j * (H @ rho - rho @ H)
 
-class SESolver(Solver):
+    if type(L_ops) is not list:
+        L_ops = [L_ops]
 
-    def __init__(self, *args):
+    _dissipator = [_lindblad_helper(L, rho) for L in L_ops]
+    dissipator = torch.stack(_dissipator)
+    return -1j * (H @ rho - rho @ H) + dissipator.sum(0)
+
+class MESolver(Solver):
+
+    def __init__(self, *args, L_ops):
         super().__init__(*args)
+        self.L_ops = L_ops
 
 
     def f(self, t, y):
         h = self.H(t)
-        return -1.j * torch.matmul(h, y)
+        return lindbladian(h,y,self.L_ops)
 
 
     def run(self):

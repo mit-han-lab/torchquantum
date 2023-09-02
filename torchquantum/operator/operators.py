@@ -108,6 +108,11 @@ __all__ = [
     "XXPLUSYY",
     "C3X",
     "R",
+    "C4X",
+    "RC3X",
+    "RCCX",
+    "GlobalPhase",
+    "C3SX",
 ]
 
 
@@ -177,6 +182,10 @@ class Operator(tq.QuantumModule):
         "CHadamard",
         "DCX",
         "C3X",
+        "C3SX",
+        "RCCX",
+        "RC3X",
+        "C4X",
     ]
 
     parameterized_ops = [
@@ -209,6 +218,7 @@ class Operator(tq.QuantumModule):
         "XXMINYY",
         "XXPLUSYY",
         "R",
+        "GlobalPhase",
     ]
 
     @property
@@ -1589,23 +1599,88 @@ class C3X(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 4
+    matrix = mat_dict["c3x"]
     func = staticmethod(tqf.c3x)
 
     @classmethod
     def _matrix(cls, params):
-        return tqf.qubitunitary_matrix(mat_dict["toffoli"])
+        return cls.matrix
 
 
 class R(DiagonalOperation, metaclass=ABCMeta):
     """Class for R Gate."""
 
-    num_params = 1
+    num_params = 2
     num_wires = 1
     func = staticmethod(tqf.r)
 
     @classmethod
     def _matrix(cls, params):
         return tqf.r_matrix(params)
+
+
+class C4X(Operation, metaclass=ABCMeta):
+    """Class for C4X Gate."""
+
+    num_params = 0
+    num_wires = 5
+    matrix = mat_dict["c4x"]
+    func = staticmethod(tqf.c4x)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
+class RC3X(Operation, metaclass=ABCMeta):
+    """Class for RC3X Gate."""
+
+    num_params = 0
+    num_wires = 4
+    matrix = mat_dict["rc3x"]
+    func = staticmethod(tqf.rc3x)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
+class RCCX(Operation, metaclass=ABCMeta):
+    """Class for RCCX Gate."""
+
+    num_params = 0
+    num_wires = 3
+    matrix = mat_dict["rccx"]
+    func = staticmethod(tqf.rccx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
+
+
+class GlobalPhase(Operation, metaclass=ABCMeta):
+    """Class for Global Phase gate."""
+
+    num_params = 1
+    num_wires = 0
+    func = staticmethod(tqf.globalphase)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.globalphase_matrix(params)
+
+
+class C3SX(Operation, metaclass=ABCMeta):
+    """Class for C3SX Gate."""
+
+    num_params = 0
+    num_wires = 4
+    matrix = mat_dict["c3sx"]
+    func = staticmethod(tqf.c3sx)
+
+    @classmethod
+    def _matrix(cls, params):
+        return cls.matrix
 
 
 H = Hadamard
@@ -1695,4 +1770,9 @@ op_name_dict = {
     "csdg": CSDG,
     "csx": CSX,
     "r": R,
+    "c3sx": C3SX,
+    "globalphase": GlobalPhase,
+    "rccx": RCCX,
+    "rc3x": RC3X,
+    "c4x": C4X,
 }
