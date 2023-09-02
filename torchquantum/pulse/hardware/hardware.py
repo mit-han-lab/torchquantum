@@ -6,6 +6,6 @@ import torchdiffeq
 
 
 
-class Hardware(torch.nn.Modele):
+class Hardware(torch.nn.Module):
     def __init__(self):
         pass
