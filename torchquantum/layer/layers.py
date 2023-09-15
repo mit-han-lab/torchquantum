@@ -391,7 +391,7 @@ class RandomLayer(tq.QuantumModule):
                     )
                 else:
                     operation = op(n_wires=n_op_wires, wires=op_wires)
-            elif op().name in tq.Operator.parameterized_ops:
+            elif op().name in tq.operator.parameterized_ops:
                 operation = op(has_params=True, trainable=True, wires=op_wires)
             else:
                 operation = op(wires=op_wires)

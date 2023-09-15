@@ -133,7 +133,7 @@ __all__ = [a().__class__.__name__ for a in all_variables]
 __all__.extend(["U", "CH", "QubitUnitary", "QubitUnitaryFast"])
 
 # add the dictionary
-__all__.append("op_name_dict")
+__all__.extend(["op_name_dict", "fixed_ops", "parameterized_ops"])
 
 # create the operations dictionary
 op_name_dict = {x.op_name: x for x in all_variables}
@@ -160,3 +160,6 @@ op_name_dict.update(
         "cr": CU1,
     }
 )
+
+fixed_ops = [a().__class__.__name__ for a in all_variables if a.num_params == 0]
+parameterized_ops = [a().__class__.__name__ for a in all_variables if a.num_params > 0]
