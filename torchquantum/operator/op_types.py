@@ -8,6 +8,18 @@ from ..macro import C_DTYPE, F_DTYPE
 from typing import Iterable, Union, List
 from enum import IntEnum
 
+__all__ = [
+    "Operator",
+    "Operation",
+    "DiagonalOperation",
+    "Observable",
+    "WiresEnum",
+    "NParamsEnum",
+    "AnyNParams",
+    "AllWires",
+    "AnyWires",
+]
+
 
 class WiresEnum(IntEnum):
     """Integer enumeration class

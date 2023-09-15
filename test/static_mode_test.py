@@ -29,7 +29,7 @@ import torchquantum as tq
 import numpy as np
 
 from torchpack.utils.logging import logger
-from torchquantum.operator.operators import op_name_dict
+from torchquantum.operator import op_name_dict
 from torchquantum.functional import func_name_dict
 from torchquantum.macro import F_DTYPE
 from torchquantum.plugin.qiskit import (

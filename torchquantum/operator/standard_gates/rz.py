@@ -1,6 +1,6 @@
-from .op_types import *
+from ..op_types import *
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class RZ(DiagonalOperation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 1
+    op_name = "rz"
     func = staticmethod(tqf.rz)
 
     @classmethod
@@ -24,6 +25,7 @@ class MultiRZ(DiagonalOperation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = AnyWires
+    op_name = "multirz"
     func = staticmethod(tqf.multirz)
 
     @classmethod
@@ -36,6 +38,7 @@ class RZZ(DiagonalOperation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 2
+    op_name = "rzz"
     func = staticmethod(tqf.rzz)
 
     @classmethod
@@ -48,6 +51,7 @@ class RZX(Operation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 2
+    op_name = "rzx"
     func = staticmethod(tqf.rzx)
 
     @classmethod
@@ -60,6 +64,7 @@ class CRZ(Operation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 2
+    op_name = "crz"
     func = staticmethod(tqf.crz)
 
     @classmethod

@@ -23,10 +23,14 @@ SOFTWARE.
 """
 
 import torchquantum as tq
-from torchquantum.measurement import expval_joint_analytical, expval_joint_sampling_grouping
+from torchquantum.measurement import (
+    expval_joint_analytical,
+    expval_joint_sampling_grouping,
+)
 
 import numpy as np
 import random
+
 
 def test_expval_joint_sampling_grouping():
     n_obs = 20
@@ -44,12 +48,15 @@ def test_expval_joint_sampling_grouping():
     expval_ana = {}
     for obs in obs_all:
         expval_ana[obs] = expval_joint_analytical(qdev, observable=obs)[0].item()
-    
-    expval_sam = expval_joint_sampling_grouping(qdev, observables=obs_all, n_shots_per_group=1000000)
+
+    expval_sam = expval_joint_sampling_grouping(
+        qdev, observables=obs_all, n_shots_per_group=1000000
+    )
     for obs in obs_all:
-        # assert 
+        # assert
         assert np.isclose(expval_ana[obs], expval_sam[obs][0].item(), atol=1e-2)
         print(obs, expval_ana[obs], expval_sam[obs][0].item())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_expval_joint_sampling_grouping()

@@ -1,6 +1,6 @@
-from .op_types import Observable, DiagonalOperation
+from ..op_types import Observable, DiagonalOperation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -13,6 +13,7 @@ class PauliZ(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
+    op_name = "pauliz"
     matrix = mat_dict["pauliz"]
     func = staticmethod(tqf.pauliz)
 
@@ -34,6 +35,7 @@ class CZ(DiagonalOperation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 2
     eigvals = torch.tensor([1, 1, 1, -1], dtype=C_DTYPE)
+    op_name = "cz"
     matrix = mat_dict["cz"]
     func = staticmethod(tqf.cz)
 
@@ -51,6 +53,7 @@ class CCZ(DiagonalOperation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 3
+    op_name = "ccz"
     matrix = mat_dict["ccz"]
     eigvals = torch.tensor([1, 1, 1, 1, 1, 1, 1, -1], dtype=C_DTYPE)
     func = staticmethod(tqf.ccz)

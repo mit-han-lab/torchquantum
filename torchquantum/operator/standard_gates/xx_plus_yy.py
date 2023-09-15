@@ -1,6 +1,6 @@
-from .op_types import Observable, Operation
+from ..op_types import Observable, Operation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class XXPLUSYY(Operation, metaclass=ABCMeta):
 
     num_params = 2
     num_wires = 2
+    op_name = "xxplusyy"
     func = staticmethod(tqf.xxplusyy_matrix)
 
     @classmethod

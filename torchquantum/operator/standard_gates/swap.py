@@ -1,6 +1,6 @@
-from .op_types import Operation
+from ..op_types import Operation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class SWAP(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "swap"
     matrix = mat_dict["swap"]
     func = staticmethod(tqf.swap)
 
@@ -25,6 +26,7 @@ class SSWAP(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "sswap"
     matrix = mat_dict["sswap"]
     func = staticmethod(tqf.sswap)
 
@@ -38,6 +40,7 @@ class CSWAP(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 3
+    op_name = "cswap"
     matrix = mat_dict["cswap"]
     func = staticmethod(tqf.cswap)
 

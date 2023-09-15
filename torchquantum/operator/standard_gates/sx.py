@@ -1,6 +1,6 @@
-from .op_types import Operation
+from ..op_types import Operation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -13,6 +13,7 @@ class SX(Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
+    op_name = "sx"
     matrix = mat_dict["sx"]
     func = staticmethod(tqf.sx)
 
@@ -30,6 +31,7 @@ class CSX(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "csx"
     matrix = mat_dict["csx"]
     func = staticmethod(tqf.csx)
 
@@ -43,6 +45,7 @@ class C3SX(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 4
+    op_name = "c3sx"
     matrix = mat_dict["c3sx"]
     func = staticmethod(tqf.c3sx)
 
@@ -56,6 +59,7 @@ class SXDG(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 1
+    op_name = "sxdg"
     matrix = mat_dict["sxdg"]
     func = staticmethod(tqf.sxdg)
 

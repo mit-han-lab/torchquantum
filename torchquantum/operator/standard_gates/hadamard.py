@@ -1,11 +1,11 @@
-from .op_types import *
+from ..op_types import *
 import torch
 import torch.nn as nn
 import torchquantum as tq
 import torchquantum.functional.functionals as tqf
 import numpy as np
 from abc import ABCMeta
-from ..macro import C_DTYPE, F_DTYPE
+from torchquantum.macro import C_DTYPE, F_DTYPE
 from torchquantum.functional import mat_dict
 
 
@@ -14,6 +14,7 @@ class Hadamard(Observable, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 1
+    op_name = "hadamard"
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
     matrix = mat_dict["hadamard"]
     func = staticmethod(tqf.hadamard)
@@ -35,6 +36,7 @@ class SHadamard(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 1
+    op_name = "shadamard"
     matrix = mat_dict["shadamard"]
     func = staticmethod(tqf.shadamard)
 
@@ -48,6 +50,7 @@ class CHadamard(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "chadamard"
     matrix = mat_dict["chadamard"]
     func = staticmethod(tqf.chadamard)
 

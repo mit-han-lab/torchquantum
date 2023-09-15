@@ -1,6 +1,6 @@
-from .op_types import Operation
+from ..op_types import Operation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class RY(Operation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 1
+    op_name = "ry"
     func = staticmethod(tqf.ry)
 
     @classmethod
@@ -24,6 +25,7 @@ class RYY(Operation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 2
+    op_name = "ryy"
     func = staticmethod(tqf.ryy)
 
     @classmethod
@@ -36,6 +38,7 @@ class CRY(Operation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 2
+    op_name = "cry"
     func = staticmethod(tqf.cry)
 
     @classmethod

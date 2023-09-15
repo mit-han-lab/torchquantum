@@ -30,7 +30,6 @@ import numpy as np
 
 
 def test_measure():
-
     n_shots = 10000
     qdev = tq.QuantumDevice(n_wires=3, bsz=1, record_op=True)
     qdev.x(wires=2)  # type: ignore

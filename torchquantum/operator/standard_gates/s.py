@@ -1,6 +1,6 @@
-from .op_types import DiagonalOperation, Operation
+from ..op_types import Operation, DiagonalOperation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -13,6 +13,7 @@ class S(DiagonalOperation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, 1j], dtype=C_DTYPE)
+    op_name = "s"
     matrix = mat_dict["s"]
     func = staticmethod(tqf.s)
 
@@ -31,6 +32,7 @@ class SDG(Operation, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
 
+    op_name = "sdg"
     matrix = mat_dict["sdg"]
     func = staticmethod(tqf.sdg)
 
@@ -44,6 +46,7 @@ class CS(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "cs"
     matrix = mat_dict["cs"]
     eigvals = torch.tensor([1, 1, 1, 1j], dtype=C_DTYPE)
     func = staticmethod(tqf.cs)
@@ -62,6 +65,7 @@ class CSDG(DiagonalOperation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "csdg"
     matrix = mat_dict["csdg"]
     eigvals = torch.tensor([1, 1, 1, -1j], dtype=C_DTYPE)
     func = staticmethod(tqf.csdg)

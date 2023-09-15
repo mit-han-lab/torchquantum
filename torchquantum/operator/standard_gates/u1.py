@@ -1,6 +1,6 @@
-from .op_types import Observable, DiagonalOperation
+from ..op_types import Observable, DiagonalOperation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -14,6 +14,7 @@ class U1(DiagonalOperation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 1
+    op_name = "u1"
     func = staticmethod(tqf.u1)
 
     @classmethod
@@ -26,6 +27,7 @@ class CU1(DiagonalOperation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 2
+    op_name = "cu1"
     func = staticmethod(tqf.cu1)
 
     @classmethod

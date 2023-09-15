@@ -1,10 +1,11 @@
-from .op_types import *
+from ..op_types import *
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
 import torchquantum.functional.functionals as tqf
+import numpy as np
 
 
 class QubitUnitary(Operation, metaclass=ABCMeta):
@@ -12,6 +13,7 @@ class QubitUnitary(Operation, metaclass=ABCMeta):
 
     num_params = AnyNParams
     num_wires = AnyWires
+    op_name = "qubitunitary"
     func = staticmethod(tqf.qubitunitary)
 
     @classmethod
@@ -32,6 +34,7 @@ class QubitUnitaryFast(Operation, metaclass=ABCMeta):
 
     num_params = AnyNParams
     num_wires = AnyWires
+    op_name = "qubitunitaryfast"
     func = staticmethod(tqf.qubitunitaryfast)
 
     def __init__(

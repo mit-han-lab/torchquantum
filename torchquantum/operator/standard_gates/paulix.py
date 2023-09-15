@@ -1,6 +1,6 @@
-from .op_types import *
+from ..op_types import *
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -13,6 +13,7 @@ class PauliX(Observable, metaclass=ABCMeta):
     num_params = 0
     num_wires = 1
     eigvals = torch.tensor([1, -1], dtype=C_DTYPE)
+    op_name = "paulix"
     matrix = mat_dict["paulix"]
     func = staticmethod(tqf.paulix)
 
@@ -33,6 +34,7 @@ class CNOT(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "cnot"
     matrix = mat_dict["cnot"]
     func = staticmethod(tqf.cnot)
 
@@ -46,6 +48,7 @@ class C4X(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 5
+    op_name = "c4x"
     matrix = mat_dict["c4x"]
     func = staticmethod(tqf.c4x)
 
@@ -59,6 +62,7 @@ class C3X(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 4
+    op_name = "c3x"
     matrix = mat_dict["c3x"]
     func = staticmethod(tqf.c3x)
 
@@ -72,6 +76,7 @@ class DCX(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 2
+    op_name = "dcx"
     matrix = mat_dict["dcx"]
     func = staticmethod(tqf.dcx)
 
@@ -85,6 +90,7 @@ class MultiCNOT(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = AnyWires
+    op_name = "multicnot"
     func = staticmethod(tqf.multicnot)
 
     @classmethod
@@ -102,6 +108,7 @@ class MultiXCNOT(Operation, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = AnyWires
+    op_name = "multixcnot"
     func = staticmethod(tqf.multixcnot)
 
     @classmethod

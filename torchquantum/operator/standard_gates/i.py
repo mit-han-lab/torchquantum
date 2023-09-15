@@ -1,6 +1,6 @@
-from .op_types import Observable
+from ..op_types import Observable
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class I(Observable, metaclass=ABCMeta):
 
     num_params = 0
     num_wires = 1
+    op_name = "i"
     eigvals = torch.tensor([1, 1], dtype=C_DTYPE)
     matrix = mat_dict["i"]
     func = staticmethod(tqf.i)

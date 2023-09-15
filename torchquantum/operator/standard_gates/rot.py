@@ -1,6 +1,6 @@
-from .op_types import Observable, Operation
+from ..op_types import Observable, Operation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class Rot(Operation, metaclass=ABCMeta):
 
     num_params = 3
     num_wires = 1
+    op_name = "rot"
     func = staticmethod(tqf.rot)
 
     @classmethod
@@ -24,6 +25,7 @@ class CRot(Operation, metaclass=ABCMeta):
 
     num_params = 3
     num_wires = 2
+    op_name = "crot"
     func = staticmethod(tqf.crot)
 
     @classmethod

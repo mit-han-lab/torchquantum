@@ -1,6 +1,6 @@
-from .op_types import Operation
+from ..op_types import Operation
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class GlobalPhase(Operation, metaclass=ABCMeta):
 
     num_params = 1
     num_wires = 0
+    op_name = "globalphase"
     func = staticmethod(tqf.globalphase)
 
     @classmethod

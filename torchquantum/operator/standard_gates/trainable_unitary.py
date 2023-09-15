@@ -1,6 +1,6 @@
-from .op_types import *
+from ..op_types import *
 from abc import ABCMeta
-from ..macro import C_DTYPE
+from torchquantum.macro import C_DTYPE
 import torchquantum as tq
 import torch
 from torchquantum.functional import mat_dict
@@ -12,6 +12,7 @@ class TrainableUnitary(Operation, metaclass=ABCMeta):
 
     num_params = AnyNParams
     num_wires = AnyWires
+    op_name = "trainableunitary"
     func = staticmethod(tqf.qubitunitaryfast)
 
     def build_params(self, trainable):
@@ -55,4 +56,5 @@ class TrainableUnitaryStrict(TrainableUnitary, metaclass=ABCMeta):
 
     num_params = AnyNParams
     num_wires = AnyWires
+    op_name = "trainableunitarystrict"
     func = staticmethod(tqf.qubitunitarystrict)
