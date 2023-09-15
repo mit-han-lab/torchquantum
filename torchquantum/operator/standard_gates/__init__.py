@@ -139,9 +139,24 @@ __all__.append("op_name_dict")
 op_name_dict = {x.op_name: x for x in all_variables}
 
 # add aliases as well
-op_name_dict["cx"] = CNOT
-op_name_dict["paulix"] = PauliX
-op_name_dict["h"] = H
-op_name_dict["u"] = U
-op_name_dict["qubitunitary"] = QubitUnitary
-op_name_dict["qubitunitaryfast"] = QubitUnitaryFast
+op_name_dict.update(
+    {
+        "h": H,
+        "sh": SH,
+        "u": U,
+        "qubitunitary": QubitUnitary,
+        "qubitunitaryfast": QubitUnitaryFast,
+        "x": PauliX,
+        "y": PauliY,
+        "z": PauliZ,
+        "cx": CNOT,
+        "xx": RXX,
+        "yy": RYY,
+        "zz": RZZ,
+        "zx": RZX,
+        "ccx": Toffoli,
+        "p": U1,
+        "cp": CU1,
+        "cr": CU1,
+    }
+)
