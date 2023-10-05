@@ -16,6 +16,9 @@
     <a href="https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ">
         <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
     </a>
+    <a href="https://discord.gg/VTHZAB5E">
+        <img alt="Chat @ Discord" src="https://img.shields.io/badge/contact-me-blue?logo=discord&logoColor=white">
+    </a>
     <a href="https://qmlsys.hanruiwang.me">
         <img alt="Forum" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
     </a>
