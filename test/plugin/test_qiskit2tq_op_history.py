@@ -41,8 +41,8 @@ def test_qiskit2tp_op_history():
     print(qmodule.Operator_list)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pdb
+
     pdb.set_trace()
     test_qiskit2tp_op_history()

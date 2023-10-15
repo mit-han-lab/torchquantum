@@ -36,10 +36,9 @@ from torchquantum.util import normalize_statevector
 __all__ = [
     "func_name_dict",
     "mat_dict",
-    "apply_unitary_einsum",
-    "apply_unitary_bmm",
+    "apply_unitary_density_einsum",
+    "apply_unitary_density_bmm",
     "hadamard",
-    "Dhadamard",
     "shadamard",
     "paulix",
     "pauliy",

@@ -10,7 +10,8 @@ from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
-from torchquantum.operator import op_name_dict, Observable
+# from ..operator import op_name_dict, Observable
+import torchquantum.operator as op
 from copy import deepcopy
 import matplotlib.pyplot as plt
 
@@ -120,10 +121,10 @@ def expval_joint_sampling_grouping(
 
     # rotation to the desired basis
     n_wires = qdev.n_wires
-    paulix = op_name_dict["paulix"]
-    pauliy = op_name_dict["pauliy"]
-    pauliz = op_name_dict["pauliz"]
-    iden = op_name_dict["i"]
+    paulix = op.op_name_dict["paulix"]
+    pauliy = op.op_name_dict["pauliy"]
+    pauliz = op.op_name_dict["pauliz"]
+    iden = op.op_name_dict["i"]
     pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
     expval_all_obs = {}
@@ -189,10 +190,10 @@ def expval_joint_sampling(
     """
     # rotation to the desired basis
     n_wires = qdev.n_wires
-    paulix = op_name_dict["paulix"]
-    pauliy = op_name_dict["pauliy"]
-    pauliz = op_name_dict["pauliz"]
-    iden = op_name_dict["i"]
+    paulix = op.op_name_dict["paulix"]
+    pauliy = op.op_name_dict["pauliy"]
+    pauliz = op.op_name_dict["pauliz"]
+    iden = op.op_name_dict["i"]
     pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
     qdev_clone = tq.QuantumDevice(n_wires=qdev.n_wires, bsz=qdev.bsz, device=qdev.device)
@@ -277,7 +278,7 @@ def expval_joint_analytical(
 def expval(
     qdev: tq.QuantumDevice,
     wires: Union[int, List[int]],
-    observables: Union[Observable, List[Observable]],
+    observables: Union[op.Observable, List[op.Observable]],
 ):
 
     all_dims = np.arange(qdev.states.dim())
