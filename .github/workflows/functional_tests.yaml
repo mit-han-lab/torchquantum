@@ -36,6 +36,9 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -m "not skip"
+    - name: Install TorchQuantum
+      run: |
+        pip install --editable .
     - name: Test Examples
       run: |
         python3 examples/qubit_rotation/qubit_rotation.py
