@@ -5,6 +5,7 @@
    api_torchquantum
    api_functional
    api_operators
+   api_layers
 
 .. toctree::
    :maxdepth: 1
