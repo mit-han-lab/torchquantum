@@ -238,11 +238,11 @@ class QuantumGraph(object):
         # for wire_modules in self.wire_module_list:
         for module in self.flat_module_list:
             name = module.name
-            if name in tq.Operator.fixed_ops:
+            if name in tq.operator.fixed_ops:
                 if name not in self.static_matrix_dict.keys():
                     # fixed operator, all share one static matrix
                     self.static_matrix_dict[module.name] = module.matrix.to(self.device)
-            elif name in tq.Operator.parameterized_ops and name not in [
+            elif name in tq.operator.parameterized_ops and name not in [
                 "QubitUnitary",
                 "QubitUnitaryFast",
                 "TrainableUnitary",
@@ -281,9 +281,9 @@ class QuantumGraph(object):
         # for wire_modules in self.wire_module_list:
         for module in self.flat_module_list:
             name = module.name
-            if name in tq.Operator.fixed_ops:
+            if name in tq.operator.fixed_ops:
                 module.static_matrix = self.static_matrix_dict[name]
-            elif name in tq.Operator.parameterized_ops and name not in [
+            elif name in tq.operator.parameterized_ops and name not in [
                 "QubitUnitary",
                 "QubitUnitaryFast",
                 "TrainableUnitary",
