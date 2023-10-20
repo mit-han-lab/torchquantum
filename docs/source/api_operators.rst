@@ -1,7 +1,7 @@
 torchquantum.operators
 ======================
 
-.. currentmodule:: torchquantum.operators
+.. currentmodule:: torchquantum.operator
 
 Classes
 ---------
