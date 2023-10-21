@@ -9,3 +9,5 @@ TorchQuantum Examples
    quantum_kernel_method/quantum_kernel_method.ipynb
    quanvolution/quanvolution.ipynb
    superdense_coding/superdense_coding_torchquantum.ipynb
+   qubit_rotation/TQ_Qubit_Rotation_Tutorial.ipynb
+   
