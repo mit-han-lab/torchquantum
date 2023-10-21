@@ -22,13 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import torch
 import torchquantum as tq
 from torchquantum.layer.layers import (
     LayerTemplate0,
     Op1QAllLayer,
     Op2QAllLayer,
-    RandomOp1All,
 )
 
 __all__ = [

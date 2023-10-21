@@ -24,17 +24,13 @@ SOFTWARE.
 
 import torch
 import torchquantum as tq
-from torchquantum.layer.layers import (
-    LayerTemplate0,
-    Op1QAllLayer,
-    Op2QAllLayer,
-    RandomOp1All,
-)
+from torchquantum.layer.layers import RandomOp1All
 from .two_local import TwoLocal
 
 __all__ = [
     "PauliTwoDesign",
 ]
+
 
 class PauliTwoDesign(TwoLocal):
     """Layer Template for a PauliTwoDesign circuit
