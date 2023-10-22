@@ -40,7 +40,7 @@ def InitialState(n_qubit = 1, state = [0]):
 
 def InitialDensity(n_qubit = 1, state = [0]):
     initial_state = InitialState(n_qubit, state)
-    initial_density = torch.ger(initial_state, torch.conj(initial_state))
+    initial_density = torch.outer(initial_state, torch.conj(initial_state))
     return initial_density
 
 def H_2q_example(pulse, dt):
