@@ -7,12 +7,13 @@
 
 
 <p align="center">
-    <a href="https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE">
-        <img alt="MIT License" src="https://img.shields.io/github/license/mit-han-lab/torchquantum">
-    </a>
     <a href="https://torchquantum.readthedocs.io/">
         <img alt="Documentation" src="https://img.shields.io/readthedocs/torchquantum/main">
     </a>
+    <a href="https://github.com/mit-han-lab/torchquantum/blob/master/LICENSE">
+        <img alt="MIT License" src="https://img.shields.io/github/license/mit-han-lab/torchquantum">
+    </a>
+
     <a href="https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ">
         <img alt="Chat @ Slack" src="https://img.shields.io/badge/slack-chat-2eb67d.svg?logo=slack">
     </a>
