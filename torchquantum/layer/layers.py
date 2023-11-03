@@ -56,6 +56,7 @@ __all__ = [
     "EntanglePairwise",
     "EntangleFull",
     "EntangleCircular",
+    "EntanglementLayer",
 ]
 
 
@@ -1778,6 +1779,59 @@ class EntanglePairwise(tq.QuantumModule):
                     wires.reverse()
                 self.ops_all[k](q_device, wires=wires)
                 k += 1
+
+
+class EntanglementLayer(tq.QuantumModule):
+    """
+    Quantum layer applying a specified two-qubit entanglement type to all qubits. The entanglement types include full, linear, pairwise, and circular.
+
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        entanglement_type (str): Type of entanglement from ["full", "linear", "pairwise", "circular"]
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+        jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
+        circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
+
+    """
+
+    def __init__(
+        self,
+        op,
+        n_wires: int,
+        entanglement_type: str,
+        has_params=False,
+        trainable=False,
+        wire_reverse=False,
+    ):
+        super().__init__()
+
+        entanglement_to_class = {
+            "full": EntangleFull,
+            "linear": EntangleLinear,
+            "pairwise": EntanglePairwise,
+            "circular": EntangleCircular,
+        }
+
+        self.entanglement_class = entanglement_to_class.get(entanglement_type, None)
+
+        assert (
+            self.entanglement_class is not None
+        ), f"invalid entanglement type {entanglement_type}"
+
+        self.entanglement_class.__init__(
+            op=op,
+            n_wires=n_wires,
+            has_params=has_params,
+            trainable=trainable,
+            wire_reverse=wire_reverse,
+        )
+
+    @tq.static_support
+    def forward(self, q_device):
+        self.entanglement_class.forward(q_device)
 
 
 layer_name_dict = {
