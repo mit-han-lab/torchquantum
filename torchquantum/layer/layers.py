@@ -52,6 +52,10 @@ __all__ = [
     "SWAPSWAPLayer",
     "RXYZCXLayer0",
     "QFTLayer",
+    "EntangleLinear",
+    "EntanglePairwise",
+    "EntangleFull",
+    "EntangleCircular",
 ]
 
 
@@ -764,7 +768,7 @@ class Op2QButterflyLayer(tq.QuantumModule):
             self.ops_all[k](q_device, wires=wires)
 
 
-class Op2QDenseLayer(tq.QuantumModule):
+class EntangleFull(tq.QuantumModule):
     """
        Quantum layer applying the same two-qubit operation in a dense pattern.
 
@@ -810,6 +814,8 @@ class Op2QDenseLayer(tq.QuantumModule):
                 self.ops_all[k](q_device, wires=wires)
                 k += 1
 
+# Adding an alias to the previous name
+Op2QDenseLayer = EntangleFull 
 
 class LayerTemplate0(tq.QuantumModule):
     """
@@ -1615,6 +1621,119 @@ class QFTLayer(tq.QuantumModule):
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         self.gates_all(q_device)
+
+class EntangleLinear(Op2QAllLayer):
+    """
+    Quantum layer applying the same two-qubit operation to all pairs of adjacent wires.
+    This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires
+    in the quantum device. 
+
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+    """
+    """pattern: [0, 1], [1, 2], [2, 3], [3, 4], [4, 5]
+    """
+
+    def __init__(
+        self,
+        op,
+        n_wires: int,
+        has_params=False,
+        trainable=False,
+        wire_reverse=False,
+    ):
+        super().__init__(op=op, n_wires=n_wires, has_params=has_params, trainable=trainable, wire_reverse=wire_reverse, jump=1, circular=False)
+
+
+class EntangleCircular(Op2QAllLayer):
+    """
+    Quantum layer applying the same two-qubit operation to all pairs of adjacent wires in a circular manner.
+    This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires
+    in the quantum device with a wrap-around 
+
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+        jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
+        circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
+
+    """
+    """pattern: [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]
+    """
+
+    def __init__(
+        self,
+        op,
+        n_wires: int,
+        has_params=False,
+        trainable=False,
+        wire_reverse=False,
+    ):
+        super().__init__(op=op, n_wires=n_wires, has_params=has_params, trainable=trainable, wire_reverse=wire_reverse, jump=1, circular=True)
+
+
+
+class EntanglePairwise(tq.QuantumModule):
+    """
+    Quantum layer applying the same two-qubit operation in a pair-wise pattern 
+
+    This class represents a quantum layer that applies the same two-qubit operation in a pairwise pattern. The pairwise pattern first entangles all qubits i with i+1 for even i then all qubits i with i+1 for odd i.
+
+    Args:
+       op (tq.Operator): Two-qubit operation to be applied.
+       n_wires (int): Number of wires in the quantum device.
+       has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+       trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+       wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+
+    """
+    """pattern:
+    [0, 1], [2, 3], [4, 5]
+    [1, 2], [3, 4] 
+    """
+
+    def __init__(
+        self, op, n_wires: int, has_params=False, trainable=False, wire_reverse=False
+    ):
+        super().__init__()
+        self.n_wires = n_wires
+        self.op = op
+        self.ops_all = tq.QuantumModuleList()
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        for k in range(self.n_wires-1): 
+            self.ops_all.append(op(has_params=has_params, trainable=trainable))
+
+    def forward(self, q_device):
+        k = 0
+
+        # entangle qubit i with i+1 for all even values of i
+        for i in range(self.n_wires - 1):
+            if i % 2 == 0:
+                wires = [i, i+1]
+                if self.wire_reverse:
+                    wires.reverse()
+                self.ops_all[k](q_device, wires=wires)
+                k += 1
+
+        # entangle qubit i with i+1 for all odd values of i
+        for i in range(1, self.n_wires - 1):
+            if i % 2 == 1:
+                wires = [i, i+1]
+                if self.wire_reverse:
+                    wires.reverse()
+                self.ops_all[k](q_device, wires=wires)
+                k += 1
+
 
 
 layer_name_dict = {
