@@ -52,16 +52,22 @@ __all__ = [
     "SWAPSWAPLayer",
     "RXYZCXLayer0",
     "QFTLayer",
+    "EntangleLinear",
+    "EntanglePairwise",
+    "EntangleFull",
+    "EntangleCircular",
+    "EntanglementLayer",
 ]
 
 
 class QuantumModuleFromOps(tq.QuantumModule):
     """Initializes a QuantumModuleFromOps instance.
 
-            Args:
-                ops (List[tq.Operation]): List of quantum operations.
+    Args:
+        ops (List[tq.Operation]): List of quantum operations.
 
-            """
+    """
+
     def __init__(self, ops):
         super().__init__()
         self.ops = tq.QuantumModuleList(ops)
@@ -70,13 +76,13 @@ class QuantumModuleFromOps(tq.QuantumModule):
     def forward(self, q_device: tq.QuantumDevice):
         """Performs the forward pass of the quantum module.
 
-               Args:
-                   q_device (tq.QuantumDevice): Quantum device to apply the operations on.
+        Args:
+            q_device (tq.QuantumDevice): Quantum device to apply the operations on.
 
-               Returns:
-                   None
+        Returns:
+            None
 
-               """
+        """
         self.q_device = q_device
         for op in self.ops:
             op(q_device)
@@ -111,18 +117,19 @@ class TrainableOpAll(tq.QuantumModule):
 
 class ClassicalInOpAll(tq.QuantumModule):
     """
-      Quantum module that applies the same quantum operation to all wires of a quantum device,
-      where the parameters of the operation are obtained from a classical input.
+    Quantum module that applies the same quantum operation to all wires of a quantum device,
+    where the parameters of the operation are obtained from a classical input.
 
-      Args:
-          n_gate (int): Number of gates.
-          op (tq.Operator): Quantum operation to be applied.
+    Args:
+        n_gate (int): Number of gates.
+        op (tq.Operator): Quantum operation to be applied.
 
-      Attributes:
-          n_gate (int): Number of gates.
-          gate_all (nn.ModuleList): List of quantum operations.
+    Attributes:
+        n_gate (int): Number of gates.
+        gate_all (nn.ModuleList): List of quantum operations.
 
-      """
+    """
+
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
         self.n_gate = n_gate
@@ -133,19 +140,19 @@ class ClassicalInOpAll(tq.QuantumModule):
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice, x):
         """
-               Performs the forward pass of the classical input quantum operation module.
+        Performs the forward pass of the classical input quantum operation module.
 
-               Args:
-                   q_device (tq.QuantumDevice): Quantum device to apply the operations on.
-                   x (torch.Tensor): Classical input of shape (batch_size, n_gate).
+        Args:
+            q_device (tq.QuantumDevice): Quantum device to apply the operations on.
+            x (torch.Tensor): Classical input of shape (batch_size, n_gate).
 
-               Returns:
-                   None
+        Returns:
+            None
 
-               Raises:
-                   AssertionError: If the number of gates is different from the number of wires in the device.
+        Raises:
+            AssertionError: If the number of gates is different from the number of wires in the device.
 
-               """
+        """
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
         assert self.n_gate == q_device.n_wires, (
@@ -159,17 +166,18 @@ class ClassicalInOpAll(tq.QuantumModule):
 
 class FixedOpAll(tq.QuantumModule):
     """
-       Quantum module that applies the same fixed quantum operation to all wires of a quantum device.
+    Quantum module that applies the same fixed quantum operation to all wires of a quantum device.
 
-       Args:
-           n_gate (int): Number of gates.
-           op (tq.Operator): Quantum operation to be applied.
+    Args:
+        n_gate (int): Number of gates.
+        op (tq.Operator): Quantum operation to be applied.
 
-       Attributes:
-           n_gate (int): Number of gates.
-           gate_all (nn.ModuleList): List of quantum operations.
+    Attributes:
+        n_gate (int): Number of gates.
+        gate_all (nn.ModuleList): List of quantum operations.
 
-       """
+    """
+
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
         self.n_gate = n_gate
@@ -180,18 +188,18 @@ class FixedOpAll(tq.QuantumModule):
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         """
-                Performs the forward pass of the fixed quantum operation module.
+        Performs the forward pass of the fixed quantum operation module.
 
-                Args:
-                    q_device (tq.QuantumDevice): Quantum device to apply the operations on.
+        Args:
+            q_device (tq.QuantumDevice): Quantum device to apply the operations on.
 
-                Returns:
-                    None
+        Returns:
+            None
 
-                Raises:
-                    AssertionError: If the number of gates is different from the number of wires in the device.
+        Raises:
+            AssertionError: If the number of gates is different from the number of wires in the device.
 
-                """
+        """
         # rx on all wires, assert the number of gate is the same as the number
         # of wires in the device.
         assert self.n_gate == q_device.n_wires, (
@@ -205,17 +213,18 @@ class FixedOpAll(tq.QuantumModule):
 
 class TwoQAll(tq.QuantumModule):
     """
-        Quantum module that applies a two-qubit quantum operation to adjacent pairs of wires in a quantum device.
+    Quantum module that applies a two-qubit quantum operation to adjacent pairs of wires in a quantum device.
 
-        Args:
-            n_gate (int): Number of adjacent pairs of wires.
-            op (tq.Operator): Two-qubit quantum operation to be applied.
+    Args:
+        n_gate (int): Number of adjacent pairs of wires.
+        op (tq.Operator): Two-qubit quantum operation to be applied.
 
-        Attributes:
-            n_gate (int): Number of adjacent pairs of wires.
-            op (tq.Operator): Two-qubit quantum operation.
+    Attributes:
+        n_gate (int): Number of adjacent pairs of wires.
+        op (tq.Operator): Two-qubit quantum operation.
 
-        """
+    """
+
     def __init__(self, n_gate: int, op: tq.Operator):
         super().__init__()
         self.n_gate = n_gate
@@ -270,28 +279,29 @@ class RandomOp1All(tq.QuantumModule):
 
 class RandomLayer(tq.QuantumModule):
     """
-        Quantum module that represents a random layer of quantum operations applied to specified wires.
+    Quantum module that represents a random layer of quantum operations applied to specified wires.
 
-        Args:
-            wires (int or Iterable[int]): Indices of the wires the operations are applied to.
-            n_ops (int): Number of random operations in the layer.
-            n_params (int): Number of parameters for each random operation.
-            op_ratios (list or float): Ratios determining the relative frequencies of different operation types.
-            op_types (tuple or tq.Operator): Types of random operations to be included in the layer.
-            seed (int): Seed for random number generation.
-            qiskit_compatible (bool): Flag indicating whether the layer should be compatible with Qiskit.
+    Args:
+        wires (int or Iterable[int]): Indices of the wires the operations are applied to.
+        n_ops (int): Number of random operations in the layer.
+        n_params (int): Number of parameters for each random operation.
+        op_ratios (list or float): Ratios determining the relative frequencies of different operation types.
+        op_types (tuple or tq.Operator): Types of random operations to be included in the layer.
+        seed (int): Seed for random number generation.
+        qiskit_compatible (bool): Flag indicating whether the layer should be compatible with Qiskit.
 
-        Attributes:
-            n_ops (int): Number of random operations in the layer.
-            n_params (int): Number of parameters for each random operation.
-            wires (list): Indices of the wires the operations are applied to.
-            n_wires (int): Number of wires.
-            op_types (list): Types of random operations included in the layer.
-            op_ratios (numpy.array): Ratios determining the relative frequencies of different operation types.
-            seed (int): Seed for random number generation.
-            op_list (tq.QuantumModuleList): List of random operations in the layer.
+    Attributes:
+        n_ops (int): Number of random operations in the layer.
+        n_params (int): Number of parameters for each random operation.
+        wires (list): Indices of the wires the operations are applied to.
+        n_wires (int): Number of wires.
+        op_types (list): Types of random operations included in the layer.
+        op_ratios (numpy.array): Ratios determining the relative frequencies of different operation types.
+        seed (int): Seed for random number generation.
+        op_list (tq.QuantumModuleList): List of random operations in the layer.
 
-        """
+    """
+
     def __init__(
         self,
         wires,
@@ -342,15 +352,15 @@ class RandomLayer(tq.QuantumModule):
 
     def rebuild_random_layer_from_op_list(self, n_ops_in, wires_in, op_list_in):
         """
-           Rebuilds a random layer from the given operation list.
-           This method is used for loading a random layer from a checkpoint.
+        Rebuilds a random layer from the given operation list.
+        This method is used for loading a random layer from a checkpoint.
 
-           Args:
-               n_ops_in (int): Number of operations in the layer.
-               wires_in (list): Indices of the wires the operations are applied to.
-               op_list_in (list): List of operations in the layer.
+        Args:
+            n_ops_in (int): Number of operations in the layer.
+            wires_in (list): Indices of the wires the operations are applied to.
+            op_list_in (list): List of operations in the layer.
 
-           """
+        """
 
         self.n_ops = n_ops_in
         self.wires = wires_in
@@ -421,20 +431,21 @@ class RandomLayer(tq.QuantumModule):
 
 class RandomLayerAllTypes(RandomLayer):
     """
-       Random layer with a wide range of quantum gate types.
+    Random layer with a wide range of quantum gate types.
 
-       This class extends the `RandomLayer` class to include a variety of quantum gate types as options for the random layer.
+    This class extends the `RandomLayer` class to include a variety of quantum gate types as options for the random layer.
 
-       Args:
-           wires (int or list): Indices of the wires the operations are applied to.
-           n_ops (int): Number of operations in the layer.
-           n_params (int): Number of parameters for each operation.
-           op_ratios (list): Ratios for selecting different types of operations.
-           op_types (tuple): Types of operations to include in the layer.
-           seed (int): Seed for the random number generator.
-           qiskit_compatible (bool): Flag indicating whether the layer should be Qiskit-compatible.
+    Args:
+        wires (int or list): Indices of the wires the operations are applied to.
+        n_ops (int): Number of operations in the layer.
+        n_params (int): Number of parameters for each operation.
+        op_ratios (list): Ratios for selecting different types of operations.
+        op_types (tuple): Types of operations to include in the layer.
+        seed (int): Seed for the random number generator.
+        qiskit_compatible (bool): Flag indicating whether the layer should be Qiskit-compatible.
 
-       """
+    """
+
     def __init__(
         self,
         wires,
@@ -489,14 +500,15 @@ class RandomLayerAllTypes(RandomLayer):
 
 class SimpleQLayer(tq.QuantumModule):
     """
-       Simple quantum layer consisting of three parameterized gates applied to specific wires.
+    Simple quantum layer consisting of three parameterized gates applied to specific wires.
 
-       This class represents a simple quantum layer with three parameterized gates: RX, RY, and RZ. The gates are applied to specific wires in the quantum device.
+    This class represents a simple quantum layer with three parameterized gates: RX, RY, and RZ. The gates are applied to specific wires in the quantum device.
 
-       Args:
-           n_wires (int): Number of wires in the quantum device.
+    Args:
+        n_wires (int): Number of wires in the quantum device.
 
-       """
+    """
+
     def __init__(self, n_wires):
         super().__init__()
         self.n_wires = n_wires
@@ -516,14 +528,15 @@ class SimpleQLayer(tq.QuantumModule):
 
 class CXLayer(tq.QuantumModule):
     """
-        Quantum layer with a controlled-X (CX) gate applied to two specified wires.
+    Quantum layer with a controlled-X (CX) gate applied to two specified wires.
 
-        This class represents a quantum layer with a controlled-X (CX) gate applied to two specified wires in the quantum device.
+    This class represents a quantum layer with a controlled-X (CX) gate applied to two specified wires in the quantum device.
 
-        Args:
-            n_wires (int): Number of wires in the quantum device.
+    Args:
+        n_wires (int): Number of wires in the quantum device.
 
-        """
+    """
+
     def __init__(self, n_wires):
         super().__init__()
         self.n_wires = n_wires
@@ -536,14 +549,15 @@ class CXLayer(tq.QuantumModule):
 
 class CXCXCXLayer(tq.QuantumModule):
     """
-       Quantum layer with a sequence of CX gates applied to three specified wires.
+    Quantum layer with a sequence of CX gates applied to three specified wires.
 
-       This class represents a quantum layer with a sequence of CX gates applied to three specified wires in the quantum device.
+    This class represents a quantum layer with a sequence of CX gates applied to three specified wires in the quantum device.
 
-       Args:
-           n_wires (int): Number of wires in the quantum device.
+    Args:
+        n_wires (int): Number of wires in the quantum device.
 
-       """
+    """
+
     def __init__(self, n_wires):
         super().__init__()
         self.n_wires = n_wires
@@ -558,14 +572,15 @@ class CXCXCXLayer(tq.QuantumModule):
 
 class SWAPSWAPLayer(tq.QuantumModule):
     """
-       Quantum layer with a sequence of SWAP gates applied to two specified pairs of wires.
+    Quantum layer with a sequence of SWAP gates applied to two specified pairs of wires.
 
-       This class represents a quantum layer with a sequence of SWAP gates applied to two specified pairs of wires in the quantum device.
+    This class represents a quantum layer with a sequence of SWAP gates applied to two specified pairs of wires in the quantum device.
 
-       Args:
-           n_wires (int): Number of wires in the quantum device.
+    Args:
+        n_wires (int): Number of wires in the quantum device.
 
-       """
+    """
+
     def __init__(self, n_wires):
         super().__init__()
         self.n_wires = n_wires
@@ -579,17 +594,18 @@ class SWAPSWAPLayer(tq.QuantumModule):
 
 class Op1QAllLayer(tq.QuantumModule):
     """
-        Quantum layer applying the same single-qubit operation to all wires.
+    Quantum layer applying the same single-qubit operation to all wires.
 
-        This class represents a quantum layer that applies the same single-qubit operation to all wires in the quantum device.
+    This class represents a quantum layer that applies the same single-qubit operation to all wires in the quantum device.
 
-        Args:
-            op (tq.Operator): Single-qubit operation to be applied.
-            n_wires (int): Number of wires in the quantum device.
-            has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
-            trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+    Args:
+        op (tq.Operator): Single-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
 
-        """
+    """
+
     def __init__(self, op, n_wires: int, has_params=False, trainable=False):
         super().__init__()
         self.n_wires = n_wires
@@ -606,21 +622,22 @@ class Op1QAllLayer(tq.QuantumModule):
 
 class Op2QAllLayer(tq.QuantumModule):
     """
-        Quantum layer applying the same two-qubit operation to all pairs of adjacent wires.
-        This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires
-        in the quantum device. The pairs of wires can be determined in a circular or non-circular pattern based on the
-        specified jump.
+    Quantum layer applying the same two-qubit operation to all pairs of adjacent wires.
+    This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires
+    in the quantum device. The pairs of wires can be determined in a circular or non-circular pattern based on the
+    specified jump.
 
-        Args:
-            op (tq.Operator): Two-qubit operation to be applied.
-            n_wires (int): Number of wires in the quantum device.
-            has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
-            trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
-            wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
-            jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
-            circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+        jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
+        circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
 
     """
+
     """pattern:
     circular = False
     jump = 1: [0, 1], [1, 2], [2, 3], [3, 4], [4, 5]
@@ -675,20 +692,21 @@ class Op2QAllLayer(tq.QuantumModule):
 
 class Op2QFit32Layer(tq.QuantumModule):
     """
-        Quantum layer applying the same two-qubit operation to all pairs of adjacent wires, fitting to 32 operations.
+    Quantum layer applying the same two-qubit operation to all pairs of adjacent wires, fitting to 32 operations.
 
-        This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires in the quantum device. The pairs of wires can be determined in a circular or non-circular pattern based on the specified jump. The layer is designed to fit to 32 operations by repeating the same operation pattern multiple times.
+    This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires in the quantum device. The pairs of wires can be determined in a circular or non-circular pattern based on the specified jump. The layer is designed to fit to 32 operations by repeating the same operation pattern multiple times.
 
-        Args:
-            op (tq.Operator): Two-qubit operation to be applied.
-            n_wires (int): Number of wires in the quantum device.
-            has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
-            trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
-            wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
-            jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
-            circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+        jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
+        circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
 
-        """
+    """
+
     def __init__(
         self,
         op,
@@ -728,18 +746,19 @@ class Op2QFit32Layer(tq.QuantumModule):
 
 class Op2QButterflyLayer(tq.QuantumModule):
     """
-        Quantum layer applying the same two-qubit operation in a butterfly pattern.
+    Quantum layer applying the same two-qubit operation in a butterfly pattern.
 
-        This class represents a quantum layer that applies the same two-qubit operation in a butterfly pattern. The butterfly pattern connects the first and last wire, the second and second-to-last wire, and so on, until the center wire(s) in the case of an odd number of wires.
+    This class represents a quantum layer that applies the same two-qubit operation in a butterfly pattern. The butterfly pattern connects the first and last wire, the second and second-to-last wire, and so on, until the center wire(s) in the case of an odd number of wires.
 
-        Args:
-            op (tq.Operator): Two-qubit operation to be applied.
-            n_wires (int): Number of wires in the quantum device.
-            has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
-            trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
-            wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
 
-        """
+    """
+
     """pattern: [0, 5], [1, 4], [2, 3]"""
 
     def __init__(
@@ -764,20 +783,21 @@ class Op2QButterflyLayer(tq.QuantumModule):
             self.ops_all[k](q_device, wires=wires)
 
 
-class Op2QDenseLayer(tq.QuantumModule):
+class EntangleFull(tq.QuantumModule):
     """
-       Quantum layer applying the same two-qubit operation in a dense pattern.
+    Quantum layer applying the same two-qubit operation in a dense pattern.
 
-       This class represents a quantum layer that applies the same two-qubit operation in a dense pattern. The dense pattern connects every pair of wires, ensuring that each wire is connected to every other wire exactly once.
+    This class represents a quantum layer that applies the same two-qubit operation in a dense pattern. The dense pattern connects every pair of wires, ensuring that each wire is connected to every other wire exactly once.
 
-       Args:
-           op (tq.Operator): Two-qubit operation to be applied.
-           n_wires (int): Number of wires in the quantum device.
-           has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
-           trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
-           wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
 
-       """
+    """
+
     """pattern:
     [0, 1], [0, 2], [0, 3], [0, 4], [0, 5]
     [1, 2], [1, 3], [1, 4], [1, 5]
@@ -811,25 +831,30 @@ class Op2QDenseLayer(tq.QuantumModule):
                 k += 1
 
 
+# Adding an alias to the previous name
+Op2QDenseLayer = EntangleFull
+
+
 class LayerTemplate0(tq.QuantumModule):
     """
-       A template for a custom quantum layer.
+    A template for a custom quantum layer.
 
-       Args:
-           arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-       Attributes:
-           n_wires (int): The number of wires in the layer.
-           arch (dict): The architecture configuration for the layer.
-           n_blocks (int): The number of blocks in the layer. (Optional)
-           n_layers_per_block (int): The number of layers per block. (Optional)
-           layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer. (Optional)
+        n_layers_per_block (int): The number of layers per block. (Optional)
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-       Methods:
-           build_layers: Abstract method to build the layers of the template.
-           forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Abstract method to build the layers of the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-       """
+    """
+
     def __init__(self, arch: dict = None):
         super().__init__()
         self.n_wires = arch["n_wires"]
@@ -852,25 +877,24 @@ class LayerTemplate0(tq.QuantumModule):
 
 class U3CU3Layer0(LayerTemplate0):
     """
-        Layer template with U3 and CU3 blocks.
+    Layer template with U3 and CU3 blocks.
 
-        This layer template consists of U3 and CU3 blocks repeated for the specified number of blocks.
+    This layer template consists of U3 and CU3 blocks repeated for the specified number of blocks.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the U3 and CU3 layers for the template.
-            forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the U3 and CU3 layers for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-        """
-
+    """
 
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -895,25 +919,24 @@ class U3CU3Layer0(LayerTemplate0):
 
 class CU3Layer0(LayerTemplate0):
     """
-        Layer template with CU3 blocks.
+    Layer template with CU3 blocks.
 
-        This layer template consists of CU3 blocks repeated for the specified number of blocks.
+    This layer template consists of CU3 blocks repeated for the specified number of blocks.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the CU3 layers for the template.
-            forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the CU3 layers for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-        """
-
+    """
 
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -933,25 +956,24 @@ class CU3Layer0(LayerTemplate0):
 
 class CXRZSXLayer0(LayerTemplate0):
     """
-        Layer template with CXRZSX blocks.
+    Layer template with CXRZSX blocks.
 
-        This layer template consists of CXRZSX blocks, which include RZ, CNOT, and SX gates, repeated for the specified number of blocks.
+    This layer template consists of CXRZSX blocks, which include RZ, CNOT, and SX gates, repeated for the specified number of blocks.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the CXRZSX layers for the template.
-            forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the CXRZSX layers for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-        """
-
+    """
 
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -985,24 +1007,25 @@ class CXRZSXLayer0(LayerTemplate0):
 
 class SethLayer0(LayerTemplate0):
     """
-        Layer template with Seth blocks.
+    Layer template with Seth blocks.
 
-        This layer template consists of Seth blocks, which include RZZ and RY gates, repeated for the specified number of blocks.
+    This layer template consists of Seth blocks, which include RZZ and RY gates, repeated for the specified number of blocks.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the Seth layers for the template.
-            forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the Seth layers for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-        """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1026,24 +1049,25 @@ class SethLayer0(LayerTemplate0):
 
 class SethLayer1(LayerTemplate0):
     """
-       Layer template with extended Seth blocks.
+    Layer template with extended Seth blocks.
 
-       This layer template consists of extended Seth blocks, which include RZZ and RY gates repeated twice for each block.
+    This layer template consists of extended Seth blocks, which include RZZ and RY gates repeated twice for each block.
 
-       Args:
-           arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-       Attributes:
-           n_wires (int): The number of wires in the layer.
-           arch (dict): The architecture configuration for the layer.
-           n_blocks (int): The number of blocks in the layer.
-           layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-       Methods:
-           build_layers: Builds the extended Seth layers for the template.
-           forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the extended Seth layers for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-       """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1077,24 +1101,25 @@ class SethLayer1(LayerTemplate0):
 
 class SethLayer2(LayerTemplate0):
     """
-        Layer template with Seth blocks using Op2QFit32Layer.
+    Layer template with Seth blocks using Op2QFit32Layer.
 
-        This layer template consists of Seth blocks using the Op2QFit32Layer, which includes RZZ gates and supports 32 wires.
+    This layer template consists of Seth blocks using the Op2QFit32Layer, which includes RZZ gates and supports 32 wires.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the Seth layers with Op2QFit32Layer for the template.
-            forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the Seth layers with Op2QFit32Layer for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-        """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1113,24 +1138,25 @@ class SethLayer2(LayerTemplate0):
 
 class RZZLayer0(LayerTemplate0):
     """
-        Layer template with RZZ blocks.
+    Layer template with RZZ blocks.
 
-        This layer template consists of RZZ blocks using the Op2QAllLayer.
+    This layer template consists of RZZ blocks using the Op2QAllLayer.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the RZZ layers with Op2QAllLayer for the template.
-            forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the RZZ layers with Op2QAllLayer for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-        """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1149,24 +1175,25 @@ class RZZLayer0(LayerTemplate0):
 
 class BarrenLayer0(LayerTemplate0):
     """
-        Layer template with Barren blocks.
+    Layer template with Barren blocks.
 
-        This layer template consists of Barren blocks using the Op1QAllLayer and Op2QAllLayer.
+    This layer template consists of Barren blocks using the Op1QAllLayer and Op2QAllLayer.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the Barren layers with Op1QAllLayer and Op2QAllLayer for the template.
-            forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the Barren layers with Op1QAllLayer and Op2QAllLayer for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-        """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         layers_all.append(
@@ -1197,24 +1224,25 @@ class BarrenLayer0(LayerTemplate0):
 
 class FarhiLayer0(LayerTemplate0):
     """
-     Layer template with Farhi blocks.
+    Layer template with Farhi blocks.
 
-     This layer template consists of Farhi blocks using the Op2QAllLayer.
+    This layer template consists of Farhi blocks using the Op2QAllLayer.
 
-     Args:
-         arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-     Attributes:
-         n_wires (int): The number of wires in the layer.
-         arch (dict): The architecture configuration for the layer.
-         n_blocks (int): The number of blocks in the layer.
-         layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-     Methods:
-         build_layers: Builds the Farhi layers with Op2QAllLayer for the template.
-         forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the Farhi layers with Op2QAllLayer for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-     """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1243,24 +1271,25 @@ class FarhiLayer0(LayerTemplate0):
 
 class MaxwellLayer0(LayerTemplate0):
     """
-       Layer template with Maxwell blocks.
+    Layer template with Maxwell blocks.
 
-       This layer template consists of Maxwell blocks using the Op1QAllLayer and Op2QAllLayer modules.
+    This layer template consists of Maxwell blocks using the Op1QAllLayer and Op2QAllLayer modules.
 
-       Args:
-           arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-       Attributes:
-           n_wires (int): The number of wires in the layer.
-           arch (dict): The architecture configuration for the layer.
-           n_blocks (int): The number of blocks in the layer.
-           layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-       Methods:
-           build_layers: Builds the Maxwell layers with Op1QAllLayer and Op2QAllLayer for the template.
-           forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the Maxwell layers with Op1QAllLayer and Op2QAllLayer for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-       """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1315,24 +1344,25 @@ class MaxwellLayer0(LayerTemplate0):
 
 class RYRYCXLayer0(LayerTemplate0):
     """
-       Layer template with RYRYCX blocks.
+    Layer template with RYRYCX blocks.
 
-       This layer template consists of RYRYCX blocks using the Op1QAllLayer and CXLayer modules.
+    This layer template consists of RYRYCX blocks using the Op1QAllLayer and CXLayer modules.
 
-       Args:
-           arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-       Attributes:
-           n_wires (int): The number of wires in the layer.
-           arch (dict): The architecture configuration for the layer.
-           n_blocks (int): The number of blocks in the layer.
-           layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-       Methods:
-           build_layers: Builds the RYRYCX layers with Op1QAllLayer and CXLayer for the template.
-           forward: Applies the quantum layer to the given quantum device.
+    Methods:
+        build_layers: Builds the RYRYCX layers with Op1QAllLayer and CXLayer for the template.
+        forward: Applies the quantum layer to the given quantum device.
 
-       """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1347,23 +1377,23 @@ class RYRYCXLayer0(LayerTemplate0):
 
 class RYRYRYCXCXCXLayer0(LayerTemplate0):
     """
-       Layer template with RYRYRYCXCXCX blocks.
+    Layer template with RYRYRYCXCXCX blocks.
 
-       This layer template consists of RYRYRYCXCXCX blocks using the RYRYCXCXLayer module.
+    This layer template consists of RYRYRYCXCXCX blocks using the RYRYCXCXLayer module.
 
-       Args:
-           arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-       Attributes:
-           n_wires (int): The number of wires in the layer.
-           arch (dict): The architecture configuration for the layer.
-           n_blocks (int): The number of blocks in the layer.
-           layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-       Methods:
-           build_layers: Builds the RYRYRYCXCXCX layers with RYRYCXCXLayer for the template.
+    Methods:
+        build_layers: Builds the RYRYRYCXCXCX layers with RYRYCXCXLayer for the template.
 
-       """
+    """
 
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -1379,24 +1409,25 @@ class RYRYRYCXCXCXLayer0(LayerTemplate0):
 
 class RYRYRYLayer0(LayerTemplate0):
     """
-        Layer template with RYRYRYCXCXCX blocks.
+    Layer template with RYRYRYCXCXCX blocks.
 
-        This layer template consists of RYRYRYCXCXCX blocks using the Op1QAllLayer and CXCXCXLayer modules.
+    This layer template consists of RYRYRYCXCXCX blocks using the Op1QAllLayer and CXCXCXLayer modules.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the RYRYRYCXCXCX layers with Op1QAllLayer and CXCXCXLayer for the template.
+    Methods:
+        build_layers: Builds the RYRYRYCXCXCX layers with Op1QAllLayer and CXCXCXLayer for the template.
 
 
-        """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1410,24 +1441,25 @@ class RYRYRYLayer0(LayerTemplate0):
 
 class RYRYRYSWAPSWAPLayer0(LayerTemplate0):
     """
-        Layer template with RYRYRYSWAPSWAP blocks.
+    Layer template with RYRYRYSWAPSWAP blocks.
 
-        This layer template consists of RYRYRYSWAPSWAP blocks using the Op1QAllLayer and SWAPSWAPLayer modules.
+    This layer template consists of RYRYRYSWAPSWAP blocks using the Op1QAllLayer and SWAPSWAPLayer modules.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the RYRYRYSWAPSWAP layers with Op1QAllLayer and SWAPSWAPLayer for the template.
+    Methods:
+        build_layers: Builds the RYRYRYSWAPSWAP layers with Op1QAllLayer and SWAPSWAPLayer for the template.
 
 
-        """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1442,23 +1474,23 @@ class RYRYRYSWAPSWAPLayer0(LayerTemplate0):
 
 class SWAPSWAPLayer0(LayerTemplate0):
     """
-        Layer template with SWAPSWAP blocks.
+    Layer template with SWAPSWAP blocks.
 
-        This layer template consists of SWAPSWAP blocks using the SWAPSWAPLayer module.
+    This layer template consists of SWAPSWAP blocks using the SWAPSWAPLayer module.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the SWAPSWAP layers with SWAPSWAPLayer for the template.
+    Methods:
+        build_layers: Builds the SWAPSWAP layers with SWAPSWAPLayer for the template.
 
-        """
+    """
 
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
@@ -1469,23 +1501,24 @@ class SWAPSWAPLayer0(LayerTemplate0):
 
 class RXYZCXLayer0(LayerTemplate0):
     """
-        Layer template with RXYZCX blocks.
+    Layer template with RXYZCX blocks.
 
-        This layer template consists of RXYZCX blocks using the RXYZCXLayer module.
+    This layer template consists of RXYZCX blocks using the RXYZCXLayer module.
 
-        Args:
-            arch (dict, optional): The architecture configuration for the layer. Defaults to None.
+    Args:
+        arch (dict, optional): The architecture configuration for the layer. Defaults to None.
 
-        Attributes:
-            n_wires (int): The number of wires in the layer.
-            arch (dict): The architecture configuration for the layer.
-            n_blocks (int): The number of blocks in the layer.
-            layers_all (tq.QuantumModuleList): The list of layers in the template.
+    Attributes:
+        n_wires (int): The number of wires in the layer.
+        arch (dict): The architecture configuration for the layer.
+        n_blocks (int): The number of blocks in the layer.
+        layers_all (tq.QuantumModuleList): The list of layers in the template.
 
-        Methods:
-            build_layers: Builds the RXYZCX layers with RXYZCXLayer for the template.
+    Methods:
+        build_layers: Builds the RXYZCX layers with RXYZCXLayer for the template.
 
-        """
+    """
+
     def build_layers(self):
         layers_all = tq.QuantumModuleList()
         for k in range(self.arch["n_blocks"]):
@@ -1615,6 +1648,190 @@ class QFTLayer(tq.QuantumModule):
     @tq.static_support
     def forward(self, q_device: tq.QuantumDevice):
         self.gates_all(q_device)
+
+
+class EntangleLinear(Op2QAllLayer):
+    """
+    Quantum layer applying the same two-qubit operation to all pairs of adjacent wires.
+    This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires
+    in the quantum device.
+
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+    """
+
+    """pattern: [0, 1], [1, 2], [2, 3], [3, 4], [4, 5]
+    """
+
+    def __init__(
+        self,
+        op,
+        n_wires: int,
+        has_params=False,
+        trainable=False,
+        wire_reverse=False,
+    ):
+        super().__init__(
+            op=op,
+            n_wires=n_wires,
+            has_params=has_params,
+            trainable=trainable,
+            wire_reverse=wire_reverse,
+            jump=1,
+            circular=False,
+        )
+
+
+class EntangleCircular(Op2QAllLayer):
+    """
+    Quantum layer applying the same two-qubit operation to all pairs of adjacent wires in a circular manner.
+    This class represents a quantum layer that applies the same two-qubit operation to all pairs of adjacent wires
+    in the quantum device with a wrap-around
+
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+        jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
+        circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
+
+    """
+
+    """pattern: [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]
+    """
+
+    def __init__(
+        self,
+        op,
+        n_wires: int,
+        has_params=False,
+        trainable=False,
+        wire_reverse=False,
+    ):
+        super().__init__(
+            op=op,
+            n_wires=n_wires,
+            has_params=has_params,
+            trainable=trainable,
+            wire_reverse=wire_reverse,
+            jump=1,
+            circular=True,
+        )
+
+
+class EntanglePairwise(tq.QuantumModule):
+    """
+    Quantum layer applying the same two-qubit operation in a pair-wise pattern
+
+    This class represents a quantum layer that applies the same two-qubit operation in a pairwise pattern. The pairwise pattern first entangles all qubits i with i+1 for even i then all qubits i with i+1 for odd i.
+
+    Args:
+       op (tq.Operator): Two-qubit operation to be applied.
+       n_wires (int): Number of wires in the quantum device.
+       has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+       trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+       wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+
+    """
+
+    """pattern:
+    [0, 1], [2, 3], [4, 5]
+    [1, 2], [3, 4] 
+    """
+
+    def __init__(
+        self, op, n_wires: int, has_params=False, trainable=False, wire_reverse=False
+    ):
+        super().__init__()
+        self.n_wires = n_wires
+        self.op = op
+        self.ops_all = tq.QuantumModuleList()
+
+        # reverse the wires, for example from [1, 2] to [2, 1]
+        self.wire_reverse = wire_reverse
+
+        for k in range(self.n_wires - 1):
+            self.ops_all.append(op(has_params=has_params, trainable=trainable))
+
+    def forward(self, q_device):
+        k = 0
+
+        # entangle qubit i with i+1 for all even values of i
+        for i in range(self.n_wires - 1):
+            if i % 2 == 0:
+                wires = [i, i + 1]
+                if self.wire_reverse:
+                    wires.reverse()
+                self.ops_all[k](q_device, wires=wires)
+                k += 1
+
+        # entangle qubit i with i+1 for all odd values of i
+        for i in range(1, self.n_wires - 1):
+            if i % 2 == 1:
+                wires = [i, i + 1]
+                if self.wire_reverse:
+                    wires.reverse()
+                self.ops_all[k](q_device, wires=wires)
+                k += 1
+
+
+class EntanglementLayer(tq.QuantumModule):
+    """
+    Quantum layer applying a specified two-qubit entanglement type to all qubits. The entanglement types include full, linear, pairwise, and circular.
+
+    Args:
+        op (tq.Operator): Two-qubit operation to be applied.
+        n_wires (int): Number of wires in the quantum device.
+        entanglement (str): Type of entanglement from ["full", "linear", "pairwise", "circular"]
+        has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
+        trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
+        wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
+        jump (int, optional): Number of positions to jump between adjacent pairs of wires. Defaults to 1.
+        circular (bool, optional): Flag indicating if the pattern should be circular. Defaults to False.
+
+    """
+
+    def __init__(
+        self,
+        op,
+        n_wires: int,
+        entanglement: str,
+        has_params=False,
+        trainable=False,
+        wire_reverse=False,
+    ):
+        super().__init__()
+
+        entanglement_to_class = {
+            "full": EntangleFull,
+            "linear": EntangleLinear,
+            "pairwise": EntanglePairwise,
+            "circular": EntangleCircular,
+        }
+
+        self.entanglement_class = entanglement_to_class.get(entanglement, None)
+
+        assert (
+            self.entanglement_class is not None
+        ), f"invalid entanglement type {entanglement}"
+
+        self.entanglement_class.__init__(
+            op=op,
+            n_wires=n_wires,
+            has_params=has_params,
+            trainable=trainable,
+            wire_reverse=wire_reverse,
+        )
+
+    @tq.static_support
+    def forward(self, q_device):
+        self.entanglement_class.forward(q_device)
 
 
 layer_name_dict = {
