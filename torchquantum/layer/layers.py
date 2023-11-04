@@ -1788,7 +1788,7 @@ class EntanglementLayer(tq.QuantumModule):
     Args:
         op (tq.Operator): Two-qubit operation to be applied.
         n_wires (int): Number of wires in the quantum device.
-        entanglement_type (str): Type of entanglement from ["full", "linear", "pairwise", "circular"]
+        entanglement (str): Type of entanglement from ["full", "linear", "pairwise", "circular"]
         has_params (bool, optional): Flag indicating if the operation has parameters. Defaults to False.
         trainable (bool, optional): Flag indicating if the operation is trainable. Defaults to False.
         wire_reverse (bool, optional): Flag indicating if the order of wires in each pair should be reversed. Defaults to False.
@@ -1801,7 +1801,7 @@ class EntanglementLayer(tq.QuantumModule):
         self,
         op,
         n_wires: int,
-        entanglement_type: str,
+        entanglement: str,
         has_params=False,
         trainable=False,
         wire_reverse=False,
@@ -1815,11 +1815,11 @@ class EntanglementLayer(tq.QuantumModule):
             "circular": EntangleCircular,
         }
 
-        self.entanglement_class = entanglement_to_class.get(entanglement_type, None)
+        self.entanglement_class = entanglement_to_class.get(entanglement, None)
 
         assert (
             self.entanglement_class is not None
-        ), f"invalid entanglement type {entanglement_type}"
+        ), f"invalid entanglement type {entanglement}"
 
         self.entanglement_class.__init__(
             op=op,
