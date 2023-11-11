@@ -26,6 +26,7 @@ import torchquantum as tq
 from torchquantum.layer.layers import (
     Op1QAllLayer,
     Op2QAllLayer,
+    Op2QDenseLayer,
 )
 from .nlocal import NLocal
 
