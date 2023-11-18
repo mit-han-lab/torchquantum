@@ -7,13 +7,14 @@ from torchquantum.util import (
     find_global_phase,
 )
 
-from qiskit.circuit.library import GR, GRX, GRY
+from qiskit.circuit.library import GR, GRX, GRY, GRZ
 import numpy as np
 
 all_pairs = [
-    # {"qiskit": GR, "tq": tq.layer.GlobalR, "params": 2},
+    {"qiskit": GR, "tq": tq.layer.GlobalR, "params": 2},
     {"qiskit": GRX, "tq": tq.layer.GlobalRX, "params": 1},
     {"qiskit": GRY, "tq": tq.layer.GlobalRY, "params": 1},
+    {"qiskit": GRZ, "tq": tq.layer.GlobalRZ, "params": 1},
 ]
 
 ITERATIONS = 10

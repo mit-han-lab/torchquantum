@@ -36,6 +36,7 @@ __all__ = [
     "GlobalR",
     "GlobalRX",
     "GlobalRY",
+    "GlobalRZ",
 ]
 
 
@@ -81,3 +82,23 @@ class GlobalRY(GlobalR):
     ):
         """Create the layer"""
         super().__init__(n_wires, theta, phi=torch.pi / 2)
+
+class GlobalRZ(tq.QuantumModule):
+    """Layer Template for a Global RZ General Gate"""
+
+    def __init__(
+        self,
+        n_wires: int = 0,
+        phi: float = 0,
+    ):
+        """Create the layer"""
+        super().__init__()
+        self.n_wires = n_wires
+        self.params = torch.tensor([[phi]])
+
+    @tq.static_support
+    def forward(self, q_device, x=None):
+        for k in range(self.n_wires):
+            tq.RZ()(q_device, wires=k, params=self.params)
+
+
