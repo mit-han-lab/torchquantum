@@ -31,7 +31,6 @@ from torchquantum.layer.layers import (
     Op2QAllLayer,
     RandomOp1All,
 )
-from torchquantum.operator.operators import R
 
 __all__ = [
     "GlobalR",
@@ -57,7 +56,7 @@ class GlobalR(tq.QuantumModule):
     @tq.static_support
     def forward(self, q_device, x=None):
         for k in range(self.n_wires):
-            R()(q_device, wires=k, params=self.params)
+            tq.R()(q_device, wires=k, params=self.params)
 
 
 class GlobalRX(GlobalR):
