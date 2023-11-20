@@ -24,3 +24,4 @@ SOFTWARE.
 
 from .layers import *
 from .nlocal import *
+from .general import *
