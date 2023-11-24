@@ -46,3 +46,4 @@ jobs:
         python3 examples/regression/new_run_regression.py --epochs 1
         python3 examples/quanvolution/quanvolution_trainable_quantum_layer.py --epochs 1
         python3 examples/grover/grover_example_sudoku.py
+        python3 examples/param_shift_onchip_training/param_shift.py
