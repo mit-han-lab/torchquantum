@@ -28,7 +28,7 @@ We need to check for four conditions:
 """
 
 import torchquantum as tq
-from torchquantum.algorithms import Grover
+from torchquantum.algorithm import Grover
 
 
 # To simplify the process, we can compile this set of comparisons into a list of clauses for convenience.
