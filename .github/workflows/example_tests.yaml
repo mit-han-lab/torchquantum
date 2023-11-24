@@ -43,3 +43,4 @@ jobs:
         python3 examples/amplitude_encoding_mnist/mnist_new.py --epochs 1
         python3 examples/amplitude_encoding_mnist/mnist_example.py --epochs 1
         python3 examples/PauliSumOp/pauli_sum_op.py
+        python3 examples/regression/new_run_regression.py --epochs 1
