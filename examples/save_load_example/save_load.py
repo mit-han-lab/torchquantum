@@ -143,7 +143,7 @@ def save_load3():
     # print(model.q_layer.rx0._parameters)
 
     traced_cell = torch.jit.trace(model, (x))
-    torch.jit.save(traced_cell, "model_trace.pth")
+    torch.jit.save(traced_cell, "model_trace.pt")
 
     loaded_trace = torch.jit.load("model_trace.pt")
     y2 = loaded_trace(x)
