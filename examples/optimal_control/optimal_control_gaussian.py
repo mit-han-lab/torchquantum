@@ -41,7 +41,7 @@ if __name__ == "__main__":
         dtype=torch.complex64,
     )
 
-    pulse = tq.QuantumPulseGaussian(hamil=[[0, 1], [1, 0]])
+    pulse = tq.pulse.QuantumPulseGaussian(hamil=[[0, 1], [1, 0]])
 
     optimizer = optim.Adam(params=pulse.parameters(), lr=5e-3)
 

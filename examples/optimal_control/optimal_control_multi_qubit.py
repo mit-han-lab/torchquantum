@@ -43,9 +43,9 @@ if __name__ == "__main__":
         dtype=torch.complex64,
     )
 
-    pulse_q0 = tq.QuantumPulseDirect(n_steps=10, hamil=[[0, 1], [1, 0]])
-    pulse_q1 = tq.QuantumPulseDirect(n_steps=10, hamil=[[0, 1], [1, 0]])
-    pulse_q01 = tq.QuantumPulseDirect(
+    pulse_q0 = tq.pulse.QuantumPulseDirect(n_steps=10, hamil=[[0, 1], [1, 0]])
+    pulse_q1 = tq.pulse.QuantumPulseDirect(n_steps=10, hamil=[[0, 1], [1, 0]])
+    pulse_q01 = tq.pulse.QuantumPulseDirect(
         n_steps=10,
         hamil=[
             [1, 0, 0, 0],
