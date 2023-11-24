@@ -51,6 +51,7 @@ __all__ = [
     "CXCXCXLayer",
     "SWAPSWAPLayer",
     "RXYZCXLayer0",
+    "U3CU3Layer0",
     "QFTLayer",
 ]
 
