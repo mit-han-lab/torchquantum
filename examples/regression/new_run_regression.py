@@ -305,11 +305,10 @@ def main():
         model.set_qiskit_processor(processor_simulation)
         valid_test(dataflow, q_device, "test", model, device, qiskit=True)
 
+        # final valid
+        valid_test(dataflow, q_device, "valid", model, device, True)
     except:
         pass
-
-    # final valid
-    valid_test(dataflow, q_device, "valid", model, device, True)
 
 
 if __name__ == "__main__":
