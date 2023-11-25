@@ -1,11 +1,18 @@
 import torchquantum as tq
-from qiskit.circuit.library import TwoLocal, EfficientSU2, ExcitationPreserving, PauliTwoDesign, RealAmplitudes
+from qiskit.circuit.library import (
+    TwoLocal,
+    EfficientSU2,
+    ExcitationPreserving,
+    PauliTwoDesign,
+    RealAmplitudes,
+)
 
-def compare_tq_to_qiskit(tq_circuit, qiskit_circuit, instance_info = ""):
+
+def compare_tq_to_qiskit(tq_circuit, qiskit_circuit, instance_info=""):
     """
     helper function to compare if tq and qiskit have the same gates configuration
     """
-    
+
     qiskit_ops = []
     for bit in qiskit_circuit.decompose():
         wires = []
@@ -41,7 +48,9 @@ def compare_tq_to_qiskit(tq_circuit, qiskit_circuit, instance_info = ""):
         tq_ops_tuple == qiskit_ops_tuple
     ), f"operations do not match for {instance_info}"
 
+
 ## TEST TWOLOCAL
+
 
 def test_twolocal():
     # iterate through different parameters to test
@@ -68,13 +77,14 @@ def test_twolocal():
                     reps=reps,
                     insert_barriers=False,
                 )
-                
+
                 # compare the circuits
                 test_info = f"{entanglement_type} with {n_wires} wires and {reps} reps"
                 compare_tq_to_qiskit(qdev, qiskit_two)
 
 
 ## TEST OTHER CIRCUITS
+
 
 def test_twolocal_variants():
     tq_to_qiskit = {
@@ -93,4 +103,3 @@ def test_twolocal_variants():
             qdev = tq.QuantumDevice(n_wires, record_op=True)
             tq_circuit(qdev)
             compare_tq_to_qiskit(qdev, circuit, f"{circuit_name} with {n_wires} wires")
-

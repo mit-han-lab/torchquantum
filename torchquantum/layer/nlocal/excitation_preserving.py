@@ -49,7 +49,7 @@ class ExcitationPreserving(TwoLocal):
     ):
         # construct circuit with rotation layers of RZ and entanglement with RXX and RYY
         super().__init__(
-            n_wires = n_wires,
+            n_wires=n_wires,
             rotation_ops=[tq.RZ],
             entanglement_ops=[tq.RXX, tq.RYY],
             entanglement_layer=entanglement_layer,

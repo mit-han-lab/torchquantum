@@ -49,7 +49,7 @@ class EfficientSU2(TwoLocal):
     ):
         # construct circuit with rotation layers of RY and RZ and entanglement with CX
         super().__init__(
-            n_wires = n_wires,
+            n_wires=n_wires,
             rotation_ops=[tq.RY, tq.RZ],
             entanglement_ops=[tq.CNOT],
             entanglement_layer=entanglement_layer,
