@@ -42,14 +42,14 @@ class ExcitationPreserving(TwoLocal):
 
     def __init__(
         self,
-        arch: dict = None,
+        n_wires: int = 1,
         entanglement_layer: str = "full",
         reps: int = 3,
         skip_final_rotation_layer: bool = False,
     ):
         # construct circuit with rotation layers of RZ and entanglement with RXX and RYY
         super().__init__(
-            arch=arch,
+            n_wires = n_wires,
             rotation_ops=[tq.RZ],
             entanglement_ops=[tq.RXX, tq.RYY],
             entanglement_layer=entanglement_layer,

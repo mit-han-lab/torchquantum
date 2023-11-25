@@ -28,7 +28,9 @@ from torchquantum.layer.layers import (
     Op2QAllLayer,
     Op2QDenseLayer,
 )
+from torchquantum.operator import op_name_dict
 from .nlocal import NLocal
+from collections.abc import Iterable
 
 __all__ = [
     "TwoLocal",
@@ -52,9 +54,9 @@ class TwoLocal(NLocal):
 
     def __init__(
         self,
+        n_wires: int = 1,
         rotation_ops: list = None,
         entanglement_ops: list = None,
-        arch: dict = None,
         rotation_layer: tq.QuantumModule = Op1QAllLayer,
         entanglement_layer: str = "linear",
         reps: int = 1,
@@ -74,9 +76,27 @@ class TwoLocal(NLocal):
         elif entanglement_layer == "full":
             entanglement_layer = Op2QDenseLayer
 
+        # handling different input types for the rotation ops
+        if isinstance(rotation_ops, str):
+            rotation_ops = [op_name_dict[rotation_ops]]
+        elif isinstance(rotation_ops, Iterable):
+            if all(isinstance(rot, str) for rot in rotation_ops):
+                rotation_ops = [op_name_dict[rot] for rot in rotation_ops]
+        else:
+            rotation_ops = [rotation_ops]
+
+        # handling different input types for the entanglment ops
+        if isinstance(entanglement_ops, str):
+            entanglement_ops = [op_name_dict[entanglement_ops]]
+        elif isinstance(entanglement_ops, Iterable):
+            if all(isinstance(op, str) for op in entanglement_ops):
+                entanglement_ops = [op_name_dict[op] for op in entanglement_ops]
+        else:
+            entanglement_ops = [entanglement_ops]
+
         # initialize
         super().__init__(
-            arch=arch,
+            arch={"n_wires": n_wires},
             rotation_ops=rotation_ops,
             rotation_layer=rotation_layer,
             rotation_layer_params={"has_params": True, "trainable": True},

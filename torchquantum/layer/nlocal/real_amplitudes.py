@@ -42,14 +42,14 @@ class RealAmplitudes(TwoLocal):
 
     def __init__(
         self,
-        arch: dict = None,
+        n_wires: int = 1,
         entanglement_layer: str = "reverse_linear",
         reps: int = 3,
         skip_final_rotation_layer: bool = False,
     ):
         # construct circuit with rotation layers of RY and entanglement with CX
         super().__init__(
-            arch=arch,
+            n_wires=n_wires,
             rotation_ops=[tq.RY],
             entanglement_ops=[tq.CNOT],
             entanglement_layer=entanglement_layer,

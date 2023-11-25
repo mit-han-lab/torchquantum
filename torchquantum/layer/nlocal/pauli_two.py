@@ -44,7 +44,7 @@ class PauliTwoDesign(TwoLocal):
 
     def __init__(
         self,
-        arch: dict = None,
+        n_wires: int = 1,
         entanglement_layer: str = "reverse_linear",
         reps: int = 3,
         skip_final_rotation_layer: bool = False,
@@ -54,7 +54,7 @@ class PauliTwoDesign(TwoLocal):
         self.seed = seed
         # construct circuit with entanglement with CX
         super().__init__(
-            arch=arch,
+            n_wires=n_wires,
             entanglement_ops=[tq.CNOT],
             entanglement_layer=entanglement_layer,
             reps=reps,

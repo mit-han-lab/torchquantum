@@ -42,14 +42,14 @@ class EfficientSU2(TwoLocal):
 
     def __init__(
         self,
-        arch: dict = None,
+        n_wires: int = None,
         entanglement_layer: str = "reverse_linear",
         reps: int = 3,
         skip_final_rotation_layer: bool = False,
     ):
         # construct circuit with rotation layers of RY and RZ and entanglement with CX
         super().__init__(
-            arch=arch,
+            n_wires = n_wires,
             rotation_ops=[tq.RY, tq.RZ],
             entanglement_ops=[tq.CNOT],
             entanglement_layer=entanglement_layer,
