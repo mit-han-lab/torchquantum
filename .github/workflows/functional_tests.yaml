@@ -41,4 +41,21 @@ jobs:
         pip install --editable .
     - name: Test Examples
       run: |
-        python3 examples/qubit_rotation/qubit_rotation.py
+        python3 examples/qubit_rotation/qubit_rotation.py --epochs 1
+        python3 examples/vqe/vqe.py --epochs 1 --steps_per_epoch 1
+        python3 examples/train_unitary_prep/train_unitary_prep.py --epochs 1
+        python3 examples/train_state_prep/train_state_prep.py --epochs 1
+        python3 examples/superdense_coding/superdense_coding_torchquantum.py
+        python3 examples/regression/run_regression.py --epochs 1
+        python3 examples/param_shift_onchip_training/param_shift.py
+        python3 examples/mnist/mnist_2qubit_4class.py --epochs 1
+        python3 examples/hadamard_grad/circ.py
+        python3 examples/encoder_examples/encoder_8x2ry.py
+        python3 examples/converter_tq_qiskit/convert.py
+        python3 examples/amplitude_encoding_mnist/mnist_new.py --epochs 1
+        python3 examples/amplitude_encoding_mnist/mnist_example.py --epochs 1
+        python3 examples/PauliSumOp/pauli_sum_op.py
+        python3 examples/regression/new_run_regression.py --epochs 1
+        python3 examples/quanvolution/quanvolution_trainable_quantum_layer.py --epochs 1
+        python3 examples/grover/grover_example_sudoku.py
+        python3 examples/param_shift_onchip_training/param_shift.py
