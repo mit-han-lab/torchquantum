@@ -154,7 +154,7 @@ class QMultiFCModel0(tq.QuantumModule):
                 node.shift_this_step[idx] = True
             elif self.pruning_method == "perlayer_pruning":
                 node.shift_this_step[:] = False
-                idxs = torch.range(0, self.n_params - 1, dtype=int).view(
+                idxs = torch.arange(0, self.n_params, dtype=int).view(
                     self.n_qubits, self.n_layers
                 )
                 sampled_colums = self.colums
@@ -164,7 +164,7 @@ class QMultiFCModel0(tq.QuantumModule):
                 self.colums %= self.n_layers
             elif self.pruning_method == "perqubit_pruning":
                 node.shift_this_step[:] = False
-                idxs = torch.range(0, self.n_params - 1, dtype=int).view(
+                idxs = torch.arange(0, self.n_params, dtype=int).view(
                     self.n_qubits, self.n_layers
                 )
                 sampled_rows = self.rows
