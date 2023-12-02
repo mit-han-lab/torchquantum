@@ -59,6 +59,7 @@ __all__ = [
     "EntangleFull",
     "EntangleCircular",
     "EntanglementLayer",
+    "SethLayer0",
 ]
 
 
