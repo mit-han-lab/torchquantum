@@ -1,0 +1,49 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python package
+
+on:
+  push: 
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pytest qiskit-aer qiskit-ibmq-provider
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Test Examples
+      run: |
+        python3 examples/qubit_rotation/qubit_rotation.py --epochs 1
+        python3 examples/vqe/vqe.py --epochs 1 --steps_per_epoch 1
+        python3 examples/train_unitary_prep/train_unitary_prep.py --epochs 1
+        python3 examples/train_state_prep/train_state_prep.py --epochs 1
+        python3 examples/superdense_coding/superdense_coding_torchquantum.py
+        python3 examples/regression/run_regression.py --epochs 1
+        python3 examples/param_shift_onchip_training/param_shift.py
+        python3 examples/mnist/mnist_2qubit_4class.py --epochs 1
+        python3 examples/hadamard_grad/circ.py
+        python3 examples/encoder_examples/encoder_8x2ry.py
+        python3 examples/converter_tq_qiskit/convert.py
+        python3 examples/amplitude_encoding_mnist/mnist_new.py --epochs 1
+        python3 examples/amplitude_encoding_mnist/mnist_example.py --epochs 1
+        python3 examples/PauliSumOp/pauli_sum_op.py
+        python3 examples/regression/new_run_regression.py --epochs 1
+        python3 examples/quanvolution/quanvolution_trainable_quantum_layer.py --epochs 1
+        python3 examples/grover/grover_example_sudoku.py
+        python3 examples/param_shift_onchip_training/param_shift.py
