@@ -239,7 +239,13 @@ class TwoQAll(tq.QuantumModule):
 
 class RandomOp1All(tq.QuantumModule):
     def __init__(
-        self, n_wires: int, op_types=(tq.RX, tq.RY, tq.RZ), op_ratios=None, seed=None
+        self,
+        n_wires: int,
+        op_types=(tq.RX, tq.RY, tq.RZ),
+        op_ratios=None,
+        has_params=True,
+        trainable=True,
+        seed=None,
     ):
         """Layer adding a random gate to all wires
 
@@ -255,26 +261,18 @@ class RandomOp1All(tq.QuantumModule):
         self.op_ratios = op_ratios
         self.seed = seed
         self.gate_all = nn.ModuleList()
+
         if seed is not None:
             np.random.seed(seed)
-        self.build_random_layer()
 
-    def build_random_layer(self):
         for k in range(self.n_wires):
             op = np.random.choice(self.op_types, p=self.op_ratios)
-            self.gate_all.append(op())
+            self.gate_all.append(op(has_params=has_params, trainable=trainable))
 
     @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice, x):
-        # op on all wires, assert the number of gate is the same as the number
-        # of wires in the device.
-        assert self.n_gate == q_device.n_wires, (
-            f"Number of gates ({self.n_wires}) is different from number "
-            f"of wires ({q_device.n_wires})!"
-        )
-
+    def forward(self, q_device: tq.QuantumDevice):
         for k in range(self.n_wires):
-            self.gate_all[k](q_device, wires=k, params=x[:, k])
+            self.gate_all[k](q_device, wires=k)
 
 
 class RandomLayer(tq.QuantumModule):
