@@ -38,7 +38,6 @@ __all__ = [
     "ClassicalInOpAll",
     "FixedOpAll",
     "TwoQAll",
-    "Op1QAllLayer",
 ]
 
 
