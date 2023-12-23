@@ -26,8 +26,8 @@ import torchquantum as tq
 from torchquantum.layer.layers import (
     LayerTemplate0,
     Op1QAllLayer,
-    Op2QAllLayer,
 )
+from torchquantum.layer.entanglement import Op2QAllLayer
 
 __all__ = [
     "NLocal",
