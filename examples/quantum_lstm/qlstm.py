@@ -31,6 +31,7 @@ import torch
 import torch.nn as nn
 import torchquantum as tq
 import torchquantum.functional as tqf
+import argparse
 
 
 class QLSTM(nn.Module):
@@ -358,6 +359,19 @@ def plot_history(history_classical, history_quantum):
     plt.show()
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pdb", action="store_true", help="debug with pdb")
+    parser.add_argument("--display", action="store_true", help="display results with matplotlib")
+    parser.add_argument(
+        "--epochs", type=int, default=300, help="number of training epochs"
+    )
+
+    args = parser.parse_args()
+
+    if args.pdb:
+        import pdb
+        pdb.set_trace()
+
     tag_to_ix = {"DET": 0, "NN": 1, "V": 2}  # Assign each tag with a unique index
     ix_to_tag = {i:k for k,i in tag_to_ix.items()}
 
@@ -380,7 +394,7 @@ def main():
 
     embedding_dim = 8
     hidden_dim = 6
-    n_epochs = 300
+    n_epochs = args.epochs
 
     model_classical = LSTMTagger(embedding_dim, 
                         hidden_dim, 
@@ -404,10 +418,8 @@ def main():
 
     print_result(model_quantum, training_data, word_to_ix, ix_to_tag)
 
-    plot_history(history_classical, history_quantum)
+    if args.display:
+        plot_history(history_classical, history_quantum)
 
 if __name__ == "__main__":
-    import pdb
-    pdb.set_trace()
-
     main()
