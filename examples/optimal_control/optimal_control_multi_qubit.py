@@ -26,11 +26,22 @@ import torch
 import torch.optim as optim
 
 import torchquantum as tq
-import pdb
+import argparse
 import numpy as np
 
 if __name__ == "__main__":
-    pdb.set_trace()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pdb", action="store_true", help="debug with pdb")
+    parser.add_argument(
+        "--epochs", type=int, default=1000, help="number of training epochs"
+    )
+
+    args = parser.parse_args()
+
+    if args.pdb:
+        import pdb
+        pdb.set_trace()
+
     # target_unitary = torch.tensor([[0, 1], [1, 0]], dtype=torch.complex64)
     theta = 0.6
     target_unitary = torch.tensor(
@@ -62,7 +73,7 @@ if __name__ == "__main__":
         lr=5e-3,
     )
 
-    for k in range(1000):
+    for k in range(args.epochs):
         u_0 = pulse_q0.get_unitary()
         u_1 = pulse_q1.get_unitary()
         u_01 = pulse_q01.get_unitary()

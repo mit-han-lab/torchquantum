@@ -61,3 +61,9 @@ jobs:
         python3 examples/param_shift_onchip_training/param_shift.py
         python3 examples/quanvolution/quanvolution.py --epochs 1
         python3 examples/quantum_lstm/qlstm.py --epochs 1
+        python3 examples/qaoa/max_cut_backprop.py --steps 1
+        python3 examples/optimal_control/optimal_control.py --epochs 1
+        python3 examples/optimal_control/optimal_control_gaussian.py --epochs 1
+        python3 examples/optimal_control/optimal_control_multi_qubit.py --epochs 1
+        python3 examples/save_load_example/save_load.py
+        python3 examples/mnist/mnist.py --epochs 1
