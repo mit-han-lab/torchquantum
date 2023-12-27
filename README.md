@@ -19,9 +19,9 @@
     <a href="https://discord.gg/VTHZAB5E">
         <img alt="Chat @ Discord" src="https://img.shields.io/badge/contact-me-blue?logo=discord&logoColor=white">
     </a>
-    <a href="https://qmlsys.hanruiwang.me">
+<!--     <a href="https://qmlsys.hanruiwang.me">
         <img alt="Forum" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
-    </a>
+    </a> -->
     <a href="https://qmlsys.mit.edu">
         <img alt="Website" src="https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu">
     </a>
