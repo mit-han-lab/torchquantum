@@ -1,38 +1,81 @@
-from typing import Callable, Union, Optional, List, Dict, TYPE_CHECKING
-from ..macro import C_DTYPE, F_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+import functools
 import torch
 import numpy as np
-from .gate_wrapper import gate_wrapper
+
+from typing import Callable, Union, Optional, List, Dict, TYPE_CHECKING
+from ..macro import C_DTYPE, F_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+from ..util.utils import pauli_eigs, diag
+from torchpack.utils.logging import logger
+from torchquantum.util import normalize_statevector
+
+from .gate_wrapper import gate_wrapper, apply_unitary_einsum, apply_unitary_bmm
 
 if TYPE_CHECKING:
     from torchquantum.device import QuantumDevice
 else:
     QuantumDevice = None
 
-_hadamard_mat_dict = {
-    "hadamard": torch.tensor(
-        [[INV_SQRT2, INV_SQRT2], [INV_SQRT2, -INV_SQRT2]], dtype=C_DTYPE
+
+_s_mat_dict = {
+    "s": torch.tensor([[1, 0], [0, 1j]], dtype=C_DTYPE),
+    "sdg": torch.tensor([[1, 0], [0, -1j]], dtype=C_DTYPE),
+    "cs": torch.tensor(
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1j]], dtype=C_DTYPE
     ),
-    "shadamard": torch.tensor(
-        [
-            [np.cos(np.pi / 8), -np.sin(np.pi / 8)],
-            [np.sin(np.pi / 8), np.cos(np.pi / 8)],
-        ],
-        dtype=C_DTYPE,
-    ),
-    "chadamard": torch.tensor(
-        [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, INV_SQRT2, INV_SQRT2],
-            [0, 0, INV_SQRT2, -INV_SQRT2],
-        ],
-        dtype=C_DTYPE,
+    "csdg": torch.tensor(
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1j]], dtype=C_DTYPE
     ),
 }
 
 
-def hadamard(
+def s(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the s gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
+    name = "s"
+    mat = _s_mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
+
+
+def sdg(
     q_device: QuantumDevice,
     wires: Union[List[int], int],
     params: torch.Tensor = None,
@@ -42,7 +85,7 @@ def hadamard(
     inverse: bool = False,
     comp_method: str = "bmm",
 ):
-    """Perform the hadamard gate.
+    """Perform the sdg gate.
 
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
@@ -63,8 +106,8 @@ def hadamard(
         None.
 
     """
-    name = "hadamard"
-    mat = _hadamard_mat_dict[name]
+    name = "sdg"
+    mat = _s_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
@@ -79,7 +122,7 @@ def hadamard(
     )
 
 
-def shadamard(
+def cs(
     q_device,
     wires,
     params=None,
@@ -89,10 +132,10 @@ def shadamard(
     inverse=False,
     comp_method="bmm",
 ):
-    """Perform the shadamard gate.
+    """Perform the cs gate.
 
     Args:
-        q_device (tq.QuantumDevice): The QuantumDevice.
+        q_device (tq.QuantumDevice): The QuantumDevicehadamard__s_mat_dict.
         wires (Union[List[int], int]): Which qubit(s) to apply the gate.
         params (torch.Tensor, optional): Parameters (if any) of the gate.
             Default to None.
@@ -110,8 +153,9 @@ def shadamard(
         None.
 
     """
-    name = "shadamard"
-    mat = _hadamard_mat_dict[name]
+
+    name = "cs"
+    mat = _s_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
@@ -126,7 +170,7 @@ def shadamard(
     )
 
 
-def chadamard(
+def csdg(
     q_device,
     wires,
     params=None,
@@ -136,8 +180,7 @@ def chadamard(
     inverse=False,
     comp_method="bmm",
 ):
-    """Perform the chadamard gate.
-
+    """Perform the csdg gate.
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
         wires (Union[List[int], int]): Which qubit(s) to apply the gate.
@@ -153,14 +196,14 @@ def chadamard(
         comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
         matrix vector multiplication. Default to 'bmm'.
 
+
     Returns:
         None.
 
     """
+    name = "csdg"
 
-    name = "chadamard"
-
-    mat = mat_dict[name]
+    mat = _s_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
@@ -173,8 +216,3 @@ def chadamard(
         parent_graph=parent_graph,
         inverse=inverse,
     )
-
-
-ch = chadamard
-h = hadamard
-sh = shadamard

@@ -139,7 +139,6 @@ def apply_unitary_bmm(state, mat, wires):
     return new_state
 
 
-
 def gate_wrapper(
     name,
     mat,
@@ -255,5 +254,3 @@ def gate_wrapper(
             q_device.states = apply_unitary_einsum(state, matrix, wires)
         elif method == "bmm":
             q_device.states = apply_unitary_bmm(state, matrix, wires)
-
-
