@@ -28,10 +28,8 @@ import torch.nn as nn
 import numpy as np
 import functools
 import torchquantum.functional as tqf
-import torchquantum.Dfunc as dfunc
-import torchquantum as tq
-import copy
-from torchquantum.states import QuantumState
+import torchquantum.density.density_func as dfunc
+import torchquantum as tqf
 from torchquantum.macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from typing import Union, List, Iterable
 
@@ -56,16 +54,12 @@ class DensityMatrix(nn.Module):
         _matrix = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
         _matrix[0] = 1 + 0j
         _matrix = torch.reshape(_matrix, [2] * (2 * self.n_wires))
+        self._dims=2*self.n_wires
         self.register_buffer("matrix", _matrix)
 
         repeat_times = [bsz] + [1] * len(self.matrix.shape)
         self._matrix = self.matrix.repeat(*repeat_times)
         self.register_buffer("matrix", self._matrix)
-
-        """
-        Whether or not calculate by states
-        """
-        self._calc_by_states = True
 
         """
         Remember whether or not a standard matrix on a given wire is contructed
@@ -81,34 +75,14 @@ class DensityMatrix(nn.Module):
         for key in tqf.func_name_dict.keys():
             self.operator_matrix[key] = {}
 
-        """
-        Preserve the probability of all pure states. has the form [(p1,s1),(p2,s2),(p3,s3),...]
-              2**n 2**n 2**n
-         Matrix  3 purestate
-        """
-        self.state_list = []
-        for i in range(0, bsz):
-            self.state_list.append((1, QuantumState(n_wires)))
+    def update_matrix(self,matrix):
+        self._matrix=matrix
+        return
 
-    def set_calc_by_states(self, val):
-        """Set the value of the `_calc_by_states` attribute.
 
-        This method sets the flag that determines whether calculations should be performed using individual pure states or the density matrix.
-
-        Args:
-            val (bool): The new value for the `_calc_by_states` attribute.
-
-        Returns:
-            None
-
-        Examples:
-            >>> device = QuantumDevice(n_wires=3)
-            >>> device.set_calc_by_states(True)
-            >>> device.calc_by_states
-            True
-        """
-        
-        self._calc_by_states = val
+    @property
+    def dim(self):
+        return self._dims
 
     def update_matrix_from_states(self):
         """Update the density matrix value from all pure states.
@@ -146,7 +120,7 @@ class DensityMatrix(nn.Module):
             tensor([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
         """
         
-        return torch.reshape(_matrix, [2 ** (2 * self.n_wires)])
+        return torch.reshape(self._matrix, [2 ** (2 * self.n_wires)])
 
     def print_2d(self, index):
         """Print the matrix value at the given index.
@@ -187,8 +161,8 @@ class DensityMatrix(nn.Module):
             >>> device.trace(0)
             tensor(2)
         """
-        
-        return torch.trace(self._matrix[index])
+        _matrix = torch.reshape(self._matrix[index], [2**self.n_wires] * 2)
+        return torch.trace(_matrix)
 
     def positive_semidefinite(self, index):
         """Check whether the matrix is positive semidefinite by Sylvester's_criterion"""
@@ -200,18 +174,6 @@ class DensityMatrix(nn.Module):
             if self.trace(i) != 1 or not self.positive_semidefinite(i):
                 return False
         return True
-
-    def spectral(self, index):
-        """Return the spectral of the DensityMatrix"""
-        return list(np.linalg.eigvals(self._matrix[index]))
-
-    def tensor(self, other):
-        """Return self tensor other(Notice the order)
-        
-        Args:
-            other (DensityMatrix: Another density matrix
-        """
-        self._matrix = torch.kron(self._matrix, other._matrix)
 
     def expand(self, other):
         """Return other tensor self(Notice the order)
@@ -255,59 +217,6 @@ class DensityMatrix(nn.Module):
         """Expectation of a measurement"""
         return
 
-    def set_from_state(self, probs, states: Union[torch.Tensor, List]):
-        """Get the density matrix of a mixed state.
-        
-        Args:
-          probs:List of probability of each state
-          states:List of state.
-          
-        Examples:
-          probs:[0.5,0.5],states:[|00>,|11>]
-        Then the corresponding matrix is: 0.5|00><00|+0.5|11><11|
-         0.5, 0, 0, 0
-         0  , 0, 0, 0
-         0  , 0, 0, 0
-         0 ,  0, 0, 0.5
-         self._matrix[00][00]=self._matrix[11][11]=0.5
-        """
-        
-        for i in range(0, len(probs)):
-            self.state_list
-        _matrix = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
-        _matrix = torch.reshape(_matrix, [2**self.n_wires, 2**self.n_wires])
-        for i in range(0, len(probs)):
-            row = torch.reshape(states[i], [2**self.n_wires, 1])
-            col = torch.reshape(states[i], [1, 2**self.n_wires])
-            _matrix = _matrix + probs[i] * torch.matmul(row, col)
-        self.matrix = torch.reshape(_matrix, [2] * (2 * self.n_wires))
-        return
-
-    def _add(self, other):
-        """Return self + other
-        
-        Args:
-            other (complex): a complex number.
-        """
-        
-        if not isinstance(other, DensityMatrix):
-            other = DensityMatrix(other)
-        if not self._matrix.shape == other._matrix.shape:
-            raise ("Two density matrix must have the same shape.")
-        ret = copy.copy(self)
-        ret._matrix = self.matrix + other._matrix
-        return ret
-
-    def _multiply(self, other):
-        """Return other * self.
-        
-        Args:
-            other (complex): a complex number.
-        """
-        
-        ret = copy.copy(self)
-        ret._matrix = other * self._matrix
-        return ret
 
     def purity(self):
         """Calculate the purity of the DensityMatrix defined as \gamma=tr(\rho^2)"""
@@ -323,12 +232,14 @@ class DensityMatrix(nn.Module):
             First, the matrix should be reshped to (2,2,2,2,2,2)
             then we call  np.einsum('ijiiqi->jq', reshaped_dm)
         """
-        
         return False
 
     @property
     def name(self):
         return self.__class__.__name__
+
+
+
 
     def __repr__(self):
         return f"Density Matrix"

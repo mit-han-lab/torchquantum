@@ -28,8 +28,8 @@ import numpy as np
 import torchquantum as tq
 
 from typing import Callable, Union, Optional, List, Dict
-from .macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
-from .util.utils import pauli_eigs, diag
+from ..macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
+from ..util.utils import pauli_eigs, diag
 from torchpack.utils.logging import logger
 from torchquantum.util import normalize_statevector
 
