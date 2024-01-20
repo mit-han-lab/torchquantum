@@ -25,6 +25,8 @@ SOFTWARE.
 import torchquantum as tq
 from torchquantum.layer.layers import (
     Op1QAllLayer,
+)
+from torchquantum.layer.entanglement import (
     Op2QAllLayer,
     Op2QDenseLayer,
 )

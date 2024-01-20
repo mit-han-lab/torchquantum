@@ -2,7 +2,7 @@ from ..op_types import *
 import torch
 import torch.nn as nn
 import torchquantum as tq
-import torchquantum.functional.functionals as tqf
+import torchquantum.functional as tqf
 import numpy as np
 from abc import ABCMeta
 from torchquantum.macro import C_DTYPE, F_DTYPE
