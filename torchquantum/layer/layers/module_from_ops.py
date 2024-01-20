@@ -22,7 +22,45 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .layers import *
-from .nlocal import *
-from .general import *
-from .entanglement import *
+import torch
+import torch.nn as nn
+import torchquantum as tq
+import torchquantum.functional as tqf
+import numpy as np
+
+
+from typing import Iterable
+from torchquantum.plugin.qiskit import QISKIT_INCOMPATIBLE_FUNC_NAMES
+from torchpack.utils.logging import logger
+
+__all__ = [
+    "QuantumModuleFromOps",
+]
+
+
+class QuantumModuleFromOps(tq.QuantumModule):
+    """Initializes a QuantumModuleFromOps instance.
+
+    Args:
+        ops (List[tq.Operation]): List of quantum operations.
+
+    """
+
+    def __init__(self, ops):
+        super().__init__()
+        self.ops = tq.QuantumModuleList(ops)
+
+    @tq.static_support
+    def forward(self, q_device: tq.QuantumDevice):
+        """Performs the forward pass of the quantum module.
+
+        Args:
+            q_device (tq.QuantumDevice): Quantum device to apply the operations on.
+
+        Returns:
+            None
+
+        """
+        self.q_device = q_device
+        for op in self.ops:
+            op(q_device)

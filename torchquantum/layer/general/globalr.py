@@ -28,9 +28,9 @@ import torchquantum as tq
 from torchquantum.layer.layers import (
     LayerTemplate0,
     Op1QAllLayer,
-    Op2QAllLayer,
     RandomOp1All,
 )
+from torchquantum.layer.entanglement import Op2QAllLayer
 
 __all__ = [
     "GlobalR",
@@ -83,6 +83,7 @@ class GlobalRY(GlobalR):
         """Create the layer"""
         super().__init__(n_wires, theta, phi=torch.pi / 2)
 
+
 class GlobalRZ(tq.QuantumModule):
     """Layer Template for a Global RZ General Gate"""
 
@@ -100,5 +101,3 @@ class GlobalRZ(tq.QuantumModule):
     def forward(self, q_device, x=None):
         for k in range(self.n_wires):
             tq.RZ()(q_device, wires=k, params=self.params)
-
-
