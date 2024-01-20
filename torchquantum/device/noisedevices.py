@@ -28,7 +28,6 @@ import numpy as np
 
 from torchquantum.macro import C_DTYPE
 from torchquantum.functional import func_name_dict, func_name_dict_collect
-from torchquantum.density import density_mat, density_func
 from typing import Union
 
 __all__ = ["NoiseDevice"]
@@ -38,7 +37,7 @@ class NoiseDevice(nn.Module):
     def __init__(
         self,
         n_wires: int,
-        device_name: str = "default",
+        device_name: str = "noisedevice",
         bsz: int = 1,
         device: Union[torch.device, str] = "cpu",
         record_op: bool = False,
@@ -80,7 +79,7 @@ class NoiseDevice(nn.Module):
         return self.__class__.__name__
 
     def __repr__(self):
-        return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.state.device} \n recording op history: {self.record_op} \n current states: {repr(self.get_states_1d().cpu().detach().numpy())}"
+        return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.density.device} \n recording op history: {self.record_op} \n current states: {repr(self.get_probs_1d().cpu().detach().numpy())}"
 
 
     '''

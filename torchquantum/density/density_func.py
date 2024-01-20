@@ -25,7 +25,7 @@ SOFTWARE.
 import torch
 import numpy as np
 import torchquantum as tq
-
+import functools
 from typing import Callable, Union, Optional, List, Dict
 from ..macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from ..util.utils import pauli_eigs, diag
@@ -227,9 +227,8 @@ def apply_unitary_density_bmm(density, mat, wires):
         bsz = permuted_dag.shape[0]
         expand_shape = [bsz] + list(matdag.shape)
         new_density = permuted_dag.bmm(matdag.expand(expand_shape))
-    _matrix = torch.reshape(new_density[0], [2 ** n_qubit] * 2)
+    new_density = new_density.view(original_shape).permute(permute_back_dag)
     return new_density
-
 
 def gate_wrapper(
         name,
