@@ -28,13 +28,10 @@ import torch.nn as nn
 import numpy as np
 import functools
 import torchquantum.functional as tqf
-import torchquantum.Dfunc as dfunc
-import torchquantum as tq
-import copy
-from torchquantum.states import QuantumState
+import torchquantum.density.density_func as dfunc
+import torchquantum as tqf
 from torchquantum.macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from typing import Union, List, Iterable
-
 
 __all__ = ["DensityMatrix"]
 
@@ -56,16 +53,12 @@ class DensityMatrix(nn.Module):
         _matrix = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
         _matrix[0] = 1 + 0j
         _matrix = torch.reshape(_matrix, [2] * (2 * self.n_wires))
+        self._dims = 2 * self.n_wires
         self.register_buffer("matrix", _matrix)
 
         repeat_times = [bsz] + [1] * len(self.matrix.shape)
         self._matrix = self.matrix.repeat(*repeat_times)
         self.register_buffer("matrix", self._matrix)
-
-        """
-        Whether or not calculate by states
-        """
-        self._calc_by_states = True
 
         """
         Remember whether or not a standard matrix on a given wire is contructed
@@ -81,54 +74,18 @@ class DensityMatrix(nn.Module):
         for key in tqf.func_name_dict.keys():
             self.operator_matrix[key] = {}
 
-        """
-        Preserve the probability of all pure states. has the form [(p1,s1),(p2,s2),(p3,s3),...]
-              2**n 2**n 2**n
-         Matrix  3 purestate
-        """
-        self.state_list = []
-        for i in range(0, bsz):
-            self.state_list.append((1, QuantumState(n_wires)))
-
-    def set_calc_by_states(self, val):
-        """Set the value of the `_calc_by_states` attribute.
-
-        This method sets the flag that determines whether calculations should be performed using individual pure states or the density matrix.
-
-        Args:
-            val (bool): The new value for the `_calc_by_states` attribute.
-
-        Returns:
-            None
-
-        Examples:
-            >>> device = QuantumDevice(n_wires=3)
-            >>> device.set_calc_by_states(True)
-            >>> device.calc_by_states
-            True
-        """
-        
-        self._calc_by_states = val
-
-    def update_matrix_from_states(self):
-        """Update the density matrix value from all pure states.
-
-        This method updates the density matrix value based on all the pure states in the state list.
-
-        Returns:
-            None
-        """
-        
-        _matrix = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
-        _matrix = torch.reshape(_matrix, [2**self.n_wires, 2**self.n_wires])
-        self.register_buffer("matrix", _matrix)
-        bsz = self.matrix.shape[0]
+    def update_matrix(self, matrix):
+        bsz = self._matrix.shape[0]
+        self._matrix = matrix
+        self.register_buffer("matrix", matrix)
         repeat_times = [bsz] + [1] * len(self.matrix.shape)
         self._matrix = self.matrix.repeat(*repeat_times)
-        for i in range(0, bsz):
-            for p, state in self.state_list:
-                self._matrix[i] = self._matrix[i] + p * state.density_matrix()[0][:][:]
         self.register_buffer("matrix", self._matrix)
+        return
+
+    @property
+    def dim(self):
+        return self._dims
 
     def vector(self):
         """Return the density matrix as a vector.
@@ -145,8 +102,8 @@ class DensityMatrix(nn.Module):
             >>> print(vector)
             tensor([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
         """
-        
-        return torch.reshape(_matrix, [2 ** (2 * self.n_wires)])
+
+        return torch.reshape(self._matrix, [2 ** (2 * self.n_wires)])
 
     def print_2d(self, index):
         """Print the matrix value at the given index.
@@ -165,8 +122,8 @@ class DensityMatrix(nn.Module):
                     [0, 1]])
 
         """
-        
-        _matrix = torch.reshape(self._matrix[index], [2**self.n_wires] * 2)
+
+        _matrix = torch.reshape(self._matrix[index], [2 ** self.n_wires] * 2)
         print(_matrix)
 
     def trace(self, index):
@@ -187,8 +144,8 @@ class DensityMatrix(nn.Module):
             >>> device.trace(0)
             tensor(2)
         """
-        
-        return torch.trace(self._matrix[index])
+        _matrix = torch.reshape(self._matrix[index], [2 ** self.n_wires] * 2)
+        return torch.trace(_matrix)
 
     def positive_semidefinite(self, index):
         """Check whether the matrix is positive semidefinite by Sylvester's_criterion"""
@@ -200,18 +157,6 @@ class DensityMatrix(nn.Module):
             if self.trace(i) != 1 or not self.positive_semidefinite(i):
                 return False
         return True
-
-    def spectral(self, index):
-        """Return the spectral of the DensityMatrix"""
-        return list(np.linalg.eigvals(self._matrix[index]))
-
-    def tensor(self, other):
-        """Return self tensor other(Notice the order)
-        
-        Args:
-            other (DensityMatrix: Another density matrix
-        """
-        self._matrix = torch.kron(self._matrix, other._matrix)
 
     def expand(self, other):
         """Return other tensor self(Notice the order)
@@ -227,7 +172,7 @@ class DensityMatrix(nn.Module):
     def set_matrix(self, matrix: Union[torch.tensor, List]):
         """
         """
-        
+
         matrix = torch.tensor(matrix, dtype=C_DTYPE).to(self.matrix.device)
         bsz = matrix.shape[0]
         self.matrix = torch.reshape(
@@ -248,66 +193,12 @@ class DensityMatrix(nn.Module):
             torch.reshape(self.matrix, [bsz, 2 ** (2 * self.n_wires)])
         )
         self.matrix = torch.reshape(
-            new_matrix, [bsz, 2**self.n_wires, 2**self.n_wires]
+            new_matrix, [bsz, 2 ** self.n_wires, 2 ** self.n_wires]
         )
 
     def expectation(self):
         """Expectation of a measurement"""
         return
-
-    def set_from_state(self, probs, states: Union[torch.Tensor, List]):
-        """Get the density matrix of a mixed state.
-        
-        Args:
-          probs:List of probability of each state
-          states:List of state.
-          
-        Examples:
-          probs:[0.5,0.5],states:[|00>,|11>]
-        Then the corresponding matrix is: 0.5|00><00|+0.5|11><11|
-         0.5, 0, 0, 0
-         0  , 0, 0, 0
-         0  , 0, 0, 0
-         0 ,  0, 0, 0.5
-         self._matrix[00][00]=self._matrix[11][11]=0.5
-        """
-        
-        for i in range(0, len(probs)):
-            self.state_list
-        _matrix = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
-        _matrix = torch.reshape(_matrix, [2**self.n_wires, 2**self.n_wires])
-        for i in range(0, len(probs)):
-            row = torch.reshape(states[i], [2**self.n_wires, 1])
-            col = torch.reshape(states[i], [1, 2**self.n_wires])
-            _matrix = _matrix + probs[i] * torch.matmul(row, col)
-        self.matrix = torch.reshape(_matrix, [2] * (2 * self.n_wires))
-        return
-
-    def _add(self, other):
-        """Return self + other
-        
-        Args:
-            other (complex): a complex number.
-        """
-        
-        if not isinstance(other, DensityMatrix):
-            other = DensityMatrix(other)
-        if not self._matrix.shape == other._matrix.shape:
-            raise ("Two density matrix must have the same shape.")
-        ret = copy.copy(self)
-        ret._matrix = self.matrix + other._matrix
-        return ret
-
-    def _multiply(self, other):
-        """Return other * self.
-        
-        Args:
-            other (complex): a complex number.
-        """
-        
-        ret = copy.copy(self)
-        ret._matrix = other * self._matrix
-        return ret
 
     def purity(self):
         """Calculate the purity of the DensityMatrix defined as \gamma=tr(\rho^2)"""
@@ -323,7 +214,6 @@ class DensityMatrix(nn.Module):
             First, the matrix should be reshped to (2,2,2,2,2,2)
             then we call  np.einsum('ijiiqi->jq', reshaped_dm)
         """
-        
         return False
 
     @property
@@ -334,10 +224,10 @@ class DensityMatrix(nn.Module):
         return f"Density Matrix"
 
     def hadamard(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a Hadamard gate on the specified wires.
 
@@ -365,10 +255,10 @@ class DensityMatrix(nn.Module):
         dfunc.hadamard(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def shadamard(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a SHadamard gate (square root of Hadamard gate) on the specified wires.
 
@@ -396,10 +286,10 @@ class DensityMatrix(nn.Module):
         dfunc.shadamard(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def paulix(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a Pauli-X gate (also known as the NOT gate) on the specified wires.
 
@@ -424,14 +314,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.paulix(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.paulix(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def pauliy(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a Pauli-Y gate on the specified wires.
 
@@ -456,14 +346,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.pauliy(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.pauliy(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def pauliz(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a Pauli-Z gate on the specified wires.
 
@@ -491,10 +381,10 @@ class DensityMatrix(nn.Module):
         dfunc.pauliz(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def i(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply an identity gate on the specified wires.
 
@@ -519,14 +409,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.i(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.i(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def s(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply an S gate on the specified wires.
 
@@ -551,14 +441,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.s(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.s(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def t(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a T gate on the specified wires.
 
@@ -582,14 +472,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.t(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.t(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def sx(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a SX gate (square root of Pauli-X gate) on the specified wires.
 
@@ -614,14 +504,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.sx(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.sx(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def cnot(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a controlled-NOT (CNOT) gate on the specified wires.
 
@@ -646,14 +536,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.cnot(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.cnot(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def cz(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a controlled-Z (CZ) gate on the specified wires.
 
@@ -678,14 +568,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.cz(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.cz(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def cy(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a controlled-Y (CY) gate on the specified wires.
 
@@ -710,14 +600,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.cy(wires=[0, 1], inverse=False)
         """
-        
+
         dfunc.cy(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def swap(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a swap gate on the specified wires.
 
@@ -742,14 +632,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.swap(wires=[0, 1, 2], inverse=False)
         """
-        
+
         dfunc.swap(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def sswap(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a symmetric swap gate on the specified wires.
 
@@ -774,14 +664,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.sswap(wires=[0, 1, 2], inverse=False)
         """
-            
+
         dfunc.sswap(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def cswap(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a controlled swap (Fredkin) gate on the specified wires.
 
@@ -806,14 +696,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.cswap(wires=[0, 1, 2], inverse=False)
         """
-        
+
         dfunc.cswap(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def toffoli(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
         """Apply a Toffoli (CCNOT) gate on the specified wires.
 
@@ -838,14 +728,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.toffoli(wires=[0, 1, 2], inverse=False)
         """
-        
+
         dfunc.toffoli(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def multicnot(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a multi-qubit controlled-NOT (CNOT) gate on the specified wires.
@@ -871,14 +761,14 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.multicnot(wires=[0, 1, 2], inverse=False)
         """
-        
+
         dfunc.multicnot(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def multixcnot(
-        self,
-        wires: Union[List[int], int],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a multi-qubit X gate or CNOT gate on the specified wires.
@@ -904,15 +794,15 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.multixcnot(wires=[0, 1, 2], inverse=False)
         """
-        
+
         dfunc.multixcnot(self, wires=wires, inverse=inverse, comp_method=comp_method)
 
     def rx(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a single-qubit Rx gate on the specified wires.
@@ -940,7 +830,7 @@ class DensityMatrix(nn.Module):
             >>> params = torch.tensor(0.5)
             >>> device.rx(wires=0, params=params)
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -951,11 +841,11 @@ class DensityMatrix(nn.Module):
         )
 
     def ry(
-        self,
-        wires: Union[List[int], int],
-        params: torch.Tensor,
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: torch.Tensor,
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a single-qubit Ry gate on the specified wires.
@@ -982,7 +872,7 @@ class DensityMatrix(nn.Module):
             >>> params = torch.tensor(0.5)
             >>> device.ry(wires=0, params=params)
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -993,11 +883,11 @@ class DensityMatrix(nn.Module):
         )
 
     def rz(
-        self,
-        wires: Union[List[int], int],
-        params: torch.Tensor,
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: torch.Tensor,
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a single-qubit Rz gate on the specified wires.
@@ -1024,7 +914,7 @@ class DensityMatrix(nn.Module):
             >>> params = torch.tensor(0.5)
             >>> device.rz(wires=0, params=params)
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1035,11 +925,11 @@ class DensityMatrix(nn.Module):
         )
 
     def rxx(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a rotation XX gate on the specified wires.
@@ -1067,7 +957,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.rxx(wires=[0, 1], params=0.1)
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1078,11 +968,11 @@ class DensityMatrix(nn.Module):
         )
 
     def ryy(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a rotation YY gate on the specified wires.
@@ -1110,7 +1000,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.rzz(wires=[0, 1], params=0.1)
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1121,11 +1011,11 @@ class DensityMatrix(nn.Module):
         )
 
     def rzz(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a rotation ZZ gate on the specified wires.
@@ -1153,7 +1043,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.rzz(wires=[0, 1], params=0.3)
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1164,11 +1054,11 @@ class DensityMatrix(nn.Module):
         )
 
     def rzx(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled Rz gate on the specified wires.
@@ -1196,7 +1086,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.rzx(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1207,11 +1097,11 @@ class DensityMatrix(nn.Module):
         )
 
     def phaseshift(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a phase shift gate on the specified wires.
@@ -1239,7 +1129,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.phaseshift(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1250,11 +1140,11 @@ class DensityMatrix(nn.Module):
         )
 
     def rot(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a rotation gate on the specified wires.
@@ -1282,7 +1172,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.rot(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1296,11 +1186,11 @@ class DensityMatrix(nn.Module):
         )
 
     def multirz(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a multi-controlled Z-rotation gate on the specified control wires.
@@ -1339,11 +1229,11 @@ class DensityMatrix(nn.Module):
         )
 
     def crx(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled X-rotation gate on the specified control and target wires.
@@ -1371,7 +1261,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.crx(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1382,11 +1272,11 @@ class DensityMatrix(nn.Module):
         )
 
     def cry(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled Y-rotation gate on the specified control and target wires.
@@ -1414,7 +1304,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.cry(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1425,11 +1315,11 @@ class DensityMatrix(nn.Module):
         )
 
     def crz(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled phase rotation gate on the specified control and target wires.
@@ -1457,7 +1347,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.crz(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1468,11 +1358,11 @@ class DensityMatrix(nn.Module):
         )
 
     def crot(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled-rotation gate on the specified control and target wires.
@@ -1500,7 +1390,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.crot(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1514,11 +1404,11 @@ class DensityMatrix(nn.Module):
         )
 
     def u1(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a u1 gate on the specified wires.
@@ -1546,7 +1436,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.u1(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1557,11 +1447,11 @@ class DensityMatrix(nn.Module):
         )
 
     def u2(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a u2 gate on the specified wires.
@@ -1589,7 +1479,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.u2(wires=[0, 1], params=[0.1, 0.2])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1603,11 +1493,11 @@ class DensityMatrix(nn.Module):
         )
 
     def u3(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a u3 gate on the specified wires.
@@ -1649,11 +1539,11 @@ class DensityMatrix(nn.Module):
         )
 
     def cu1(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled-u1 gate on the specified wires.
@@ -1681,7 +1571,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.cu1(wires=[0, 1], params=[0.3, 0.5])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1695,11 +1585,11 @@ class DensityMatrix(nn.Module):
         )
 
     def cu2(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled-u2 gate on the specified wires.
@@ -1727,7 +1617,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=2)
             >>> device.cu2(wires=[0, 1], params=[0.3, 0.5])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
@@ -1741,11 +1631,11 @@ class DensityMatrix(nn.Module):
         )
 
     def cu3(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a controlled-u3 gate on the specified wires.
@@ -1787,11 +1677,11 @@ class DensityMatrix(nn.Module):
         )
 
     def qubitunitary(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a unitary gate on the specified wires.
@@ -1819,7 +1709,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.qubitunitary(wires=[0, 1], params=[0.5, 0.5])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.tensor(params, dtype=C_DTYPE)
         else:
@@ -1830,11 +1720,11 @@ class DensityMatrix(nn.Module):
         )
 
     def qubitunitaryfast(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a unitary gate on the specified wires (fast method).
@@ -1863,7 +1753,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.qubitunitaryfast(wires=[0, 1], params=[0.5, 0.5])
         """
-        
+
         if isinstance(params, Iterable):
             params = torch.tensor(params, dtype=C_DTYPE)
         else:
@@ -1874,11 +1764,11 @@ class DensityMatrix(nn.Module):
         )
 
     def qubitunitarystrict(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
 
         """Apply a unitary gate on the specified wires.
@@ -1917,13 +1807,13 @@ class DensityMatrix(nn.Module):
         )
 
     def single_excitation(
-        self,
-        wires: Union[List[int], int],
-        params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
-        inverse: bool = False,
-        comp_method: str = "bmm",
+            self,
+            wires: Union[List[int], int],
+            params: Union[torch.Tensor, np.ndarray, List[float], List[int], int, float],
+            inverse: bool = False,
+            comp_method: str = "bmm",
     ):
-        
+
         """Apply a single excitation gate on the specified wires.
         
         This method applies a single excitation gate on the specified wires of the quantum device.
@@ -1949,7 +1839,7 @@ class DensityMatrix(nn.Module):
             >>> device = QuantumDevice(n_wires=3)
             >>> device.single_excitation(wires=[0, 2], params=[0.1, 0.2])
         """
-    
+
         if isinstance(params, Iterable):
             params = torch.Tensor(params)
         else:
