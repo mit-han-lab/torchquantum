@@ -113,7 +113,7 @@ def apply_unitary_density_einsum(density, mat, wires):
     Returns:
         torch.Tensor: The new statevector.
     """
-    
+
     device_wires = wires
     n_qubit = int((density.dim() - 1) / 2)
 
@@ -151,7 +151,7 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
-    new_indices = ABC[total_wires : total_wires + len(device_wires)]
+    new_indices = ABC[total_wires: total_wires + len(device_wires)]
     print("new_indices", new_indices)
 
     # The new indices of the state are given by the old ones with the
@@ -195,7 +195,7 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
-    new_indices = ABC[total_wires : total_wires + len(device_wires)]
+    new_indices = ABC[total_wires: total_wires + len(device_wires)]
     print("new_indices", new_indices)
 
     # The new indices of the state are given by the old ones with the
@@ -230,14 +230,11 @@ def apply_unitary_density_bmm(density, mat, wires):
         state (torch.Tensor): The statevector.
         mat (torch.Tensor): The unitary matrix of the operation.
         wires (int or List[int]): Which qubit the operation is applied to.
-
     Returns:
         torch.Tensor: The new statevector.
     """
-    
     device_wires = wires
-    n_qubit = int((density.dim() - 1) / 2)
-
+    n_qubit = density.dim() // 2
     mat = mat.type(C_DTYPE).to(density.device)
     """
     Compute U \rho
@@ -249,9 +246,8 @@ def apply_unitary_density_bmm(density, mat, wires):
     permute_to = permute_to[:1] + devices_dims + permute_to[1:]
     permute_back = list(np.argsort(permute_to))
     original_shape = density.shape
-    permuted = density.permute(permute_to).reshape(
-        [original_shape[0], mat.shape[-1], -1]
-    )
+    permuted = density.permute(permute_to).reshape([original_shape[0], mat.shape[-1], -1])
+
     if len(mat.shape) > 2:
         # both matrix and state are in batch mode
         new_density = mat.bmm(permuted)
@@ -261,45 +257,45 @@ def apply_unitary_density_bmm(density, mat, wires):
         expand_shape = [bsz] + list(mat.shape)
         new_density = mat.expand(expand_shape).bmm(permuted)
     new_density = new_density.view(original_shape).permute(permute_back)
+    _matrix = torch.reshape(new_density[0], [2 ** n_qubit] * 2)
     """
-    Compute U*rho*U^\dagger
+    Compute \rho U^\dagger 
     """
-    devices_dims = [w + 1 + n_qubit for w in device_wires]
-    permute_to = list(range(density.dim()))
-    for d in sorted(devices_dims, reverse=True):
-        del permute_to[d]
-    permute_to = permute_to + devices_dims
-    permute_back = list(np.argsort(permute_to))
-    original_shape = density.shape
-    permuted = new_density.permute(permute_to).reshape(
-        [original_shape[0], -1, mat.shape[-1]]
-    )
-    if len(mat.shape) > 2:
+    matdag = torch.conj(mat)
+    matdag = matdag.type(C_DTYPE).to(density.device)
+
+    devices_dims_dag = [n_qubit + w + 1 for w in device_wires]
+    permute_to_dag = list(range(density.dim()))
+    for d in sorted(devices_dims_dag, reverse=True):
+        del permute_to_dag[d]
+    permute_to_dag = permute_to_dag + devices_dims_dag
+    permute_back_dag = list(np.argsort(permute_to_dag))
+    original_shape = new_density.shape
+    permuted_dag = new_density.permute(permute_to_dag).reshape([original_shape[0], -1, matdag.shape[0]])
+
+    if len(matdag.shape) > 2:
         # both matrix and state are in batch mode
-        # matdag is the dagger of mat
-        matdag = torch.conj(mat.permute([0, 2, 1]))
-        new_density = permuted.bmm(matdag)
+        new_density = permuted_dag.bmm(matdag)
     else:
         # matrix no batch, state in batch mode
-        matdag = torch.conj(mat.permute([1, 0]))
-        bsz = permuted.shape[0]
+        bsz = permuted_dag.shape[0]
         expand_shape = [bsz] + list(matdag.shape)
-        new_density = permuted.bmm(matdag.expand(expand_shape))
-    new_density = new_density.view(original_shape).permute(permute_back)
+        new_density =permuted_dag.bmm( matdag.expand(expand_shape))
+    _matrix = torch.reshape(new_density[0], [2 ** n_qubit] * 2)
     return new_density
 
 
 def gate_wrapper(
-    name,
-    mat,
-    method,
-    q_device: tq.QuantumDevice,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
+        name,
+        mat,
+        method,
+        q_device: tq.QuantumDevice,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
 ):
     """Perform the phaseshift gate.
 
@@ -325,7 +321,7 @@ def gate_wrapper(
     Returns:
         None.
     """
-    
+
     if params is not None:
         if not isinstance(params, torch.Tensor):
             # this is for qubitunitary gate
@@ -440,7 +436,7 @@ def rx_matrix(params: torch.Tensor) -> torch.Tensor:
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     """
     Seems to be a pytorch bug. Have to explicitly cast the theta to a
@@ -452,7 +448,7 @@ def rx_matrix(params: torch.Tensor) -> torch.Tensor:
     (Could this error message be improved?
     If so, please report an enhancement request to PyTorch.)
     """
-    
+
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(-theta / 2)
 
@@ -470,7 +466,7 @@ def ry_matrix(params: torch.Tensor) -> torch.Tensor:
     Returns:
         The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
 
     co = torch.cos(theta / 2)
@@ -490,7 +486,7 @@ def rz_matrix(params: torch.Tensor) -> torch.Tensor:
     Returns:
         The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
@@ -550,7 +546,7 @@ def rot_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     theta = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     omega = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -588,7 +584,7 @@ def multirz_eigvals(params, n_wires):
     Returns:
         torch.Tensor: The computed eigenvalues.
     """
-    
+
     theta = params.type(C_DTYPE)
     return torch.exp(
         -1j * theta / 2 * torch.tensor(pauli_eigs(n_wires)).to(params.device)
@@ -604,7 +600,7 @@ def multirz_matrix(params, n_wires):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     # torch diagonal not available for complex number
     eigvals = multirz_eigvals(params, n_wires)
     dia = diag(eigvals)
@@ -657,7 +653,7 @@ def ryy_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
@@ -694,7 +690,7 @@ def rzz_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
     conj_exp = torch.conj(exp)
@@ -726,7 +722,7 @@ def rzx_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     jsi = 1j * torch.sin(theta / 2)
@@ -796,7 +792,7 @@ def cry_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
@@ -827,7 +823,7 @@ def crz_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     exp = torch.exp(-0.5j * theta)
 
@@ -855,7 +851,7 @@ def crot_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].type(C_DTYPE)
     theta = params[:, 1].type(C_DTYPE)
     omega = params[:, 2].type(C_DTYPE)
@@ -890,7 +886,7 @@ def u1_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -918,7 +914,7 @@ def cu1_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params.type(C_DTYPE)
     exp = torch.exp(1j * phi)
 
@@ -946,7 +942,7 @@ def u2_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
@@ -971,7 +967,7 @@ def cu2_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     phi = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
 
@@ -1001,7 +997,7 @@ def u3_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -1029,7 +1025,7 @@ def cu3_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
     phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
     lam = params[:, 2].unsqueeze(dim=-1).type(C_DTYPE)
@@ -1067,7 +1063,7 @@ def qubitunitary_matrix(params):
     Raises:
         AssertionError: If Operator is other than square matrix
     """
-    
+
     matrix = params.squeeze(0)
     try:
         assert matrix.shape[-1] == matrix.shape[-2]
@@ -1107,7 +1103,7 @@ def qubitunitaryfast_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     return params.squeeze(0)
 
 
@@ -1121,7 +1117,7 @@ def qubitunitarystrict_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     params.squeeze(0)
     mat = params
     U, Sigma, V = torch.svd(mat)
@@ -1137,8 +1133,8 @@ def multicnot_matrix(n_wires):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
-    mat = torch.eye(2**n_wires, dtype=C_DTYPE)
+
+    mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
     mat[-1][-1] = 0
     mat[-2][-2] = 0
     mat[-1][-2] = 1
@@ -1156,9 +1152,9 @@ def multixcnot_matrix(n_wires):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     # when all control qubits are zero, then the target qubit will flip
-    mat = torch.eye(2**n_wires, dtype=C_DTYPE)
+    mat = torch.eye(2 ** n_wires, dtype=C_DTYPE)
     mat[0][0] = 0
     mat[1][1] = 0
     mat[0][1] = 1
@@ -1176,7 +1172,7 @@ def single_excitation_matrix(params):
     Returns:
         torch.Tensor: The computed unitary matrix.
     """
-    
+
     theta = params.type(C_DTYPE)
     co = torch.cos(theta / 2)
     si = torch.sin(theta / 2)
@@ -1294,14 +1290,14 @@ mat_dict = {
 
 
 def hadamard(
-    q_device: tq.QuantumDevice,
-    wires: Union[List[int], int],
-    params: torch.Tensor = None,
-    n_wires: int = None,
-    static: bool = False,
-    parent_graph=None,
-    inverse: bool = False,
-    comp_method: str = "bmm",
+        q_device: tq.QuantumDevice,
+        wires: Union[List[int], int],
+        params: torch.Tensor = None,
+        n_wires: int = None,
+        static: bool = False,
+        parent_graph=None,
+        inverse: bool = False,
+        comp_method: str = "bmm",
 ):
     """Perform the hadamard gate.
 
@@ -1323,7 +1319,7 @@ def hadamard(
     Returns:
         None.
     """
-    
+
     name = "hadamard"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1341,14 +1337,14 @@ def hadamard(
 
 
 def shadamard(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the shadamard gate.
 
@@ -1370,7 +1366,7 @@ def shadamard(
     Returns:
         None.
     """
-    
+
     name = "shadamard"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1388,14 +1384,14 @@ def shadamard(
 
 
 def paulix(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the Pauli X gate.
 
@@ -1417,7 +1413,7 @@ def paulix(
     Returns:
         None.
     """
-    
+
     name = "paulix"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1435,14 +1431,14 @@ def paulix(
 
 
 def pauliy(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the Pauli Y gate.
 
@@ -1464,7 +1460,7 @@ def pauliy(
     Returns:
         None.
     """
-    
+
     name = "pauliy"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1482,14 +1478,14 @@ def pauliy(
 
 
 def pauliz(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the Pauli Z gate.
 
@@ -1511,7 +1507,7 @@ def pauliz(
     Returns:
         None.
     """
-    
+
     name = "pauliz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1529,14 +1525,14 @@ def pauliz(
 
 
 def i(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the I gate.
 
@@ -1558,7 +1554,7 @@ def i(
     Returns:
         None.
     """
-    
+
     name = "i"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1576,14 +1572,14 @@ def i(
 
 
 def s(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the s gate.
 
@@ -1605,7 +1601,7 @@ def s(
     Returns:
         None.
     """
-    
+
     name = "s"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1623,14 +1619,14 @@ def s(
 
 
 def t(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the t gate.
 
@@ -1652,7 +1648,7 @@ def t(
     Returns:
         None.
     """
-    
+
     name = "t"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1670,14 +1666,14 @@ def t(
 
 
 def sx(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the sx gate.
 
@@ -1699,7 +1695,7 @@ def sx(
     Returns:
         None.
     """
-    
+
     name = "sx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1717,14 +1713,14 @@ def sx(
 
 
 def cnot(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cnot gate.
 
@@ -1746,7 +1742,7 @@ def cnot(
     Returns:
         None.
     """
-    
+
     name = "cnot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1764,14 +1760,14 @@ def cnot(
 
 
 def cz(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cz gate.
 
@@ -1793,7 +1789,7 @@ def cz(
     Returns:
         None.
     """
-    
+
     name = "cz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1811,14 +1807,14 @@ def cz(
 
 
 def cy(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cy gate.
 
@@ -1840,7 +1836,7 @@ def cy(
     Returns:
         None.
     """
-    
+
     name = "cy"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1858,14 +1854,14 @@ def cy(
 
 
 def rx(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the rx gate.
 
@@ -1887,7 +1883,7 @@ def rx(
     Returns:
         None.
     """
-    
+
     name = "rx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1905,14 +1901,14 @@ def rx(
 
 
 def ry(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the ry gate.
 
@@ -1934,7 +1930,7 @@ def ry(
     Returns:
         None.
     """
-    
+
     name = "ry"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1952,14 +1948,14 @@ def ry(
 
 
 def rz(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the rz gate.
 
@@ -1981,7 +1977,7 @@ def rz(
     Returns:
         None.
     """
-    
+
     name = "rz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -1999,14 +1995,14 @@ def rz(
 
 
 def rxx(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the rxx gate.
 
@@ -2028,7 +2024,7 @@ def rxx(
     Returns:
         None.
     """
-    
+
     name = "rxx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2046,14 +2042,14 @@ def rxx(
 
 
 def ryy(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the ryy gate.
 
@@ -2075,7 +2071,7 @@ def ryy(
     Returns:
         None.
     """
-    
+
     name = "ryy"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2093,14 +2089,14 @@ def ryy(
 
 
 def rzz(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the rzz gate.
 
@@ -2122,7 +2118,7 @@ def rzz(
     Returns:
         None.
     """
-    
+
     name = "rzz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2140,14 +2136,14 @@ def rzz(
 
 
 def rzx(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the rzx gate.
 
@@ -2169,7 +2165,7 @@ def rzx(
     Returns:
         None.
     """
-    
+
     name = "rzx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2187,14 +2183,14 @@ def rzx(
 
 
 def swap(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the swap gate.
 
@@ -2216,7 +2212,7 @@ def swap(
     Returns:
         None.
     """
-    
+
     name = "swap"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2234,14 +2230,14 @@ def swap(
 
 
 def sswap(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the sswap gate.
 
@@ -2263,7 +2259,7 @@ def sswap(
     Returns:
         None.
     """
-    
+
     name = "sswap"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2281,14 +2277,14 @@ def sswap(
 
 
 def cswap(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cswap gate.
 
@@ -2310,7 +2306,7 @@ def cswap(
     Returns:
         None.
     """
-    
+
     name = "cswap"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2328,14 +2324,14 @@ def cswap(
 
 
 def toffoli(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the toffoli gate.
 
@@ -2357,7 +2353,7 @@ def toffoli(
     Returns:
         None.
     """
-    
+
     name = "toffoli"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2375,14 +2371,14 @@ def toffoli(
 
 
 def phaseshift(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the phaseshift gate.
 
@@ -2404,7 +2400,7 @@ def phaseshift(
     Returns:
         None.
     """
-    
+
     name = "phaseshift"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2422,14 +2418,14 @@ def phaseshift(
 
 
 def rot(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the rot gate.
 
@@ -2451,7 +2447,7 @@ def rot(
     Returns:
         None.
     """
-    
+
     name = "rot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2469,14 +2465,14 @@ def rot(
 
 
 def multirz(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the multi qubit RZ gate.
 
@@ -2498,7 +2494,7 @@ def multirz(
     Returns:
         None.
     """
-    
+
     name = "multirz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2516,14 +2512,14 @@ def multirz(
 
 
 def crx(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the crx gate.
 
@@ -2545,7 +2541,7 @@ def crx(
     Returns:
         None.
     """
-    
+
     name = "crx"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2563,14 +2559,14 @@ def crx(
 
 
 def cry(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cry gate.
 
@@ -2592,7 +2588,7 @@ def cry(
     Returns:
         None.
     """
-    
+
     name = "cry"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2610,14 +2606,14 @@ def cry(
 
 
 def crz(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the crz gate.
 
@@ -2639,7 +2635,7 @@ def crz(
     Returns:
         None.
     """
-    
+
     name = "crz"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2657,14 +2653,14 @@ def crz(
 
 
 def crot(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the crot gate.
 
@@ -2686,7 +2682,7 @@ def crot(
     Returns:
         None.
     """
-    
+
     name = "crot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2704,14 +2700,14 @@ def crot(
 
 
 def u1(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the u1 gate.
 
@@ -2733,7 +2729,7 @@ def u1(
     Returns:
         None.
     """
-    
+
     name = "u1"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2751,14 +2747,14 @@ def u1(
 
 
 def u2(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the u2 gate.
 
@@ -2780,7 +2776,7 @@ def u2(
     Returns:
         None.
     """
-    
+
     name = "u2"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2798,14 +2794,14 @@ def u2(
 
 
 def u3(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the u3 gate.
 
@@ -2827,7 +2823,7 @@ def u3(
     Returns:
         None.
     """
-    
+
     name = "u3"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2845,14 +2841,14 @@ def u3(
 
 
 def cu1(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cu1 gate.
 
@@ -2874,7 +2870,7 @@ def cu1(
     Returns:
         None.
     """
-    
+
     name = "cu1"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2892,14 +2888,14 @@ def cu1(
 
 
 def cu2(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cu2 gate.
 
@@ -2921,7 +2917,7 @@ def cu2(
     Returns:
         None.
     """
-    
+
     name = "cu2"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2939,14 +2935,14 @@ def cu2(
 
 
 def cu3(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the cu3 gate.
 
@@ -2968,7 +2964,7 @@ def cu3(
     Returns:
         None.
     """
-    
+
     name = "cu3"
     mat = mat_dict[name]
     gate_wrapper(
@@ -2986,14 +2982,14 @@ def cu3(
 
 
 def qubitunitary(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the qubitunitary gate.
 
@@ -3015,7 +3011,7 @@ def qubitunitary(
     Returns:
         None.
     """
-    
+
     name = "qubitunitary"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3033,14 +3029,14 @@ def qubitunitary(
 
 
 def qubitunitaryfast(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the qubitunitaryfast gate.
 
@@ -3062,7 +3058,7 @@ def qubitunitaryfast(
     Returns:
         None.
     """
-    
+
     name = "qubitunitaryfast"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3080,14 +3076,14 @@ def qubitunitaryfast(
 
 
 def qubitunitarystrict(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the qubitunitarystrict = gate.
 
@@ -3109,7 +3105,7 @@ def qubitunitarystrict(
     Returns:
         None.
     """
-    
+
     name = "qubitunitarystrict"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3127,14 +3123,14 @@ def qubitunitarystrict(
 
 
 def multicnot(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the multi qubit cnot gate.
 
@@ -3156,7 +3152,7 @@ def multicnot(
     Returns:
         None.
     """
-    
+
     name = "multicnot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3174,14 +3170,14 @@ def multicnot(
 
 
 def multixcnot(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the multi qubit xcnot gate.
 
@@ -3203,7 +3199,7 @@ def multixcnot(
     Returns:
         None.
     """
-    
+
     name = "multixcnot"
     mat = mat_dict[name]
     gate_wrapper(
@@ -3221,14 +3217,14 @@ def multixcnot(
 
 
 def single_excitation(
-    q_device,
-    wires,
-    params=None,
-    n_wires=None,
-    static=False,
-    parent_graph=None,
-    inverse=False,
-    comp_method="bmm",
+        q_device,
+        wires,
+        params=None,
+        n_wires=None,
+        static=False,
+        parent_graph=None,
+        inverse=False,
+        comp_method="bmm",
 ):
     """Perform the single excitation gate.
 
@@ -3250,7 +3246,7 @@ def single_excitation(
     Returns:
         None.
     """
-    
+
     name = "single_excitation"
     mat = mat_dict[name]
     gate_wrapper(
