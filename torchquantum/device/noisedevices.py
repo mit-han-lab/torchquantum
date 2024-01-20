@@ -61,15 +61,15 @@ class NoiseDevice(nn.Module):
         self.bsz = bsz
         self.device = device
 
-        _matrix = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
-        _matrix[0] = 1 + 0j
-        _matrix = torch.reshape(_matrix, [2] * (2 * self.n_wires))
+        _density = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
+        _density[0] = 1 + 0j
+        _density = torch.reshape(_density, [2] * (2 * self.n_wires))
         self._dims = 2 * self.n_wires
-        self.register_buffer("matrix", _matrix)
+        self.register_buffer("density", _density)
 
         repeat_times = [bsz] + [1] * len(self.density.shape)  # type: ignore
-        self._matrices = self.state.repeat(*repeat_times)  # type: ignore
-        self.register_buffer("matrices", self._matrices)
+        self._densities = self.density.repeat(*repeat_times)  # type: ignore
+        self.register_buffer("densities", self._densities)
 
         self.record_op = record_op
         self.op_history = []
