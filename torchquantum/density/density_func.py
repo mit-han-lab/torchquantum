@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import functools
 import torch
 import numpy as np
 import torchquantum as tq
@@ -32,6 +31,15 @@ from ..macro import C_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
 from ..util.utils import pauli_eigs, diag
 from torchpack.utils.logging import logger
 from torchquantum.util import normalize_statevector
+from ..functional import  (hadamard,shadamard,paulix,pauliy,pauliz,i,s,t,sx,cnot,
+                           cz,cy,swap,sswap,cswap,toffoli,multicnot,multixcnot,rx,ry,rz,rxx,ryy,rzz,rzx,
+                           phaseshift,rot,multirz,crx,cry,crz,crot,u1,u2,u3, cu,cu1, cu2, cu3, qubitunitary,
+                           qubitunitaryfast,qubitunitarystrict,singleexcitation,h,sh,x,y,z,xx,yy,zz,zx,cx,ccnot, ccx,
+                           u,cu, p,cp,cr,cphase,ecr,echoedcrossresonance,qft,sdg,iswap,cs, csdg,csx,chadamard,ccz,
+                           dcx,xxminyy,xxplusyy,c3x,tdg,sxdg,ch,r,c4x,rccx,rc3x,globalphase,c3sx)
+
+
+
 
 __all__ = [
     "apply_unitary_density_einsum",
