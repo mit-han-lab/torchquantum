@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 MIT License
 
