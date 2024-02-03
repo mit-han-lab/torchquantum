@@ -35,12 +35,12 @@ __all__ = ["NoiseDevice"]
 
 class NoiseDevice(nn.Module):
     def __init__(
-        self,
-        n_wires: int,
-        device_name: str = "noisedevice",
-        bsz: int = 1,
-        device: Union[torch.device, str] = "cpu",
-        record_op: bool = False,
+            self,
+            n_wires: int,
+            device_name: str = "noisedevice",
+            bsz: int = 1,
+            device: Union[torch.device, str] = "cpu",
+            record_op: bool = False,
     ):
         """A quantum device that support the density matrix simulation
         Args:
@@ -73,7 +73,6 @@ class NoiseDevice(nn.Module):
         self.record_op = record_op
         self.op_history = []
 
-
     def print_2d(self, index):
         """Print the matrix value at the given index.
 
@@ -99,6 +98,10 @@ class NoiseDevice(nn.Module):
         _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
         return _matrix
 
+    def calc_trace(self, index):
+        _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
+        return torch.trace(_matrix)
+
     @property
     def name(self):
         """Return the name of the device."""
@@ -107,20 +110,20 @@ class NoiseDevice(nn.Module):
     def __repr__(self):
         return f" class: {self.name} \n device name: {self.device_name} \n number of qubits: {self.n_wires} \n batch size: {self.bsz} \n current computing device: {self.density.device} \n recording op history: {self.record_op} \n current states: {repr(self.get_probs_1d().cpu().detach().numpy())}"
 
-
     '''
     Get the probability of measuring each state to a one dimension
     tensor
     '''
+
     def get_probs_1d(self):
         """Return the states in a 1d tensor."""
         bsz = self.densities.shape[0]
-        densities2d=torch.reshape(self.densities, [bsz, 2**self.n_wires,2**self.n_wires])
+        densities2d = torch.reshape(self.densities, [bsz, 2 ** self.n_wires, 2 ** self.n_wires])
         return torch.diagonal(densities2d, offset=0, dim1=1, dim2=2)
 
     def get_prob_1d(self):
         """Return the state in a 1d tensor."""
-        density2d=torch.reshape(self.density, [2**self.n_wires,2**self.n_wires])
+        density2d = torch.reshape(self.density, [2 ** self.n_wires, 2 ** self.n_wires])
         return torch.diagonal(density2d, offset=0, dim1=0, dim2=1)
 
 
