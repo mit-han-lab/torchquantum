@@ -367,3 +367,77 @@ class random_layer_test(TestCase):
         for i in range(0, repeat_num):
             for gatestrength in gate_strength_list:
                 self.assertTrue(self.three_qubit_random_layer(gatestrength))
+
+    def mix_random_layer(self, gatestrength):
+        passed = True
+        three_qubit_gate_length = len(three_qubit_gate_list)
+        single_qubit_gate_length = len(single_gate_list)
+        two_qubit_gate_length = len(two_qubit_gate_list)
+
+        for qubit_num in range(3, maximum_qubit_num + 1):
+            qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
+            rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
+            gate_num = int(gatestrength * qubit_num)
+            for i in range(0, gate_num + 1):
+                random_gate_qubit_num = randrange(3)
+                '''
+                Add a single qubit gate
+                '''
+                if (random_gate_qubit_num == 0):
+                    random_gate_index = randrange(single_qubit_gate_length)
+                    gate_pair = single_gate_list[random_gate_index]
+                    random_qubit_index = randrange(qubit_num)
+                    gate_pair['tq'](qdev, [random_qubit_index])
+                    rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - random_qubit_index])
+                '''
+                Add a two qubit gate
+                '''
+                if (random_gate_qubit_num == 1):
+                    random_gate_index = randrange(two_qubit_gate_length)
+                    gate_pair = two_qubit_gate_list[random_gate_index]
+                    random_qubit_index1 = randrange(qubit_num)
+                    random_qubit_index2 = randrange(qubit_num)
+                    while random_qubit_index2 == random_qubit_index1:
+                        random_qubit_index2 = randrange(qubit_num)
+                    gate_pair['tq'](qdev, [random_qubit_index1, random_qubit_index2])
+                    rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - random_qubit_index1,
+                                                                           qubit_num - 1 - random_qubit_index2])
+                '''
+                Add a three qubit gate
+                '''
+                if (random_gate_qubit_num == 2):
+                    random_gate_index = randrange(three_qubit_gate_length)
+                    gate_pair = three_qubit_gate_list[random_gate_index]
+                    random_qubit_index1 = randrange(qubit_num)
+                    random_qubit_index2 = randrange(qubit_num)
+                    while random_qubit_index2 == random_qubit_index1:
+                        random_qubit_index2 = randrange(qubit_num)
+                    random_qubit_index3 = randrange(qubit_num)
+                    while random_qubit_index3 == random_qubit_index1 or random_qubit_index3 == random_qubit_index2:
+                        random_qubit_index3 = randrange(qubit_num)
+                    gate_pair['tq'](qdev, [random_qubit_index1, random_qubit_index2, random_qubit_index3])
+                    rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - random_qubit_index1,
+                                                                           qubit_num - 1 - random_qubit_index2,
+                                                                           qubit_num - 1 - random_qubit_index3])
+
+            mat1 = np.array(qdev.get_2d_matrix(0))
+            mat2 = np.array(rho_qiskit.to_operator())
+
+            if density_is_close(mat1, mat2):
+                print(
+                    "Test passed for mix qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+            else:
+                passed = False
+                print(
+                    "Test falied for mix qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+        return passed
+
+
+    def test_mix_random_layer(self):
+        repeat_num = 5
+        gate_strength_list = [0.5, 1, 1.5, 2]
+        for i in range(0, repeat_num):
+            for gatestrength in gate_strength_list:
+                self.assertTrue(self.mix_random_layer(gatestrength))
