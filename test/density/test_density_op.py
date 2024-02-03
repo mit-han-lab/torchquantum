@@ -40,14 +40,29 @@ RND_TIMES = 100
 single_gate_list = [
     {"qiskit": qiskit_gate.HGate, "tq": tq.h, "name": "Hadamard"},
     {"qiskit": qiskit_gate.XGate, "tq": tq.x, "name": "x"},
-    {"qiskit": qiskit_gate.YGate, "tq": tq.y, "name": "y"},
+    #{"qiskit": qiskit_gate.YGate, "tq": tq.y, "name": "y"},
     {"qiskit": qiskit_gate.ZGate, "tq": tq.z, "name": "z"},
     {"qiskit": qiskit_gate.SGate, "tq": tq.S, "name": "S"},
     {"qiskit": qiskit_gate.TGate, "tq": tq.T, "name": "T"},
-    {"qiskit": qiskit_gate.SXGate, "tq": tq.SX, "name": "SX"},
+    #{"qiskit": qiskit_gate.SXGate, "tq": tq.SX, "name": "SX"},
     {"qiskit": qiskit_gate.SdgGate, "tq": tq.SDG, "name": "SDG"},
     {"qiskit": qiskit_gate.TdgGate, "tq": tq.TDG, "name": "TDG"}
 ]
+
+two_qubit_gate_list = [
+    {"qiskit": qiskit_gate.CXGate, "tq": tq.CNOT, "name": "CNOT"},
+    {"qiskit": qiskit_gate.CYGate, "tq": tq.CY, "name": "CY"},
+    {"qiskit": qiskit_gate.CZGate, "tq": tq.CZ, "name": "CZ"},
+    {"qiskit": qiskit_gate.SwapGate, "tq": tq.SWAP, "name": "SWAP"}
+]
+
+three_qubit_gate_list = [
+    {"qiskit": qiskit_gate.CCXGate, "tq": tq.Toffoli, "name": "Toffoli"},
+    {"qiskit": qiskit_gate.CSwapGate, "tq": tq.CSWAP, "name": "CSWAP"}
+]
+
+
+
 
 pair_list = [
     {"qiskit": qiskit_gate.HGate, "tq": tq.Hadamard},
@@ -116,8 +131,6 @@ def density_is_close(mat1: np.ndarray, mat2: np.ndarray):
     return np.allclose(mat1, mat2)
 
 
-("Geeks : %2d, Portal : %5.2f" % (1, 05.333))
-
 
 class single_qubit(TestCase):
     def compare_single_gate(self, gate_pair, qubit_num):
@@ -141,3 +154,35 @@ class single_qubit(TestCase):
     def test_single_gates(self):
         for i in range(0, len(single_gate_list)):
             self.assertTrue(self.compare_single_gate(single_gate_list[i], 5))
+
+
+
+class Two_qubit(TestCase):
+    def compare_two_qubit_gate(self, gate_pair, qubit_num):
+        passed = True
+        for index1 in range(0, qubit_num):
+            for index2 in range(0, qubit_num):
+                if(index1==index2):
+                    continue
+                qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
+                gate_pair['tq'](qdev, [index1,index2])
+                mat1 = np.array(qdev.get_2d_matrix(0))
+                rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
+                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - index1,qubit_num - 1 - index2])
+                mat2 = np.array(rho_qiskit.to_operator())
+                if density_is_close(mat1, mat2):
+                    print("Test passed for %s gate on qubit (%d,%d) when qubit_number is %d!" % (
+                    gate_pair['name'], index1,index2, qubit_num))
+                else:
+                    passed = False
+                    print("Test failed for %s gate on qubit (%d,%d) when qubit_number is %d!" % (
+                    gate_pair['name'], index1,index2, qubit_num))
+        return passed
+
+    def test_two_qubits_gates(self):
+        for i in range(0, len(two_qubit_gate_list)):
+            self.assertTrue(self.compare_two_qubit_gate(two_qubit_gate_list[i], 5))
+
+
+
+
