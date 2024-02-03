@@ -32,6 +32,9 @@ import qiskit.circuit.library.standard_gates as qiskit_gate
 from qiskit.quantum_info import DensityMatrix as qiskitDensity
 
 from unittest import TestCase
+
+from random import randrange
+
 import qiskit.circuit.library as qiskit_library
 from qiskit.quantum_info import Operator
 
@@ -49,6 +52,10 @@ single_gate_list = [
     {"qiskit": qiskit_gate.TdgGate, "tq": tq.TDG, "name": "TDG"}
 ]
 
+single_param_gate_list = [
+
+]
+
 two_qubit_gate_list = [
     {"qiskit": qiskit_gate.CXGate, "tq": tq.CNOT, "name": "CNOT"},
     {"qiskit": qiskit_gate.CYGate, "tq": tq.CY, "name": "CY"},
@@ -56,9 +63,16 @@ two_qubit_gate_list = [
     {"qiskit": qiskit_gate.SwapGate, "tq": tq.SWAP, "name": "SWAP"}
 ]
 
+two_qubit_param_gate_list = [
+
+]
+
 three_qubit_gate_list = [
     {"qiskit": qiskit_gate.CCXGate, "tq": tq.Toffoli, "name": "Toffoli"},
     {"qiskit": qiskit_gate.CSwapGate, "tq": tq.CSWAP, "name": "CSWAP"}
+]
+
+three_qubit_param_gate_list = [
 ]
 
 pair_list = [
@@ -131,6 +145,11 @@ def density_is_close(mat1: np.ndarray, mat2: np.ndarray):
 
 
 class single_qubit_test(TestCase):
+    '''
+    Act one single qubit on all possible location of a quantum circuit,
+    compare the density matrix between qiskit result and tq result.
+    '''
+
     def compare_single_gate(self, gate_pair, qubit_num):
         passed = True
         for index in range(0, qubit_num):
@@ -150,17 +169,22 @@ class single_qubit_test(TestCase):
         return passed
 
     def test_single_gates(self):
-        for qubit_num in range(1, maximum_qubit_num+1):
+        for qubit_num in range(1, maximum_qubit_num + 1):
             for i in range(0, len(single_gate_list)):
                 self.assertTrue(self.compare_single_gate(single_gate_list[i], qubit_num))
 
 
 class two_qubit_test(TestCase):
+    '''
+    Act two qubits gate on all possible location of a quantum circuit,
+    compare the density matrix between qiskit result and tq result.
+    '''
+
     def compare_two_qubit_gate(self, gate_pair, qubit_num):
         passed = True
         for index1 in range(0, qubit_num):
             for index2 in range(0, qubit_num):
-                if (index1 == index2):
+                if index1 == index2:
                     continue
                 qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
                 gate_pair['tq'](qdev, [index1, index2])
@@ -178,12 +202,17 @@ class two_qubit_test(TestCase):
         return passed
 
     def test_two_qubits_gates(self):
-        for qubit_num in range(2, maximum_qubit_num+1):
+        for qubit_num in range(2, maximum_qubit_num + 1):
             for i in range(0, len(two_qubit_gate_list)):
                 self.assertTrue(self.compare_two_qubit_gate(two_qubit_gate_list[i], qubit_num))
 
 
 class three_qubit_test(TestCase):
+    '''
+    Act three qubits gates on all possible location of a quantum circuit,
+    compare the density matrix between qiskit result and tq result.
+    '''
+
     def compare_three_qubit_gate(self, gate_pair, qubit_num):
         passed = True
         for index1 in range(0, qubit_num):
@@ -211,6 +240,130 @@ class three_qubit_test(TestCase):
         return passed
 
     def test_three_qubits_gates(self):
-        for qubit_num in range(3, maximum_qubit_num+1):
+        for qubit_num in range(3, maximum_qubit_num + 1):
             for i in range(0, len(three_qubit_gate_list)):
                 self.assertTrue(self.compare_three_qubit_gate(three_qubit_gate_list[i], qubit_num))
+
+
+class random_layer_test(TestCase):
+    '''
+    Generate a single qubit random layer
+    '''
+
+    def single_qubit_random_layer(self, gatestrength):
+        passed = True
+        length = len(single_gate_list)
+        for qubit_num in range(1, maximum_qubit_num + 1):
+            qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
+            rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
+            gate_num = int(gatestrength * qubit_num)
+            for i in range(0, gate_num + 1):
+                random_gate_index = randrange(length)
+                gate_pair = single_gate_list[random_gate_index]
+                random_qubit_index = randrange(qubit_num)
+                gate_pair['tq'](qdev, [random_qubit_index])
+                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - random_qubit_index])
+
+            mat1 = np.array(qdev.get_2d_matrix(0))
+            mat2 = np.array(rho_qiskit.to_operator())
+
+            if density_is_close(mat1, mat2):
+                print(
+                    "Test passed for single qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+            else:
+                passed = False
+                print(
+                    "Test falied for single qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+        return passed
+
+    def test_single_qubit_random_layer(self):
+        repeat_num = 5
+        gate_strength_list = [0.5, 1, 1.5, 2]
+        for i in range(0, repeat_num):
+            for gatestrength in gate_strength_list:
+                self.assertTrue(self.single_qubit_random_layer(gatestrength))
+
+    def two_qubit_random_layer(self, gatestrength):
+        passed = True
+        length = len(two_qubit_gate_list)
+        for qubit_num in range(2, maximum_qubit_num + 1):
+            qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
+            rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
+            gate_num = int(gatestrength * qubit_num)
+            for i in range(0, gate_num + 1):
+                random_gate_index = randrange(length)
+                gate_pair = two_qubit_gate_list[random_gate_index]
+                random_qubit_index1 = randrange(qubit_num)
+                random_qubit_index2 = randrange(qubit_num)
+                while random_qubit_index2 == random_qubit_index1:
+                    random_qubit_index2 = randrange(qubit_num)
+
+                gate_pair['tq'](qdev, [random_qubit_index1, random_qubit_index2])
+                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - random_qubit_index1,
+                                                                       qubit_num - 1 - random_qubit_index2])
+
+            mat1 = np.array(qdev.get_2d_matrix(0))
+            mat2 = np.array(rho_qiskit.to_operator())
+
+            if density_is_close(mat1, mat2):
+                print(
+                    "Test passed for two qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+            else:
+                passed = False
+                print(
+                    "Test falied for two qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+        return passed
+
+    def test_two_qubit_random_layer(self):
+        repeat_num = 5
+        gate_strength_list = [0.5, 1, 1.5, 2]
+        for i in range(0, repeat_num):
+            for gatestrength in gate_strength_list:
+                self.assertTrue(self.two_qubit_random_layer(gatestrength))
+
+    def three_qubit_random_layer(self, gatestrength):
+        passed = True
+        length = len(three_qubit_gate_list)
+        for qubit_num in range(3, maximum_qubit_num + 1):
+            qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
+            rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
+            gate_num = int(gatestrength * qubit_num)
+            for i in range(0, gate_num + 1):
+                random_gate_index = randrange(length)
+                gate_pair = three_qubit_gate_list[random_gate_index]
+                random_qubit_index1 = randrange(qubit_num)
+                random_qubit_index2 = randrange(qubit_num)
+                while random_qubit_index2 == random_qubit_index1:
+                    random_qubit_index2 = randrange(qubit_num)
+                random_qubit_index3 = randrange(qubit_num)
+                while random_qubit_index3 == random_qubit_index1 or random_qubit_index3 == random_qubit_index2:
+                    random_qubit_index3 = randrange(qubit_num)
+                gate_pair['tq'](qdev, [random_qubit_index1, random_qubit_index2, random_qubit_index3])
+                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - random_qubit_index1,
+                                                                       qubit_num - 1 - random_qubit_index2,
+                                                                       qubit_num - 1 - random_qubit_index3])
+
+            mat1 = np.array(qdev.get_2d_matrix(0))
+            mat2 = np.array(rho_qiskit.to_operator())
+
+            if density_is_close(mat1, mat2):
+                print(
+                    "Test passed for three qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+            else:
+                passed = False
+                print(
+                    "Test falied for three qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
+                        gate_num, qubit_num))
+        return passed
+
+    def test_three_qubit_random_layer(self):
+        repeat_num = 5
+        gate_strength_list = [0.5, 1, 1.5, 2]
+        for i in range(0, repeat_num):
+            for gatestrength in gate_strength_list:
+                self.assertTrue(self.three_qubit_random_layer(gatestrength))
