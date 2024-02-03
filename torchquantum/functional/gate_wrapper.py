@@ -433,7 +433,6 @@ def gate_wrapper(
         assert np.log2(matrix.shape[-1]) == len(wires)
         if q_device.device_name=="noisedevice":
             density = q_device.densities
-            print(density.shape)
             if method == "einsum":
                 return
             elif method == "bmm":

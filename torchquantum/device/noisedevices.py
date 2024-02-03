@@ -73,6 +73,32 @@ class NoiseDevice(nn.Module):
         self.record_op = record_op
         self.op_history = []
 
+
+    def print_2d(self, index):
+        """Print the matrix value at the given index.
+
+        This method prints the matrix value of `matrix[index]`. It reshapes the value into a 2D matrix
+        using the `torch.reshape` function and then prints it.
+
+        Args:
+            index (int): The index of the matrix value to print.
+
+        Examples:
+            >>> device = QuantumDevice(n_wires=2)
+            >>> device.matrix = torch.tensor([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+            >>> device.print_2d(1)
+            tensor([[0, 0],
+                    [0, 1]])
+
+        """
+
+        _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
+        print(_matrix)
+
+    def get_2d_matrix(self, index):
+        _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
+        return _matrix
+
     @property
     def name(self):
         """Return the name of the device."""
