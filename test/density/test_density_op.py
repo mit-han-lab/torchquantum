@@ -40,11 +40,11 @@ RND_TIMES = 100
 single_gate_list = [
     {"qiskit": qiskit_gate.HGate, "tq": tq.h, "name": "Hadamard"},
     {"qiskit": qiskit_gate.XGate, "tq": tq.x, "name": "x"},
-    #{"qiskit": qiskit_gate.YGate, "tq": tq.y, "name": "y"},
+    # {"qiskit": qiskit_gate.YGate, "tq": tq.y, "name": "y"},
     {"qiskit": qiskit_gate.ZGate, "tq": tq.z, "name": "z"},
     {"qiskit": qiskit_gate.SGate, "tq": tq.S, "name": "S"},
     {"qiskit": qiskit_gate.TGate, "tq": tq.T, "name": "T"},
-    #{"qiskit": qiskit_gate.SXGate, "tq": tq.SX, "name": "SX"},
+    # {"qiskit": qiskit_gate.SXGate, "tq": tq.SX, "name": "SX"},
     {"qiskit": qiskit_gate.SdgGate, "tq": tq.SDG, "name": "SDG"},
     {"qiskit": qiskit_gate.TdgGate, "tq": tq.TDG, "name": "TDG"}
 ]
@@ -60,9 +60,6 @@ three_qubit_gate_list = [
     {"qiskit": qiskit_gate.CCXGate, "tq": tq.Toffoli, "name": "Toffoli"},
     {"qiskit": qiskit_gate.CSwapGate, "tq": tq.CSWAP, "name": "CSWAP"}
 ]
-
-
-
 
 pair_list = [
     {"qiskit": qiskit_gate.HGate, "tq": tq.Hadamard},
@@ -125,11 +122,12 @@ pair_list = [
     {"qiskit": qiskit_gate.C3SXGate, "tq": tq.C3SX},
 ]
 
+maximum_qubit_num = 5
+
 
 def density_is_close(mat1: np.ndarray, mat2: np.ndarray):
     assert mat1.shape == mat2.shape
     return np.allclose(mat1, mat2)
-
 
 
 class single_qubit_test(TestCase):
@@ -144,17 +142,17 @@ class single_qubit_test(TestCase):
             mat2 = np.array(rho_qiskit.to_operator())
             if density_is_close(mat1, mat2):
                 print("Test passed for %s gate on qubit %d when qubit_number is %d!" % (
-                gate_pair['name'], index, qubit_num))
+                    gate_pair['name'], index, qubit_num))
             else:
                 passed = False
                 print("Test failed for %s gaet on qubit %d when qubit_number is %d!" % (
-                gate_pair['name'], index, qubit_num))
+                    gate_pair['name'], index, qubit_num))
         return passed
 
     def test_single_gates(self):
-        for i in range(0, len(single_gate_list)):
-            self.assertTrue(self.compare_single_gate(single_gate_list[i], 5))
-
+        for qubit_num in range(1, maximum_qubit_num+1):
+            for i in range(0, len(single_gate_list)):
+                self.assertTrue(self.compare_single_gate(single_gate_list[i], qubit_num))
 
 
 class two_qubit_test(TestCase):
@@ -162,26 +160,27 @@ class two_qubit_test(TestCase):
         passed = True
         for index1 in range(0, qubit_num):
             for index2 in range(0, qubit_num):
-                if(index1==index2):
+                if (index1 == index2):
                     continue
                 qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
-                gate_pair['tq'](qdev, [index1,index2])
+                gate_pair['tq'](qdev, [index1, index2])
                 mat1 = np.array(qdev.get_2d_matrix(0))
                 rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
-                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - index1,qubit_num - 1 - index2])
+                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - index1, qubit_num - 1 - index2])
                 mat2 = np.array(rho_qiskit.to_operator())
                 if density_is_close(mat1, mat2):
                     print("Test passed for %s gate on qubit (%d,%d) when qubit_number is %d!" % (
-                    gate_pair['name'], index1,index2, qubit_num))
+                        gate_pair['name'], index1, index2, qubit_num))
                 else:
                     passed = False
                     print("Test failed for %s gate on qubit (%d,%d) when qubit_number is %d!" % (
-                    gate_pair['name'], index1,index2, qubit_num))
+                        gate_pair['name'], index1, index2, qubit_num))
         return passed
 
     def test_two_qubits_gates(self):
-        for i in range(0, len(two_qubit_gate_list)):
-            self.assertTrue(self.compare_two_qubit_gate(two_qubit_gate_list[i], 5))
+        for qubit_num in range(2, maximum_qubit_num+1):
+            for i in range(0, len(two_qubit_gate_list)):
+                self.assertTrue(self.compare_two_qubit_gate(two_qubit_gate_list[i], qubit_num))
 
 
 class three_qubit_test(TestCase):
@@ -195,23 +194,23 @@ class three_qubit_test(TestCase):
                     if (index3 == index1) or (index3 == index2):
                         continue
                     qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
-                    gate_pair['tq'](qdev, [index1,index2,index3])
+                    gate_pair['tq'](qdev, [index1, index2, index3])
                     mat1 = np.array(qdev.get_2d_matrix(0))
                     rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
-                    rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - index1,qubit_num - 1 - index2,qubit_num - 1 - index3])
+                    rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](),
+                                                   [qubit_num - 1 - index1, qubit_num - 1 - index2,
+                                                    qubit_num - 1 - index3])
                     mat2 = np.array(rho_qiskit.to_operator())
                     if density_is_close(mat1, mat2):
                         print("Test passed for %s gate on qubit (%d,%d,%d) when qubit_number is %d!" % (
-                        gate_pair['name'], index1,index2,index3, qubit_num))
+                            gate_pair['name'], index1, index2, index3, qubit_num))
                     else:
                         passed = False
                         print("Test failed for %s gate on qubit (%d,%d,%d)  when qubit_number is %d!" % (
-                        gate_pair['name'], index1,index2,index3,qubit_num))
+                            gate_pair['name'], index1, index2, index3, qubit_num))
         return passed
 
     def test_three_qubits_gates(self):
-        for i in range(0, len(three_qubit_gate_list)):
-            self.assertTrue(self.compare_three_qubit_gate(three_qubit_gate_list[i], 5))
-
-
-
+        for qubit_num in range(3, maximum_qubit_num+1):
+            for i in range(0, len(three_qubit_gate_list)):
+                self.assertTrue(self.compare_three_qubit_gate(three_qubit_gate_list[i], qubit_num))
