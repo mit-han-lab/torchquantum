@@ -307,7 +307,7 @@ def apply_unitary_density_bmm(density, mat, wires):
         del permute_to_dag[d]
     permute_to_dag = permute_to_dag + devices_dims_dag
     permute_back_dag = list(np.argsort(permute_to_dag))
-    permuted_dag = new_density.permute(permute_to_dag).reshape([original_shape[0], -1, matdag.shape[0]])
+    permuted_dag = new_density.permute(permute_to_dag).reshape([original_shape[0], -1, matdag.shape[-1]])
 
     if len(matdag.shape) > 2:
         # both matrix and state are in batch mode
@@ -431,6 +431,7 @@ def gate_wrapper(
             else:
                 matrix = matrix.permute(1, 0)
         assert np.log2(matrix.shape[-1]) == len(wires)
+        #TODO: There might be a better way to discriminate noisedevice and normal statevector device
         if q_device.device_name=="noisedevice":
             density = q_device.densities
             if method == "einsum":

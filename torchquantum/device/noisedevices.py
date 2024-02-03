@@ -73,6 +73,12 @@ class NoiseDevice(nn.Module):
         self.record_op = record_op
         self.op_history = []
 
+
+    def reset_op_history(self):
+        """Resets the all Operation of the quantum device"""
+        self.op_history = []
+
+
     def print_2d(self, index):
         """Print the matrix value at the given index.
 
