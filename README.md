@@ -359,6 +359,7 @@ pre-commit install
 - [ICCAD'22] [Wang et al., "QuEst: Graph Transformer for Quantum Circuit Reliability Estimation"](https://arxiv.org/abs/2210.16724)
 - [ICML Workshop] [Yun et al., "Slimmable Quantum Federated Learning"](https://dynn-icml2022.github.io/spapers/paper_7.pdf)
 - [IEEE ICDCS] [Yun et al., "Quantum Multi-Agent Reinforcement Learning via Variational Quantum Circuit Design"](https://ieeexplore.ieee.org/document/9912289)
+- [QCE'23] [Zhan et al., "Quantum Sensor Network Algorithms for Transmitter Localization"](https://ieeexplore.ieee.org/abstract/document/10313806)
 <details>
   <summary>Manuscripts</summary>
 
