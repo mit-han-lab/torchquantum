@@ -3,4 +3,4 @@ nbsphinx
 recommonmark
 
 torchquantum>=0.1
-
+opt_einsum
