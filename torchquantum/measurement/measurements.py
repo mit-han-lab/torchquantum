@@ -43,13 +43,7 @@ def measure(qdev, n_shots=1024, draw_id=None):
         distribution of bitstrings
     """
     bitstring_candidates = gen_bitstrings(qdev.n_wires)
-    if isinstance(qdev, tq.QuantumDevice):
-        state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
-    elif isinstance(qdev, tq.NoiseDevice):
-        '''
-        Measure the density matrix in the computational basis
-        '''
-        state_mag = qdev.get_probs_1d().abs().detach().cpu().numpy()
+    state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
     distri_all = []
 
     for state_mag_one in state_mag:
