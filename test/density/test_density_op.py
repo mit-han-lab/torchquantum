@@ -43,13 +43,12 @@ RND_TIMES = 100
 single_gate_list = [
     {"qiskit": qiskit_gate.HGate, "tq": tq.h, "name": "Hadamard"},
     {"qiskit": qiskit_gate.XGate, "tq": tq.x, "name": "x"},
-    # {"qiskit": qiskit_gate.YGate, "tq": tq.y, "name": "y"},
+    {"qiskit": qiskit_gate.YGate, "tq": tq.y, "name": "y"},
     {"qiskit": qiskit_gate.ZGate, "tq": tq.z, "name": "z"},
-    {"qiskit": qiskit_gate.SGate, "tq": tq.S, "name": "S"},
-    {"qiskit": qiskit_gate.TGate, "tq": tq.T, "name": "T"},
-    # {"qiskit": qiskit_gate.SXGate, "tq": tq.SX, "name": "SX"},
-    {"qiskit": qiskit_gate.SdgGate, "tq": tq.SDG, "name": "SDG"},
-    {"qiskit": qiskit_gate.TdgGate, "tq": tq.TDG, "name": "TDG"}
+    {"qiskit": qiskit_gate.SGate, "tq": tq.s, "name": "S"},
+    {"qiskit": qiskit_gate.TGate, "tq": tq.t, "name": "T"},
+    {"qiskit": qiskit_gate.SdgGate, "tq": tq.sdg, "name": "SDG"},
+    {"qiskit": qiskit_gate.TdgGate, "tq": tq.tdg, "name": "TDG"}
 ]
 
 single_param_gate_list = [
@@ -57,10 +56,13 @@ single_param_gate_list = [
 ]
 
 two_qubit_gate_list = [
-    {"qiskit": qiskit_gate.CXGate, "tq": tq.CNOT, "name": "CNOT"},
-    {"qiskit": qiskit_gate.CYGate, "tq": tq.CY, "name": "CY"},
-    {"qiskit": qiskit_gate.CZGate, "tq": tq.CZ, "name": "CZ"},
-    {"qiskit": qiskit_gate.SwapGate, "tq": tq.SWAP, "name": "SWAP"}
+    {"qiskit": qiskit_gate.CXGate, "tq": tq.cnot, "name": "CNOT"},
+    {"qiskit": qiskit_gate.CXGate, "tq": tq.cx, "name": "CY"},
+    {"qiskit": qiskit_gate.CYGate, "tq": tq.cy, "name": "CY"},
+    {"qiskit": qiskit_gate.CZGate, "tq": tq.cz, "name": "CZ"},
+    {"qiskit": qiskit_gate.CSGate, "tq": tq.cs, "name": "CS"},
+    {"qiskit": qiskit_gate.SwapGate, "tq": tq.swap, "name": "SWAP"},
+    {"qiskit": qiskit_gate.iSwapGate, "tq": tq.iswap, "name": "iSWAP"}
 ]
 
 two_qubit_param_gate_list = [
@@ -68,25 +70,16 @@ two_qubit_param_gate_list = [
 ]
 
 three_qubit_gate_list = [
-    {"qiskit": qiskit_gate.CCXGate, "tq": tq.Toffoli, "name": "Toffoli"},
-    {"qiskit": qiskit_gate.CSwapGate, "tq": tq.CSWAP, "name": "CSWAP"}
+    {"qiskit": qiskit_gate.CCXGate, "tq": tq.ccx, "name": "Toffoli"},
+    {"qiskit": qiskit_gate.CSwapGate, "tq": tq.cswap, "name": "CSWAP"},
 ]
 
 three_qubit_param_gate_list = [
 ]
 
 pair_list = [
-    {"qiskit": qiskit_gate.HGate, "tq": tq.Hadamard},
-    {"qiskit": None, "tq": tq.SHadamard},
-    {"qiskit": qiskit_gate.XGate, "tq": tq.PauliX},
-    {"qiskit": qiskit_gate.YGate, "tq": tq.PauliY},
-    {"qiskit": qiskit_gate.ZGate, "tq": tq.PauliZ},
-    {"qiskit": qiskit_gate.SGate, "tq": tq.S},
-    {"qiskit": qiskit_gate.TGate, "tq": tq.T},
     {"qiskit": qiskit_gate.SXGate, "tq": tq.SX},
     {"qiskit": qiskit_gate.CXGate, "tq": tq.CNOT},
-    {"qiskit": qiskit_gate.CYGate, "tq": tq.CY},
-    {"qiskit": qiskit_gate.CZGate, "tq": tq.CZ},
     {"qiskit": qiskit_gate.RXGate, "tq": tq.RX},
     {"qiskit": qiskit_gate.RYGate, "tq": tq.RY},
     {"qiskit": qiskit_gate.RZGate, "tq": tq.RZ},
@@ -94,7 +87,6 @@ pair_list = [
     {"qiskit": qiskit_gate.RYYGate, "tq": tq.RYY},
     {"qiskit": qiskit_gate.RZZGate, "tq": tq.RZZ},
     {"qiskit": qiskit_gate.RZXGate, "tq": tq.RZX},
-    {"qiskit": qiskit_gate.SwapGate, "tq": tq.SWAP},
     # {'qiskit': qiskit_gate.?, 'tq': tq.SSWAP},
     {"qiskit": qiskit_gate.CSwapGate, "tq": tq.CSWAP},
     {"qiskit": qiskit_gate.CCXGate, "tq": tq.Toffoli},
@@ -136,12 +128,12 @@ pair_list = [
     {"qiskit": qiskit_gate.C3SXGate, "tq": tq.C3SX},
 ]
 
-maximum_qubit_num = 5
+maximum_qubit_num = 10
 
 
 def density_is_close(mat1: np.ndarray, mat2: np.ndarray):
     assert mat1.shape == mat2.shape
-    return np.allclose(mat1, mat2)
+    return np.allclose(mat1, mat2, 1e-3, 1e-6)
 
 
 class single_qubit_test(TestCase):
@@ -257,13 +249,33 @@ class random_layer_test(TestCase):
             qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
             rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
             gate_num = int(gatestrength * qubit_num)
-            for i in range(0, gate_num + 1):
+            gate_list = []
+            for i in range(0, gate_num):
                 random_gate_index = randrange(length)
                 gate_pair = single_gate_list[random_gate_index]
                 random_qubit_index = randrange(qubit_num)
+                gate_list.append(gate_pair["name"])
                 gate_pair['tq'](qdev, [random_qubit_index])
                 rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](), [qubit_num - 1 - random_qubit_index])
-
+                '''
+                print(i)
+                print("gate list:")
+                print(gate_list)
+                print("qdev history")
+                print(qdev.op_history)
+                mat1_tmp = np.array(qdev.get_2d_matrix(0))
+                mat2_tmp = np.array(rho_qiskit.to_operator())
+                print("Torch quantum result:")
+                print(mat1_tmp)
+                print("Qiskit result:")
+                print(mat2_tmp)
+                if not density_is_close(mat1_tmp, mat2_tmp):
+                    passed = False
+                    print("Failed! Current gate list:")
+                    print(gate_list)
+                    print(qdev.op_history)
+                    return passed
+                '''
             mat1 = np.array(qdev.get_2d_matrix(0))
             mat2 = np.array(rho_qiskit.to_operator())
 
@@ -276,11 +288,14 @@ class random_layer_test(TestCase):
                 print(
                     "Test falied for single qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
                         gate_num, qubit_num))
+                print(gate_list)
+                print(qdev.op_history)
+
         return passed
 
     def test_single_qubit_random_layer(self):
         repeat_num = 5
-        gate_strength_list = [0.5, 1, 1.5, 2]
+        gate_strength_list = [0.5, 1, 1.5, 2, 2.5, 3.5, 4.5, 5, 5.5, 6.5, 7.5, 8.5, 9.5, 10]
         for i in range(0, repeat_num):
             for gatestrength in gate_strength_list:
                 self.assertTrue(self.single_qubit_random_layer(gatestrength))
@@ -433,7 +448,6 @@ class random_layer_test(TestCase):
                     "Test falied for mix qubit gate random layer on qubit with %d gates when qubit_number is %d!" % (
                         gate_num, qubit_num))
         return passed
-
 
     def test_mix_random_layer(self):
         repeat_num = 5

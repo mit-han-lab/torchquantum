@@ -8,7 +8,6 @@ from ..util.utils import pauli_eigs, diag
 from torchpack.utils.logging import logger
 from torchquantum.util import normalize_statevector
 
-
 if TYPE_CHECKING:
     from torchquantum.device import QuantumDevice, NoiseDevice
 else:
@@ -274,6 +273,7 @@ def apply_unitary_density_bmm(density, mat, wires):
     device_wires = wires
     n_qubit = density.dim() // 2
     mat = mat.type(C_DTYPE).to(density.device)
+
     """
     Compute U \rho
     """
@@ -298,7 +298,14 @@ def apply_unitary_density_bmm(density, mat, wires):
     """
     Compute \rho U^\dagger 
     """
-    matdag = torch.conj(mat)
+
+
+    matdag = mat.conj()
+    if matdag.dim() == 3:
+        matdag = matdag.permute(0, 2, 1)
+    else:
+        matdag = matdag.permute(1, 0)
+
     matdag = matdag.type(C_DTYPE).to(density.device)
 
     devices_dims_dag = [n_qubit + w + 1 for w in device_wires]
@@ -431,8 +438,8 @@ def gate_wrapper(
             else:
                 matrix = matrix.permute(1, 0)
         assert np.log2(matrix.shape[-1]) == len(wires)
-        #TODO: There might be a better way to discriminate noisedevice and normal statevector device
-        if q_device.device_name=="noisedevice":
+        # TODO: There might be a better way to discriminate noisedevice and normal statevector device
+        if q_device.device_name == "noisedevice":
             density = q_device.densities
             if method == "einsum":
                 return
@@ -444,4 +451,3 @@ def gate_wrapper(
                 q_device.states = apply_unitary_einsum(state, matrix, wires)
             elif method == "bmm":
                 q_device.states = apply_unitary_bmm(state, matrix, wires)
-
