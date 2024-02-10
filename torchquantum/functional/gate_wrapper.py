@@ -366,6 +366,8 @@ def gate_wrapper(
 
     """
     if params is not None:
+        print("Start change params:")
+        print(params)
         if not isinstance(params, torch.Tensor):
             if name in ["qubitunitary", "qubitunitaryfast", "qubitunitarystrict"]:
                 # this is for qubitunitary gate
@@ -373,7 +375,8 @@ def gate_wrapper(
             else:
                 # this is for directly inputting parameters as a number
                 params = torch.tensor(params, dtype=F_DTYPE)
-
+        print("Become torch tensor:")
+        print(params)
         if name in ["qubitunitary", "qubitunitaryfast", "qubitunitarystrict"]:
             params = params.unsqueeze(0) if params.dim() == 2 else params
         else:
@@ -382,6 +385,8 @@ def gate_wrapper(
             elif params.dim() == 0:
                 params = params.unsqueeze(-1).unsqueeze(-1)
             # params = params.unsqueeze(-1) if params.dim() == 1 else params
+        print("Final params")
+        print(params)
     wires = [wires] if isinstance(wires, int) else wires
 
     if q_device.record_op:
