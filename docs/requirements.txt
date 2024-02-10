@@ -1,3 +1,6 @@
 furo @ git+https://github.com/frogcjn/torchquantum-doc-furo-theme.git
 nbsphinx
 recommonmark
+
+torchquantum>=0.1
+
