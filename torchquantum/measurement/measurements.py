@@ -43,6 +43,8 @@ def measure(qdev, n_shots=1024, draw_id=None):
         distribution of bitstrings
     """
     bitstring_candidates = gen_bitstrings(qdev.n_wires)
+
+    #state_prob =
     state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
     distri_all = []
 
