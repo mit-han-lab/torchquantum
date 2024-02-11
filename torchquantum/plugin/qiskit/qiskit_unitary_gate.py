@@ -25,7 +25,7 @@ from qiskit.circuit._utils import _compute_control_matrix
 from qiskit.circuit.library.standard_gates import U3Gate
 from qiskit.quantum_info.operators.predicates import matrix_equal
 from qiskit.quantum_info.operators.predicates import is_unitary_matrix
-from qiskit.quantum_info.synthesis.one_qubit_decompose import OneQubitEulerDecomposer
+from qiskit.quantum_info import OneQubitEulerDecomposer
 from qiskit.quantum_info.synthesis.two_qubit_decompose import two_qubit_cnot_decompose
 from qiskit.extensions.exceptions import ExtensionError
 
