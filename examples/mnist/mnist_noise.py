@@ -82,7 +82,7 @@ class QFCModel(tq.QuantumModule):
         self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_u3_h_rx"])
 
         self.q_layer = self.QLayer()
-        self.measure = tq.MeasureAll(tq.PauliZ)
+        self.measure = tq.MeasureAll_Density(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
         qdev = tq.NoiseDevice(

@@ -73,11 +73,9 @@ class NoiseDevice(nn.Module):
         self.record_op = record_op
         self.op_history = []
 
-
     def reset_op_history(self):
         """Resets the all Operation of the quantum device"""
         self.op_history = []
-
 
     def print_2d(self, index):
         """Print the matrix value at the given index.
@@ -125,12 +123,16 @@ class NoiseDevice(nn.Module):
         """Return the states in a 1d tensor."""
         bsz = self.densities.shape[0]
         densities2d = torch.reshape(self.densities, [bsz, 2 ** self.n_wires, 2 ** self.n_wires])
-        return torch.diagonal(densities2d, offset=0, dim1=1, dim2=2)
+        return torch.abs(torch.diagonal(densities2d, offset=0, dim1=1, dim2=2))
 
     def get_prob_1d(self):
         """Return the state in a 1d tensor."""
         density2d = torch.reshape(self.density, [2 ** self.n_wires, 2 ** self.n_wires])
-        return torch.diagonal(density2d, offset=0, dim1=0, dim2=1)
+        return torch.abs(torch.diagonal(density2d, offset=0, dim1=0, dim2=1))
+
+    def clone_densities(self, existing_densities: torch.Tensor):
+        """Clone the densities of the other quantum device."""
+        self.densities = existing_densities.clone()
 
 
 for func_name, func in func_name_dict.items():

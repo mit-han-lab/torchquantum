@@ -14,8 +14,8 @@ from torchquantum.functional import mat_dict
 import torchquantum.operator as op
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from measurements import gen_bitstrings
-from measurements import find_observable_groups
+from .measurements import gen_bitstrings
+from .measurements import find_observable_groups
 
 __all__ = [
     "expval_joint_sampling_grouping",
@@ -23,6 +23,7 @@ __all__ = [
     "expval_joint_sampling",
     "expval",
     "measure",
+    "MeasureAll_Density"
 ]
 
 
@@ -194,7 +195,7 @@ def expval(
         wires: Union[int, List[int]],
         observables: Union[op.Observable, List[op.Observable]],
 ):
-    all_dims = np.arange(noisedev.densities.dim())
+    all_dims = np.arange(noisedev.n_wires+1)
     if isinstance(wires, int):
         wires = [wires]
         observables = [observables]
@@ -206,7 +207,8 @@ def expval(
 
     # compute magnitude
     state_mag = noisedev.get_probs_1d()
-
+    bsz = state_mag.shape[0]
+    state_mag = torch.reshape(state_mag, [bsz] + [2] * noisedev.n_wires)
     expectations = []
     for wire, observable in zip(wires, observables):
         # compute marginal magnitude
@@ -221,7 +223,7 @@ def expval(
     return torch.stack(expectations, dim=-1)
 
 
-class MeasureAll(tq.QuantumModule):
+class MeasureAll_Density(tq.QuantumModule):
     """Obtain the expectation value of all the qubits."""
 
     def __init__(self, obs, v_c_reg_mapping=None):
@@ -265,11 +267,7 @@ if __name__ == '__main__':
     # measure the state on z basis
     print(tq.measure(qdev, n_shots=1024))
 
-
-
-    '''
     # obtain the expval on a observable
     expval = expval_joint_sampling(qdev, 'II', 100000)
-    expval_ana = expval_joint_analytical(qdev, 'II')
-    print(expval, expval_ana)
-    '''
+    # expval_ana = expval_joint_analytical(qdev, 'II')
+    print(expval)
