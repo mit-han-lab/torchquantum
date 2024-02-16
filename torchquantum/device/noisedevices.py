@@ -30,7 +30,26 @@ from torchquantum.macro import C_DTYPE
 from torchquantum.functional import func_name_dict, func_name_dict_collect
 from typing import Union
 
-__all__ = ["NoiseDevice"]
+__all__ = ["NoiseDevice", "NoiseModel"]
+
+
+class NoiseModel:
+    ''
+
+    def __init__(self,
+                 kraus_dict
+                 ):
+        """A quantum noise model
+        Args:
+            kraus_dict: the karus_dict for this noise_model.
+            For example:
+                 kraus_dict={"Bitflip":0.5, "Phaseflip":0.5}
+        """
+        self._kraus_dict = kraus_dict
+        # TODO: Check that the trace is preserved
+
+    def kraus_dict(self):
+        return self._kraus_dict
 
 
 class NoiseDevice(nn.Module):
@@ -41,6 +60,7 @@ class NoiseDevice(nn.Module):
             bsz: int = 1,
             device: Union[torch.device, str] = "cpu",
             record_op: bool = False,
+            noise_model: NoiseModel = NoiseModel(kraus_dict={"Bitflip": 0, "Phaseflip": 0})
     ):
         """A quantum device that support the density matrix simulation
         Args:
@@ -72,6 +92,8 @@ class NoiseDevice(nn.Module):
 
         self.record_op = record_op
         self.op_history = []
+
+        self._noise_model = noise_model
 
     def reset_op_history(self):
         """Resets the all Operation of the quantum device"""
@@ -133,6 +155,9 @@ class NoiseDevice(nn.Module):
     def clone_densities(self, existing_densities: torch.Tensor):
         """Clone the densities of the other quantum device."""
         self.densities = existing_densities.clone()
+
+    def noise_model(self):
+        return self._noise_model
 
 
 for func_name, func in func_name_dict.items():

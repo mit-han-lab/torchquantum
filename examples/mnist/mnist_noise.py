@@ -86,7 +86,8 @@ class QFCModel(tq.QuantumModule):
 
     def forward(self, x, use_qiskit=False):
         qdev = tq.NoiseDevice(
-            n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True
+            n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True,
+            noise_model=tq.NoiseModel(kraus_dict={"Bitflip": 0.2, "Phaseflip": 0}),
         )
 
         bsz = x.shape[0]
@@ -180,10 +181,10 @@ def main():
     )
     parser.add_argument("--pdb", action="store_true", help="debug with pdb")
     parser.add_argument(
-        "--wires-per-block", type=int, default=2, help="wires per block int static mode"
+        "--wires-per-block", type=int, default=20, help="wires per block int static mode"
     )
     parser.add_argument(
-        "--epochs", type=int, default=2, help="number of training epochs"
+        "--epochs", type=int, default=20, help="number of training epochs"
     )
 
     args = parser.parse_args()
@@ -242,8 +243,6 @@ def main():
 
     # test
     valid_test(dataflow, "test", model, device, qiskit=False)
-
-
 
 
 if __name__ == "__main__":
