@@ -25,3 +25,4 @@ SOFTWARE.
 from .vqe import *
 from .hamiltonian import *
 from .qft import *
+from .grover import *

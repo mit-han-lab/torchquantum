@@ -38,6 +38,7 @@ from .util import *
 from .noise_model import *
 from .algorithm import *
 from .dataset import *
+from .pulse import *
 
 # here we check whether the Qiskit parameterization bug is fixed, if not, a
 # warning message will be printed
