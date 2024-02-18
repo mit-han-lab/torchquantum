@@ -281,6 +281,7 @@ def expval(
         observables: Union[op.Observable, List[op.Observable]],
 ):
     all_dims = np.arange(qdev.states.dim())
+
     if isinstance(wires, int):
         wires = [wires]
         observables = [observables]
@@ -291,9 +292,9 @@ def expval(
             rotation(qdev, wires=wire)
 
     states = qdev.states
+
     # compute magnitude
     state_mag = torch.abs(states) ** 2
-
     expectations = []
     for wire, observable in zip(wires, observables):
         # compute marginal magnitude
