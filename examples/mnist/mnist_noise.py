@@ -40,6 +40,8 @@ from torchquantum.plugin import (
 from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+import pickle
+
 
 class QFCModel(tq.QuantumModule):
     class QLayer(tq.QuantumModule):
@@ -87,7 +89,7 @@ class QFCModel(tq.QuantumModule):
     def forward(self, x, use_qiskit=False):
         qdev = tq.NoiseDevice(
             n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True,
-            noise_model=tq.NoiseModel(kraus_dict={"Bitflip": 0.2, "Phaseflip": 0}),
+            noise_model=tq.NoiseModel(kraus_dict={"Bitflip": 0.08, "Phaseflip": 0.08}),
         )
 
         bsz = x.shape[0]
@@ -151,6 +153,7 @@ def train(dataflow, model, device, optimizer):
 def valid_test(dataflow, split, model, device, qiskit=False):
     target_all = []
     output_all = []
+
     with torch.no_grad():
         for feed_dict in dataflow[split]:
             inputs = feed_dict["image"].to(device)
@@ -172,6 +175,8 @@ def valid_test(dataflow, split, model, device, qiskit=False):
 
     print(f"{split} set accuracy: {accuracy}")
     print(f"{split} set loss: {loss}")
+
+    return accuracy, loss
 
 
 def main():
@@ -226,6 +231,9 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
+    accuracy_list = []
+    loss_list = []
+
     if args.static:
         # optionally to switch to the static mode, which can bring speedup
         # on training
@@ -235,13 +243,19 @@ def main():
         # train
         print(f"Epoch {epoch}:")
         train(dataflow, model, device, optimizer)
-        print(optimizer.param_groups[0]["lr"])
 
         # valid
-        valid_test(dataflow, "valid", model, device)
+        accuracy, loss = valid_test(dataflow, "valid", model, device)
+
+        accuracy_list.append(accuracy)
+        loss_list.append(loss)
+
         scheduler.step()
 
+    with open('C:/Users/yezhu/OneDrive/Desktop/torchquantum/noisy_training_3.pickle', 'wb') as handle:
+        pickle.dump([accuracy_list, loss_list], handle, protocol=pickle.HIGHEST_PROTOCOL)
     # test
+
     valid_test(dataflow, "test", model, device, qiskit=False)
 
 

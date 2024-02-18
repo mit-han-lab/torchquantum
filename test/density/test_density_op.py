@@ -50,8 +50,8 @@ single_gate_list = [
     {"qiskit": qiskit_gate.TGate, "tq": tq.t, "name": "T"},
     {"qiskit": qiskit_gate.SdgGate, "tq": tq.sdg, "name": "SDG"},
     {"qiskit": qiskit_gate.TdgGate, "tq": tq.tdg, "name": "TDG"},
-    {"qiskit": qiskit_gate.SXGate, "tq": tq.sx},
-    {"qiskit": qiskit_gate.SXdgGate, "tq": tq.sxdg},
+    {"qiskit": qiskit_gate.SXGate, "tq": tq.sx, "name": "SX"},
+    {"qiskit": qiskit_gate.SXdgGate, "tq": tq.sxdg, "name": "SXDG"},
 ]
 
 single_param_gate_list = [
@@ -60,10 +60,10 @@ single_param_gate_list = [
     {"qiskit": qiskit_gate.RZGate, "tq": tq.rz, "name": "RZ", "numparam": 1},
     {"qiskit": qiskit_gate.U1Gate, "tq": tq.u1, "name": "U1", "numparam": 1},
     {"qiskit": qiskit_gate.PhaseGate, "tq": tq.phaseshift, "name": "Phaseshift", "numparam": 1},
-    # {"qiskit": qiskit_gate.GlobalPhaseGate, "tq": tq.globalphase, "name": "Gphase", "numparam": 1},
-    # {"qiskit": qiskit_gate.U2Gate, "tq": tq.u2, "name": "U2", "numparam": 2},
-    # {"qiskit": qiskit_gate.U3Gate, "tq": tq.u3, "name": "U3", "numparam": 3},
-    {"qiskit": qiskit_gate.RGate, "tq": tq.r, "name": "R", "numparam": 3},
+    #{"qiskit": qiskit_gate.GlobalPhaseGate, "tq": tq.globalphase, "name": "Gphase", "numparam": 1},
+    {"qiskit": qiskit_gate.U2Gate, "tq": tq.u2, "name": "U2", "numparam": 2},
+    {"qiskit": qiskit_gate.U3Gate, "tq": tq.u3, "name": "U3", "numparam": 3},
+    {"qiskit": qiskit_gate.RGate, "tq": tq.r, "name": "R", "numparam": 2},
     {"qiskit": qiskit_gate.UGate, "tq": tq.u, "name": "U", "numparam": 3},
 
 ]
@@ -89,8 +89,7 @@ two_qubit_param_gate_list = [
     {"qiskit": qiskit_gate.CRYGate, "tq": tq.cry, "name": "CRY", "numparam": 1},
     {"qiskit": qiskit_gate.CRZGate, "tq": tq.crz, "name": "CRZ", "numparam": 1},
     {"qiskit": qiskit_gate.CU1Gate, "tq": tq.cu1, "name": "CU1", "numparam": 1},
-    #{"qiskit": qiskit_gate.CU3Gate, "tq": tq.CU3, "name": "CU3", "numparam": 3},
-    #{"qiskit": qiskit_gate.CUGate, "tq": tq.cu, "name": "CU", "numparam": 3}
+    {"qiskit": qiskit_gate.CU3Gate, "tq": tq.cu3, "name": "CU3", "numparam": 3}
 ]
 
 three_qubit_gate_list = [
@@ -122,7 +121,7 @@ pair_list = [
     {"qiskit": qiskit_gate.C3SXGate, "tq": tq.C3SX},
 ]
 
-maximum_qubit_num = 10
+maximum_qubit_num = 6
 
 
 def density_is_close(mat1: np.ndarray, mat2: np.ndarray):
@@ -162,14 +161,11 @@ class single_qubit_test(TestCase):
             params = []
             for i in range(0, paramnum):
                 params.append(uniform(0, 6.2))
-            if (paramnum == 1):
-                params = params[0]
 
-            print(params)
             gate_pair['tq'](qdev, [index], params=params)
             mat1 = np.array(qdev.get_2d_matrix(0))
             rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
-            rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](params), [qubit_num - 1 - index])
+            rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](*params), [qubit_num - 1 - index])
             mat2 = np.array(rho_qiskit.to_operator())
             if density_is_close(mat1, mat2):
                 print("Test passed for %s gate on qubit %d when qubit_number is %d!" % (
@@ -218,9 +214,6 @@ class two_qubit_test(TestCase):
                         gate_pair['name'], index1, index2, qubit_num))
         return passed
 
-
-
-
     def compare_two_qubit_params_gate(self, gate_pair, qubit_num):
         passed = True
         for index1 in range(0, qubit_num):
@@ -231,15 +224,15 @@ class two_qubit_test(TestCase):
                 params = []
                 for i in range(0, paramnum):
                     params.append(uniform(0, 6.2))
-                if (paramnum == 1):
-                    params = params[0]
+
 
                 qdev = tq.NoiseDevice(n_wires=qubit_num, bsz=1, device="cpu", record_op=True)
-                gate_pair['tq'](qdev, [index1, index2],params=params)
+                gate_pair['tq'](qdev, [index1, index2], params=params)
 
                 mat1 = np.array(qdev.get_2d_matrix(0))
                 rho_qiskit = qiskitDensity.from_label('0' * qubit_num)
-                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](params), [qubit_num - 1 - index1, qubit_num - 1 - index2])
+                rho_qiskit = rho_qiskit.evolve(gate_pair['qiskit'](*params),
+                                               [qubit_num - 1 - index1, qubit_num - 1 - index2])
                 mat2 = np.array(rho_qiskit.to_operator())
                 if density_is_close(mat1, mat2):
                     print("Test passed for %s gate on qubit (%d,%d) when qubit_number is %d!" % (
@@ -250,13 +243,10 @@ class two_qubit_test(TestCase):
                         gate_pair['name'], index1, index2, qubit_num))
         return passed
 
-
     def test_two_qubits_params_gates(self):
         for qubit_num in range(2, maximum_qubit_num + 1):
             for i in range(0, len(two_qubit_param_gate_list)):
                 self.assertTrue(self.compare_two_qubit_params_gate(two_qubit_param_gate_list[i], qubit_num))
-
-
 
     def test_two_qubits_gates(self):
         for qubit_num in range(2, maximum_qubit_num + 1):

@@ -328,6 +328,7 @@ def gate_wrapper(
         method,
         q_device: QuantumDevice,
         wires,
+        paramnum=0,
         params=None,
         n_wires=None,
         static=False,
@@ -367,6 +368,12 @@ def gate_wrapper(
             else:
                 # this is for directly inputting parameters as a number
                 params = torch.tensor(params, dtype=F_DTYPE)
+        '''
+        Check whether user don't set parameters of multi parameters gate 
+        in batch mode.
+        '''
+        if params.dim() == 1 and params.shape[0] == paramnum:
+            params = params.unsqueeze(0)
         if name in ["qubitunitary", "qubitunitaryfast", "qubitunitarystrict"]:
             params = params.unsqueeze(0) if params.dim() == 2 else params
         else:
@@ -441,15 +448,15 @@ def gate_wrapper(
                 Apply kraus operator if there is noise
                 '''
                 kraus_dict = q_device.noise_model().kraus_dict()
-                if(kraus_dict["Bitflip"]!=0 or kraus_dict["Phaseflip"] != 0):
+                if (kraus_dict["Bitflip"] != 0 or kraus_dict["Phaseflip"] != 0):
                     p_identity = 1 - kraus_dict["Bitflip"] ** 2 - kraus_dict["Phaseflip"] ** 2
                     if kraus_dict["Bitflip"] != 0:
                         noise_mat = kraus_dict["Bitflip"] * _noise_mat_dict["Bitflip"]
                         density_noise = apply_unitary_density_bmm(density, noise_mat, wires)
                     if kraus_dict["Phaseflip"] != 0:
                         noise_mat = kraus_dict["Phaseflip"] * _noise_mat_dict["Bitflip"]
-                        density_noise =density_noise+ apply_unitary_density_bmm(density, noise_mat, wires)
-                    density=p_identity*density+density_noise
+                        density_noise = density_noise + apply_unitary_density_bmm(density, noise_mat, wires)
+                    density = p_identity * density + density_noise
                 q_device.densities = apply_unitary_density_bmm(density, matrix, wires)
         else:
             state = q_device.states
