@@ -30,7 +30,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opt_einsum import contract
-from qiskit import IBMQ
+from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit.exceptions import QiskitError
 from qiskit.providers.aer.noise.device.parameters import gate_error_values
 from torchpack.utils.config import Config
@@ -738,7 +738,6 @@ def get_success_rate(properties, transpiled_circ):
 
     return success_rate
 
-
 def get_provider(backend_name, hub=None):
     """
         Get the provider object for a specific backend from IBM Quantum.
@@ -753,13 +752,9 @@ def get_provider(backend_name, hub=None):
     # mass-inst-tech-1 or MIT-1
     if backend_name in ["ibmq_casablanca", "ibmq_rome", "ibmq_bogota", "ibmq_jakarta"]:
         if hub == "mass" or hub is None:
-            provider = IBMQ.get_provider(
-                hub="ibm-q-research", group="mass-inst-tech-1", project="main"
-            )
+            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/mass-inst-tech-1/main")
         elif hub == "mit":
-            provider = IBMQ.get_provider(
-                hub="ibm-q-research", group="MIT-1", project="main"
-            )
+            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/MIT-1/main")
         else:
             raise ValueError(f"not supported backend {backend_name} in hub " f"{hub}")
     elif backend_name in [
@@ -769,33 +764,25 @@ def get_provider(backend_name, hub=None):
         "ibmq_guadalupe",
         "ibmq_montreal",
     ]:
-        provider = IBMQ.get_provider(hub="ibm-q-ornl", group="anl", project="csc428")
+        provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-ornl/anl/csc428")
     else:
         if hub == "mass" or hub is None:
             try:
-                provider = IBMQ.get_provider(
-                    hub="ibm-q-research", group="mass-inst-tech-1", project="main"
-                )
+                provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/mass-inst-tech-1/main")
             except QiskitError:
                 # logger.warning(f"Cannot use MIT backend, roll back to open")
                 logger.warning(f"Use the open backend")
-                provider = IBMQ.get_provider(hub="ibm-q", group="open", project="main")
+                provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q/open/main")
         elif hub == "mit":
-            provider = IBMQ.get_provider(
-                hub="ibm-q-research", group="MIT-1", project="main"
-            )
+            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/MIT-1/main")
         else:
-            provider = IBMQ.get_provider(hub="ibm-q", group="open", project="main")
+            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q/open/main")
 
     return provider
 
 
 def get_provider_hub_group_project(hub="ibm-q", group="open", project="main"):
-    provider = IBMQ.get_provider(
-        hub=hub,
-        group=group,
-        project=project,
-    )
+    provider = QiskitRuntimeService(channel = "ibm_quantum", instance = f"{hub}/{group}/{project}")
     return provider
 
 
