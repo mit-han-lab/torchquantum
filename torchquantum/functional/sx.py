@@ -82,7 +82,7 @@ def sx(
 
     """
     name = "sx"
-    mat = mat_dict[name]
+    mat = _sx_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
@@ -129,7 +129,7 @@ def sxdg(
 
     """
     name = "sxdg"
-    mat = mat_dict[name]
+    mat = _sx_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
@@ -176,7 +176,7 @@ def csx(
 
     """
     name = "csx"
-    mat = mat_dict[name]
+    mat = _sx_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
@@ -220,7 +220,7 @@ def c3sx(
         None.
     """
     name = "c3sx"
-    mat = mat_dict[name]
+    mat = _sx_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
