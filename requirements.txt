@@ -8,7 +8,7 @@ opt_einsum
 pathos>=0.2.7
 pylatexenc>=2.10
 pyscf>=2.0.1
-qiskit>=0.39.0
+qiskit>=0.39.0,<1.0.0
 recommonmark
 
 scipy>=1.5.2
