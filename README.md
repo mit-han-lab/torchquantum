@@ -58,8 +58,8 @@ Researchers on quantum algorithm design, parameterized quantum circuit training,
 Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
 
 ## News
+- v0.1.8 Available!
 - Check the [dev branch](https://github.com/mit-han-lab/torchquantum/tree/dev) for new latest features on quantum layers and quantum algorithms.
-- v0.1.7 Available!
 - Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ) for real time support!
 - Welcome to contribute! Please contact us or post in the Github Issues if you want to have new examples implemented by TorchQuantum or any other questions.
 - Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu) and [torchquantum.org](https://torchquantum.org)
