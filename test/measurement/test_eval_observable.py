@@ -58,7 +58,9 @@ def test_expval_observable():
         random_layer(qdev)
 
         expval_tq = expval_joint_analytical(qdev, observable="".join(obs))[0].item()
-        expval_tq_sampling = expval_joint_sampling(qdev, observable="".join(obs), n_shots=100000)[0].item()
+        expval_tq_sampling = expval_joint_sampling(
+            qdev, observable="".join(obs), n_shots=100000
+        )[0].item()
 
         qiskit_circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
         operator = pauli_str_op_dict[obs[0]]
@@ -75,7 +77,9 @@ def test_expval_observable():
         expval_qiskit = (~psi @ operator @ psi).eval().real
         # print(expval_tq, expval_qiskit)
         assert np.isclose(expval_tq, expval_qiskit, atol=1e-5)
-        if n_wires <= 3: # if too many wires, the stochastic method is not accurate due to limited shots
+        if (
+            n_wires <= 3
+        ):  # if too many wires, the stochastic method is not accurate due to limited shots
             assert np.isclose(expval_tq_sampling, expval_qiskit, atol=1e-2)
 
     print("expval observable test passed")

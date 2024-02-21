@@ -23,10 +23,9 @@ from qiskit.circuit import QuantumRegister, Qubit
 from qiskit.circuit.exceptions import CircuitError
 from qiskit.circuit._utils import _compute_control_matrix
 from qiskit.circuit.library.standard_gates import U3Gate
-from qiskit.extensions.quantum_initializer import isometry
 from qiskit.quantum_info.operators.predicates import matrix_equal
 from qiskit.quantum_info.operators.predicates import is_unitary_matrix
-from qiskit.quantum_info.synthesis.one_qubit_decompose import OneQubitEulerDecomposer
+from qiskit.quantum_info import OneQubitEulerDecomposer
 from qiskit.quantum_info.synthesis.two_qubit_decompose import two_qubit_cnot_decompose
 from qiskit.extensions.exceptions import ExtensionError
 
@@ -117,7 +116,7 @@ class UnitaryGate(Gate):
         else:
             q = QuantumRegister(self.num_qubits, "q")
             qc = QuantumCircuit(q, name=self.name)
-            qc.append(isometry.Isometry(self.to_matrix(), 0, 0), qargs=q[:])
+            qc.append(qiskit.circuit.library.Isometry(self.to_matrix(), 0, 0), qargs=q[:])
             self.definition = qc
 
     def control(self, num_ctrl_qubits=1, label=None, ctrl_state=None):
@@ -139,7 +138,7 @@ class UnitaryGate(Gate):
         cmat = _compute_control_matrix(
             self.to_matrix(), num_ctrl_qubits, ctrl_state=None
         )
-        iso = isometry.Isometry(cmat, 0, 0)
+        iso = qiskit.circuit.library.Isometry(cmat, 0, 0)
         cunitary = ControlledGate(
             "c-unitary",
             num_qubits=self.num_qubits + num_ctrl_qubits,

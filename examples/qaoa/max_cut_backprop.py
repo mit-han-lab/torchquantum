@@ -27,6 +27,7 @@ import torchquantum as tq
 
 import random
 import numpy as np
+import argparse
 
 from torchquantum.functional import mat_dict
 
@@ -172,6 +173,12 @@ def backprop_optimize(model, n_steps=100, lr=0.1):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--steps", type=int, default=300, help="number of steps"
+    )
+    args = parser.parse_args()
+
     # create a input_graph
     input_graph = [(0, 1), (0, 3), (1, 2), (2, 3)]
     n_wires = 4
@@ -184,7 +191,7 @@ def main():
     # print("The circuit is", circ.draw(output="mpl"))
     # circ.draw(output="mpl")
     # use backprop
-    backprop_optimize(model, n_steps=300, lr=0.01)
+    backprop_optimize(model, n_steps=args.steps, lr=0.01)
     # use parameter shift rule
     # param_shift_optimize(model, n_steps=500, step_size=100000)
 

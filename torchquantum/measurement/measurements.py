@@ -10,7 +10,8 @@ from typing import Union, List
 from collections import Counter, OrderedDict
 
 from torchquantum.functional import mat_dict
-from torchquantum.operator import op_name_dict, Observable
+# from ..operator import op_name_dict, Observable
+import torchquantum.operator as op
 from copy import deepcopy
 import matplotlib.pyplot as plt
 
@@ -30,7 +31,7 @@ __all__ = [
 
 
 def gen_bitstrings(n_wires):
-    return ["{:0{}b}".format(k, n_wires) for k in range(2**n_wires)]
+    return ["{:0{}b}".format(k, n_wires) for k in range(2 ** n_wires)]
 
 
 def measure(qdev, n_shots=1024, draw_id=None):
@@ -42,8 +43,13 @@ def measure(qdev, n_shots=1024, draw_id=None):
         distribution of bitstrings
     """
     bitstring_candidates = gen_bitstrings(qdev.n_wires)
-
-    state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
+    if isinstance(qdev, tq.QuantumDevice):
+        state_mag = qdev.get_states_1d().abs().detach().cpu().numpy()
+    elif isinstance(qdev, tq.NoiseDevice):
+        '''
+        Measure the density matrix in the computational basis
+        '''
+        state_mag = qdev.get_probs_1d().abs().detach().cpu().numpy()
     distri_all = []
 
     for state_mag_one in state_mag:
@@ -68,7 +74,6 @@ def measure(qdev, n_shots=1024, draw_id=None):
     return distri_all
 
 
-
 def find_observable_groups(observables):
     # the group is not unique
     # ["XXII", "IIZZ", "ZZII"] can be grouped as ["XXZZ", "ZZII"] or ["ZZZZ", "XXZZ"]
@@ -89,7 +94,7 @@ def find_observable_groups(observables):
                         continue
                     else:
                         break
-            else: # for this group, the observable is matched or I be replaced, so no need to try other groups
+            else:  # for this group, the observable is matched or I be replaced, so no need to try other groups
                 matched = True
                 break
         if matched:
@@ -106,9 +111,9 @@ def find_observable_groups(observables):
 
 
 def expval_joint_sampling_grouping(
-    qdev: tq.QuantumDevice,
-    observables: List[str],
-    n_shots_per_group=1024,
+        qdev: tq.QuantumDevice,
+        observables: List[str],
+        n_shots_per_group=1024,
 ):
     assert len(observables) == len(set(observables)), "each observable should be unique"
     # key is the group, values is the list of sub-observables  
@@ -120,10 +125,10 @@ def expval_joint_sampling_grouping(
 
     # rotation to the desired basis
     n_wires = qdev.n_wires
-    paulix = op_name_dict["paulix"]
-    pauliy = op_name_dict["pauliy"]
-    pauliz = op_name_dict["pauliz"]
-    iden = op_name_dict["i"]
+    paulix = op.op_name_dict["paulix"]
+    pauliy = op.op_name_dict["pauliy"]
+    pauliz = op.op_name_dict["pauliz"]
+    iden = op.op_name_dict["i"]
     pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
     expval_all_obs = {}
@@ -151,7 +156,7 @@ def expval_joint_sampling_grouping(
                         n_eigen_one += n_count
                     else:
                         n_eigen_minus_one += n_count
-                
+
                 expval = n_eigen_one / n_shots_per_group + (-1) * n_eigen_minus_one / n_shots_per_group
 
                 expval_all.append(expval)
@@ -161,9 +166,9 @@ def expval_joint_sampling_grouping(
 
 
 def expval_joint_sampling(
-    qdev: tq.QuantumDevice,
-    observable: str,
-    n_shots=1024,
+        qdev: tq.QuantumDevice,
+        observable: str,
+        n_shots=1024,
 ):
     """
     Compute the expectation value of a joint observable from sampling 
@@ -189,10 +194,10 @@ def expval_joint_sampling(
     """
     # rotation to the desired basis
     n_wires = qdev.n_wires
-    paulix = op_name_dict["paulix"]
-    pauliy = op_name_dict["pauliy"]
-    pauliz = op_name_dict["pauliz"]
-    iden = op_name_dict["i"]
+    paulix = op.op_name_dict["paulix"]
+    pauliy = op.op_name_dict["pauliy"]
+    pauliz = op.op_name_dict["pauliz"]
+    iden = op.op_name_dict["i"]
     pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
     qdev_clone = tq.QuantumDevice(n_wires=qdev.n_wires, bsz=qdev.bsz, device=qdev.device)
@@ -202,7 +207,7 @@ def expval_joint_sampling(
     for wire in range(n_wires):
         for rotation in pauli_dict[observable[wire]]().diagonalizing_gates():
             rotation(qdev_clone, wires=wire)
-    
+
     mask = np.ones(len(observable), dtype=bool)
     mask[np.array([*observable]) == "I"] = False
 
@@ -217,7 +222,7 @@ def expval_joint_sampling(
                 n_eigen_one += n_count
             else:
                 n_eigen_minus_one += n_count
-        
+
         expval = n_eigen_one / n_shots + (-1) * n_eigen_minus_one / n_shots
         expval_all.append(expval)
 
@@ -225,8 +230,8 @@ def expval_joint_sampling(
 
 
 def expval_joint_analytical(
-    qdev: tq.QuantumDevice,
-    observable: str,
+        qdev: tq.QuantumDevice,
+        observable: str,
 ):
     """
     Compute the expectation value of a joint observable in analytical way, assuming the
@@ -275,11 +280,10 @@ def expval_joint_analytical(
 
 
 def expval(
-    qdev: tq.QuantumDevice,
-    wires: Union[int, List[int]],
-    observables: Union[Observable, List[Observable]],
+        qdev: tq.QuantumDevice,
+        wires: Union[int, List[int]],
+        observables: Union[op.Observable, List[op.Observable]],
 ):
-
     all_dims = np.arange(qdev.states.dim())
     if isinstance(wires, int):
         wires = [wires]
@@ -454,8 +458,9 @@ class MeasureMultiQubitPauliSum(tq.QuantumModule):
 
 if __name__ == '__main__':
     import pdb
+
     pdb.set_trace()
-    qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cpu", record_op=True) # use device='cuda' for GPU
+    qdev = tq.QuantumDevice(n_wires=2, bsz=5, device="cpu", record_op=True)  # use device='cuda' for GPU
     qdev.h(wires=0)
     qdev.cnot(wires=[0, 1])
     tqf.h(qdev, wires=1)
@@ -470,5 +475,3 @@ if __name__ == '__main__':
     expval = expval_joint_sampling(qdev, 'II', 100000)
     expval_ana = expval_joint_analytical(qdev, 'II')
     print(expval, expval_ana)
-
-

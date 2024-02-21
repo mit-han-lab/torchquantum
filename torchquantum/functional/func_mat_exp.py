@@ -23,12 +23,13 @@ SOFTWARE.
 """
 
 import torch
-from .functionals import gate_wrapper
+from .gate_wrapper import gate_wrapper
 from typing import Union
 import numpy as np
 import torchquantum.functional as tqf
 
 __all__ = ["matrix_exp"]
+
 
 def matrix_exp(
     qdev,
@@ -62,7 +63,7 @@ def matrix_exp(
 
     mat = torch.matrix_exp(params)
 
-    name = 'qubitunitaryfast'
+    name = "qubitunitaryfast"
 
     tqf.qubitunitaryfast(
         q_device=qdev,

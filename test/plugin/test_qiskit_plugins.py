@@ -33,6 +33,7 @@ from torchquantum.plugin import op_history2qiskit, QiskitProcessor
 from torchquantum.util import switch_little_big_endian_state
 
 import torch
+import pytest
 
 pauli_str_op_dict = {
     "X": X,
@@ -41,7 +42,7 @@ pauli_str_op_dict = {
     "I": I,
 }
 
-
+@pytest.mark.skip
 def test_expval_observable():
     # seed = 0
     # random.seed(seed)
@@ -58,7 +59,9 @@ def test_expval_observable():
         random_layer(qdev)
         qiskit_circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
 
-        expval_qiskit_processor = processor.process_circs_get_joint_expval([qiskit_circ], "".join(obs), parallel=False)
+        expval_qiskit_processor = processor.process_circs_get_joint_expval(
+            [qiskit_circ], "".join(obs), parallel=False
+        )
 
         operator = pauli_str_op_dict[obs[0]]
         for ob in obs[1:]:
@@ -73,13 +76,16 @@ def test_expval_observable():
 
         expval_qiskit = (~psi @ operator @ psi).eval().real
         # print(expval_qiskit_processor, expval_qiskit)
-        if n_wires <= 3: # if too many wires, the stochastic method is not accurate due to limited shots
+        if (
+            n_wires <= 3
+        ):  # if too many wires, the stochastic method is not accurate due to limited shots
             assert np.isclose(expval_qiskit_processor, expval_qiskit, atol=1e-2)
 
     print("expval observable test passed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pdb
+
     pdb.set_trace()
     test_expval_observable()

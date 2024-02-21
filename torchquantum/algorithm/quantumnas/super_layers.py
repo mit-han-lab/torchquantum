@@ -42,6 +42,30 @@ __all__ = [
 
 
 def get_combs(inset: List, n=None) -> List[List]:
+    """Get all combinations of elements from `inset`.
+
+    Args:
+        inset (List): List of elements.
+        n (int or Iterable, optional): Number of elements to include in each combination.
+            If `n` is an integer, only combinations of that size will be returned.
+            If `n` is an iterable, combinations of different sizes specified by `n` will be returned.
+            If `n` is not provided, all possible combinations with different numbers of elements will be returned.
+            Defaults to None.
+
+    Returns:
+        List[List]: List of all combinations of elements from `inset`.
+
+    Examples:
+        >>> get_combs([1, 2, 3])
+        [[1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3]]
+
+        >>> get_combs([1, 2, 3], n=2)
+        [[1, 2], [1, 3], [2, 3]]
+
+        >>> get_combs([1, 2, 3], n=[1, 2])
+        [[1], [2], [3], [1, 2], [1, 3], [2, 3]]
+    """
+
     all_combs = []
     if n is None:
         # all possible combinations, with different #elements in a set
@@ -57,19 +81,57 @@ def get_combs(inset: List, n=None) -> List[List]:
 
 
 class SuperQuantumModule(tq.QuantumModule):
+    """A super module for quantum computations.
+    
+    Attributes:
+        n_wires (int): Number of wires in the quantum module.
+        sample_arch: The sample architecture for the quantum module.
+        
+    Methods:
+        set_sample_arch(sample_arch): Sets the sample architecture for the quantum module.
+        count_sample_params(): Counts the number of sample parameters in the quantum module.
+    """
+
     def __init__(self, n_wires):
+        """Initializes the SuperQuantumModule.
+        
+        Args:
+            n_wires (int): Number of wires in the quantum module.
+        """
+        
         super().__init__()
         self.n_wires = n_wires
         self.sample_arch = None
 
     def set_sample_arch(self, sample_arch):
+        """Set the sample architecture for the quantum module.
+
+        Args:
+            sample_arch: The sample architecture for the quantum module.
+            
+        Returns:
+            None.
+        """
+
         self.sample_arch = sample_arch
 
     @property
     def arch_space(self):
+        """Return the architecture space of the quantum module.
+
+        Returns:
+            None.
+        """
+
         return None
 
     def count_sample_params(self):
+        """Count the number of sample parameters in the quantum module.
+
+        Raises:
+            NotImplementedError
+        """
+
         raise NotImplementedError
 
 
