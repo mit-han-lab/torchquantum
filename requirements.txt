@@ -1,4 +1,4 @@
-furo @ git+https://github.com/frogcjn/torchquantum-doc-furo-theme.git
+# furo @ git+https://github.com/frogcjn/torchquantum-doc-furo-theme.git
 dill==0.3.4
 matplotlib>=3.3.2
 nbsphinx
