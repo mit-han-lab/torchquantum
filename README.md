@@ -2,7 +2,7 @@
 <img src="torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
 </p>
 
-<h2><p align="center">A PyTorch Library for Quantum Simulation and Quantum Machine Learning</p></h2>
+<h2><p align="center">Quantum Computing in PyTorch</p></h2>
 <h3><p align="center">Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p></h3>
 
 
@@ -19,9 +19,9 @@
     <a href="https://discord.gg/VTHZAB5E">
         <img alt="Chat @ Discord" src="https://img.shields.io/badge/contact-me-blue?logo=discord&logoColor=white">
     </a>
-    <a href="https://qmlsys.hanruiwang.me">
+<!--     <a href="https://qmlsys.hanruiwang.me">
         <img alt="Forum" src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fqmlsys.hanruiwang.me%2F">
-    </a>
+    </a> -->
     <a href="https://qmlsys.mit.edu">
         <img alt="Website" src="https://img.shields.io/website?up_message=qmlsys&url=https%3A%2F%2Fqmlsys.mit.edu">
     </a>
@@ -49,7 +49,7 @@
 
 #### What it is doing
 
-Quantum simulation framework based on PyTorch. It supports statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 30+ qubits with multiple GPUs.
+Simulate quantum computations on classical hardware using PyTorch. It supports statevector simulation and pulse simulation on GPUs. It can scale up to the simulation of 30+ qubits with multiple GPUs.
 #### Who will benefit
 
 Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning, quantum neural networks.
@@ -58,10 +58,10 @@ Researchers on quantum algorithm design, parameterized quantum circuit training,
 Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
 
 ## News
-
+- Check the [dev branch](https://github.com/mit-han-lab/torchquantum/tree/dev) for new latest features on quantum layers and quantum algorithms.
 - v0.1.7 Available!
 - Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ) for real time support!
-- Welcome to contribute! Please contact us or post in the [forum](https://qmlsys.hanruiwang.me) if you want to have new examples implemented by TorchQuantum or any other questions.
+- Welcome to contribute! Please contact us or post in the Github Issues if you want to have new examples implemented by TorchQuantum or any other questions.
 - Qmlsys website goes online: [qmlsys.mit.edu](https://qmlsys.mit.edu) and [torchquantum.org](https://torchquantum.org)
 
 ## Features
@@ -358,6 +358,7 @@ pre-commit install
 - [ICCAD'22] [Wang et al., "QuEst: Graph Transformer for Quantum Circuit Reliability Estimation"](https://arxiv.org/abs/2210.16724)
 - [ICML Workshop] [Yun et al., "Slimmable Quantum Federated Learning"](https://dynn-icml2022.github.io/spapers/paper_7.pdf)
 - [IEEE ICDCS] [Yun et al., "Quantum Multi-Agent Reinforcement Learning via Variational Quantum Circuit Design"](https://ieeexplore.ieee.org/document/9912289)
+- [QCE'23] [Zhan et al., "Quantum Sensor Network Algorithms for Transmitter Localization"](https://ieeexplore.ieee.org/abstract/document/10313806)
 <details>
   <summary>Manuscripts</summary>
 
