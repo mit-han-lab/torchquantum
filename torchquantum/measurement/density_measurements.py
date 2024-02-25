@@ -14,8 +14,8 @@ from torchquantum.functional import mat_dict
 import torchquantum.operator as op
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from .measurements import gen_bitstrings
-from .measurements import find_observable_groups
+from torchquantum.measurement import gen_bitstrings
+from torchquantum.measurement import find_observable_groups
 
 __all__ = [
     "expval_joint_sampling_grouping_density",
@@ -181,68 +181,62 @@ def expval_joint_sampling_density(
 
     return torch.tensor(expval_all, dtype=F_DTYPE)
 
+
 def expval_joint_analytical_density(
         noisedev: tq.NoiseDevice,
         observable: str,
         n_shots=1024
 ):
     """
-     Compute the expectation value of a joint observable from sampling
-     the measurement bistring
-     Args:
-         qdev: the quantum device
-         observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
-     Returns:
-         the expectation value
-     Examples:
-     >>> import torchquantum as tq
-     >>> import torchquantum.functional as tqf
-     >>> x = tq.NoiseDevice(n_wires=2)
-     >>> tqf.hadamard(x, wires=0)
-     >>> tqf.x(x, wires=1)
-     >>> tqf.cnot(x, wires=[0, 1])
-     >>> print(expval_joint_sampling(x, 'II', n_shots=8192))
-     tensor([[0.9997]])
-     >>> print(expval_joint_sampling(x, 'XX', n_shots=8192))
-     tensor([[0.9991]])
-     >>> print(expval_joint_sampling(x, 'ZZ', n_shots=8192))
-     tensor([[-0.9980]])
-     """
-    # rotation to the desired basis
-    n_wires = noisedev.n_wires
-    paulix = op.op_name_dict["paulix"]
-    pauliy = op.op_name_dict["pauliy"]
-    pauliz = op.op_name_dict["pauliz"]
-    iden = op.op_name_dict["i"]
+    Compute the expectation value of a joint observable in analytical way, assuming the
+    density matrix is available.
+    Args:
+        qdev: the quantum device
+        observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
+    Returns:
+        the expectation value
+    Examples:
+    >>> import torchquantum as tq
+    >>> import torchquantum.functional as tqf
+    >>> x = tq.QuantumDevice(n_wires=2)
+    >>> tqf.hadamard(x, wires=0)
+    >>> tqf.x(x, wires=1)
+    >>> tqf.cnot(x, wires=[0, 1])
+    >>> print(expval_joint_analytical(x, 'II'))
+    tensor([[1.0000]])
+    >>> print(expval_joint_analytical(x, 'XX'))
+    tensor([[1.0000]])
+    >>> print(expval_joint_analytical(x, 'ZZ'))
+    tensor([[-1.0000]])
+    """
+    # compute the hamiltonian matrix
+    paulix = mat_dict["paulix"]
+    pauliy = mat_dict["pauliy"]
+    pauliz = mat_dict["pauliz"]
+    iden = mat_dict["i"]
     pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
-    noisedev_clone = tq.NoiseDevice(n_wires=noisedev.n_wires, bsz=noisedev.bsz, device=noisedev.device)
-    noisedev_clone.clone_densities(noisedev.densities)
-
     observable = observable.upper()
-    for wire in range(n_wires):
-        for rotation in pauli_dict[observable[wire]]().diagonalizing_gates():
-            rotation(noisedev_clone, wires=wire)
+    assert len(observable) == noisedev.n_wires
+    densities = noisedev.get_densities_2d()
 
-    mask = np.ones(len(observable), dtype=bool)
-    mask[np.array([*observable]) == "I"] = False
+    hamiltonian = pauli_dict[observable[0]].to(densities.device)
+    for op in observable[1:]:
+        hamiltonian = torch.kron(hamiltonian, pauli_dict[op].to(densities.device))
 
-    expval_all = []
-    # measure
-    distributions = measure_density(noisedev_clone, n_shots=n_shots)
-    for distri in distributions:
-        n_eigen_one = 0
-        n_eigen_minus_one = 0
-        for bitstring, n_count in distri.items():
-            if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
-                n_eigen_one += n_count
-            else:
-                n_eigen_minus_one += n_count
+    batch_size = densities.shape[0]
+    expanded_hamiltonian = hamiltonian.unsqueeze(0).expand(batch_size, *hamiltonian.shape)
 
-        expval = n_eigen_one / n_shots + (-1) * n_eigen_minus_one / n_shots
-        expval_all.append(expval)
+    product = torch.bmm(expanded_hamiltonian, densities)
 
-    return torch.tensor(expval_all, dtype=F_DTYPE)
+    # Extract the diagonal elements from each matrix in the batch
+    diagonals = torch.diagonal(product, dim1=-2, dim2=-1)
+
+    # Sum the diagonal elements to get the trace for each batch
+    trace = torch.sum(diagonals, dim=-1).real
+
+    # Should use expectation= Tr(observable \times density matrix)
+    return trace
 
 
 def expval_density(
@@ -250,7 +244,7 @@ def expval_density(
         wires: Union[int, List[int]],
         observables: Union[op.Observable, List[op.Observable]],
 ):
-    all_dims = np.arange(noisedev.n_wires+1)
+    all_dims = np.arange(noisedev.n_wires + 1)
     if isinstance(wires, int):
         wires = [wires]
         observables = [observables]
@@ -314,15 +308,22 @@ if __name__ == '__main__':
     qdev = tq.NoiseDevice(n_wires=2, bsz=5, device="cpu", record_op=True)  # use device='cuda' for GPU
     qdev.h(wires=0)
     qdev.cnot(wires=[0, 1])
-    tqf.h(qdev, wires=1)
-    tqf.x(qdev, wires=1)
-    op = tq.RX(has_params=True, trainable=True, init_params=0.5)
-    op(qdev, wires=0)
+    #tqf.h(qdev, wires=1)
+    #tqf.x(qdev, wires=1)
+    #tqf.y(qdev, wires=1)
+    #tqf.cnot(qdev,wires=[0, 1])
+    # op = tq.RX(has_params=True, trainable=True, init_params=0.5)
+    # op(qdev, wires=0)
 
     # measure the state on z basis
     print(tq.measure_density(qdev, n_shots=1024))
 
     # obtain the expval on a observable
-    expval = expval_joint_sampling_density(qdev, 'II', 100000)
-    # expval_ana = expval_joint_analytical(qdev, 'II')
+    expval = expval_joint_sampling_density(qdev, 'XZ', 100000)
+
+    print("expval")
     print(expval)
+
+    expval_ana = expval_joint_analytical_density(qdev, 'XZ')
+    print("expval_ana")
+    print(expval_ana)

@@ -38,7 +38,7 @@ def test_measure_density():
     qdev.rx(wires=1, params=1.2)  # type: ignore
     qdev.cnot(wires=[0, 2])  # type: ignore
 
-    tq_counts = tq.measure(qdev, n_shots=n_shots)
+    tq_counts = tq.measure_density(qdev, n_shots=n_shots)
 
     circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
     circ.measure_all()
@@ -58,7 +58,7 @@ def test_measure_density():
 
 
 if __name__ == "__main__":
-    import pdb
+    #import pdb
 
-    pdb.set_trace()
-    test_measure()
+    #pdb.set_trace()
+    test_measure_density()
