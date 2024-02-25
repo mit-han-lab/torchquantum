@@ -2,7 +2,7 @@
 <img src="torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
 </p>
 
-<h2><p align="center">A PyTorch Library for Quantum Simulation and Quantum Machine Learning</p></h2>
+<h2><p align="center">Quantum Computing in PyTorch</p></h2>
 <h3><p align="center">Faster, Scalable, Easy Debugging, Easy Deployment on Real Machine</p></h3>
 
 
@@ -49,7 +49,7 @@
 
 #### What it is doing
 
-Quantum simulation framework based on PyTorch. It supports statevector simulation and pulse simulation (coming soon) on GPUs. It can scale up to the simulation of 30+ qubits with multiple GPUs.
+Simulate quantum computations on classical hardware using PyTorch. It supports statevector simulation and pulse simulation on GPUs. It can scale up to the simulation of 30+ qubits with multiple GPUs.
 #### Who will benefit
 
 Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning, quantum neural networks.
