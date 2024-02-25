@@ -6,6 +6,7 @@ Qubit Rotation Optimization, adapted from https://pennylane.ai/qml/demos/tutoria
 import torchquantum as tq
 import torch
 from torchquantum.measurement import expval_joint_analytical
+import argparse
 
 
 class OptimizationModel(torch.nn.Module):
@@ -42,7 +43,7 @@ def train(model, device, optimizer):
 
 
 # main function to run the optimization
-def main():
+def main(n_epochs):
     seed = 0
     torch.manual_seed(seed)
 
@@ -50,7 +51,6 @@ def main():
     device = torch.device("cuda" if use_cuda else "cpu")
 
     model = OptimizationModel()
-    n_epochs = 200
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 
     for epoch in range(1, n_epochs + 1):
@@ -65,4 +65,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        prog="Qubit Rotation",
+        description="Specify Parameters for Qubit Rotation Optimization Example",
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=200, help="number of training epochs"
+    )
+    args = parser.parse_args()
+    main(args.epochs)

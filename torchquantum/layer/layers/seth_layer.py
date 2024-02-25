@@ -32,8 +32,8 @@ from typing import Iterable
 from torchquantum.plugin.qiskit import QISKIT_INCOMPATIBLE_FUNC_NAMES
 from torchpack.utils.logging import logger
 
-from .layers import LayerTemplate0
-
+from .layers import LayerTemplate0, Op1QAllLayer
+from ..entanglement.op2_layer import Op2QAllLayer
 
 class SethLayer0(LayerTemplate0):
     """
