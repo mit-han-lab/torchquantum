@@ -53,7 +53,7 @@ class QFCModel(tq.QuantumModule):
             self.crx0 = tq.CRX(has_params=True, trainable=True)
 
         @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice):
+        def forward(self, q_device: tq.NoiseDevice):
             """
             1. To convert tq QuantumModule to qiskit or run in the static
             model, need to:
@@ -90,36 +90,22 @@ class QFCModel(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.n_wires = 4
-        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
+        self.q_device = tq.NoiseDevice(n_wires=self.n_wires,
+                                       noise_model=tq.NoiseModel(kraus_dict={"Bitflip": 0.08, "Phaseflip": 0.08})
+                                       )
         self.encoder = tq.AmplitudeEncoder()
 
         self.q_layer = self.QLayer()
-        self.measure = tq.MeasureAll(tq.PauliZ)
+        self.measure = tq.MeasureAll_density(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
-
-
-        print("Shape 1:")
-        print(self.q_device.states.shape)
         self.encoder(self.q_device, x)
         self.q_layer(self.q_device)
-
-
-
-        print("X shape before measurement")
-        print(x.shape)
-
         x = self.measure(self.q_device)
-
-
-        print("X shape after measurement")
-        print(x.shape)
-
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
-
         return x
 
 

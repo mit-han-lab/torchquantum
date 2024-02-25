@@ -124,18 +124,14 @@ class NoiseDevice(nn.Module):
         _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
         return _matrix
 
-
     def get_densities_2d(self):
         """Return the states in a 1d tensor."""
         bsz = self.densities.shape[0]
-        return torch.reshape(self.densities, [bsz, 2**self.n_wires, 2**self.n_wires])
+        return torch.reshape(self.densities, [bsz, 2 ** self.n_wires, 2 ** self.n_wires])
 
     def get_density_2d(self):
         """Return the state in a 1d tensor."""
-        return torch.reshape(self.density, [2**self.n_wires,2**self.n_wires])
-
-
-
+        return torch.reshape(self.density, [2 ** self.n_wires, 2 ** self.n_wires])
 
     def calc_trace(self, index):
         _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
@@ -168,6 +164,19 @@ class NoiseDevice(nn.Module):
     def clone_densities(self, existing_densities: torch.Tensor):
         """Clone the densities of the other quantum device."""
         self.densities = existing_densities.clone()
+
+    def clone_from_states(self, existing_states: torch.Tensor):
+        """Clone the densities of the other quantum device using the conjugate transpose."""
+        # Ensure the dimensions match the expected shape for the outer product operation
+        assert 2 * (existing_states.dim() - 1) == (self.densities.dim() - 1)
+        #assert existing_states.shape[0] == self.densities.shape[0]
+        bsz = existing_states.shape[0]
+        state_dim = 2 ** self.n_wires
+        states_reshaped = existing_states.view(-1, state_dim, 1)  # [batch_size, state_dim, 1]
+        states_conj_transpose = torch.conj(states_reshaped).transpose(1, 2)  # [batch_size, 1, state_dim]
+        # Use torch.bmm for batched outer product
+        self.densities = torch.bmm(states_reshaped, states_conj_transpose)
+        self.densities = torch.reshape(self.densities, [bsz] + [2] * (2 * self.n_wires))
 
     def noise_model(self):
         return self._noise_model

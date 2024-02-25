@@ -49,7 +49,7 @@ class TQNet(tq.QuantumModule):
             self.layers.append(layer)
 
         self.service = "TorchQuantum"
-        self.measure = tq.MeasureAll(tq.PauliZ)
+        self.measure = tq.MeasureAll_density(tq.PauliZ)
 
     def forward(self, device, x):
         bsz = x.shape[0]
@@ -139,7 +139,8 @@ trainable_layer = [
 trainable_layer = TQLayer(trainable_layer)
 layers = [random_layer, trainable_layer]
 
-device = tq.QuantumDevice(n_wires=4).to(torch_device)
+device = tq.NoiseDevice(n_wires=4,
+                        noise_model=tq.NoiseModel(kraus_dict={"Bitflip": 0.08, "Phaseflip": 0.08})).to(torch_device)
 
 model = TQNet(layers=layers, encoder=encoder, use_softmax=True).to(torch_device)
 

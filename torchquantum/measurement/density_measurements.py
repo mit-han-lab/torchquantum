@@ -281,7 +281,7 @@ class MeasureAll_density(tq.QuantumModule):
         self.v_c_reg_mapping = v_c_reg_mapping
 
     def forward(self, qdev: tq.NoiseDevice):
-        x = expval(qdev, list(range(qdev.n_wires)), [self.obs()] * qdev.n_wires)
+        x = expval_density(qdev, list(range(qdev.n_wires)), [self.obs()] * qdev.n_wires)
 
         if self.v_c_reg_mapping is not None:
             c2v_mapping = self.v_c_reg_mapping["c2v"]
@@ -304,26 +304,27 @@ class MeasureAll_density(tq.QuantumModule):
 
 
 if __name__ == '__main__':
-    print("Yes")
     qdev = tq.NoiseDevice(n_wires=2, bsz=5, device="cpu", record_op=True)  # use device='cuda' for GPU
     qdev.h(wires=0)
     qdev.cnot(wires=[0, 1])
-    #tqf.h(qdev, wires=1)
-    #tqf.x(qdev, wires=1)
-    #tqf.y(qdev, wires=1)
-    #tqf.cnot(qdev,wires=[0, 1])
+    # tqf.h(qdev, wires=1)
+    # tqf.x(qdev, wires=1)
+    # tqf.y(qdev, wires=1)
+    # tqf.cnot(qdev,wires=[0, 1])
     # op = tq.RX(has_params=True, trainable=True, init_params=0.5)
     # op(qdev, wires=0)
+    result = tq.expval_density(qdev, [0, 1], [tq.PauliZ(), tq.PauliZ()])
+    print(result.shape)
 
     # measure the state on z basis
-    print(tq.measure_density(qdev, n_shots=1024))
+    # print(tq.measure_density(qdev, n_shots=1024))
 
     # obtain the expval on a observable
-    expval = expval_joint_sampling_density(qdev, 'XZ', 100000)
+    # expval = expval_joint_sampling_density(qdev, 'XZ', 100000)
 
-    print("expval")
-    print(expval)
+    # print("expval")
+    # print(expval)
 
-    expval_ana = expval_joint_analytical_density(qdev, 'XZ')
-    print("expval_ana")
-    print(expval_ana)
+    # expval_ana = expval_joint_analytical_density(qdev, 'XZ')
+    # print("expval_ana")
+    # print(expval_ana)
