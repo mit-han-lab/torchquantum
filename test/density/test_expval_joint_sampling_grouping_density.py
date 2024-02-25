@@ -23,42 +23,40 @@ SOFTWARE.
 """
 
 import torchquantum as tq
+from torchquantum.measurement import (
+    expval_joint_analytical_density,
+    expval_joint_sampling_grouping_density,
+)
 
-from torchquantum.plugin import op_history2qiskit
-from qiskit import Aer, transpile
 import numpy as np
+import random
 
 
-def test_measure():
-    n_shots = 10000
-    qdev = tq.NoiseDevice(n_wires=3, bsz=1, record_op=True)
-    qdev.x(wires=2)  # type: ignore
-    qdev.x(wires=1)  # type: ignore
-    qdev.ry(wires=0, params=0.98)  # type: ignore
-    qdev.rx(wires=1, params=1.2)  # type: ignore
-    qdev.cnot(wires=[0, 2])  # type: ignore
+def test_expval_joint_sampling_grouping():
+    n_obs = 20
+    n_wires = 4
+    obs_all = []
+    for _ in range(n_obs):
+        obs = random.choices(["X", "Y", "Z", "I"], k=n_wires)
+        obs_all.append("".join(obs))
+    obs_all = list(set(obs_all))
 
-    tq_counts = tq.measure(qdev, n_shots=n_shots)
+    random_layer = tq.RandomLayer(n_ops=100, wires=list(range(n_wires)))
+    qdev = tq.NoiseDevice(n_wires=n_wires, bsz=1, record_op=True)
+    random_layer(qdev)
 
-    circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
-    circ.measure_all()
-    simulator = Aer.get_backend("aer_simulator_density_matrix")
-    circ = transpile(circ, simulator)
-    qiskit_res = simulator.run(circ, shots=n_shots).result()
-    qiskit_counts = qiskit_res.get_counts()
+    expval_ana = {}
+    for obs in obs_all:
+        expval_ana[obs] = expval_joint_analytical_density(qdev, observable=obs)[0].item()
 
-    for k, v in tq_counts[0].items():
-        # need to reverse the bitstring because qiskit is in little endian
-        qiskit_ratio = qiskit_counts.get(k[::-1], 0) / n_shots
-        tq_ratio = v / n_shots
-        print(k, qiskit_ratio, tq_ratio)
-        assert np.isclose(qiskit_ratio, tq_ratio, atol=0.1)
-
-    print("tq.measure for density matrix test passed")
+    expval_sam = expval_joint_sampling_grouping_density(
+        qdev, observables=obs_all, n_shots_per_group=1000000
+    )
+    for obs in obs_all:
+        # assert
+        assert np.isclose(expval_ana[obs], expval_sam[obs][0].item(), atol=1e-1)
+        print(obs, expval_ana[obs], expval_sam[obs][0].item())
 
 
 if __name__ == "__main__":
-    import pdb
-
-    pdb.set_trace()
-    test_measure()
+    test_expval_joint_sampling_grouping()

@@ -35,8 +35,6 @@ from unittest import TestCase
 
 from random import randrange, uniform
 
-import qiskit.circuit.library as qiskit_library
-from qiskit.quantum_info import Operator
 
 RND_TIMES = 100
 
