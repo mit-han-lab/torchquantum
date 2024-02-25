@@ -36,9 +36,9 @@ if __name__ == "__main__":
     setup(
         name="torchquantum",
         version=VERSION["version"],
-        description="A PyTorch-based framework for differentiable classical simulation of quantum computing",
+        description="Quantum Computing in PyTorch",
         url="https://github.com/mit-han-lab/torchquantum",
-        author="Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli",
+        author="Shreya Chaudhary, Zhuoyang Ye, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli, Hanrui Wang",
         author_email="hanruiwang.hw@gmail.com",
         license="MIT",
         install_requires=requirements,

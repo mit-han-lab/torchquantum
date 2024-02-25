@@ -30,7 +30,7 @@ from qiskit import QuantumCircuit
 from torchquantum.plugin import qiskit2tq_op_history
 
 if __name__ == "__main__":
-    hamil = Hamiltonian.from_file("./examples/simple_vqe/h2.txt")
+    hamil = Hamiltonian.from_file("./examples/vqe/h2.txt")
 
     ops = [
         {'name': 'u3', 'wires': 0, 'trainable': True},

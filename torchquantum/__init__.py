@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "0.1.7"
-__author__ = "Hanrui Wang, Jiannan Cao, Jessica Ding, Jiai Gu, Song Han, Zirui Li, Zhiding Liang, Pengyu Liu, Mohammadreza Tavasoli"
+__version__ = "0.1.8"
+__author__ = "TorchQuantum Authors"
 
 from .macro import *
 from .device import *
@@ -38,6 +38,7 @@ from .util import *
 from .noise_model import *
 from .algorithm import *
 from .dataset import *
+from .pulse import *
 
 # here we check whether the Qiskit parameterization bug is fixed, if not, a
 # warning message will be printed
