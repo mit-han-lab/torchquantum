@@ -32,7 +32,7 @@ import numpy as np
 import random
 
 
-def test_expval_joint_sampling_grouping():
+def test_expval_joint_sampling_grouping_density():
     n_obs = 20
     n_wires = 4
     obs_all = []
@@ -59,4 +59,4 @@ def test_expval_joint_sampling_grouping():
 
 
 if __name__ == "__main__":
-    test_expval_joint_sampling_grouping()
+    test_expval_joint_sampling_grouping_density()

@@ -18,16 +18,16 @@ from .measurements import gen_bitstrings
 from .measurements import find_observable_groups
 
 __all__ = [
-    "expval_joint_sampling_grouping",
-    "expval_joint_analytical",
-    "expval_joint_sampling",
-    "expval",
-    "measure",
-    "MeasureAll_Density"
+    "expval_joint_sampling_grouping_density",
+    "expval_joint_sampling_density",
+    "expval_joint_analytical_density",
+    "expval_density",
+    "measure_density",
+    "MeasureAll_density"
 ]
 
 
-def measure(noisedev: tq.NoiseDevice, n_shots=1024, draw_id=None):
+def measure_density(noisedev: tq.NoiseDevice, n_shots=1024, draw_id=None):
     """Measure the target density matrix and obtain classical bitstream distribution
     Args:
         noisedev: input tq.NoiseDevice
@@ -62,7 +62,7 @@ def measure(noisedev: tq.NoiseDevice, n_shots=1024, draw_id=None):
     return distri_all
 
 
-def expval_joint_sampling_grouping(
+def expval_joint_sampling_grouping_density(
         noisedev: tq.NoiseDevice,
         observables: List[str],
         n_shots_per_group=1024,
@@ -85,7 +85,7 @@ def expval_joint_sampling_grouping(
 
     expval_all_obs = {}
     for obs_group, obs_elements in groups.items():
-        # for each group need to clone a new qdev and its states
+        # for each group need to clone a new qdev and its densities
         noisedev_clone = tq.NoiseDevice(n_wires=noisedev.n_wires, bsz=noisedev.bsz, device=noisedev.device)
         noisedev_clone.clone_densities(noisedev.densities)
 
@@ -94,7 +94,7 @@ def expval_joint_sampling_grouping(
                 rotation(noisedev_clone, wires=wire)
 
         # measure
-        distributions = measure(noisedev_clone, n_shots=n_shots_per_group)
+        distributions = measure_density(noisedev_clone, n_shots=n_shots_per_group)
         # interpret the distribution for different observable elements
         for obs_element in obs_elements:
             expval_all = []
@@ -118,15 +118,70 @@ def expval_joint_sampling_grouping(
     return expval_all_obs
 
 
-def expval_joint_sampling(
+def expval_joint_sampling_density(
         qdev: tq.NoiseDevice,
         observable: str,
         n_shots=1024,
 ):
-    return
+    """
+    Compute the expectation value of a joint observable from sampling
+    the measurement bistring
+    Args:
+        qdev: the noise device
+        observable: the joint observable, on the qubit 0, 1, 2, 3, etc in this order
+    Returns:
+        the expectation value
+    Examples:
+    >>> import torchquantum as tq
+    >>> import torchquantum.functional as tqf
+    >>> x = tq.QuantumDevice(n_wires=2)
+    >>> tqf.hadamard(x, wires=0)
+    >>> tqf.x(x, wires=1)
+    >>> tqf.cnot(x, wires=[0, 1])
+    >>> print(expval_joint_sampling(x, 'II', n_shots=8192))
+    tensor([[0.9997]])
+    >>> print(expval_joint_sampling(x, 'XX', n_shots=8192))
+    tensor([[0.9991]])
+    >>> print(expval_joint_sampling(x, 'ZZ', n_shots=8192))
+    tensor([[-0.9980]])
+    """
+    # rotation to the desired basis
+    n_wires = qdev.n_wires
+    paulix = op.op_name_dict["paulix"]
+    pauliy = op.op_name_dict["pauliy"]
+    pauliz = op.op_name_dict["pauliz"]
+    iden = op.op_name_dict["i"]
+    pauli_dict = {"X": paulix, "Y": pauliy, "Z": pauliz, "I": iden}
 
+    qdev_clone = tq.NoiseDevice(n_wires=qdev.n_wires, bsz=qdev.bsz, device=qdev.device)
+    qdev_clone.clone_densities(qdev.densities)
 
-def expval_joint_analytical(
+    observable = observable.upper()
+    for wire in range(n_wires):
+        for rotation in pauli_dict[observable[wire]]().diagonalizing_gates():
+            rotation(qdev_clone, wires=wire)
+
+    mask = np.ones(len(observable), dtype=bool)
+    mask[np.array([*observable]) == "I"] = False
+
+    expval_all = []
+    # measure
+    distributions = measure_density(qdev_clone, n_shots=n_shots)
+    for distri in distributions:
+        n_eigen_one = 0
+        n_eigen_minus_one = 0
+        for bitstring, n_count in distri.items():
+            if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
+                n_eigen_one += n_count
+            else:
+                n_eigen_minus_one += n_count
+
+        expval = n_eigen_one / n_shots + (-1) * n_eigen_minus_one / n_shots
+        expval_all.append(expval)
+
+    return torch.tensor(expval_all, dtype=F_DTYPE)
+
+def expval_joint_analytical_density(
         noisedev: tq.NoiseDevice,
         observable: str,
         n_shots=1024
@@ -174,7 +229,7 @@ def expval_joint_analytical(
 
     expval_all = []
     # measure
-    distributions = measure(noisedev_clone, n_shots=n_shots)
+    distributions = measure_density(noisedev_clone, n_shots=n_shots)
     for distri in distributions:
         n_eigen_one = 0
         n_eigen_minus_one = 0
@@ -190,7 +245,7 @@ def expval_joint_analytical(
     return torch.tensor(expval_all, dtype=F_DTYPE)
 
 
-def expval(
+def expval_density(
         noisedev: tq.NoiseDevice,
         wires: Union[int, List[int]],
         observables: Union[op.Observable, List[op.Observable]],
@@ -223,7 +278,7 @@ def expval(
     return torch.stack(expectations, dim=-1)
 
 
-class MeasureAll_Density(tq.QuantumModule):
+class MeasureAll_density(tq.QuantumModule):
     """Obtain the expectation value of all the qubits."""
 
     def __init__(self, obs, v_c_reg_mapping=None):
@@ -265,9 +320,9 @@ if __name__ == '__main__':
     op(qdev, wires=0)
 
     # measure the state on z basis
-    print(tq.measure(qdev, n_shots=1024))
+    print(tq.measure_density(qdev, n_shots=1024))
 
     # obtain the expval on a observable
-    expval = expval_joint_sampling(qdev, 'II', 100000)
+    expval = expval_joint_sampling_density(qdev, 'II', 100000)
     # expval_ana = expval_joint_analytical(qdev, 'II')
     print(expval)

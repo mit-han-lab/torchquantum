@@ -29,7 +29,7 @@ from qiskit import Aer, transpile
 import numpy as np
 
 
-def test_measure():
+def test_measure_density():
     n_shots = 10000
     qdev = tq.NoiseDevice(n_wires=3, bsz=1, record_op=True)
     qdev.x(wires=2)  # type: ignore

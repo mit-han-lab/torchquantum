@@ -43,7 +43,7 @@ pauli_str_op_dict = {
 }
 
 
-def test_expval_observable():
+def test_expval_observable_density():
     # seed = 0
     # random.seed(seed)
     # np.random.seed(seed)

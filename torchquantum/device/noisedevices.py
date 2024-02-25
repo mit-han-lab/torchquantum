@@ -124,6 +124,19 @@ class NoiseDevice(nn.Module):
         _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
         return _matrix
 
+
+    def get_densities_2d(self):
+        """Return the states in a 1d tensor."""
+        bsz = self.densities.shape[0]
+        return torch.reshape(self.densities, [bsz, 2**self.n_wires, 2**self.n_wires])
+
+    def get_density_2d(self):
+        """Return the state in a 1d tensor."""
+        return torch.reshape(self.density, [2**self.n_wires,2**self.n_wires])
+
+
+
+
     def calc_trace(self, index):
         _matrix = torch.reshape(self.densities[index], [2 ** self.n_wires] * 2)
         return torch.trace(_matrix)
