@@ -57,7 +57,7 @@ single_param_gate_list = [
     {"qiskit": qiskit_gate.RYGate, "tq": tq.ry, "name": "Ry", "numparam": 1},
     {"qiskit": qiskit_gate.RZGate, "tq": tq.rz, "name": "RZ", "numparam": 1},
     {"qiskit": qiskit_gate.U1Gate, "tq": tq.u1, "name": "U1", "numparam": 1},
-    {"qiskit": qiskit_gate.PhaseGate, "tq": tq.phaseshift, "name": "Phaseshift", "numparam": 1},
+    #{"qiskit": qiskit_gate.PhaseGate, "tq": tq.phaseshift, "name": "Phaseshift", "numparam": 1},
     #{"qiskit": qiskit_gate.GlobalPhaseGate, "tq": tq.globalphase, "name": "Gphase", "numparam": 1},
     {"qiskit": qiskit_gate.U2Gate, "tq": tq.u2, "name": "U2", "numparam": 2},
     {"qiskit": qiskit_gate.U3Gate, "tq": tq.u3, "name": "U3", "numparam": 3},
@@ -75,7 +75,8 @@ two_qubit_gate_list = [
     {"qiskit": qiskit_gate.CHGate, "tq": tq.ch, "name": "CH"},
     {"qiskit": qiskit_gate.CSdgGate, "tq": tq.csdg, "name": "CSdag"},
     {"qiskit": qiskit_gate.SwapGate, "tq": tq.swap, "name": "SWAP"},
-    {"qiskit": qiskit_gate.iSwapGate, "tq": tq.iswap, "name": "iSWAP"}
+    {"qiskit": qiskit_gate.iSwapGate, "tq": tq.iswap, "name": "iSWAP"},
+    {"qiskit": qiskit_gate.CSXGate, "tq": tq.csx, "name": "CSX"}
 ]
 
 two_qubit_param_gate_list = [
@@ -93,9 +94,7 @@ two_qubit_param_gate_list = [
 three_qubit_gate_list = [
     {"qiskit": qiskit_gate.CCXGate, "tq": tq.ccx, "name": "Toffoli"},
     {"qiskit": qiskit_gate.CSwapGate, "tq": tq.cswap, "name": "CSWAP"},
-    {"qiskit": qiskit_gate.iSwapGate, "tq": tq.iswap, "name": "ISWAP"},
-    {"qiskit": qiskit_gate.CCZGate, "tq": tq.ccz, "name": "CCZ"},
-    {"qiskit": qiskit_gate.CSXGate, "tq": tq.csx, "name": "CSX"}
+    {"qiskit": qiskit_gate.CCZGate, "tq": tq.ccz, "name": "CCZ"}
 ]
 
 three_qubit_param_gate_list = [
