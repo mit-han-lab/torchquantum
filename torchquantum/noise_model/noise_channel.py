@@ -42,3 +42,7 @@ class NoiseChannel:
     def add_all_qubit_error(self):
         pass
 
+
+    def add_quantum_error(self):
+        pass
+

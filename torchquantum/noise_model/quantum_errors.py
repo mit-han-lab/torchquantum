@@ -25,44 +25,49 @@ SOFTWARE.
 import numpy as np
 import torch
 import torchquantum as tq
+from __future__ import annotations
 
 
 class QuantumError(object):
     """
         A class for describing quantum error
 
-        Methods:
-
-
     """
-    def __init__(self,
-                 wires):
+
+    def __init__(self):
+        pass
+
+    def compose(self, other: QuantumError) -> QuantumError:
+        pass
+
+    def tensor(self, other: QuantumError) -> QuantumError:
+        pass
+
+    def expand(self, other: QuantumError) -> QuantumError:
         pass
 
 
-
-class KrausError(QuantumError):
+class krausError(QuantumError):
     """
-        A class for describing quantum error
+        A general CPTP quantum error given a list of kraus matrices
 
-        Methods:
-
+        Params:
 
     """
+
     def __init__(self,
                  wires):
         pass
-
 
 
 class mixed_unitary_error(QuantumError):
     """
-        A class for describing quantum error
+        An n-qubit mixed unitary error
 
-        Methods:
-
+        Params:
 
     """
+
     def __init__(self,
                  wires):
         pass
@@ -70,86 +75,93 @@ class mixed_unitary_error(QuantumError):
 
 class coherent_unitary_error(QuantumError):
     """
-        A class for describing quantum error
+        An n qubit coheren error given a a single unitary
 
-        Methods:
-
-
+        Params:
     """
 
     def __init__(self,
                  wires):
         pass
-
-
 
 
 class pauli_error(QuantumError):
     """
-        A class for describing quantum error
+        An n qubit pauli error channel
+        Initialized from a list of paulis and probability.
 
-        Methods:
+        Params:
 
+        [(P0,p0),(P1,p1),...]
 
     """
 
     def __init__(self,
-                 wires):
+                 oplist):
         pass
-
 
 
 class depolarizing_error(QuantumError):
     """
-        A class for describing quantum error
+        An n qubit depolarizing error channel
 
-        Methods:
+        Params:
 
+        Depolarization probability p
 
     """
 
     def __init__(self,
-                 wires):
+                 p):
         pass
-
 
 
 class reset_error(QuantumError):
     """
-        A class for describing quantum error
+        A single qubit reset error
 
-        Methods:
-
+        Params:
+                p0:  Resetting of |0> state
+                p1:  Resetting of |1> state
 
     """
 
     def __init__(self,
-                 wires):
+                 p0,
+                 p1):
         pass
-
 
 
 class thermal_relaxation_error(QuantumError):
     """
-        A class for describing quantum error
-
-        Methods:
-
-
+        A single qubit thermal relaxation channel.
+        The relaxation process is determined by T1 and T2, gate time t,
+        and excited state thermal population p1
+        Params:
+              T1:  Depolarization time
+              T2:  Dephasing time
+              t:   gate time
+              p1:  excited state thermal population p1
     """
 
     def __init__(self,
-                 wires):
+                 T1,
+                 T2,
+                 t,
+                 p1):
         pass
-
 
 
 class phase_amplitude_damping_error(QuantumError):
     """
-        A class for describing quantum error
+        A single qubit generalized combined phase and
+        amplitude damping.
 
-        Methods:
+        Params:
 
+        lambda: Amplitude damping parameter
+        gamma: Phase damping parameter
+        p1:  excited state thermal population p1
 
     """
 
@@ -160,39 +172,31 @@ class phase_amplitude_damping_error(QuantumError):
 
 class amplitude_damping_error(QuantumError):
     """
-        A class for describing quantum error
+        A class for describing amplitude damping
 
-        Methods:
+        Params:
 
+        lambda: Amplitude damping parameter
+        p1:  excited state thermal population p1
 
     """
 
     def __init__(self,
                  wires):
         pass
-
 
 
 class phase_damping_error(QuantumError):
     """
         A class for describing quantum error
 
-        Methods:
+        Params:
 
+        gamma: Phase damping parameter
+        p1:  excited state thermal population p1
 
     """
 
     def __init__(self,
                  wires):
         pass
-
-
-
-
-
-
-
-
-
-
-
