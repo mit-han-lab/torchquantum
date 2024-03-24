@@ -90,7 +90,11 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
     def forward(self, qdev: tq.QuantumDevice, x):
         for info in self.func_list:
             if tq.op_name_dict[info["func"]].num_params > 0:
-                params = x[:, info["input_idx"]]
+                # If params are provided in encoder, use those,
+                #  else use params from x
+                params = (torch.Tensor(info["params"]).repeat(x.shape[0], 1)
+                          if info.get("params")
+                          else x[:, info["input_idx"]])
             else:
                 params = None
             func_name_dict[info["func"]](
