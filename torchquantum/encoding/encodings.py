@@ -80,6 +80,18 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
     {'input_idx': [12, 13, 14], 'func': 'u3', 'wires': [3]},
     {'input_idx': [15], 'func': 'u1', 'wires': [3]},
     ]
+
+    Example 3:
+    [
+    {'params': [0.25], 'func': 'rx', 'wires': [0]},
+    {'params': [0.25], 'func': 'rx', 'wires': [1]},
+    {'params': [0.25], 'func': 'rx', 'wires': [2]},
+    {'params': [0.25], 'func': 'rx', 'wires': [3]},
+    {'input_idx': [0], 'func': 'ry', 'wires': [0]},
+    {'input_idx': [1], 'func': 'ry', 'wires': [1]},
+    {'input_idx': [2], 'func': 'ry', 'wires': [2]},
+    {'input_idx': [3], 'func': 'ry', 'wires': [3]}
+    ]
     """
 
     def __init__(self, func_list):
