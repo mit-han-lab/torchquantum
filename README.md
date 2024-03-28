@@ -55,7 +55,7 @@ Simulate quantum computations on classical hardware using PyTorch. It supports s
 Researchers on quantum algorithm design, parameterized quantum circuit training, quantum optimal control, quantum machine learning, quantum neural networks.
 #### Differences from Qiskit/Pennylane
 
-Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tersorized processing.
+Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tensorized processing.
 
 ## News
 - v0.1.8 Available!

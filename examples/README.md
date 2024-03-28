@@ -1,6 +1,6 @@
 ## TorchQuantum Examples
 
-For **beginning level**, you may check [QNN for MNIST](simple_mnist), [Quantum Convolution (Quanvolution)](quanvolution) and [Quantum Kernel Method](quantum_kernel_method), and [Quantum Regression](regression).
+For **beginning level**, you may check [QNN for MNIST](mnist), [Quantum Convolution (Quanvolution)](quanvolution) and [Quantum Kernel Method](quantum_kernel_method), and [Quantum Regression](regression).
 
 For **intermediate level**, you may check [Amplitude Encoding for MNIST](amplitude_encoding_mnist), [Clifford gate QNN](clifford_qnn), [Save and Load QNN models](save_load_example), [PauliSum Operation](PauliSumOp), [How to convert tq to Qiskit](converter_tq_qiskit).
 
