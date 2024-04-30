@@ -352,6 +352,15 @@ class QuantumModule(nn.Module):
         unitary = qdev.get_states_1d().T
 
         return unitary
+    
+    def inverse_module(self):
+        assert self.Operator_list is not None
+        inverse_ops = [] 
+        for op in self.Operator_list:
+            inverse_ops.append(op.inverse_operation(op.params))
+        self.Operator_list = tq.QuantumModuleList(inverse_ops[::-1])
+
+
 
 
 class QuantumModuleList(nn.ModuleList, QuantumModule, metaclass=ABCMeta):

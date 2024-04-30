@@ -19,6 +19,17 @@ class U3(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return tqf.u3_matrix(params)
 
+    def inverse_operation(self, params):
+        params = self.params.squeeze(0).detach().numpy()
+        params = [-params[0], -params[2], -params[1]]
+        return U3(
+            has_params=self.has_params,
+            trainable=self.trainable,
+            init_params=params,
+            n_wires=self.n_wires,
+            wires=self.wires,
+            inverse=self.inverse,
+        )
 
 U = U3
 
