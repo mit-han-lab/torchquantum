@@ -28,10 +28,11 @@ import itertools
 import numpy as np
 import pathos.multiprocessing as multiprocessing
 import torch
-from qiskit import IBMQ, Aer, QuantumCircuit, execute, transpile
+from qiskit import IBMQ, QuantumCircuit, execute, transpile
 from qiskit.exceptions import QiskitError
 from qiskit.tools.monitor import job_monitor
 from qiskit.transpiler import PassManager
+from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 from torchpack.utils.logging import logger
 from tqdm import tqdm
@@ -40,7 +41,6 @@ import torchquantum as tq
 from torchquantum.util import (
     get_circ_stats,
     get_expectations_from_counts,
-    get_provider,
     get_provider_hub_group_project,
 )
 
@@ -56,7 +56,7 @@ class EmptyPassManager(PassManager):
 def run_job_worker(data):
     while True:
         try:
-            job = execute(**(data[0]))
+            job = AerSimulator(**(data[0]))
             qiskit_verbose = data[1]
             if qiskit_verbose:
                 job_monitor(job, interval=1)
@@ -199,8 +199,8 @@ class QiskitProcessor(object):
                 self.coupling_map = self.get_coupling_map(self.backend_name)
             else:
                 # use simulator
-                self.backend = Aer.get_backend(
-                    "qasm_simulator", max_parallel_experiments=0
+                self.backend = AerSimulator(
+                    method="qasm_simulator", max_parallel_experiments=0
                 )
                 self.noise_model = self.get_noise_model(self.noise_model_name)
                 self.coupling_map = self.get_coupling_map(self.coupling_map_name)
@@ -341,9 +341,8 @@ class QiskitProcessor(object):
                     results[-1] = [results[-1]]
                 counts = list(itertools.chain(*results))
         else:
-            job = execute(
+            job = self.backend.run(
                 experiments=transpiled_circ,
-                backend=self.backend,
                 pass_manager=self.empty_pass_manager,
                 shots=self.n_shots,
                 seed_simulator=self.seed_simulator,
@@ -529,9 +528,8 @@ class QiskitProcessor(object):
             for circ in split_circs:
                 while True:
                     try:
-                        job = execute(
+                        job = self.backend.run(
                             experiments=circ,
-                            backend=self.backend,
                             pass_manager=self.empty_pass_manager,
                             shots=self.n_shots,
                             seed_simulator=self.seed_simulator,
@@ -657,9 +655,8 @@ class QiskitProcessor(object):
         transpiled_circs = self.transpile(circs)
         self.transpiled_circs = transpiled_circs
 
-        job = execute(
+        job = self.backend.run(
             experiments=transpiled_circs,
-            backend=self.backend,
             shots=self.n_shots,
             # initial_layout=self.initial_layout,
             seed_transpiler=self.seed_transpiler,
@@ -724,9 +721,8 @@ class QiskitProcessor(object):
                     results[-1] = [results[-1]]
                 counts = list(itertools.chain(*results))
         else:
-            job = execute(
+            job = self.backend.run(
                 experiments=circs_all,
-                backend=self.backend,
                 pass_manager=self.empty_pass_manager,
                 shots=self.n_shots,
                 seed_simulator=self.seed_simulator,

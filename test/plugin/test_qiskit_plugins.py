@@ -26,17 +26,17 @@ import random
 
 import numpy as np
 import pytest
-from qiskit.opflow import I, StateFn, X, Y, Z
+from qiskit.quantum_info import Pauli, Statevector
 
 import torchquantum as tq
 from torchquantum.plugin import QiskitProcessor, op_history2qiskit
 from torchquantum.util import switch_little_big_endian_state
 
 pauli_str_op_dict = {
-    "X": X,
-    "Y": Y,
-    "Z": Z,
-    "I": I,
+    "X": Pauli("X"),
+    "Y": Pauli("Y"),
+    "Z": Pauli("Z"),
+    "I": Pauli("I"),
 }
 
 
@@ -65,14 +65,13 @@ def test_expval_observable():
         for ob in obs[1:]:
             # note here the order is reversed because qiskit is in little endian
             operator = pauli_str_op_dict[ob] ^ operator
-        psi = StateFn(qiskit_circ)
-        psi_evaled = psi.eval()._primitive._data
+        psi = Statevector(qiskit_circ)
         state_tq = switch_little_big_endian_state(
             qdev.get_states_1d().detach().numpy()
         )[0]
-        assert np.allclose(psi_evaled, state_tq, atol=1e-5)
+        assert np.allclose(psi.data, state_tq, atol=1e-5)
 
-        expval_qiskit = (~psi @ operator @ psi).eval().real
+        expval_qiskit = psi.expectation_value(operator).real
         # print(expval_qiskit_processor, expval_qiskit)
         if (
             n_wires <= 3

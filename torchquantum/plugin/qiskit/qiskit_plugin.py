@@ -25,10 +25,12 @@ SOFTWARE.
 from typing import Iterable
 
 import numpy as np
+import qiskit
 import qiskit.circuit.library.standard_gates as qiskit_gate
 import torch
-from qiskit import Aer, ClassicalRegister, QuantumCircuit, execute
+from qiskit import ClassicalRegister, QuantumCircuit
 from qiskit.circuit import Parameter
+from qiskit_aer import AerSimulator
 from torchpack.utils.logging import logger
 
 import torchquantum as tq
@@ -78,13 +80,15 @@ def qiskit2tq_op_history(circ):
     ops = []
     for gate in circ.data:
         op_name = gate[0].name
-        wires = list(map(lambda x: x.index, gate[1]))
+        wires = [circ.find_bit(qb).index for qb in gate.qubits]
         wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
         init_params = (
             list(map(float, gate[0].params)) if len(gate[0].params) > 0 else None
         )
-        print(op_name,)
+        print(
+            op_name,
+        )
 
         if op_name in [
             "h",
@@ -103,12 +107,12 @@ def qiskit2tq_op_history(circ):
         ]:
             ops.append(
                 {
-                "name": op_name,  # type: ignore
-                "wires": np.array(wires),
-                "params": None,
-                "inverse": False,
-                "trainable": False,
-            }
+                    "name": op_name,  # type: ignore
+                    "wires": np.array(wires),
+                    "params": None,
+                    "inverse": False,
+                    "trainable": False,
+                }
             )
         elif op_name in [
             "rx",
@@ -137,12 +141,13 @@ def qiskit2tq_op_history(circ):
         ]:
             ops.append(
                 {
-                "name": op_name,  # type: ignore
-                "wires": np.array(wires),
-                "params": init_params,
-                "inverse": False,
-                "trainable": True
-            })
+                    "name": op_name,  # type: ignore
+                    "wires": np.array(wires),
+                    "params": init_params,
+                    "inverse": False,
+                    "trainable": True,
+                }
+            )
         elif op_name in ["barrier", "measure"]:
             continue
         else:
@@ -205,7 +210,10 @@ def append_parameterized_gate(func, circ, input_idx, params, wires):
         )
     elif func == "u2":
         from qiskit.circuit.library import U2Gate
-        circ.append(U2Gate(phi=params[input_idx[0]], lam=params[input_idx[1]]), wires, [])
+
+        circ.append(
+            U2Gate(phi=params[input_idx[0]], lam=params[input_idx[1]]), wires, []
+        )
         # circ.u2(phi=params[input_idx[0]], lam=params[input_idx[1]], qubit=wires[0])
     elif func == "u3":
         circ.u(
@@ -250,7 +258,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
     elif func == "sx":
         circ.sx(*wires)
     elif func in ["cnot", "cx"]:
-        circ.cnot(*wires)
+        circ.cx(*wires)
     elif func == "cz":
         circ.cz(*wires)
     elif func == "cy":
@@ -296,6 +304,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
         circ.cu1(params, *wires)
     elif func == "u2":
         from qiskit.circuit.library import U2Gate
+
         circ.append(U2Gate(phi=params[0], lam=params[1]), wires, [])
         # circ.u2(*list(params), *wires)
     elif func == "u3":
@@ -534,7 +543,15 @@ def tq2qiskit(
             circ.cu1(module.params[0][0].item(), *module.wires)
         elif module.name == "U2":
             from qiskit.circuit.library import U2Gate
-            circ.append(U2Gate(phi=module.params[0].data.cpu().numpy()[0], lam=module.params[0].data.cpu().numpy()[0]), module.wires, [])
+
+            circ.append(
+                U2Gate(
+                    phi=module.params[0].data.cpu().numpy()[0],
+                    lam=module.params[0].data.cpu().numpy()[0],
+                ),
+                module.wires,
+                [],
+            )
             # circ.u2(*list(module.params[0].data.cpu().numpy()), *module.wires)
         elif module.name == "U3":
             circ.u3(*list(module.params[0].data.cpu().numpy()), *module.wires)
@@ -665,9 +682,7 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
             else:
                 param = None
 
-            append_fixed_gate(
-                circ, op["name"], param, op["wires"], op["inverse"]
-            )
+            append_fixed_gate(circ, op["name"], param, op["wires"], op["inverse"])
 
         circs_all.append(circ)
 
@@ -800,8 +815,8 @@ def test_qiskit2tq():
 
     m = qiskit2tq(circ)
 
-    simulator = Aer.get_backend("unitary_simulator")
-    result = execute(circ, simulator).result()
+    simulator = AerSimulator(method="unitary_simulator")
+    result = simulator.run(circ).result()
     unitary_qiskit = result.get_unitary(circ)
 
     unitary_tq = m.get_unitary(q_dev)
@@ -965,8 +980,8 @@ def test_tq2qiskit():
 
     circuit = tq2qiskit(test_module, inputs)
 
-    simulator = Aer.get_backend("unitary_simulator")
-    result = execute(circuit, simulator).result()
+    simulator = AerSimulator(method="unitary_simulator")
+    result = simulator.run(circuit).result()
     unitary_qiskit = result.get_unitary(circuit)
 
     unitary_tq = test_module.get_unitary(q_dev, inputs)
@@ -993,8 +1008,8 @@ def test_tq2qiskit_parameterized():
     for k, x in enumerate(inputs[0]):
         binds[params[k]] = x.item()
 
-    simulator = Aer.get_backend("unitary_simulator")
-    result = execute(circuit, simulator, parameter_binds=[binds]).result()
+    simulator = AerSimulator(method="unitary_simulator")
+    result = simulator.run(circuit, parameter_binds=[binds]).result()
     unitary_qiskit = result.get_unitary(circuit)
 
     # print(unitary_qiskit)
