@@ -28,7 +28,7 @@ import itertools
 import numpy as np
 import pathos.multiprocessing as multiprocessing
 import torch
-from qiskit import IBMQ, QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile
 from qiskit.exceptions import QiskitError
 from qiskit.transpiler import PassManager
 from qiskit_aer import AerSimulator
@@ -183,7 +183,6 @@ class QiskitProcessor(object):
 
         if self.backend is None:
             # initialize now
-            IBMQ.load_account()
             self.provider = get_provider_hub_group_project(
                 hub=self.hub,
                 group=self.group,
@@ -195,9 +194,7 @@ class QiskitProcessor(object):
                 self.coupling_map = self.get_coupling_map(self.backend_name)
             else:
                 # use simulator
-                self.backend = AerSimulator(
-                    method="qasm_simulator", max_parallel_experiments=0
-                )
+                self.backend = AerSimulator(max_parallel_experiments=0)
                 self.noise_model = self.get_noise_model(self.noise_model_name)
                 self.coupling_map = self.get_coupling_map(self.coupling_map_name)
                 self.basis_gates = self.get_basis_gates(self.basis_gates_name)
@@ -337,14 +334,13 @@ class QiskitProcessor(object):
                 counts = list(itertools.chain(*results))
         else:
             job = self.backend.run(
-                experiments=transpiled_circ,
+                transpiled_circ,
                 pass_manager=self.empty_pass_manager,
                 shots=self.n_shots,
                 seed_simulator=self.seed_simulator,
                 noise_model=self.noise_model,
                 parameter_binds=binds_all,
             )
-            job_monitor(job, interval=1)
 
             result = job.result()
             counts = result.get_counts()
@@ -523,14 +519,14 @@ class QiskitProcessor(object):
                 while True:
                     try:
                         job = self.backend.run(
-                            experiments=circ,
+                            circ,
                             pass_manager=self.empty_pass_manager,
                             shots=self.n_shots,
                             seed_simulator=self.seed_simulator,
                             noise_model=self.noise_model,
                             parameter_binds=binds_all,
                         )
-                        job_monitor(job, interval=1)
+
                         result = (
                             job.result()
                         )  # qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
@@ -649,7 +645,7 @@ class QiskitProcessor(object):
         self.transpiled_circs = transpiled_circs
 
         job = self.backend.run(
-            experiments=transpiled_circs,
+            transpiled_circs,
             shots=self.n_shots,
             # initial_layout=self.initial_layout,
             seed_transpiler=self.seed_transpiler,
@@ -659,7 +655,6 @@ class QiskitProcessor(object):
             noise_model=self.noise_model,
             optimization_level=self.optimization_level,
         )
-        job_monitor(job, interval=1)
 
         result = job.result()
         counts = result.get_counts()
@@ -714,13 +709,12 @@ class QiskitProcessor(object):
                 counts = list(itertools.chain(*results))
         else:
             job = self.backend.run(
-                experiments=circs_all,
+                circs_all,
                 pass_manager=self.empty_pass_manager,
                 shots=self.n_shots,
                 seed_simulator=self.seed_simulator,
                 noise_model=self.noise_model,
             )
-            job_monitor(job, interval=1)
 
             result = job.result()
             counts = [result.get_counts()]
