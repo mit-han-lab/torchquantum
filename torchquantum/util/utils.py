@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from __future__ import annotations
+
 import copy
 from typing import TYPE_CHECKING, Iterable
 
@@ -279,7 +281,7 @@ def switch_little_big_endian_state(state):
         is_batch_state = False
         reshape = [2] * int(np.log2(state.size))
     else:
-        logger.exception(f"Dimension of statevector should be 1 or 2")
+        logger.exception("Dimension of statevector should be 1 or 2")
         raise ValueError
 
     original_shape = state.shape
@@ -471,7 +473,7 @@ def build_module_from_op_list(
         ]
         module = build_module_from_op_list(op_list, remove_ops=True, thres=0.1)
     """
-    logger.info(f"Building module from op_list...")
+    logger.info("Building module from op_list...")
     thres = 1e-5 if thres is None else thres
     n_removed_ops = 0
     ops = []
@@ -503,7 +505,7 @@ def build_module_from_op_list(
     if n_removed_ops > 0:
         logger.warning(f"Remove in total {n_removed_ops} pruned operations.")
     else:
-        logger.info(f"Do not remove any operations.")
+        logger.info("Do not remove any operations.")
 
     return tq.QuantumModuleFromOps(ops)
 
@@ -564,7 +566,7 @@ def get_p_v_reg_mapping(circ):
     """
     try:
         p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
-    except:
+    except AttributeError:
         p2v_orig = circ._layout.get_physical_bits().copy()
     mapping = {
         "p2v": {},
@@ -605,7 +607,7 @@ def get_v_c_reg_mapping(circ):
     """
     try:
         p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
-    except:
+    except AttributeError:
         p2v_orig = circ._layout.get_physical_bits().copy()
     p2v = {}
     for p, v in p2v_orig.items():
@@ -785,7 +787,7 @@ def get_provider(backend_name, hub=None):
                 )
             except QiskitError:
                 # logger.warning(f"Cannot use MIT backend, roll back to open")
-                logger.warning(f"Use the open backend")
+                logger.warning("Use the open backend")
                 provider = QiskitRuntimeService(
                     channel="ibm_quantum", instance="ibm-q/open/main"
                 )
@@ -1082,7 +1084,7 @@ def parameter_shift_gradient(
     #####################
 
     for idx, key in enumerate(state_dict_plus_shift):
-        if idx < 2:  # Skip the first two keys because they are not paramters
+        if idx < 2:  # Skip the first two keys because they are not parameters
             continue
         state_dict_plus_shift[key] += shift_rate
         state_dict_minus_shift[key] -= shift_rate
