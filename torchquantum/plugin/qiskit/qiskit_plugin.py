@@ -64,7 +64,7 @@ def qiskit2tq_op_history(circ):
     if getattr(circ, "_layout", None) is not None:
         try:
             p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
-        except:
+        except AttributeError:
             p2v_orig = circ._layout.get_physical_bits().copy()
         p2v = {}
         for p, v in p2v_orig.items():
@@ -231,7 +231,7 @@ def append_parameterized_gate(func, circ, input_idx, params, wires):
         )
     else:
         raise NotImplementedError(
-            f"{func} cannot be converted to " f"parameterized Qiskit QuantumCircuit"
+            f"{func} cannot be converted to parameterized Qiskit QuantumCircuit"
         )
 
 
@@ -344,7 +344,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
 
 
 def tq2qiskit_initialize(q_device: tq.QuantumDevice, all_states):
-    """Call the qiskit initialize funtion and encoder the current quantum state
+    """Call the qiskit initialize function and encoder the current quantum state
      using initialize and return circuits
 
     Args:
@@ -444,7 +444,7 @@ def tq2qiskit(
             # generate only one qiskit QuantumCircuit
             assert module.params is None or module.params.shape[0] == 1
         except AssertionError:
-            logger.exception(f"Cannot convert batch model tq module")
+            logger.exception("Cannot convert batch model tq module")
 
     n_removed_ops = 0
 
@@ -497,7 +497,7 @@ def tq2qiskit(
         elif module.name == "SX":
             circ.sx(*module.wires)
         elif module.name == "CNOT":
-            circ.cnot(*module.wires)
+            circ.cx(*module.wires)
         elif module.name == "CZ":
             circ.cz(*module.wires)
         elif module.name == "CY":
@@ -595,7 +595,7 @@ def tq2qiskit(
 
     if n_removed_ops > 0:
         logger.warning(
-            f"Remove {n_removed_ops} operations with small " f"parameter magnitude."
+            f"Remove {n_removed_ops} operations with small parameter magnitude."
         )
 
     return circ
@@ -695,10 +695,10 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
     if getattr(circ, "_layout", None) is not None:
         try:
             p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
-        except:
+        except AttributeError:
             try:
                 p2v_orig = circ._layout.get_physical_bits().copy()
-            except:
+            except AttributeError:
                 p2v_orig = circ._layout.initial_layout.get_physical_bits().copy()
         p2v = {}
         for p, v in p2v_orig.items():
@@ -803,11 +803,11 @@ def test_qiskit2tq():
     circ.sx(3)
 
     circ.crx(theta=0.4, control_qubit=0, target_qubit=1)
-    circ.cnot(control_qubit=2, target_qubit=1)
+    circ.cx(control_qubit=2, target_qubit=1)
 
     circ.u3(theta=-0.1, phi=-0.2, lam=-0.4, qubit=3)
-    circ.cnot(control_qubit=3, target_qubit=0)
-    circ.cnot(control_qubit=0, target_qubit=2)
+    circ.cx(control_qubit=3, target_qubit=0)
+    circ.cx(control_qubit=0, target_qubit=2)
     circ.x(2)
     circ.x(3)
     circ.u2(phi=-0.2, lam=-0.9, qubit=3)
@@ -1011,7 +1011,6 @@ def test_tq2qiskit_parameterized():
     binds = {}
     for k, x in enumerate(inputs[0]):
         binds[params[k]] = x.item()
-
 
     backend = AerSimulator(method="unitary")
     circuit = transpile(circuit, backend)
