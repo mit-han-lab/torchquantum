@@ -22,34 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import torch
-import torchquantum as tq
-import pathos.multiprocessing as multiprocessing
+import datetime
 import itertools
 
-from qiskit import Aer, execute, IBMQ, transpile, QuantumCircuit
-from qiskit.providers.aer.noise import NoiseModel
-from qiskit.tools.monitor import job_monitor
+import numpy as np
+import pathos.multiprocessing as multiprocessing
+import torch
+from qiskit import IBMQ, Aer, QuantumCircuit, execute, transpile
 from qiskit.exceptions import QiskitError
-from .qiskit_plugin import (
-    tq2qiskit,
-    tq2qiskit_parameterized,
-    tq2qiskit_measurement,
-)
+from qiskit.tools.monitor import job_monitor
+from qiskit.transpiler import PassManager
+from qiskit_aer.noise import NoiseModel
+from torchpack.utils.logging import logger
+from tqdm import tqdm
+
+import torchquantum as tq
 from torchquantum.util import (
+    get_circ_stats,
     get_expectations_from_counts,
     get_provider,
     get_provider_hub_group_project,
-    get_circ_stats,
 )
-from .qiskit_macros import IBMQ_NAMES
-from tqdm import tqdm
-from torchpack.utils.logging import logger
-from qiskit.transpiler import PassManager
-import numpy as np
-import datetime
 
-from .my_job_monitor import my_job_monitor
+from .qiskit_macros import IBMQ_NAMES
+from .qiskit_plugin import tq2qiskit, tq2qiskit_measurement, tq2qiskit_parameterized
 
 
 class EmptyPassManager(PassManager):
@@ -555,7 +551,7 @@ class QiskitProcessor(object):
                         # total_cont += 1
                         # print(total_time_spent / total_cont)
                         break
-                    except (QiskitError) as e:
+                    except QiskitError as e:
                         logger.warning("Job failed, rerun now.")
                         print(e.message)
 
@@ -758,9 +754,9 @@ class QiskitProcessor(object):
         for circ_ in circs_all:
             circ = circ_.copy()
             for k, obs in enumerate(observable):
-                if obs == 'X':
+                if obs == "X":
                     circ.h(k)
-                elif obs == 'Y':
+                elif obs == "Y":
                     circ.z(k)
                     circ.s(k)
                     circ.h(k)
@@ -771,8 +767,10 @@ class QiskitProcessor(object):
 
         mask = np.ones(len(observable), dtype=bool)
         mask[np.array([*observable]) == "I"] = False
-    
-        counts = self.process_ready_circs_get_counts(circs_all_diagonalized, parallel=parallel)
+
+        counts = self.process_ready_circs_get_counts(
+            circs_all_diagonalized, parallel=parallel
+        )
 
         # here we need to switch the little and big endian of distribution bitstrings
         distributions = []
@@ -786,19 +784,25 @@ class QiskitProcessor(object):
             n_eigen_one = 0
             n_eigen_minus_one = 0
             for bitstring, n_count in distri.items():
-                if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
+                if (
+                    np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2
+                    == 0
+                ):
                     n_eigen_one += n_count
                 else:
                     n_eigen_minus_one += n_count
-            
-            expval = n_eigen_one / self.n_shots + (-1) * n_eigen_minus_one / self.n_shots
+
+            expval = (
+                n_eigen_one / self.n_shots + (-1) * n_eigen_minus_one / self.n_shots
+            )
             expval_all.append(expval)
 
         return expval_all
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pdb
+
     pdb.set_trace()
     circ = QuantumCircuit(3)
     circ.h(0)
@@ -806,11 +810,9 @@ if __name__ == '__main__':
     circ.cx(1, 2)
     circ.rx(0.1, 0)
 
-    qiskit_processor = QiskitProcessor(
-        use_real_qc=False
-    )
+    qiskit_processor = QiskitProcessor(use_real_qc=False)
 
-    qiskit_processor.process_circs_get_joint_expval([circ], 'XII')
+    qiskit_processor.process_circs_get_joint_expval([circ], "XII")
 
     qdev = tq.QuantumDevice(n_wires=3, bsz=1)
     qdev.h(0)
@@ -819,5 +821,5 @@ if __name__ == '__main__':
     qdev.rx(0, 0.1)
 
     from torchquantum.measurement import expval_joint_sampling
-    print(expval_joint_sampling(qdev, 'XII', n_shots=8192))
 
+    print(expval_joint_sampling(qdev, "XII", n_shots=8192))

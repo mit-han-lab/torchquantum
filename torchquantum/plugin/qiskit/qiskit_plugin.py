@@ -22,24 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import torch
-import torchquantum as tq
-import torchquantum.functional as tqf
-import qiskit.circuit.library.standard_gates as qiskit_gate
-import numpy as np
+from typing import Iterable
 
-from qiskit import QuantumCircuit, ClassicalRegister
-from qiskit import Aer, execute
+import numpy as np
+import qiskit.circuit.library.standard_gates as qiskit_gate
+import torch
+from qiskit import Aer, ClassicalRegister, QuantumCircuit, execute
 from qiskit.circuit import Parameter
 from torchpack.utils.logging import logger
+
+import torchquantum as tq
+import torchquantum.functional as tqf
+from torchquantum.functional import mat_dict
 from torchquantum.util import (
-    switch_little_big_endian_matrix,
     find_global_phase,
+    switch_little_big_endian_matrix,
     switch_little_big_endian_state,
 )
-from typing import Iterable, List
-from torchquantum.functional import mat_dict
-
 
 __all__ = [
     "tq2qiskit",
@@ -665,11 +664,11 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
                 param = op["params"][i]
             else:
                 param = None
-            
+
             append_fixed_gate(
                 circ, op["name"], param, op["wires"], op["inverse"]
             )
-            
+
         circs_all.append(circ)
 
     return circs_all
@@ -762,7 +761,7 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
             raise NotImplementedError(
                 f"{op_name} conversion to tq is currently not supported."
             )
-    
+
     return ops
 
 
