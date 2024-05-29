@@ -850,7 +850,7 @@ def get_circ_stats(circ):
 
     for gate in circ.data:
         op_name = gate[0].name
-        wires = list(map(lambda x: x.index, gate[1]))
+        wires = [circ.find_bit(qb).index for qb in gate.qubits]
         if op_name in n_gates_dict.keys():
             n_gates_dict[op_name] += 1
         else:

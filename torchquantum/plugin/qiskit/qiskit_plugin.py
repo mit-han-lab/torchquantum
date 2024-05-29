@@ -714,7 +714,7 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
     ops = []
     for gate in circ.data:
         op_name = gate[0].name
-        wires = list(map(lambda x: x.index, gate[1]))
+        wires = [circ.find_bit(qb).index for qb in gate.qubits]
         wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
         init_params = (
