@@ -178,16 +178,13 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     # Tensor indices of the quantum state
     density_indices = ABC[:total_wires]
-    print("density_indices", density_indices)
 
     # Indices of the quantum state affected by this operation
     affected_indices = "".join(ABC_ARRAY[list(device_wires)].tolist())
-    print("affected_indices", affected_indices)
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
     new_indices = ABC[total_wires : total_wires + len(device_wires)]
-    print("new_indices", new_indices)
 
     # The new indices of the state are given by the old ones with the
     # affected indices replaced by the new_indices
@@ -196,7 +193,6 @@ def apply_unitary_density_einsum(density, mat, wires):
         zip(affected_indices, new_indices),
         density_indices,
     )
-    print("new_density_indices", new_density_indices)
 
     # Use the last literal as the indice of batch
     density_indices = ABC[-1] + density_indices
@@ -209,29 +205,24 @@ def apply_unitary_density_einsum(density, mat, wires):
     einsum_indices = (
         f"{new_indices}{affected_indices}," f"{density_indices}->{new_density_indices}"
     )
-    print("einsum_indices", einsum_indices)
 
     new_density = torch.einsum(einsum_indices, mat, density)
 
     r"""
     Compute U \rho U^\dagger
     """
-    print("dagger")
 
     # Tensor indices of the quantum state
     density_indices = ABC[:total_wires]
-    print("density_indices", density_indices)
 
     # Indices of the quantum state affected by this operation
     affected_indices = "".join(
         ABC_ARRAY[[x + n_qubit for x in list(device_wires)]].tolist()
     )
-    print("affected_indices", affected_indices)
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
     new_indices = ABC[total_wires : total_wires + len(device_wires)]
-    print("new_indices", new_indices)
 
     # The new indices of the state are given by the old ones with the
     # affected indices replaced by the new_indices
@@ -240,7 +231,6 @@ def apply_unitary_density_einsum(density, mat, wires):
         zip(affected_indices, new_indices),
         density_indices,
     )
-    print("new_density_indices", new_density_indices)
 
     density_indices = ABC[-1] + density_indices
     new_density_indices = ABC[-1] + new_density_indices
@@ -252,7 +242,6 @@ def apply_unitary_density_einsum(density, mat, wires):
     einsum_indices = (
         f"{density_indices}," f"{affected_indices}{new_indices}->{new_density_indices}"
     )
-    print("einsum_indices", einsum_indices)
 
     new_density = torch.einsum(einsum_indices, density, matdag)
 
@@ -271,6 +260,7 @@ def apply_unitary_density_bmm(density, mat, wires):
     device_wires = wires
     n_qubit = density.dim() // 2
     mat = mat.type(C_DTYPE).to(density.device)
+
     """
     Compute U \rho
     """
@@ -297,7 +287,13 @@ def apply_unitary_density_bmm(density, mat, wires):
     r"""
     Compute \rho U^\dagger
     """
-    matdag = torch.conj(mat)
+
+    matdag = mat.conj()
+    if matdag.dim() == 3:
+        matdag = matdag.permute(0, 2, 1)
+    else:
+        matdag = matdag.permute(1, 0)
+
     matdag = matdag.type(C_DTYPE).to(density.device)
 
     devices_dims_dag = [n_qubit + w + 1 for w in device_wires]
@@ -320,6 +316,12 @@ def apply_unitary_density_bmm(density, mat, wires):
         new_density = permuted_dag.bmm(matdag.expand(expand_shape))
     new_density = new_density.view(original_shape).permute(permute_back_dag)
     return new_density
+
+
+_noise_mat_dict = {
+    "Bitflip": torch.tensor([[0, 1], [1, 0]], dtype=C_DTYPE),
+    "Phaseflip": torch.tensor([[1, 0], [0, -1]], dtype=C_DTYPE)
+}
 
 
 def gate_wrapper(
@@ -367,7 +369,12 @@ def gate_wrapper(
             else:
                 # this is for directly inputting parameters as a number
                 params = torch.tensor(params, dtype=F_DTYPE)
-
+        '''
+        Check whether user don't set parameters of multi parameters gate 
+        in batch mode.
+        '''
+        if params.dim() == 1 and params.shape[0] == paramnum:
+            params = params.unsqueeze(0)
         if name in ["qubitunitary", "qubitunitaryfast", "qubitunitarystrict"]:
             params = params.unsqueeze(0) if params.dim() == 2 else params
         else:
@@ -434,12 +441,26 @@ def gate_wrapper(
             else:
                 matrix = matrix.permute(1, 0)
         assert np.log2(matrix.shape[-1]) == len(wires)
+        
+        # TODO: There might be a better way to discriminate noisedevice and normal statevector device
         if q_device.device_name == "noisedevice":
             density = q_device.densities
-            print(density.shape)
             if method == "einsum":
                 return
             elif method == "bmm":
+                '''
+                Apply kraus operator if there is noise
+                '''
+                kraus_dict = q_device.noise_model().kraus_dict()
+                if (kraus_dict["Bitflip"] != 0 or kraus_dict["Phaseflip"] != 0):
+                    p_identity = 1 - kraus_dict["Bitflip"] ** 2 - kraus_dict["Phaseflip"] ** 2
+                    if kraus_dict["Bitflip"] != 0:
+                        noise_mat = kraus_dict["Bitflip"] * _noise_mat_dict["Bitflip"]
+                        density_noise = apply_unitary_density_bmm(density, noise_mat, wires)
+                    if kraus_dict["Phaseflip"] != 0:
+                        noise_mat = kraus_dict["Phaseflip"] * _noise_mat_dict["Bitflip"]
+                        density_noise = density_noise + apply_unitary_density_bmm(density, noise_mat, wires)
+                    density = p_identity * density + density_noise
                 q_device.densities = apply_unitary_density_bmm(density, matrix, wires)
         else:
             state = q_device.states

@@ -26,15 +26,21 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 import argparse
+import random
+import numpy as np
 
 import torchquantum as tq
-import torchquantum.functional as tqf
+from torchquantum.plugin import (
+    tq2qiskit_measurement,
+    qiskit_assemble_circs,
+    op_history2qiskit,
+    op_history2qiskit_expand_params,
+)
 
 from torchquantum.dataset import MNIST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-import random
-import numpy as np
+import pickle
 
 
 class QFCModel(tq.QuantumModule):
@@ -52,70 +58,78 @@ class QFCModel(tq.QuantumModule):
             self.rz0 = tq.RZ(has_params=True, trainable=True)
             self.crx0 = tq.CRX(has_params=True, trainable=True)
 
-        @tq.static_support
-        def forward(self, q_device: tq.QuantumDevice):
-            """
-            1. To convert tq QuantumModule to qiskit or run in the static
-            model, need to:
-                (1) add @tq.static_support before the forward
-                (2) make sure to add
-                    static=self.static_mode and
-                    parent_graph=self.graph
-                    to all the tqf functions, such as tqf.hadamard below
-            """
-            self.q_device = q_device
-
-            self.random_layer(self.q_device)
+        def forward(self, qdev: tq.NoiseDevice):
+            self.random_layer(qdev)
 
             # some trainable gates (instantiated ahead of time)
-            self.rx0(self.q_device, wires=0)
-            self.ry0(self.q_device, wires=1)
-            self.rz0(self.q_device, wires=3)
-            self.crx0(self.q_device, wires=[0, 2])
+            self.rx0(qdev, wires=0)
+            self.ry0(qdev, wires=1)
+            self.rz0(qdev, wires=3)
+            self.crx0(qdev, wires=[0, 2])
 
             # add some more non-parameterized gates (add on-the-fly)
-            tqf.hadamard(
-                self.q_device, wires=3, static=self.static_mode, parent_graph=self.graph
-            )
-            tqf.sx(
-                self.q_device, wires=2, static=self.static_mode, parent_graph=self.graph
-            )
-            tqf.cnot(
-                self.q_device,
-                wires=[3, 0],
+            qdev.h(wires=3)  # type: ignore
+            qdev.sx(wires=2)  # type: ignore
+            qdev.cnot(wires=[3, 0])  # type: ignore
+            qdev.rx(
+                wires=1,
+                params=torch.tensor([0.1]),
                 static=self.static_mode,
                 parent_graph=self.graph,
-            )
+            )  # type: ignore
 
     def __init__(self):
         super().__init__()
         self.n_wires = 4
-        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
-        self.encoder = tq.AmplitudeEncoder()
+        self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_u3_h_rx"])
 
         self.q_layer = self.QLayer()
-        self.measure = tq.MeasureAll(tq.PauliZ)
+        self.measure = tq.MeasureAll_density(tq.PauliZ)
 
     def forward(self, x, use_qiskit=False):
+        qdev = tq.NoiseDevice(
+            n_wires=self.n_wires, bsz=x.shape[0], device=x.device, record_op=True,
+            noise_model=tq.NoiseModel(kraus_dict={"Bitflip": 0.08, "Phaseflip": 0.08}),
+        )
+
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
+        devi = x.device
 
+        if use_qiskit:
+            # use qiskit to process the circuit
+            # create the qiskit circuit for encoder
+            self.encoder(qdev, x)
+            op_history_parameterized = qdev.op_history
+            qdev.reset_op_history()
+            encoder_circs = op_history2qiskit_expand_params(self.n_wires, op_history_parameterized, bsz=bsz)
 
-        print("Shape 1:")
-        print(self.q_device.states.shape)
-        self.encoder(self.q_device, x)
-        self.q_layer(self.q_device)
+            # create the qiskit circuit for trainable quantum layers
+            self.q_layer(qdev)
+            op_history_fixed = qdev.op_history
+            qdev.reset_op_history()
+            q_layer_circ = op_history2qiskit(self.n_wires, op_history_fixed)
 
+            # create the qiskit circuit for measurement
+            measurement_circ = tq2qiskit_measurement(qdev, self.measure)
 
+            # assemble the encoder, trainable quantum layers, and measurement circuits
+            assembled_circs = qiskit_assemble_circs(
+                encoder_circs, q_layer_circ, measurement_circ
+            )
 
-        print("X shape before measurement")
-        print(x.shape)
+            # call the qiskit processor to process the circuit
+            x0 = self.qiskit_processor.process_ready_circs(qdev, assembled_circs).to(  # type: ignore
+                devi
+            )
+            x = x0
 
-        x = self.measure(self.q_device)
-
-
-        print("X shape after measurement")
-        print(x.shape)
+        else:
+            # use torchquantum to process the circuit
+            self.encoder(qdev, x)
+            qdev.reset_op_history()
+            self.q_layer(qdev)
+            x = self.measure(qdev)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)
@@ -139,6 +153,7 @@ def train(dataflow, model, device, optimizer):
 def valid_test(dataflow, split, model, device, qiskit=False):
     target_all = []
     output_all = []
+
     with torch.no_grad():
         for feed_dict in dataflow[split]:
             inputs = feed_dict["image"].to(device)
@@ -161,6 +176,8 @@ def valid_test(dataflow, split, model, device, qiskit=False):
     print(f"{split} set accuracy: {accuracy}")
     print(f"{split} set loss: {loss}")
 
+    return accuracy, loss
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -169,10 +186,10 @@ def main():
     )
     parser.add_argument("--pdb", action="store_true", help="debug with pdb")
     parser.add_argument(
-        "--wires-per-block", type=int, default=2, help="wires per block int static mode"
+        "--wires-per-block", type=int, default=20, help="wires per block int static mode"
     )
     parser.add_argument(
-        "--epochs", type=int, default=5, help="number of training epochs"
+        "--epochs", type=int, default=20, help="number of training epochs"
     )
 
     args = parser.parse_args()
@@ -214,6 +231,9 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=5e-3, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=n_epochs)
 
+    accuracy_list = []
+    loss_list = []
+
     if args.static:
         # optionally to switch to the static mode, which can bring speedup
         # on training
@@ -223,13 +243,19 @@ def main():
         # train
         print(f"Epoch {epoch}:")
         train(dataflow, model, device, optimizer)
-        print(optimizer.param_groups[0]["lr"])
 
         # valid
-        valid_test(dataflow, "valid", model, device)
+        accuracy, loss = valid_test(dataflow, "valid", model, device)
+
+        accuracy_list.append(accuracy)
+        loss_list.append(loss)
+
         scheduler.step()
 
+    with open('C:/Users/yezhu/OneDrive/Desktop/torchquantum/noisy_training_3.pickle', 'wb') as handle:
+        pickle.dump([accuracy_list, loss_list], handle, protocol=pickle.HIGHEST_PROTOCOL)
     # test
+
     valid_test(dataflow, "test", model, device, qiskit=False)
 
 

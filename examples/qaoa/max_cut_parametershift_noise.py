@@ -28,7 +28,7 @@ import torchquantum as tq
 import random
 import numpy as np
 
-from torchquantum.measurement import expval_joint_analytical
+from torchquantum.measurement import expval_joint_analytical_density
 
 seed = 0
 random.seed(seed)
@@ -37,7 +37,6 @@ torch.manual_seed(seed)
 
 from torchquantum.plugin import QiskitProcessor, op_history2qiskit
 
-       
 
 class MAXCUT(tq.QuantumModule):
     """computes the optimal cut for a given graph.
@@ -67,9 +66,9 @@ class MAXCUT(tq.QuantumModule):
 
         for wire in range(self.n_wires):
             if (
-                self.shift_param_name == "beta"
-                and self.shift_wire == wire
-                and layer_id == self.shift_layer
+                    self.shift_param_name == "beta"
+                    and self.shift_wire == wire
+                    and layer_id == self.shift_layer
             ):
                 degree = self.shift_degree
             else:
@@ -86,9 +85,9 @@ class MAXCUT(tq.QuantumModule):
         """
         for edge_id, edge in enumerate(self.input_graph):
             if (
-                self.shift_param_name == "gamma"
-                and edge_id == self.shift_edge_id
-                and layer_id == self.shift_layer
+                    self.shift_param_name == "gamma"
+                    and edge_id == self.shift_edge_id
+                    and layer_id == self.shift_layer
             ):
                 degree = self.shift_degree
             else:
@@ -154,7 +153,9 @@ class MAXCUT(tq.QuantumModule):
         Args:
             if edge is None
         """
-        qdev = tq.QuantumDevice(n_wires=self.n_wires, device=self.betas.device)
+        qdev = tq.NoiseDevice(n_wires=self.n_wires, device=self.betas.device,
+                              noise_model=tq.NoiseModel(kraus_dict={"Bitflip": 0.12, "Phaseflip": 0.12}))
+
 
         # print(tq.measure(qdev, n_shots=1024))
         # compute the expectation value
@@ -165,7 +166,7 @@ class MAXCUT(tq.QuantumModule):
             expVal = 0
             for edge in self.input_graph:
                 pauli_string = self.edge_to_PauliString(edge)
-                expv = expval_joint_analytical(qdev, observable=pauli_string)
+                expv = expval_joint_analytical_density(qdev, observable=pauli_string)
                 expVal += 0.5 * expv
         else:
             # use qiskit to compute the expectation value
@@ -181,9 +182,6 @@ class MAXCUT(tq.QuantumModule):
                 expVal += 0.5 * expv
             expVal = torch.Tensor([expVal])
         return expVal
-    
-
-
 
 
 def shift_and_run(model, use_qiskit):
@@ -266,7 +264,7 @@ def param_shift_optimize(model, n_steps=10, step_size=0.1, use_qiskit=False):
         #         *model.parameters()
         #     )
         # )
-    return model(use_qiskit=False,measure_all=True)
+    return model(use_qiskit=False, measure_all=True)
 
 
 """
@@ -282,12 +280,12 @@ def main(use_qiskit):
     n_wires = 4
     n_layers = 1
     model = MAXCUT(n_wires=n_wires, input_graph=input_graph, n_layers=n_layers)
-    
-    # set the qiskit processor
-    #processor_simulation = QiskitProcessor(use_real_qc=False, n_shots=10000)
-    #model.set_qiskit_processor(processor_simulation)
 
-     # firstly perform simulate
+    # set the qiskit processor
+    # processor_simulation = QiskitProcessor(use_real_qc=False, n_shots=10000)
+    # model.set_qiskit_processor(processor_simulation)
+
+    # firstly perform simulate
     # model.to("cuda")
     # model.to(torch.device("cuda"))
     # circ = tq2qiskit(tq.QuantumDevice(n_wires=4), model)
