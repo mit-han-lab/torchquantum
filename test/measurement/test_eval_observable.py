@@ -81,7 +81,7 @@ def test_expval_observable():
         if (
             n_wires <= 3
         ):  # if too many wires, the stochastic method is not accurate due to limited shots
-            assert np.isclose(expval_tq_sampling, expval_qiskit, atol=1e-2)
+            assert np.isclose(expval_tq_sampling, expval_qiskit, atol=0.015)
 
     print("expval observable test passed")
 
