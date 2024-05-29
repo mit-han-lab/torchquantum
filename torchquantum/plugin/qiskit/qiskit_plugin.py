@@ -28,7 +28,7 @@ import numpy as np
 import qiskit
 import qiskit.circuit.library.standard_gates as qiskit_gate
 import torch
-from qiskit import ClassicalRegister, QuantumCircuit
+from qiskit import ClassicalRegister, QuantumCircuit, transpile
 from qiskit.circuit import Parameter
 from qiskit_aer import AerSimulator
 from torchpack.utils.logging import logger
@@ -815,8 +815,10 @@ def test_qiskit2tq():
 
     m = qiskit2tq(circ)
 
-    simulator = AerSimulator(method="unitary_simulator")
-    result = simulator.run(circ).result()
+    backend = AerSimulator(method="unitary")
+    circ = transpile(circ, backend)
+    circ.save_unitary()
+    result = backend.run(circ).result()
     unitary_qiskit = result.get_unitary(circ)
 
     unitary_tq = m.get_unitary(q_dev)
@@ -980,8 +982,10 @@ def test_tq2qiskit():
 
     circuit = tq2qiskit(test_module, inputs)
 
-    simulator = AerSimulator(method="unitary_simulator")
-    result = simulator.run(circuit).result()
+    backend = AerSimulator(method="unitary")
+    circuit = transpile(circuit, backend)
+    circuit.save_unitary()
+    result = backend.run(circuit).result()
     unitary_qiskit = result.get_unitary(circuit)
 
     unitary_tq = test_module.get_unitary(q_dev, inputs)
@@ -1008,8 +1012,11 @@ def test_tq2qiskit_parameterized():
     for k, x in enumerate(inputs[0]):
         binds[params[k]] = x.item()
 
-    simulator = AerSimulator(method="unitary_simulator")
-    result = simulator.run(circuit, parameter_binds=[binds]).result()
+
+    backend = AerSimulator(method="unitary")
+    circuit = transpile(circuit, backend)
+    circuit.save_unitary()
+    result = backend.run(circuit, parameter_binds=[binds]).result()
     unitary_qiskit = result.get_unitary(circuit)
 
     # print(unitary_qiskit)

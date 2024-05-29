@@ -28,9 +28,8 @@ import itertools
 import numpy as np
 import pathos.multiprocessing as multiprocessing
 import torch
-from qiskit import IBMQ, QuantumCircuit, execute, transpile
+from qiskit import IBMQ, QuantumCircuit, transpile
 from qiskit.exceptions import QiskitError
-from qiskit.tools.monitor import job_monitor
 from qiskit.transpiler import PassManager
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
@@ -56,13 +55,10 @@ class EmptyPassManager(PassManager):
 def run_job_worker(data):
     while True:
         try:
-            job = AerSimulator(**(data[0]))
-            qiskit_verbose = data[1]
-            if qiskit_verbose:
-                job_monitor(job, interval=1)
+            job = AerSimulator(**(data))
             result = job.result()
             counts = result.get_counts()
-            # circ_num = len(data[0]['parameter_binds'])
+            # circ_num = len(data['parameter_binds'])
             # logger.info(
             #     f'run job worker successful, circuit number = {circ_num}')
             break
@@ -316,7 +312,6 @@ class QiskitProcessor(object):
                     for i in range(0, len(binds_all), chunk_size)
                 ]
 
-            qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_bind in split_binds:
                 feed_dict = {
@@ -328,7 +323,7 @@ class QiskitProcessor(object):
                     "noise_model": self.noise_model,
                     "parameter_binds": split_bind,
                 }
-                feed_dicts.append([feed_dict, qiskit_verbose])
+                feed_dicts.append(feed_dict)
 
             p = multiprocessing.Pool(self.max_jobs)
             results = p.map(run_job_worker, feed_dicts)
@@ -492,7 +487,6 @@ class QiskitProcessor(object):
                 for i in range(0, len(binds_all), chunk_size)
             ]
 
-            qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_bind in split_binds:
                 feed_dict = {
@@ -504,7 +498,7 @@ class QiskitProcessor(object):
                     "noise_model": self.noise_model,
                     "parameter_binds": split_bind,
                 }
-                feed_dicts.append([feed_dict, qiskit_verbose])
+                feed_dicts.append(feed_dict)
 
             p = multiprocessing.Pool(self.max_jobs)
             results = p.map(run_job_worker, feed_dicts)
@@ -607,7 +601,6 @@ class QiskitProcessor(object):
             circ_all[i : i + chunk_size] for i in range(0, len(circ_all), chunk_size)
         ]
 
-        qiskit_verbose = self.max_jobs <= 2
         feed_dicts = []
         for split_circ in split_circs:
             feed_dict = {
@@ -618,7 +611,7 @@ class QiskitProcessor(object):
                 "seed_simulator": self.seed_simulator,
                 "noise_model": self.noise_model,
             }
-            feed_dicts.append([feed_dict, qiskit_verbose])
+            feed_dicts.append(feed_dict)
 
         p = multiprocessing.Pool(self.max_jobs)
         results = p.map(run_job_worker, feed_dicts)
@@ -697,7 +690,6 @@ class QiskitProcessor(object):
                 for i in range(0, len(circs_all), chunk_size)
             ]
 
-            qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_circ in split_circs:
                 feed_dict = {
@@ -708,7 +700,7 @@ class QiskitProcessor(object):
                     "seed_simulator": self.seed_simulator,
                     "noise_model": self.noise_model,
                 }
-                feed_dicts.append([feed_dict, qiskit_verbose])
+                feed_dicts.append(feed_dict)
 
             p = multiprocessing.Pool(self.max_jobs)
             results = p.map(run_job_worker, feed_dicts)

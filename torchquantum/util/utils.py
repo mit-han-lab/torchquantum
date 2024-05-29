@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 import copy
-from typing import TYPE_CHECKING, Dict, Iterable, List
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
 import torch
@@ -372,6 +372,10 @@ def find_global_phase(mat1, mat2, threshold):
         threshold = 0.5
         global_phase = find_global_phase(mat1, mat2, threshold)
     """
+    if not isinstance(mat1, np.ndarray):
+        mat1 = np.asarray(mat1)
+    if not isinstance(mat2, np.ndarray):
+        mat2 = np.asarray(mat2)
     for i in range(mat1.shape[0]):
         for j in range(mat1.shape[1]):
             # find a numerical stable global phase
@@ -380,7 +384,7 @@ def find_global_phase(mat1, mat2, threshold):
     return None
 
 
-def build_module_op_list(m: QuantumModule, x=None) -> List:
+def build_module_op_list(m: QuantumModule, x=None) -> list:
     """
     serialize all operations in the module and generate a list with
     [{'name': RX, 'has_params': True, 'trainable': True, 'wires': [0],
@@ -435,7 +439,7 @@ def build_module_op_list(m: QuantumModule, x=None) -> List:
 
 
 def build_module_from_op_list(
-    op_list: List[Dict], remove_ops=False, thres=None
+    op_list: list[dict], remove_ops=False, thres=None
 ) -> QuantumModule:
     """
     Build a quantum module from an operation list.
@@ -872,7 +876,7 @@ def get_circ_stats(circ):
 
 def partial_trace(
     q_device: QuantumDevice,
-    keep_indices: List[int],
+    keep_indices: list[int],
 ) -> torch.Tensor:
     """Returns a density matrix with only some qubits kept.
     Args:

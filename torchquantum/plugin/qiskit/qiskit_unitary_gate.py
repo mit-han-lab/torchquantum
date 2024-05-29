@@ -24,8 +24,8 @@ from qiskit.circuit.exceptions import CircuitError
 from qiskit.circuit.library.standard_gates import U3Gate
 from qiskit.extensions.exceptions import ExtensionError
 from qiskit.quantum_info.operators.predicates import is_unitary_matrix, matrix_equal
-from qiskit.quantum_info.synthesis.two_qubit_decompose import two_qubit_cnot_decompose
 from qiskit.synthesis import OneQubitEulerDecomposer
+from qiskit.synthesis.two_qubit.two_qubit_decompose import two_qubit_cnot_decompose
 
 _DECOMPOSER1Q = OneQubitEulerDecomposer("U3")
 
