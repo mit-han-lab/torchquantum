@@ -1048,7 +1048,7 @@ def parameter_shift_gradient(model, input_data, expectation_operator, shift_rate
     #####################
 
     for idx, key in enumerate(state_dict_plus_shift):
-        if idx < 2:  # Skip the first two keys because they are not paramters
+        if idx < 2:  # Skip the first two keys because they are not parameters
             continue
         state_dict_plus_shift[key]  +=  shift_rate
         state_dict_minus_shift[key] -=  shift_rate

@@ -30,6 +30,7 @@ import itertools
 
 from qiskit import Aer, execute, transpile, QuantumCircuit
 from qiskit.providers.aer.noise import NoiseModel
+from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
 from .qiskit_plugin import (
     tq2qiskit,
@@ -192,7 +193,6 @@ class QiskitProcessor(object):
             # initialize now
             # Retrieve token from environment.
             token = os.getenv("IBM_API_TOKEN")
-            # IBMQ.load_account()
             self.provider = get_provider_hub_group_project(
                 token=token,
                 hub=self.hub,
