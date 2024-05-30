@@ -42,7 +42,8 @@ pauli_str_op_dict = {
     "I": I,
 }
 
-@pytest.mark.skip
+
+# @pytest.mark.skip
 def test_expval_observable():
     # seed = 0
     # random.seed(seed)

@@ -22,12 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import os
 import torch
 import torchquantum as tq
 import pathos.multiprocessing as multiprocessing
 import itertools
 
-from qiskit import Aer, execute, IBMQ, transpile, QuantumCircuit
+from qiskit import Aer, execute, transpile, QuantumCircuit
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
@@ -191,7 +192,9 @@ class QiskitProcessor(object):
 
         if self.backend is None:
             # initialize now
-            IBMQ.load_account()
+            # Retrieve token from environment.
+            token = os.getenv("IBM_API_TOKEN")
+            # IBMQ.load_account()
             self.provider = get_provider_hub_group_project(
                 hub=self.hub,
                 group=self.group,

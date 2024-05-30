@@ -781,8 +781,8 @@ def get_provider(backend_name, hub=None):
     return provider
 
 
-def get_provider_hub_group_project(hub="ibm-q", group="open", project="main"):
-    provider = QiskitRuntimeService(channel = "ibm_quantum", instance = f"{hub}/{group}/{project}")
+def get_provider_hub_group_project(token, hub="ibm-q", group="open", project="main"):
+    provider = QiskitRuntimeService(channel = "ibm_quantum", token=token, instance = f"{hub}/{group}/{project}")
     return provider
 
 
