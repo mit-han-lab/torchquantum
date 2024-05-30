@@ -30,7 +30,6 @@ import itertools
 
 from qiskit import Aer, execute, transpile, QuantumCircuit
 from qiskit.providers.aer.noise import NoiseModel
-from qiskit.tools.monitor import job_monitor
 from qiskit.exceptions import QiskitError
 from .qiskit_plugin import (
     tq2qiskit,
@@ -39,7 +38,6 @@ from .qiskit_plugin import (
 )
 from torchquantum.util import (
     get_expectations_from_counts,
-    get_provider,
     get_provider_hub_group_project,
     get_circ_stats,
 )
@@ -73,7 +71,7 @@ def run_job_worker(data):
             break
         except Exception as e:
             if "Job was cancelled" in str(e):
-                logger.warning(f"Job is cancelled manually.")
+                logger.warning("Job is cancelled manually.")
                 return None
             else:
                 logger.warning(f"Job failed because {e}, rerun now.")
@@ -196,6 +194,7 @@ class QiskitProcessor(object):
             token = os.getenv("IBM_API_TOKEN")
             # IBMQ.load_account()
             self.provider = get_provider_hub_group_project(
+                token=token,
                 hub=self.hub,
                 group=self.group,
                 project=self.project,
