@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from qiskit import QuantumCircuit
 import numpy as np
 import random
 from qiskit.opflow import StateFn, X, Y, Z, I
@@ -31,9 +30,6 @@ import torchquantum as tq
 
 from torchquantum.plugin import op_history2qiskit, QiskitProcessor
 from torchquantum.util import switch_little_big_endian_state
-
-import torch
-import pytest
 
 pauli_str_op_dict = {
     "X": X,

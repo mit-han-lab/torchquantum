@@ -279,7 +279,7 @@ def switch_little_big_endian_state(state):
         is_batch_state = False
         reshape = [2] * int(np.log2(state.size))
     else:
-        logger.exception(f"Dimension of statevector should be 1 or 2")
+        logger.exception("Dimension of statevector should be 1 or 2")
         raise ValueError
 
     original_shape = state.shape
@@ -467,7 +467,7 @@ def build_module_from_op_list(
            ]
            module = build_module_from_op_list(op_list, remove_ops=True, thres=0.1)
        """
-    logger.info(f"Building module from op_list...")
+    logger.info("Building module from op_list...")
     thres = 1e-5 if thres is None else thres
     n_removed_ops = 0
     ops = []
@@ -499,7 +499,7 @@ def build_module_from_op_list(
     if n_removed_ops > 0:
         logger.warning(f"Remove in total {n_removed_ops} pruned operations.")
     else:
-        logger.info(f"Do not remove any operations.")
+        logger.info("Do not remove any operations.")
 
     return tq.QuantumModuleFromOps(ops)
 
@@ -770,8 +770,8 @@ def get_provider(backend_name, hub=None):
             try:
                 provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/mass-inst-tech-1/main")
             except QiskitError:
-                # logger.warning(f"Cannot use MIT backend, roll back to open")
-                logger.warning(f"Use the open backend")
+                # logger.warning("Cannot use MIT backend, roll back to open")
+                logger.warning("Use the open backend")
                 provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q/open/main")
         elif hub == "mit":
             provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/MIT-1/main")
