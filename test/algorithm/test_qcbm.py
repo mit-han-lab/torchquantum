@@ -1,7 +1,6 @@
 from torchquantum.algorithm.qcbm import QCBM, MMDLoss
 import torchquantum as tq
 import torch
-import pytest
 
 
 def test_qcbm_forward():
@@ -29,5 +28,4 @@ def test_mmd_loss():
 
     mmd = MMDLoss(bandwidth, space)
     loss = mmd(torch.zeros(4), torch.zeros(4))
-    print(loss)
     assert torch.isclose(loss, torch.tensor(0.0), rtol=1e-5)
