@@ -33,8 +33,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from opt_einsum import contract
 from qiskit.exceptions import QiskitError
-from qiskit_aer.noise.device.parameters import gate_error_values
-from qiskit_ibm_runtime import QiskitRuntimeService
 from torchpack.utils.config import Config
 from torchpack.utils.logging import logger
 
@@ -721,28 +719,7 @@ def get_success_rate(properties, transpiled_circ):
     Returns:
         float: The estimated success rate.
     """
-    # estimate the success rate according to the error rates of single and
-    # two-qubit gates in transpiled circuits
-
-    gate_errors = gate_error_values(properties)
-    # construct the error dict
-    gate_error_dict = {}
-    for gate_error in gate_errors:
-        if gate_error[0] not in gate_error_dict.keys():
-            gate_error_dict[gate_error[0]] = {tuple(gate_error[1]): gate_error[2]}
-        else:
-            gate_error_dict[gate_error[0]][tuple(gate_error[1])] = gate_error[2]
-
-    success_rate = 1
-    for gate in transpiled_circ.data:
-        gate_success_rate = (
-            1 - gate_error_dict[gate[0].name][tuple(map(lambda x: x.index, gate[1]))]
-        )
-        if gate_success_rate == 0:
-            gate_success_rate = 1e-5
-        success_rate *= gate_success_rate
-
-    return success_rate
+    raise NotImplementedError
 
 
 def get_provider(backend_name, hub=None):
