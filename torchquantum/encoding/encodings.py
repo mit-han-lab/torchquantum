@@ -43,8 +43,21 @@ class Encoder(tq.QuantumModule):
         super().__init__()
         pass
 
-    def forward(self, qdev: tq.QuantumDevice, x):
+    def forward(self, qdev: tq.QuantumDevice, x: torch.Tensor):
         raise NotImplementedError
+
+    @staticmethod
+    def validate_inputs(qdev: tq.QuantumDevice, x: torch.Tensor):
+        if not isinstance(qdev, tq.QuantumDevice):
+            raise TypeError(f"The qdev input {qdev} must be of the type tq.QuantumDevice.")
+
+        if not isinstance(x, torch.Tensor):
+            raise TypeError(f"The x input {x} must be of the type torch.Tensor.")
+
+        if any(tensor.size()[0] > pow(2, qdev.n_wires) for tensor in x):
+            raise ValueError(f"The size of tensors in x ({x.size()[1]}) must be less than or "
+                             f"equal to {pow(2, qdev.n_wires)} for a QuantumDevice with "
+                             f"{qdev.n_wires} wires.")
 
 
 class GeneralEncoder(Encoder, metaclass=ABCMeta):
@@ -222,8 +235,9 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
                     torch.Tensor: The encoded data.
 
                 """
+        # Validate inputs
+        self.validate_inputs(qdev, x)
         # encoder the x to the statevector of the quantum device
-
         # normalize the input
         x = x / (torch.sqrt((x.abs() ** 2).sum(dim=-1))).unsqueeze(-1)
         state = torch.cat(
