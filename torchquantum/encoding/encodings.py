@@ -39,6 +39,7 @@ class Encoder(tq.QuantumModule):
         - forward(qdev: tq.QuantumDevice, x): Performs the encoding using a quantum device.
 
     """
+
     def __init__(self):
         super().__init__()
         pass
@@ -49,15 +50,19 @@ class Encoder(tq.QuantumModule):
     @staticmethod
     def validate_inputs(qdev: tq.QuantumDevice, x: torch.Tensor):
         if not isinstance(qdev, tq.QuantumDevice):
-            raise TypeError(f"The qdev input {qdev} must be of the type tq.QuantumDevice.")
+            raise TypeError(
+                f"The qdev input {qdev} must be of the type tq.QuantumDevice."
+            )
 
         if not isinstance(x, torch.Tensor):
             raise TypeError(f"The x input {x} must be of the type torch.Tensor.")
 
         if any(tensor.size()[0] > pow(2, qdev.n_wires) for tensor in x):
-            raise ValueError(f"The size of tensors in x ({x.size()[1]}) must be less than or "
-                             f"equal to {pow(2, qdev.n_wires)} for a QuantumDevice with "
-                             f"{qdev.n_wires} wires.")
+            raise ValueError(
+                f"The size of tensors in x ({x.size()[1]}) must be less than or "
+                f"equal to {pow(2, qdev.n_wires)} for a QuantumDevice with "
+                f"{qdev.n_wires} wires."
+            )
 
 
 class GeneralEncoder(Encoder, metaclass=ABCMeta):
@@ -145,7 +150,9 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
 
 class PhaseEncoder(Encoder, metaclass=ABCMeta):
     """PhaseEncoder is a subclass of Encoder and represents a phase encoder.
-    It applies a specified quantum function to encode input data using a quantum device."""
+    It applies a specified quantum function to encode input data using a quantum device.
+    """
+
     def __init__(self, func: str):
         super().__init__()
 
@@ -156,16 +163,16 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
     @tq.static_support
     def forward(self, qdev: tq.QuantumDevice, x):
         """
-                Performs the encoding using a quantum device.
+        Performs the encoding using a quantum device.
 
-                Args:
-                    qdev (tq.QuantumDevice): The quantum device to be used for encoding.
-                    x (torch.Tensor): The input data to be encoded.
+        Args:
+            qdev (tq.QuantumDevice): The quantum device to be used for encoding.
+            x (torch.Tensor): The input data to be encoded.
 
-                Returns:
-                    torch.Tensor: The encoded data.
+        Returns:
+            torch.Tensor: The encoded data.
 
-                """
+        """
         for k in range(qdev.n_wires):
             print("Calling")
             self.func(
@@ -179,7 +186,9 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
 
 class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
     """PhaseEncoder is a subclass of Encoder and represents a phase encoder.
-    It applies a specified quantum function to encode input data using a quantum device."""
+    It applies a specified quantum function to encode input data using a quantum device.
+    """
+
     def __init__(self, funcs, wires=None):
         super().__init__()
         self.funcs = funcs if isinstance(funcs, Iterable) else [funcs]
@@ -188,18 +197,19 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
     @tq.static_support
     def forward(self, qdev: tq.QuantumDevice, x):
         """
-                Performs the encoding using a quantum device.
+        Performs the encoding using a quantum device.
 
-                Args:
-                    qdev (tq.QuantumDevice): The quantum device to be used for encoding.
-                    x (torch.Tensor): The input data to be encoded.
+        Args:
+            qdev (tq.QuantumDevice): The quantum device to be used for encoding.
+            x (torch.Tensor): The input data to be encoded.
 
-                Returns:
-                    torch.Tensor: The encoded data.
+        Returns:
+            torch.Tensor: The encoded data.
 
-                """
+        """
         if self.wires is None:
-            self.wires = list(range(qdev.n_wires)) * (len(self.funcs) // qdev.n_wires)
+            # self.wires = list(range(qdev.n_wires)) * (len(self.funcs) // qdev.n_wires)
+            self.wires = list(range(qdev.n_wires + (len(self.funcs) // qdev.n_wires)))
 
         x_id = 0
         for k, func in enumerate(self.funcs):
@@ -210,7 +220,7 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
             elif func == "u3":
                 stride = 3
             else:
-                raise ValueError(func)
+                raise ValueError(f"The func {func} is not supported.")
 
             func_name_dict[func](
                 qdev,
@@ -225,20 +235,21 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
 class StateEncoder(Encoder, metaclass=ABCMeta):
     """StateEncoder is a subclass of Encoder and represents a state encoder.
     It encodes the input data into the state vector of a quantum device."""
+
     def __init__(self):
         super().__init__()
 
     def forward(self, qdev: tq.QuantumDevice, x):
         """
-            Performs the encoding by preparing the state vector of the quantum device.
+        Performs the encoding by preparing the state vector of the quantum device.
 
-                Args:
-                    qdev (tq.QuantumDevice): The quantum device to be used for encoding.
-                    x (torch.Tensor): The input data to be encoded.
-                Returns:
-                    torch.Tensor: The encoded data.
+            Args:
+                qdev (tq.QuantumDevice): The quantum device to be used for encoding.
+                x (torch.Tensor): The input data to be encoded.
+            Returns:
+                torch.Tensor: The encoded data.
 
-                """
+        """
         # Validate inputs
         self.validate_inputs(qdev, x)
         # encoder the x to the statevector of the quantum device
@@ -247,9 +258,7 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
         state = torch.cat(
             (
                 x,
-                torch.zeros(
-                    x.shape[0], 2**qdev.n_wires - x.shape[1], device=x.device
-                ),
+                torch.zeros(x.shape[0], 2**qdev.n_wires - x.shape[1], device=x.device),
             ),
             dim=-1,
         )
@@ -261,6 +270,7 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
 class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
     """MagnitudeEncoder is a subclass of Encoder and represents a magnitude encoder.
     It encodes the input data by considering the magnitudes of the elements."""
+
     def __init__(self):
         super().__init__()
 
