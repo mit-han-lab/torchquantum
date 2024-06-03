@@ -146,9 +146,12 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
 class PhaseEncoder(Encoder, metaclass=ABCMeta):
     """PhaseEncoder is a subclass of Encoder and represents a phase encoder.
     It applies a specified quantum function to encode input data using a quantum device."""
-    def __init__(self, func):
+    def __init__(self, func: str):
         super().__init__()
-        self.func = func
+
+        if not isinstance(func, str):
+            raise TypeError("The input func must be of the type str.")
+        self.func = func_name_dict[func]
 
     @tq.static_support
     def forward(self, qdev: tq.QuantumDevice, x):
@@ -164,6 +167,7 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
 
                 """
         for k in range(qdev.n_wires):
+            print("Calling")
             self.func(
                 qdev,
                 wires=k,

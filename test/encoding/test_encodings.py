@@ -23,11 +23,14 @@ SOFTWARE.
 """
 
 from __future__ import annotations
+from typing import Callable
 import pytest
 from pytest import raises
+from unittest import mock
 import torch
-from torchquantum import QuantumDevice
+from torchquantum import QuantumDevice, PhaseEncoder
 from torchquantum.encoding import StateEncoder
+from torchquantum.functional import func_name_dict
 
 
 class TestStateEncoding:
@@ -43,7 +46,7 @@ class TestStateEncoding:
                 match=r"The qdev input ([\s\S]*?) must be of the type tq\.QuantumDevice\.",
         ):
             encoder = StateEncoder()
-            encoder(qdev, torch.rand(2, 2))
+            encoder.forward(qdev, torch.rand(2, 2))
 
     @pytest.mark.parametrize(
         "wires, x",
@@ -137,3 +140,24 @@ class TestStateEncoding:
         assert qdev.states.shape[0] == x.shape[0]
         assert qdev.states.reshape(x.shape[0], -1).shape == (x.shape[0], pow(2, wires))
         assert torch.allclose(qdev.states.reshape(x.shape[0], -1), x_norm.type(torch.complex64), atol=1e-3)
+
+
+class TestPhaseEncoding:
+    """Test class for Phase Encoder."""
+
+    @pytest.mark.parametrize("func", [None, 1, 2.4, {}, True, list(range(2))])
+    def test_func_type(self, func):
+        """Test the type of func input"""
+        with raises(TypeError, match="The input func must be of the type str."):
+            _ = PhaseEncoder(func)
+
+    #
+    @pytest.mark.parametrize("func", ["hadamard", "ry", "xx", "paulix", "i"])
+    def test_phase_encoding(self, func):
+        """Tests the PhaseEncoder class."""
+        assert func in func_name_dict
+        encoder = PhaseEncoder(func)
+        with mock.patch.object(encoder, "func") as mock_func:
+            qdev = QuantumDevice(2)
+            encoder.forward(qdev, torch.rand(2, 4))
+            assert mock_func.call_count > 1
