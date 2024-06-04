@@ -50,13 +50,12 @@ class TestGeneralEncoder:
             _ = GeneralEncoder(func_list)
 
     @pytest.mark.parametrize(
-        "func_list", [[{"key1": 1}], [{"func": "rx"}], [{"func": "rx", "key2": None}]]
+        "func_list", [[{"key1": 1}], [{"func": "rx"}], [{"func": "rx", "input_idx": [0]}]]
     )
     def test_func_list_keys(self, func_list):
         with raises(
             ValueError,
-            match="The dictionary in func_list must contain the "
-            "keys: input_idx, func, and wires.",
+            match="The dictionary in func_list must is missing func or wires.",
         ):
             _ = GeneralEncoder(func_list)
 

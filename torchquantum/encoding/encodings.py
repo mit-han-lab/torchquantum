@@ -102,14 +102,14 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
             raise TypeError("The input func_list must be of the type list[dict].")
 
         if any(
-            "input_idx" not in func_dict.keys()
-            or "func" not in func_dict.keys()
-            or "wires" not in func_dict.keys()
+            (
+                "func" not in func_dict
+                or ("func" in func_dict and "wires" not in func_dict)
+            )
             for func_dict in func_list
         ):
             raise ValueError(
-                "The dictionary in func_list must contain the keys: "
-                "input_idx, func, and wires."
+                "The dictionary in func_list must is missing func or wires."
             )
         self.func_list = func_list
 
