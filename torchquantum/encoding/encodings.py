@@ -39,12 +39,23 @@ class Encoder(tq.QuantumModule):
         - forward(qdev: tq.QuantumDevice, x): Performs the encoding using a quantum device.
 
     """
+
     def __init__(self):
         super().__init__()
         pass
 
-    def forward(self, qdev: tq.QuantumDevice, x):
+    def forward(self, qdev: tq.QuantumDevice, x: torch.Tensor):
         raise NotImplementedError
+
+    @staticmethod
+    def validate_inputs(qdev: tq.QuantumDevice, x: torch.Tensor):
+        if not isinstance(qdev, tq.QuantumDevice):
+            raise TypeError(
+                f"The qdev input {qdev} must be of the type tq.QuantumDevice."
+            )
+
+        if not isinstance(x, torch.Tensor):
+            raise TypeError(f"The x input {x} must be of the type torch.Tensor.")
 
 
 class GeneralEncoder(Encoder, metaclass=ABCMeta):
@@ -84,10 +95,28 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
 
     def __init__(self, func_list):
         super().__init__()
+
+        if not isinstance(func_list, list) or not all(
+            isinstance(func_dict, dict) for func_dict in func_list
+        ):
+            raise TypeError("The input func_list must be of the type list[dict].")
+
+        if any(
+            (
+                "func" not in func_dict
+                or ("func" in func_dict and "wires" not in func_dict)
+            )
+            for func_dict in func_list
+        ):
+            raise ValueError(
+                "The dictionary in func_list must is missing func or wires."
+            )
         self.func_list = func_list
 
     @tq.static_support
     def forward(self, qdev: tq.QuantumDevice, x):
+        # Validate inputs
+        self.validate_inputs(qdev, x)
         for info in self.func_list:
             if tq.op_name_dict[info["func"]].num_params > 0:
                 params = x[:, info["input_idx"]]
@@ -124,7 +153,7 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
                 elif info["func"] == "rzx":
                     circ.rzx(x[k][info["input_idx"][0]].item(), *info["wires"])
                 else:
-                    raise NotImplementedError(info["func"])
+                    raise NotImplementedError(f"{info['func']} is not supported yet.")
             circs.append(circ)
 
         return circs
@@ -132,25 +161,33 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
 
 class PhaseEncoder(Encoder, metaclass=ABCMeta):
     """PhaseEncoder is a subclass of Encoder and represents a phase encoder.
-    It applies a specified quantum function to encode input data using a quantum device."""
-    def __init__(self, func):
+    It applies a specified quantum function to encode input data using a quantum device.
+    """
+
+    def __init__(self, func: str):
         super().__init__()
-        self.func = func
+
+        if not isinstance(func, str):
+            raise TypeError("The input func must be of the type str.")
+        self.func = func_name_dict[func]
 
     @tq.static_support
     def forward(self, qdev: tq.QuantumDevice, x):
         """
-                Performs the encoding using a quantum device.
+        Performs the encoding using a quantum device.
 
-                Args:
-                    qdev (tq.QuantumDevice): The quantum device to be used for encoding.
-                    x (torch.Tensor): The input data to be encoded.
+        Args:
+            qdev (tq.QuantumDevice): The quantum device to be used for encoding.
+            x (torch.Tensor): The input data to be encoded.
 
-                Returns:
-                    torch.Tensor: The encoded data.
+        Returns:
+            torch.Tensor: The encoded data.
 
-                """
+        """
+        # Validate inputs
+        self.validate_inputs(qdev, x)
         for k in range(qdev.n_wires):
+            print("Calling")
             self.func(
                 qdev,
                 wires=k,
@@ -162,7 +199,9 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
 
 class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
     """PhaseEncoder is a subclass of Encoder and represents a phase encoder.
-    It applies a specified quantum function to encode input data using a quantum device."""
+    It applies a specified quantum function to encode input data using a quantum device.
+    """
+
     def __init__(self, funcs, wires=None):
         super().__init__()
         self.funcs = funcs if isinstance(funcs, Iterable) else [funcs]
@@ -171,18 +210,21 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
     @tq.static_support
     def forward(self, qdev: tq.QuantumDevice, x):
         """
-                Performs the encoding using a quantum device.
+        Performs the encoding using a quantum device.
 
-                Args:
-                    qdev (tq.QuantumDevice): The quantum device to be used for encoding.
-                    x (torch.Tensor): The input data to be encoded.
+        Args:
+            qdev (tq.QuantumDevice): The quantum device to be used for encoding.
+            x (torch.Tensor): The input data to be encoded.
 
-                Returns:
-                    torch.Tensor: The encoded data.
+        Returns:
+            torch.Tensor: The encoded data.
 
-                """
+        """
+        # Validate inputs
+        self.validate_inputs(qdev, x)
         if self.wires is None:
-            self.wires = list(range(qdev.n_wires)) * (len(self.funcs) // qdev.n_wires)
+            # self.wires = list(range(qdev.n_wires)) * (len(self.funcs) // qdev.n_wires)
+            self.wires = list(range(qdev.n_wires + (len(self.funcs) // qdev.n_wires)))
 
         x_id = 0
         for k, func in enumerate(self.funcs):
@@ -193,7 +235,7 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
             elif func == "u3":
                 stride = 3
             else:
-                raise ValueError(func)
+                raise ValueError(f"The func {func} is not supported.")
 
             func_name_dict[func](
                 qdev,
@@ -208,30 +250,31 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
 class StateEncoder(Encoder, metaclass=ABCMeta):
     """StateEncoder is a subclass of Encoder and represents a state encoder.
     It encodes the input data into the state vector of a quantum device."""
+
     def __init__(self):
         super().__init__()
 
     def forward(self, qdev: tq.QuantumDevice, x):
         """
-            Performs the encoding by preparing the state vector of the quantum device.
+        Performs the encoding by preparing the state vector of the quantum device.
 
-                Args:
-                    qdev (tq.QuantumDevice): The quantum device to be used for encoding.
-                    x (torch.Tensor): The input data to be encoded.
-                Returns:
-                    torch.Tensor: The encoded data.
+            Args:
+                qdev (tq.QuantumDevice): The quantum device to be used for encoding.
+                x (torch.Tensor): The input data to be encoded.
+            Returns:
+                torch.Tensor: The encoded data.
 
-                """
+        """
+        # Validate inputs
+        self.validate_inputs(qdev, x)
+        self.validate_tensor_size(qdev, x)
         # encoder the x to the statevector of the quantum device
-
         # normalize the input
         x = x / (torch.sqrt((x.abs() ** 2).sum(dim=-1))).unsqueeze(-1)
         state = torch.cat(
             (
                 x,
-                torch.zeros(
-                    x.shape[0], 2**qdev.n_wires - x.shape[1], device=x.device
-                ),
+                torch.zeros(x.shape[0], 2**qdev.n_wires - x.shape[1], device=x.device),
             ),
             dim=-1,
         )
@@ -239,10 +282,20 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
 
         qdev.states = state.type(C_DTYPE)
 
+    @staticmethod
+    def validate_tensor_size(qdev: tq.QuantumDevice, x):
+        if any(tensor.size()[0] > pow(2, qdev.n_wires) for tensor in x):
+            raise ValueError(
+                f"The size of tensors in x ({x.size()[1]}) must be less than or "
+                f"equal to {pow(2, qdev.n_wires)} for a QuantumDevice with "
+                f"{qdev.n_wires} wires."
+            )
+
 
 class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
     """MagnitudeEncoder is a subclass of Encoder and represents a magnitude encoder.
     It encodes the input data by considering the magnitudes of the elements."""
+
     def __init__(self):
         super().__init__()
 
