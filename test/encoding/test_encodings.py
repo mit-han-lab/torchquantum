@@ -184,7 +184,8 @@ class TestMultiPhaseEncoder:
 
     # NOTE: Test with func = u1 currently fails.
     @pytest.mark.parametrize(
-        "batch_size, wires, funcs", [(2, 5, ["ry", "phaseshift"]), (1, 4, ["u2"]), (3, 1, ["u3"])]
+        "batch_size, wires, funcs",
+        [(2, 5, ["ry", "phaseshift"]), (1, 4, ["u2"]), (3, 1, ["u3"])],
     )
     def test_phase_encoding(self, batch_size, wires, funcs):
         """Tests the MultiPhaseEncoder class."""

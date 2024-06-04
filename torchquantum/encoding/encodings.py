@@ -122,6 +122,8 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
 
     @tq.static_support
     def forward(self, qdev: tq.QuantumDevice, x):
+        # Validate inputs
+        self.validate_inputs(qdev, x)
         for info in self.func_list:
             if tq.op_name_dict[info["func"]].num_params > 0:
                 params = x[:, info["input_idx"]]
@@ -189,6 +191,8 @@ class PhaseEncoder(Encoder, metaclass=ABCMeta):
             torch.Tensor: The encoded data.
 
         """
+        # Validate inputs
+        self.validate_inputs(qdev, x)
         for k in range(qdev.n_wires):
             print("Calling")
             self.func(
@@ -223,6 +227,8 @@ class MultiPhaseEncoder(Encoder, metaclass=ABCMeta):
             torch.Tensor: The encoded data.
 
         """
+        # Validate inputs
+        self.validate_inputs(qdev, x)
         if self.wires is None:
             # self.wires = list(range(qdev.n_wires)) * (len(self.funcs) // qdev.n_wires)
             self.wires = list(range(qdev.n_wires + (len(self.funcs) // qdev.n_wires)))
