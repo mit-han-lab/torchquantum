@@ -102,6 +102,22 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
 
     def __init__(self, func_list):
         super().__init__()
+
+        if not isinstance(func_list, list) or not all(
+            isinstance(func_dict, dict) for func_dict in func_list
+        ):
+            raise TypeError("The input func_list must be of the type list[dict].")
+
+        if any(
+            "input_idx" not in func_dict.keys()
+            or "func" not in func_dict.keys()
+            or "wires" not in func_dict.keys()
+            for func_dict in func_list
+        ):
+            raise ValueError(
+                "The dictionary in func_list must contain the keys: "
+                "input_idx, func, and wires."
+            )
         self.func_list = func_list
 
     @tq.static_support
@@ -142,7 +158,7 @@ class GeneralEncoder(Encoder, metaclass=ABCMeta):
                 elif info["func"] == "rzx":
                     circ.rzx(x[k][info["input_idx"][0]].item(), *info["wires"])
                 else:
-                    raise NotImplementedError(info["func"])
+                    raise NotImplementedError(f"{info['func']} is not supported yet.")
             circs.append(circ)
 
         return circs

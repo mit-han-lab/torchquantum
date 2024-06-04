@@ -27,12 +27,178 @@ from typing import Callable
 import pytest
 from pytest import raises
 from unittest import mock
+from qiskit.circuit import QuantumCircuit
 import torch
-from torchquantum import QuantumDevice, StateEncoder, PhaseEncoder, MultiPhaseEncoder
+from torchquantum import (
+    QuantumDevice,
+    GeneralEncoder,
+    StateEncoder,
+    PhaseEncoder,
+    MultiPhaseEncoder,
+)
 from torchquantum.functional import func_name_dict
 
 
-class TestStateEncoding:
+class TestGeneralEncoder:
+    """Test class for General Encoder."""
+
+    @pytest.mark.parametrize("func_list", [None, 1, 2.4, True, list(range(2))])
+    def test_invalid_func_list(self, func_list):
+        with raises(
+            TypeError, match=r"The input func_list must be of the type list\[dict\]\."
+        ):
+            _ = GeneralEncoder(func_list)
+
+    @pytest.mark.parametrize(
+        "func_list", [[{"key1": 1}], [{"func": "rx"}], [{"func": "rx", "key2": None}]]
+    )
+    def test_func_list_keys(self, func_list):
+        with raises(
+            ValueError,
+            match="The dictionary in func_list must contain the "
+            "keys: input_idx, func, and wires.",
+        ):
+            _ = GeneralEncoder(func_list)
+
+    @pytest.mark.parametrize(
+        "wires, func_list",
+        [
+            (1, [{"input_idx": [0], "func": "ry", "wires": [0]}]),
+            (
+                2,
+                [
+                    {"input_idx": [0], "func": "ry", "wires": [0]},
+                    {"input_idx": [1], "func": "ry", "wires": [1]},
+                ],
+            ),
+            (
+                4,
+                [
+                    {"input_idx": [0], "func": "rz", "wires": [0]},
+                    {"input_idx": None, "func": "sx", "wires": [0]},
+                    {"input_idx": [2], "func": "rx", "wires": [2]},
+                    {"input_idx": [3], "func": "ry", "wires": [3]},
+                ],
+            ),
+        ],
+    )
+    def test_general_encoding(self, wires, func_list):
+        """Tests the GeneralEncoder class."""
+        encoder = GeneralEncoder(func_list)
+        qdev = QuantumDevice(wires)
+        mock_func = mock.Mock()
+        for func_dict in func_list:
+            func = func_dict["func"]
+            with mock.patch.dict(func_name_dict, {func: mock_func}):
+                encoder(qdev, torch.rand(1, pow(2, wires)))
+                assert mock_func.call_count >= 1
+
+    @pytest.mark.parametrize(
+        "batch_size, wires, func_list",
+        [
+            (2, 1, [{"input_idx": [0], "func": "rz", "wires": [0]}]),
+            (
+                4,
+                2,
+                [
+                    {"input_idx": [0], "func": "ryy", "wires": [0, 1]},
+                    {"input_idx": [1], "func": "rx", "wires": [1]},
+                ],
+            ),
+            (
+                2,
+                4,
+                [
+                    {"input_idx": [0], "func": "rzz", "wires": [0, 2]},
+                    {"input_idx": [1], "func": "rxx", "wires": [1, 2]},
+                    {"input_idx": [2], "func": "ry", "wires": [2]},
+                    {"input_idx": [3], "func": "rzx", "wires": [1, 3]},
+                ],
+            ),
+        ],
+    )
+    def test_to_qiskit(self, batch_size, wires, func_list):
+        """Tests conversion of GeneralEncoder to Qiskit."""
+        x = torch.rand(batch_size, pow(2, wires))
+        encoder = GeneralEncoder(func_list)
+        qdev = QuantumDevice(n_wires=wires, bsz=batch_size)
+        encoder(qdev, x)
+        resulting_circuit = encoder.to_qiskit(wires, x)
+        for circuit in resulting_circuit:
+            assert isinstance(circuit, QuantumCircuit)
+
+    @pytest.mark.parametrize(
+        "batch_size, wires, func_list",
+        [
+            (2, 1, [{"input_idx": [0], "func": "hadamard", "wires": [0]}]),
+            (2, 2, [{"input_idx": [0], "func": "xx", "wires": [0, 1]}]),
+        ],
+    )
+    def test_not_implemeted_qiskit(self, batch_size, wires, func_list):
+        """Tests conversion of GeneralEncoder to Qiskit."""
+        x = torch.rand(batch_size, pow(2, wires))
+        encoder = GeneralEncoder(func_list)
+        qdev = QuantumDevice(n_wires=wires, bsz=batch_size)
+        encoder(qdev, x)
+        with raises(NotImplementedError, match=r"([\s\S]*?) is not supported yet\."):
+            _ = encoder.to_qiskit(wires, x)
+
+
+class TestPhaseEncoder:
+    """Test class for Phase Encoder."""
+
+    @pytest.mark.parametrize("func", [None, 1, 2.4, {}, True, list(range(2))])
+    def test_func_type(self, func):
+        """Test the type of func input"""
+        with raises(TypeError, match="The input func must be of the type str."):
+            _ = PhaseEncoder(func)
+
+    @pytest.mark.parametrize("func", ["hadamard", "ry", "xx", "paulix", "i"])
+    def test_phase_encoding(self, func):
+        """Tests the PhaseEncoder class."""
+        assert func in func_name_dict
+        encoder = PhaseEncoder(func)
+        qdev = QuantumDevice(2)
+        with mock.patch.object(encoder, "func") as mock_func:
+            encoder(qdev, torch.rand(2, 4))
+            assert mock_func.call_count >= 1
+
+
+class TestMultiPhaseEncoder:
+    """Test class for Multi-phase Encoder."""
+
+    @pytest.mark.parametrize(
+        "wires, funcs",
+        [
+            (10, ["rx", "hadamard"]),
+            (2, ["swap", "ry"]),
+            (3, ["xx"]),
+            (1, ["paulix", "i"]),
+        ],
+    )
+    def test_invalid_func(self, wires, funcs):
+        with raises(ValueError, match=r"The func (.*?) is not supported\."):
+            encoder = MultiPhaseEncoder(funcs)
+            qdev = QuantumDevice(n_wires=wires)
+            encoder(qdev, torch.rand(1, pow(2, wires)))
+
+    # NOTE: Test with func = u1 currently fails.
+    @pytest.mark.parametrize(
+        "batch_size, wires, funcs", [(2, 5, ["ry", "phaseshift"]), (1, 4, ["u2"]), (3, 1, ["u3"])]
+    )
+    def test_phase_encoding(self, batch_size, wires, funcs):
+        """Tests the MultiPhaseEncoder class."""
+        # wires = 4
+        encoder = MultiPhaseEncoder(funcs)
+        qdev = QuantumDevice(n_wires=wires, bsz=batch_size)
+        mock_func = mock.Mock()
+        for func in encoder.funcs:
+            with mock.patch.dict(func_name_dict, {func: mock_func}):
+                encoder(qdev, torch.rand(batch_size, pow(2, wires)))
+                assert mock_func.call_count >= 1
+
+
+class TestStateEncoder:
     """Test class for State Encoder."""
 
     @pytest.mark.parametrize(
@@ -140,57 +306,3 @@ class TestStateEncoding:
         assert torch.allclose(
             qdev.states.reshape(x.shape[0], -1), x_norm.type(torch.complex64), atol=1e-3
         )
-
-
-class TestPhaseEncoding:
-    """Test class for Phase Encoder."""
-
-    @pytest.mark.parametrize("func", [None, 1, 2.4, {}, True, list(range(2))])
-    def test_func_type(self, func):
-        """Test the type of func input"""
-        with raises(TypeError, match="The input func must be of the type str."):
-            _ = PhaseEncoder(func)
-
-    @pytest.mark.parametrize("func", ["hadamard", "ry", "xx", "paulix", "i"])
-    def test_phase_encoding(self, func):
-        """Tests the PhaseEncoder class."""
-        assert func in func_name_dict
-        encoder = PhaseEncoder(func)
-        qdev = QuantumDevice(2)
-        with mock.patch.object(encoder, "func") as mock_func:
-            encoder(qdev, torch.rand(2, 4))
-            assert mock_func.call_count >= 1
-
-
-class TestMultiPhaseEncoding:
-    """Test class for Multi-phase Encoder."""
-
-    @pytest.mark.parametrize(
-        "wires, funcs",
-        [
-            (10, ["rx", "hadamard"]),
-            (2, ["swap", "ry"]),
-            (3, ["xx"]),
-            (1, ["paulix", "i"]),
-        ],
-    )
-    def test_invalid_func(self, wires, funcs):
-        with raises(ValueError, match=r"The func (.*?) is not supported\."):
-            encoder = MultiPhaseEncoder(funcs)
-            qdev = QuantumDevice(n_wires=wires)
-            encoder(qdev, torch.rand(1, pow(2, wires)))
-
-    # NOTE: Test with func = u1 currently fails.
-    @pytest.mark.parametrize(
-        "wires, funcs", [(5, ["ry", "phaseshift"]), (4, ["u2"]), (1, ["u3"])]
-    )
-    def test_phase_encoding(self, wires, funcs):
-        """Tests the MultiPhaseEncoder class."""
-        # wires = 4
-        encoder = MultiPhaseEncoder(funcs)
-        qdev = QuantumDevice(n_wires=wires)
-        mock_func = mock.Mock()
-        for func in encoder.funcs:
-            with mock.patch.dict(func_name_dict, {func: mock_func}):
-                encoder(qdev, torch.rand(1, pow(2, wires)))
-                assert mock_func.call_count >= 1
