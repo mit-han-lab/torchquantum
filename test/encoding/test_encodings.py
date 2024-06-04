@@ -50,7 +50,8 @@ class TestGeneralEncoder:
             _ = GeneralEncoder(func_list)
 
     @pytest.mark.parametrize(
-        "func_list", [[{"key1": 1}], [{"func": "rx"}], [{"func": "rx", "input_idx": [0]}]]
+        "func_list",
+        [[{"key1": 1}], [{"func": "rx"}], [{"func": "rx", "input_idx": [0]}]],
     )
     def test_func_list_keys(self, func_list):
         with raises(
