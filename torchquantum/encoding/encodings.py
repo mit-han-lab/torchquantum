@@ -57,13 +57,6 @@ class Encoder(tq.QuantumModule):
         if not isinstance(x, torch.Tensor):
             raise TypeError(f"The x input {x} must be of the type torch.Tensor.")
 
-        if any(tensor.size()[0] > pow(2, qdev.n_wires) for tensor in x):
-            raise ValueError(
-                f"The size of tensors in x ({x.size()[1]}) must be less than or "
-                f"equal to {pow(2, qdev.n_wires)} for a QuantumDevice with "
-                f"{qdev.n_wires} wires."
-            )
-
 
 class GeneralEncoder(Encoder, metaclass=ABCMeta):
     """func_list list of dict
@@ -274,6 +267,7 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
         """
         # Validate inputs
         self.validate_inputs(qdev, x)
+        self.validate_tensor_size(qdev, x)
         # encoder the x to the statevector of the quantum device
         # normalize the input
         x = x / (torch.sqrt((x.abs() ** 2).sum(dim=-1))).unsqueeze(-1)
@@ -287,6 +281,15 @@ class StateEncoder(Encoder, metaclass=ABCMeta):
         state = state.view([x.shape[0]] + [2] * qdev.n_wires)
 
         qdev.states = state.type(C_DTYPE)
+
+    @staticmethod
+    def validate_tensor_size(qdev: tq.QuantumDevice, x):
+        if any(tensor.size()[0] > pow(2, qdev.n_wires) for tensor in x):
+            raise ValueError(
+                f"The size of tensors in x ({x.size()[1]}) must be less than or "
+                f"equal to {pow(2, qdev.n_wires)} for a QuantumDevice with "
+                f"{qdev.n_wires} wires."
+            )
 
 
 class MagnitudeEncoder(Encoder, metaclass=ABCMeta):
