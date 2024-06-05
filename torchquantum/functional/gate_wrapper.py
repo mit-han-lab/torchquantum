@@ -330,6 +330,7 @@ def gate_wrapper(
     method,
     q_device: QuantumDevice,
     wires,
+    paramnum=0,
     params=None,
     n_wires=None,
     static=False,
