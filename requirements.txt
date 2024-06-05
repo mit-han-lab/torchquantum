@@ -10,7 +10,7 @@ pylatexenc>=2.10
 pyscf>=2.0.1
 qiskit>=1.0.0
 recommonmark
-qiskit-ibm-runtime==0.20.0
+qiskit-ibm-runtime>=0.20.0
 qiskit-aer==0.13.3
 
 scipy>=1.5.2
