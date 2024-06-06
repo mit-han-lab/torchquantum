@@ -33,7 +33,7 @@ class MMDLoss(nn.Module):
         Kernel expectation value
 
         Args:
-			px: First probability distribution
+		px: First probability distribution
 			py: Second probability distribution
 
         Returns:
