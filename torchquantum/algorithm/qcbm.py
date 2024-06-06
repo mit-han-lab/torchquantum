@@ -34,7 +34,7 @@ class MMDLoss(nn.Module):
 
         Args:
 		px: First probability distribution
-			py: Second probability distribution
+		py: Second probability distribution
 
         Returns:
             Expectation value of the RBF Kernel.
