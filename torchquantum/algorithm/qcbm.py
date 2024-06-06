@@ -45,7 +45,7 @@ class MMDLoss(nn.Module):
     def forward(self, px, py):
         """
         Squared MMD loss.
-
+    Args:
         px: First probability distribution
         py: Second probability distribution
 
