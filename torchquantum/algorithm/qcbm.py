@@ -33,8 +33,8 @@ class MMDLoss(nn.Module):
         Kernel expectation value
 
         Args:
-		px: First probability distribution
-		py: Second probability distribution
+            px: First probability distribution
+            py: Second probability distribution
 
         Returns:
             Expectation value of the RBF Kernel.
@@ -45,7 +45,8 @@ class MMDLoss(nn.Module):
     def forward(self, px, py):
         """
         Squared MMD loss.
-    Args:
+
+        Args:
             px: First probability distribution
             py: Second probability distribution
 
@@ -61,13 +62,12 @@ class QCBM(nn.Module):
     Quantum Circuit Born Machine (QCBM)
 
     Attributes:
-		ansatz: An Ansatz object
-		n_wires: Number of wires in the ansatz used.
+        ansatz: An Ansatz object
+        n_wires: Number of wires in the ansatz used.
 
     Methods:
-		__init__: Initialize the QCBM object.
-		forward: Returns the probability distribution (output from measurement).
-
+        __init__: Initialize the QCBM object.
+        forward: Returns the probability distribution (output from measurement).
     """
 
     def __init__(self, n_wires, ansatz):
@@ -75,8 +75,8 @@ class QCBM(nn.Module):
         Initialize QCBM object
 
         Args:
-			ansatz (Ansatz): An Ansatz object
-			n_wires (int): Number of wires in the ansatz used.
+            ansatz (Ansatz): An Ansatz object
+            n_wires (int): Number of wires in the ansatz used.
         """
         super().__init__()
 
