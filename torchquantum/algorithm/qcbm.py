@@ -47,7 +47,7 @@ class MMDLoss(nn.Module):
         Squared MMD loss.
     Args:
             px: First probability distribution
-        py: Second probability distribution
+            py: Second probability distribution
 
         Returns:
             Squared MMD loss.
