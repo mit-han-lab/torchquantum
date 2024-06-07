@@ -135,7 +135,7 @@ def train(init_params, backend):
     elif backend == "torchquantum":
         model = TQModel(init_params).to(device)
 
-    print(model)
+    print(f"{backend} model:", model)
 
     n_epochs = 10
     optimizer = optim.Adam(model.parameters(), lr=1e-2, weight_decay=0)
@@ -146,7 +146,7 @@ def train(init_params, backend):
 
     result_list = []
     for epoch in range(1, n_epochs + 1):
-        # print(f"Epoch {epoch}, LR: {optimizer.param_groups[0]['lr']}")
+        print(f"Epoch {epoch}, LR: {optimizer.param_groups[0]['lr']}")
         result_list.append(train_step(target_state, q_device, model, optimizer))
         scheduler.step()
 
