@@ -728,10 +728,7 @@ def qiskit2tq_Operator(circ: QuantumCircuit, initial_parameters=None):
         op_name = gate[0].name
         wires = list(map(lambda x: x.index, gate[1]))
         wires = [p2v[wire] for wire in wires]
-        # sometimes the gate.params is ParameterExpression class
-        # init_params = (
-        #     list(map(float, gate[0].params)) if len(gate[0].params) > 0 else None
-        # )
+
         init_params = qiskit2tq_translate_qiskit_params(
             gate, initial_parameters, param_to_index
         )
