@@ -21,8 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Optional
 
 import numpy as np
 import qiskit
@@ -837,7 +838,7 @@ def qiskit2tq_translate_qiskit_params(
 
 
 def qiskit2tq(
-    circ: QuantumCircuit, initial_parameters: list[torch.nn.Parameter] | None = None
+    circ: QuantumCircuit, initial_parameters: Optional[list[torch.nn.Parameter]] = None
 ):
     ops = qiskit2tq_Operator(circ, initial_parameters)
     return tq.QuantumModuleFromOps(ops)
