@@ -23,7 +23,6 @@ SOFTWARE.
 """
 
 import random
-
 import numpy as np
 import pytest
 from qiskit.quantum_info import Pauli, Statevector
@@ -40,7 +39,7 @@ pauli_str_op_dict = {
 }
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 def test_expval_observable():
     # seed = 0
     # random.seed(seed)

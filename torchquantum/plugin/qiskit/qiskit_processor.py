@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import os
 import datetime
 import itertools
 
@@ -29,6 +30,7 @@ import numpy as np
 import pathos.multiprocessing as multiprocessing
 import torch
 from qiskit import QuantumCircuit, transpile
+
 from qiskit.exceptions import QiskitError
 from qiskit.transpiler import PassManager
 from qiskit_aer import AerSimulator
@@ -64,7 +66,7 @@ def run_job_worker(data):
             break
         except Exception as e:
             if "Job was cancelled" in str(e):
-                logger.warning(f"Job is cancelled manually.")
+                logger.warning("Job is cancelled manually.")
                 return None
             else:
                 logger.warning(f"Job failed because {e}, rerun now.")
@@ -183,7 +185,10 @@ class QiskitProcessor(object):
 
         if self.backend is None:
             # initialize now
+            # Retrieve token from environment.
+            token = os.getenv("IBM_API_TOKEN")
             self.provider = get_provider_hub_group_project(
+                token=token,
                 hub=self.hub,
                 group=self.group,
                 project=self.project,
