@@ -1,15 +1,13 @@
 import functools
-import torch
-import numpy as np
+from typing import TYPE_CHECKING, Callable
 
-from typing import Callable, Union, Optional, List, Dict, TYPE_CHECKING
-from ..macro import C_DTYPE, F_DTYPE, ABC, ABC_ARRAY, INV_SQRT2
-from ..util.utils import pauli_eigs, diag
-from torchpack.utils.logging import logger
-from torchquantum.util import normalize_statevector
+import numpy as np
+import torch
+
+from ..macro import ABC, ABC_ARRAY, C_DTYPE, F_DTYPE
 
 if TYPE_CHECKING:
-    from torchquantum.device import QuantumDevice, NoiseDevice
+    from torchquantum.device import QuantumDevice
 else:
     QuantumDevice = None
 
@@ -58,7 +56,7 @@ def apply_unitary_einsum(state, mat, wires):
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
-    new_indices = ABC[total_wires: total_wires + len(device_wires)]
+    new_indices = ABC[total_wires : total_wires + len(device_wires)]
 
     # The new indices of the state are given by the old ones with the
     # affected indices replaced by the new_indices
@@ -186,7 +184,7 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
-    new_indices = ABC[total_wires: total_wires + len(device_wires)]
+    new_indices = ABC[total_wires : total_wires + len(device_wires)]
 
     # The new indices of the state are given by the old ones with the
     # affected indices replaced by the new_indices
@@ -210,7 +208,7 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     new_density = torch.einsum(einsum_indices, mat, density)
 
-    """
+    r"""
     Compute U \rho U^\dagger
     """
 
@@ -224,7 +222,7 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     # All affected indices will be summed over, so we need the same number
     # of new indices
-    new_indices = ABC[total_wires: total_wires + len(device_wires)]
+    new_indices = ABC[total_wires : total_wires + len(device_wires)]
 
     # The new indices of the state are given by the old ones with the
     # affected indices replaced by the new_indices
@@ -273,7 +271,9 @@ def apply_unitary_density_bmm(density, mat, wires):
     permute_to = permute_to[:1] + devices_dims + permute_to[1:]
     permute_back = list(np.argsort(permute_to))
     original_shape = density.shape
-    permuted = density.permute(permute_to).reshape([original_shape[0], mat.shape[-1], -1])
+    permuted = density.permute(permute_to).reshape(
+        [original_shape[0], mat.shape[-1], -1]
+    )
 
     if len(mat.shape) > 2:
         # both matrix and state are in batch mode
@@ -284,8 +284,8 @@ def apply_unitary_density_bmm(density, mat, wires):
         expand_shape = [bsz] + list(mat.shape)
         new_density = mat.expand(expand_shape).bmm(permuted)
     new_density = new_density.view(original_shape).permute(permute_back)
-    """
-    Compute \rho U^\dagger 
+    r"""
+    Compute \rho U^\dagger
     """
 
     matdag = mat.conj()
@@ -302,7 +302,9 @@ def apply_unitary_density_bmm(density, mat, wires):
         del permute_to_dag[d]
     permute_to_dag = permute_to_dag + devices_dims_dag
     permute_back_dag = list(np.argsort(permute_to_dag))
-    permuted_dag = new_density.permute(permute_to_dag).reshape([original_shape[0], -1, matdag.shape[-1]])
+    permuted_dag = new_density.permute(permute_to_dag).reshape(
+        [original_shape[0], -1, matdag.shape[0]]
+    )
 
     if len(matdag.shape) > 2:
         # both matrix and state are in batch mode
@@ -323,17 +325,17 @@ _noise_mat_dict = {
 
 
 def gate_wrapper(
-        name,
-        mat,
-        method,
-        q_device: QuantumDevice,
-        wires,
-        paramnum=0,
-        params=None,
-        n_wires=None,
-        static=False,
-        parent_graph=None,
-        inverse=False,
+    name,
+    mat,
+    method,
+    q_device: QuantumDevice,
+    wires,
+    paramnum=0,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
 ):
     """Perform the phaseshift gate.
 
@@ -389,9 +391,11 @@ def gate_wrapper(
             {
                 "name": name,  # type: ignore
                 "wires": np.array(wires).squeeze().tolist(),
-                "params": params.squeeze().detach().cpu().numpy().tolist()
-                if params is not None
-                else None,
+                "params": (
+                    params.squeeze().detach().cpu().numpy().tolist()
+                    if params is not None
+                    else None
+                ),
                 "inverse": inverse,
                 "trainable": params.requires_grad if params is not None else False,
             }
@@ -438,6 +442,7 @@ def gate_wrapper(
             else:
                 matrix = matrix.permute(1, 0)
         assert np.log2(matrix.shape[-1]) == len(wires)
+        
         # TODO: There might be a better way to discriminate noisedevice and normal statevector device
         if q_device.device_name == "noisedevice":
             density = q_device.densities
