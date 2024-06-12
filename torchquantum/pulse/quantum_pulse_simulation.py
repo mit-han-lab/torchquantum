@@ -14,6 +14,11 @@ class QuantumPulseDemo(tq.QuantumModule):
     def __init__(self):
         """
         Initializes the QuantumPulseDemo module.
+
+        Args:
+            n_wires (int): Number of quantum wires (qubits).
+            n_steps (int): Number of steps for the quantum pulse.
+            hamil (list): Hamiltonian for the quantum pulse.
         """
         super().__init__()
         self.n_wires = 2
