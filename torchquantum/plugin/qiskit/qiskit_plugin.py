@@ -22,15 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-
 from typing import Iterable
 
 import numpy as np
 import qiskit
 import qiskit.circuit.library.standard_gates as qiskit_gate
+import symengine
+import sympy
 import torch
 from qiskit import ClassicalRegister, QuantumCircuit, transpile
-from qiskit.circuit import Parameter
+from qiskit.circuit import CircuitInstruction, Parameter
+from qiskit.circuit.parameter import ParameterExpression
+from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit_aer import AerSimulator
 from torchpack.utils.logging import logger
 
