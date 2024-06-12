@@ -62,4 +62,9 @@ The Generator creates fake quantum data samples from a latent space.
 The Discriminator attempts to distinguish these fake samples from real quantum data.
 Through training, the generator improves its ability to create realistic quantum data, while the discriminator enhances its ability to identify fake data. This process results in a generator that can produce high-quality quantum data samples.
 
+
+## QGAN Implementation for CIFAR-10 Dataset
+This implementation trains a QGAN on the CIFAR-10 dataset to generate fake images. It follows a similar structure to the TorchQuantum QGAN, with the addition of data loading and processing specific to the CIFAR-10 dataset.
+Generated images can be seen in the folder
+
 This `README.md` file explains the purpose of the repository, the structure of the notebook, and how to run the examples, along with a brief overview of the QGAN concept for those unfamiliar with it.
