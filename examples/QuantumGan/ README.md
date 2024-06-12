@@ -68,3 +68,7 @@ This implementation trains a QGAN on the CIFAR-10 dataset to generate fake image
 Generated images can be seen in the folder
 
 This `README.md` file explains the purpose of the repository, the structure of the notebook, and how to run the examples, along with a brief overview of the QGAN concept for those unfamiliar with it.
+
+
+## Reference
+- [ ] https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.220505
