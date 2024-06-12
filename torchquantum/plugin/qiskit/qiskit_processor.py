@@ -23,33 +23,30 @@ SOFTWARE.
 """
 
 import os
-import torch
-import torchquantum as tq
-import pathos.multiprocessing as multiprocessing
+import datetime
 import itertools
 
-from qiskit import Aer, execute, transpile, QuantumCircuit
-from qiskit.providers.aer.noise import NoiseModel
-from qiskit.tools.monitor import job_monitor
+import numpy as np
+import pathos.multiprocessing as multiprocessing
+import torch
+from qiskit import QuantumCircuit, transpile
+
 from qiskit.exceptions import QiskitError
-from .qiskit_plugin import (
-    tq2qiskit,
-    tq2qiskit_parameterized,
-    tq2qiskit_measurement,
-)
+from qiskit.transpiler import PassManager
+from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
+from torchpack.utils.logging import logger
+from tqdm import tqdm
+
+import torchquantum as tq
 from torchquantum.util import (
+    get_circ_stats,
     get_expectations_from_counts,
     get_provider_hub_group_project,
-    get_circ_stats,
 )
-from .qiskit_macros import IBMQ_NAMES
-from tqdm import tqdm
-from torchpack.utils.logging import logger
-from qiskit.transpiler import PassManager
-import numpy as np
-import datetime
 
-from .my_job_monitor import my_job_monitor
+from .qiskit_macros import IBMQ_NAMES
+from .qiskit_plugin import tq2qiskit, tq2qiskit_measurement, tq2qiskit_parameterized
 
 
 class EmptyPassManager(PassManager):
@@ -60,13 +57,10 @@ class EmptyPassManager(PassManager):
 def run_job_worker(data):
     while True:
         try:
-            job = execute(**(data[0]))
-            qiskit_verbose = data[1]
-            if qiskit_verbose:
-                job_monitor(job, interval=1)
+            job = AerSimulator(**(data))
             result = job.result()
             counts = result.get_counts()
-            # circ_num = len(data[0]['parameter_binds'])
+            # circ_num = len(data['parameter_binds'])
             # logger.info(
             #     f'run job worker successful, circuit number = {circ_num}')
             break
@@ -205,9 +199,7 @@ class QiskitProcessor(object):
                 self.coupling_map = self.get_coupling_map(self.backend_name)
             else:
                 # use simulator
-                self.backend = Aer.get_backend(
-                    "qasm_simulator", max_parallel_experiments=0
-                )
+                self.backend = AerSimulator(max_parallel_experiments=0)
                 self.noise_model = self.get_noise_model(self.noise_model_name)
                 self.coupling_map = self.get_coupling_map(self.coupling_map_name)
                 self.basis_gates = self.get_basis_gates(self.basis_gates_name)
@@ -322,7 +314,6 @@ class QiskitProcessor(object):
                     for i in range(0, len(binds_all), chunk_size)
                 ]
 
-            qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_bind in split_binds:
                 feed_dict = {
@@ -334,7 +325,7 @@ class QiskitProcessor(object):
                     "noise_model": self.noise_model,
                     "parameter_binds": split_bind,
                 }
-                feed_dicts.append([feed_dict, qiskit_verbose])
+                feed_dicts.append(feed_dict)
 
             p = multiprocessing.Pool(self.max_jobs)
             results = p.map(run_job_worker, feed_dicts)
@@ -347,16 +338,14 @@ class QiskitProcessor(object):
                     results[-1] = [results[-1]]
                 counts = list(itertools.chain(*results))
         else:
-            job = execute(
-                experiments=transpiled_circ,
-                backend=self.backend,
+            job = self.backend.run(
+                transpiled_circ,
                 pass_manager=self.empty_pass_manager,
                 shots=self.n_shots,
                 seed_simulator=self.seed_simulator,
                 noise_model=self.noise_model,
                 parameter_binds=binds_all,
             )
-            job_monitor(job, interval=1)
 
             result = job.result()
             counts = result.get_counts()
@@ -499,7 +488,6 @@ class QiskitProcessor(object):
                 for i in range(0, len(binds_all), chunk_size)
             ]
 
-            qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_bind in split_binds:
                 feed_dict = {
@@ -511,7 +499,7 @@ class QiskitProcessor(object):
                     "noise_model": self.noise_model,
                     "parameter_binds": split_bind,
                 }
-                feed_dicts.append([feed_dict, qiskit_verbose])
+                feed_dicts.append(feed_dict)
 
             p = multiprocessing.Pool(self.max_jobs)
             results = p.map(run_job_worker, feed_dicts)
@@ -535,16 +523,15 @@ class QiskitProcessor(object):
             for circ in split_circs:
                 while True:
                     try:
-                        job = execute(
-                            experiments=circ,
-                            backend=self.backend,
+                        job = self.backend.run(
+                            circ,
                             pass_manager=self.empty_pass_manager,
                             shots=self.n_shots,
                             seed_simulator=self.seed_simulator,
                             noise_model=self.noise_model,
                             parameter_binds=binds_all,
                         )
-                        job_monitor(job, interval=1)
+
                         result = (
                             job.result()
                         )  # qiskit.providers.ibmq.job.exceptions.IBMQJobFailureError:Job has failed. Use the error_message() method to get more details
@@ -557,7 +544,7 @@ class QiskitProcessor(object):
                         # total_cont += 1
                         # print(total_time_spent / total_cont)
                         break
-                    except (QiskitError) as e:
+                    except QiskitError as e:
                         logger.warning("Job failed, rerun now.")
                         print(e.message)
 
@@ -615,7 +602,6 @@ class QiskitProcessor(object):
             circ_all[i : i + chunk_size] for i in range(0, len(circ_all), chunk_size)
         ]
 
-        qiskit_verbose = self.max_jobs <= 2
         feed_dicts = []
         for split_circ in split_circs:
             feed_dict = {
@@ -626,7 +612,7 @@ class QiskitProcessor(object):
                 "seed_simulator": self.seed_simulator,
                 "noise_model": self.noise_model,
             }
-            feed_dicts.append([feed_dict, qiskit_verbose])
+            feed_dicts.append(feed_dict)
 
         p = multiprocessing.Pool(self.max_jobs)
         results = p.map(run_job_worker, feed_dicts)
@@ -663,9 +649,8 @@ class QiskitProcessor(object):
         transpiled_circs = self.transpile(circs)
         self.transpiled_circs = transpiled_circs
 
-        job = execute(
-            experiments=transpiled_circs,
-            backend=self.backend,
+        job = self.backend.run(
+            transpiled_circs,
             shots=self.n_shots,
             # initial_layout=self.initial_layout,
             seed_transpiler=self.seed_transpiler,
@@ -675,7 +660,6 @@ class QiskitProcessor(object):
             noise_model=self.noise_model,
             optimization_level=self.optimization_level,
         )
-        job_monitor(job, interval=1)
 
         result = job.result()
         counts = result.get_counts()
@@ -706,7 +690,6 @@ class QiskitProcessor(object):
                 for i in range(0, len(circs_all), chunk_size)
             ]
 
-            qiskit_verbose = self.max_jobs <= 6
             feed_dicts = []
             for split_circ in split_circs:
                 feed_dict = {
@@ -717,7 +700,7 @@ class QiskitProcessor(object):
                     "seed_simulator": self.seed_simulator,
                     "noise_model": self.noise_model,
                 }
-                feed_dicts.append([feed_dict, qiskit_verbose])
+                feed_dicts.append(feed_dict)
 
             p = multiprocessing.Pool(self.max_jobs)
             results = p.map(run_job_worker, feed_dicts)
@@ -730,15 +713,13 @@ class QiskitProcessor(object):
                     results[-1] = [results[-1]]
                 counts = list(itertools.chain(*results))
         else:
-            job = execute(
-                experiments=circs_all,
-                backend=self.backend,
+            job = self.backend.run(
+                circs_all,
                 pass_manager=self.empty_pass_manager,
                 shots=self.n_shots,
                 seed_simulator=self.seed_simulator,
                 noise_model=self.noise_model,
             )
-            job_monitor(job, interval=1)
 
             result = job.result()
             counts = [result.get_counts()]
@@ -760,9 +741,9 @@ class QiskitProcessor(object):
         for circ_ in circs_all:
             circ = circ_.copy()
             for k, obs in enumerate(observable):
-                if obs == 'X':
+                if obs == "X":
                     circ.h(k)
-                elif obs == 'Y':
+                elif obs == "Y":
                     circ.z(k)
                     circ.s(k)
                     circ.h(k)
@@ -773,8 +754,10 @@ class QiskitProcessor(object):
 
         mask = np.ones(len(observable), dtype=bool)
         mask[np.array([*observable]) == "I"] = False
-    
-        counts = self.process_ready_circs_get_counts(circs_all_diagonalized, parallel=parallel)
+
+        counts = self.process_ready_circs_get_counts(
+            circs_all_diagonalized, parallel=parallel
+        )
 
         # here we need to switch the little and big endian of distribution bitstrings
         distributions = []
@@ -788,19 +771,25 @@ class QiskitProcessor(object):
             n_eigen_one = 0
             n_eigen_minus_one = 0
             for bitstring, n_count in distri.items():
-                if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
+                if (
+                    np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2
+                    == 0
+                ):
                     n_eigen_one += n_count
                 else:
                     n_eigen_minus_one += n_count
-            
-            expval = n_eigen_one / self.n_shots + (-1) * n_eigen_minus_one / self.n_shots
+
+            expval = (
+                n_eigen_one / self.n_shots + (-1) * n_eigen_minus_one / self.n_shots
+            )
             expval_all.append(expval)
 
         return expval_all
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pdb
+
     pdb.set_trace()
     circ = QuantumCircuit(3)
     circ.h(0)
@@ -808,11 +797,9 @@ if __name__ == '__main__':
     circ.cx(1, 2)
     circ.rx(0.1, 0)
 
-    qiskit_processor = QiskitProcessor(
-        use_real_qc=False
-    )
+    qiskit_processor = QiskitProcessor(use_real_qc=False)
 
-    qiskit_processor.process_circs_get_joint_expval([circ], 'XII')
+    qiskit_processor.process_circs_get_joint_expval([circ], "XII")
 
     qdev = tq.QuantumDevice(n_wires=3, bsz=1)
     qdev.h(0)
@@ -821,5 +808,5 @@ if __name__ == '__main__':
     qdev.rx(0, 0.1)
 
     from torchquantum.measurement import expval_joint_sampling
-    print(expval_joint_sampling(qdev, 'XII', n_shots=8192))
 
+    print(expval_joint_sampling(qdev, "XII", n_shots=8192))
