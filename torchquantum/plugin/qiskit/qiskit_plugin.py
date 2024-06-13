@@ -21,15 +21,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Optional
 
 import numpy as np
 import qiskit
 import qiskit.circuit.library.standard_gates as qiskit_gate
+import symengine
+import sympy
 import torch
 from qiskit import ClassicalRegister, QuantumCircuit, transpile
-from qiskit.circuit import Parameter
+from qiskit.circuit import CircuitInstruction, Parameter
+from qiskit.circuit.parameter import ParameterExpression
+from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit_aer import AerSimulator
 from torchpack.utils.logging import logger
 
@@ -691,7 +696,7 @@ def op_history2qiskit_expand_params(n_wires, op_history, bsz):
 
 # construct a tq QuantumModule object according to the qiskit QuantumCircuit
 # object
-def qiskit2tq_Operator(circ: QuantumCircuit):
+def qiskit2tq_Operator(circ: QuantumCircuit, initial_parameters=None):
     if getattr(circ, "_layout", None) is not None:
         try:
             p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
@@ -711,14 +716,23 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
         for p in range(circ.num_qubits):
             p2v[p] = p
 
+    if initial_parameters is None:
+        initial_parameters = torch.nn.init.uniform_(
+            torch.ones(len(circ.parameters)), -np.pi, np.pi
+        )
+
+    param_to_index = {}
+    for i, param in enumerate(circ.parameters):
+        param_to_index[param] = i
+
     ops = []
     for gate in circ.data:
         op_name = gate[0].name
         wires = [circ.find_bit(qb).index for qb in gate.qubits]
         wires = [p2v[wire] for wire in wires]
-        # sometimes the gate.params is ParameterExpression class
-        init_params = (
-            list(map(float, gate[0].params)) if len(gate[0].params) > 0 else None
+
+        init_params = qiskit2tq_translate_qiskit_params(
+            gate, initial_parameters, param_to_index
         )
 
         if op_name in [
@@ -780,8 +794,53 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
     return ops
 
 
-def qiskit2tq(circ: QuantumCircuit):
-    ops = qiskit2tq_Operator(circ)
+def qiskit2tq_translate_qiskit_params(
+    circuit_instruction: CircuitInstruction, initial_parameters, param_to_index
+):
+    parameters = []
+    for p in circuit_instruction.operation.params:
+        if isinstance(p, Parameter) or isinstance(p, ParameterVectorElement):
+            parameters.append(initial_parameters[param_to_index[p]])
+        elif isinstance(p, ParameterExpression):
+            if len(p.parameters) == 0:
+                parameters.append(float(p))
+                continue
+
+            expr = p.sympify().simplify()
+            if isinstance(expr, symengine.Expr):  # qiskit uses symengine if available
+                expr = expr._sympy_()  # sympy.Expr
+
+            for free_symbol in expr.free_symbols:
+                # replace names: theta[0] -> theta_0
+                # ParameterVector creates symbols with brackets like theta[0]
+                # but sympy.lambdify does not allow brackets in symbol names
+                free_symbol.name = free_symbol.name.replace("[", "_").replace("]", "")
+
+            parameter_list = list(p.parameters)
+            sympy_symbols = [param._symbol_expr for param in parameter_list]
+            # replace names again: theta[0] -> theta_0
+            sympy_symbols = [
+                sympy.Symbol(str(symbol).replace("[", "_").replace("]", ""))
+                for symbol in sympy_symbols
+            ]
+            lam_f = sympy.lambdify(sympy_symbols, expr, modules="math")
+            parameters.append(
+                lam_f(
+                    *[
+                        initial_parameters[param_to_index[param]]
+                        for param in parameter_list
+                    ]
+                )
+            )
+        else:  # non-parameterized gate
+            parameters.append(p)
+    return parameters
+
+
+def qiskit2tq(
+    circ: QuantumCircuit, initial_parameters: Optional[list[torch.nn.Parameter]] = None
+):
+    ops = qiskit2tq_Operator(circ, initial_parameters)
     return tq.QuantumModuleFromOps(ops)
 
 
