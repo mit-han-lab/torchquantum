@@ -1,5 +1,5 @@
 <p align="center">
-<img src="torchquantum_logo.jpg" alt="torchquantum Logo" width="450">
+<img src="https://github.com/mit-han-lab/torchquantum/blob/main/torchquantum_logo.jpg?raw=true" alt="torchquantum Logo" width="450">
 </p>
 
 <h2><p align="center">Quantum Computing in PyTorch</p></h2>
