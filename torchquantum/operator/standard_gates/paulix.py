@@ -42,6 +42,17 @@ class CNOT(Operation, metaclass=ABCMeta):
     def _matrix(cls, params):
         return cls.matrix
 
+    def inverse_operation(self, params):
+        return CNOT(
+            has_params=self.has_params,
+            trainable=self.trainable,
+            init_params=self.init_params,
+            n_wires=self.n_wires,
+            wires=self.wires,
+            inverse=self.inverse,
+        )
+        # return self
+
 
 class C4X(Operation, metaclass=ABCMeta):
     """Class for C4X Gate."""
