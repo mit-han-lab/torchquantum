@@ -380,7 +380,7 @@ def gate_wrapper(
             params = params.unsqueeze(0) if params.dim() == 2 else params
         else:
             if params.dim() == 1:
-                params = params.unsqueeze(-1)
+                params = params.unsqueeze(0).unsqueeze(-1)
             elif params.dim() == 0:
                 params = params.unsqueeze(-1).unsqueeze(-1)
             # params = params.unsqueeze(-1) if params.dim() == 1 else params
