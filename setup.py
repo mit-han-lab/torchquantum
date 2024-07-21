@@ -31,7 +31,7 @@ with open("torchquantum/__version__.py", "r") as version_file:
 
 if __name__ == "__main__":
     requirements = open("requirements.txt").readlines()
-    requirements = [r.strip() for r in requirements]
+    requirements = [r.strip() for r in requirements if not r.startswith("torchquantum")]
 
     setup(
         name="torchquantum",
