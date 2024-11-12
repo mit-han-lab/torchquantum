@@ -424,7 +424,7 @@ class MeasureMultiPauliSum(tq.QuantumModule):
         )
 
     def forward(self, qdev: tq.QuantumDevice):
-        res_all = self.measure_multiple_times(qdev)
+        res_all = self.measure_multiple_times(qdev).prod(-1)
 
         return res_all.sum(-1)
 
@@ -452,8 +452,9 @@ class MeasureMultiQubitPauliSum(tq.QuantumModule):
         )
 
     def forward(self, qdev: tq.QuantumDevice):
-        res_all = self.measure_multiple_times(qdev)
-        return (res_all * self.obs_list[0]["coefficient"]).sum(-1)
+        res_all = self.measure_multiple_times(qdev).prod(-1)
+        
+        return (res_all * torch.tensor(self.obs_list[0]["coefficient"])).sum(-1)
 
 
 if __name__ == '__main__':
