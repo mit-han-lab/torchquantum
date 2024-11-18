@@ -7,6 +7,7 @@ from abc import ABCMeta
 from ..macro import C_DTYPE, F_DTYPE
 from typing import Iterable, Union, List
 from enum import IntEnum
+from torchquantum.util.quantization.clifford_quantization import CliffordQuantizer
 
 __all__ = [
     "Operator",
