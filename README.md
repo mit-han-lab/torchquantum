@@ -58,6 +58,11 @@ Researchers on quantum algorithm design, parameterized quantum circuit training,
 Dynamic computation graph, automatic gradient computation, fast GPU support, batch model tensorized processing.
 
 ## News
+- Torchquantum is used in the winning team for ACM Quantum Computing for Drug Discovery Challenge.
+- Torchquantum is highlighted in [UnitaryHack](https://unitaryhack.dev/projects/torchquantum/).
+- TorchQuantum received [UnitaryFund](https://unitary.fund/).
+- TorchQuantum is integrated to [IBM Qiskit Ecosystem](https://qiskit.github.io/ecosystem/).
+- TorchQuantum is integrated to [PyTorch Ecosystem](https://pytorch.org/ecosystem/).
 - v0.1.8 Available!
 - Check the [dev branch](https://github.com/mit-han-lab/torchquantum/tree/dev) for new latest features on quantum layers and quantum algorithms.
 - Join our [Slack](https://join.slack.com/t/torchquantum/shared_invite/zt-1ghuf283a-OtP4mCPJREd~367VX~TaQQ) for real time support!
