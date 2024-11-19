@@ -7,7 +7,6 @@ from abc import ABCMeta
 from ..macro import C_DTYPE, F_DTYPE
 from typing import Iterable, Union, List
 from enum import IntEnum
-from torchquantum.util.quantization.clifford_quantization import CliffordQuantizer
 
 __all__ = [
     "Operator",
@@ -246,6 +245,7 @@ class Operator(tq.QuantumModule):
                 params = self.params
 
             if self.clifford_quantization:
+                from torchquantum.util.quantization.clifford_quantization import CliffordQuantizer
                 params = CliffordQuantizer.quantize_sse(params)
             if self.n_wires is None:
                 self.func(q_device, self.wires, params=params, inverse=self.inverse)
