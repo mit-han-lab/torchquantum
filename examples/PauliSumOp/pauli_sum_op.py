@@ -44,17 +44,16 @@ class QLayer(tq.QuantumModule):
         self.rz0 = tq.RZ(has_params=True, trainable=True)
         self.crx0 = tq.CRX(has_params=True, trainable=True)
 
-        self.measure = tq.MeasureMultiPauliSum(
+        self.measure = tq.MeasureMultiQubitPauliSum(
             obs_list=[
+                {'coefficient': [0.2, 0.5]},
                 {
                     "wires": [0, 2, 3, 1],
                     "observables": ["x", "y", "z", "i"],
-                    "coefficient": [1, 0.5, 0.4, 0.3],
                 },
                 {
                     "wires": [0, 2, 3, 1],
                     "observables": ["x", "x", "z", "i"],
-                    "coefficient": [1, 0.5, 0.4, 0.3],
                 },
             ]
         )

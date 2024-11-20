@@ -23,7 +23,6 @@ __all__ = [
     "expval",
     "MeasureAll",
     "MeasureMultipleTimes",
-    "MeasureMultiPauliSum",
     "MeasureMultiQubitPauliSum",
     "gen_bitstrings",
     "measure",
@@ -367,15 +366,14 @@ class MeasureMultipleTimes(tq.QuantumModule):
 
             observables = []
             for wire in range(qdev.n_wires):
-                observables.append(tq.I())
+                observables.append("I")
 
             for wire, observable in zip(layer["wires"], layer["observables"]):
-                observables[wire] = tq.op_name_dict[observable]()
+                observables[wire] = observable
 
-            res = expval(
+            res = expval_joint_analytical(
                 qdev_new,
-                wires=list(range(qdev.n_wires)),
-                observables=observables,
+                observable="".join(observables),
             )
 
             if self.v_c_reg_mapping is not None:
@@ -390,40 +388,11 @@ class MeasureMultipleTimes(tq.QuantumModule):
                 res = res[:, perm]
             res_all.append(res)
 
-        return torch.cat(res_all)
+
+        return torch.stack(res_all, dim=-1)
 
     def set_v_c_reg_mapping(self, mapping):
         self.v_c_reg_mapping = mapping
-
-
-class MeasureMultiPauliSum(tq.QuantumModule):
-    """
-    similar to qiskit.opflow PauliSumOp
-    obs list:
-    list of dict: example
-    [{'wires': [0, 2, 3, 1],
-    'observables': ['x', 'y', 'z', 'i'],
-    'coefficient': [1, 0.5, 0.4, 0.3]
-    },
-    {'wires': [0, 2, 3, 1],
-    'observables': ['x', 'y', 'z', 'i'],
-    'coefficient': [1, 0.5, 0.4, 0.3]
-    },
-    ]
-    """
-
-    def __init__(self, obs_list, v_c_reg_mapping=None):
-        super().__init__()
-        self.obs_list = obs_list
-        self.v_c_reg_mapping = v_c_reg_mapping
-        self.measure_multiple_times = MeasureMultipleTimes(
-            obs_list=obs_list, v_c_reg_mapping=v_c_reg_mapping
-        )
-
-    def forward(self, qdev: tq.QuantumDevice):
-        res_all = self.measure_multiple_times(qdev).prod(-1)
-
-        return res_all.sum(-1)
 
 
 class MeasureMultiQubitPauliSum(tq.QuantumModule):
@@ -449,8 +418,9 @@ class MeasureMultiQubitPauliSum(tq.QuantumModule):
         )
 
     def forward(self, qdev: tq.QuantumDevice):
-        res_all = self.measure_multiple_times(qdev).prod(-1)
-        
+        # returns batch x len(obs_list) object, return sum times coefficient
+        res_all = self.measure_multiple_times(qdev)
+
         return (res_all * torch.tensor(self.obs_list[0]["coefficient"])).sum(-1)
 
 
