@@ -23,7 +23,6 @@ __all__ = [
     "expval",
     "MeasureAll",
     "MeasureMultipleTimes",
-    "MeasureMultiPauliSum",
     "MeasureMultiQubitPauliSum",
     "gen_bitstrings",
     "measure",
@@ -394,37 +393,6 @@ class MeasureMultipleTimes(tq.QuantumModule):
 
     def set_v_c_reg_mapping(self, mapping):
         self.v_c_reg_mapping = mapping
-
-
-class MeasureMultiPauliSum(tq.QuantumModule):
-    """
-    similar to qiskit.opflow PauliSumOp
-    obs list:
-    list of dict: example
-    [{'wires': [0, 2, 3, 1],
-    'observables': ['x', 'y', 'z', 'i'],
-    'coefficient': [1, 0.5, 0.4, 0.3]
-    },
-    {'wires': [0, 2, 3, 1],
-    'observables': ['x', 'y', 'z', 'i'],
-    'coefficient': [1, 0.5, 0.4, 0.3]
-    },
-    ]
-    """
-
-    def __init__(self, obs_list, v_c_reg_mapping=None):
-        super().__init__()
-        self.obs_list = obs_list
-        self.v_c_reg_mapping = v_c_reg_mapping
-        self.measure_multiple_times = MeasureMultipleTimes(
-            obs_list=obs_list, v_c_reg_mapping=v_c_reg_mapping
-        )
-
-    def forward(self, qdev: tq.QuantumDevice):
-        # returns batch x len(obs_list) object, return sum
-        res_all = self.measure_multiple_times(qdev)
-
-        return res_all.sum(-1)
 
 
 class MeasureMultiQubitPauliSum(tq.QuantumModule):
