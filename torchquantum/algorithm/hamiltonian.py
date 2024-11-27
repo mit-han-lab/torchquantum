@@ -28,7 +28,7 @@ import torchquantum as tq
 import torchquantum.functional as tqf
 import numpy as np
 
-from typing import Any, Iterable, List
+from typing import Any, Iterable, List, Union
 from torchquantum.util import pauli_string_to_matrix
 
 __all__ = ["Hamiltonian"]
@@ -96,6 +96,7 @@ class Hamiltonian(object):
                  coeffs: List[float],
                  paulis: List[str],
                  endianness: str = "big",
+                 device: Union[torch.device, str, None] = None
                  ) -> None:
         """Initialize the Hamiltonian.
         Args:
@@ -125,6 +126,8 @@ class Hamiltonian(object):
         self.coeffs = coeffs
         self.paulis = paulis
         self.endianness = endianness
+        self.dev = (torch.device(device) if isinstance(device, str)
+                    else device)
         if self.endianness == "little":
             self.paulis = [pauli[::-1] for pauli in self.paulis]
     
@@ -135,9 +138,11 @@ class Hamiltonian(object):
     
     def get_matrix(self) -> torch.Tensor:
         """Return the matrix of the Hamiltonian."""
-        matrix = self.coeffs[0] * pauli_string_to_matrix(self.paulis[0])
+        matrix = self.coeffs[0] * pauli_string_to_matrix(self.paulis[0],
+                                                         device=self.dev)
         for coeff, pauli in zip(self.coeffs[1:], self.paulis[1:]):
-            matrix += coeff * pauli_string_to_matrix(pauli)
+            matrix += coeff * pauli_string_to_matrix(pauli,
+                                                     device=self.dev)
 
         return matrix
     
