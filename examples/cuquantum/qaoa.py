@@ -50,8 +50,8 @@ class MAXCUT(nn.Module):
             hamiltonian[pauli_string] = 0.5
 
         backend = CuTensorNetworkBackend(TNConfig(num_hyper_samples=10))
-        self.energy = QuantumExpectation(self.circuit, [hamiltonian], backend)
-        self.sampling = QuantumSampling(self.circuit, 100, backend)
+        self.energy = QuantumExpectation(self.circuit, backend, [hamiltonian])
+        self.sampling = QuantumSampling(self.circuit, backend, 100)
 
     def forward(self):
         start_time = torch.cuda.Event(enable_timing=True)

@@ -19,18 +19,18 @@ class QuantumExpectation(nn.Module):
 
     Args:
         circuit: The quantum circuit that prepares the state.
+        backend: The quantum backend to use for computation.
         pauli_ops: List of Pauli operators to compute expectations for. Each Pauli operator can be either:
             - A single Pauli string specifying the pauli operator for each qubit ("I", "X", "Y", or "Z").
             - A linear combination of Pauli strings specified as a dictionary mapping each single Pauli string to
               its corresponding coefficient.
-        backend: The quantum backend to use for computation.
     """
 
     def __init__(
         self,
         circuit: ParameterizedQuantumCircuit,
-        pauli_ops: Union[List[str], Dict[str, float]],
         backend: QuantumBackend,
+        pauli_ops: Union[List[str], Dict[str, float]],
     ):
         super().__init__()
         self._circuit = circuit.copy()

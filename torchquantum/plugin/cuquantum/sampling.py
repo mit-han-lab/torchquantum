@@ -14,17 +14,23 @@ from .circuit import ParameterizedQuantumCircuit
 class QuantumSampling(nn.Module):
     """A PyTorch module for sampling from quantum states.
 
-    This module generates samples from the quantum state prepared by a given quantum circuit. It can sample from all 
+    This module generates samples from the quantum state prepared by a given quantum circuit. It can sample from all
     qubits or a specified subset of qubits.
 
     Args:
         circuit: The quantum circuit that prepares the state.
-        n_samples: Number of samples to generate per batch.
         backend: The quantum backend to use for computation.
+        n_samples: Number of samples to generate per batch.
         wires: Optional list of wires/qubits to sample from. If not provided, all wires/qubits are sampled from.
     """
-    
-    def __init__(self, circuit:ParameterizedQuantumCircuit, n_samples: int, backend: QuantumBackend, wires: Optional[List[int]]=None):
+
+    def __init__(
+        self,
+        circuit: ParameterizedQuantumCircuit,
+        backend: QuantumBackend,        
+        n_samples: int,
+        wires: Optional[List[int]] = None,
+    ):
         super().__init__()
         self.circuit = circuit
         self.n_samples = n_samples

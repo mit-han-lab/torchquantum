@@ -18,11 +18,11 @@ class QuantumAmplitude(nn.Module):
 
     Args:
         circuit: The quantum circuit that prepares the state.
-        bitstrings: List of bitstrings whose amplitudes to compute.
         backend: The quantum backend to use for computation.
+        bitstrings: List of bitstrings whose amplitudes to compute.
     """
 
-    def __init__(self, circuit: ParameterizedQuantumCircuit, bitstrings: List[str], backend: QuantumBackend):
+    def __init__(self, circuit: ParameterizedQuantumCircuit, backend: QuantumBackend, bitstrings: List[str]):
         super().__init__()
         self._circuit = circuit.copy()
         self._bitstrings = bitstrings.copy()
