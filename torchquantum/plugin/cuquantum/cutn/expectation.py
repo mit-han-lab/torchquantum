@@ -13,7 +13,7 @@ class CuTNExpectationFD(nn.Module):
     def __init__(self, states, pauli_ops, circuit_params, delta):
         super().__init__()
         if len(states) != len(pauli_ops):
-            raise ValueError(f"Expected as many states as pauli operators, got {len(states)} and {len(pauli_ops)}")
+            raise ValueError(f"Expected as many states as Pauli operators, got {len(states)} and {len(pauli_ops)}")
         if len(states) == 0:
             raise ValueError(f"Expected at least one state")
 

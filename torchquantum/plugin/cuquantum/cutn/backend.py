@@ -52,7 +52,7 @@ class CuTensorNetworkBackend(QuantumBackend):
         self, circuit: ParameterizedQuantumCircuit, pauli_ops: Union[List[str], Dict[str, float]]
     ) -> nn.Module:
         if self._allow_multiple_states:
-            # In order to utilize caching feature of the network states, we need to create a seperate network state for each pauli operator.
+            # In order to utilize caching feature of the network states, we need to create a seperate network state for each Pauli operator.
             # Otherwise, the network state cache will be overwritten when pauli_op changes.
             states = [
                 ParameterizedNetworkState.from_parameterized_circuit(circuit, self._config)
