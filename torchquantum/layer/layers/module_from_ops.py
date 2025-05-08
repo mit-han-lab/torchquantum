@@ -43,19 +43,22 @@ class QuantumModuleFromOps(tq.QuantumModule):
 
     Args:
         ops (List[tq.Operation]): List of quantum operations.
+        n_wires (int, optional): Number of wires in the quantum circuit.
 
     """
 
-    def __init__(self, ops):
+    def __init__(self, ops, n_wires=None):
         super().__init__()
         self.ops = tq.QuantumModuleList(ops)
+        self.n_wires = n_wires
 
     @tq.static_support
-    def forward(self, q_device: tq.QuantumDevice):
+    def forward(self, q_device: tq.QuantumDevice, x=None):
         """Performs the forward pass of the quantum module.
 
         Args:
             q_device (tq.QuantumDevice): Quantum device to apply the operations on.
+            x (Any, optional): Optional input parameter, not used in this implementation.
 
         Returns:
             None

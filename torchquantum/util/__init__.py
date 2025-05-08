@@ -24,3 +24,4 @@ SOFTWARE.
 
 from .utils import *
 from .vqe_utils import *
+from .matrix_utils import *

@@ -156,7 +156,7 @@ class QuantumGraph(object):
         if not self.is_list_finish:
             # graph construction is not finished, build a new operation and
             # add the operation to the graph
-            print(tq.op_name_dict[name])
+            # print(tq.op_name_dict[name])
             # op = tq.op_name_dict[name]()
             op_class = tq.op_name_dict[name]
             op = op_class(has_params=True if params is not None else False,

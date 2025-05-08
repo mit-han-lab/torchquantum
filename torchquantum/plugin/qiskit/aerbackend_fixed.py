@@ -25,7 +25,7 @@ from abc import ABC, abstractmethod
 
 from qiskit.circuit import QuantumCircuit, ParameterExpression, Delay
 from qiskit.compiler import assemble
-from qiskit.providers import BackendV1 as Backend
+from qiskit.providers import BackendV2 as Backend
 from qiskit.providers.models import BackendStatus
 from qiskit.pulse import Schedule, ScheduleBlock
 from qiskit.qobj import QasmQobj, PulseQobj
@@ -69,10 +69,16 @@ class AerBackend(Backend, ABC):
         Raises:
             AerError: if there is no name in the configuration
         """
-        # Init configuration and provider in Backend
-        configuration.simulator = True
-        configuration.local = True
-        super().__init__(configuration, provider=provider)
+        # Store original configuration for compatibility
+        self._configuration = configuration
+        
+        # For BackendV2, we need to extract and pass the required attributes
+        super().__init__(
+            provider=provider,
+            name=configuration.backend_name,
+            description=getattr(configuration, "description", ""),
+            backend_version=configuration.backend_version
+        )
 
         # Initialize backend properties and pulse defaults.
         self._properties = properties
@@ -359,7 +365,7 @@ class AerBackend(Backend, ABC):
 
             # Compile Qasm3 instructions
             circuits, optypes = compile_circuit(
-                circuits, basis_gates=self.configuration().basis_gates, optypes=optypes
+                circuits, basis_gates=self.operation_names, optypes=optypes
             )
 
             # run option noise model
