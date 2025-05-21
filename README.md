@@ -59,8 +59,8 @@ Dynamic computation graph, automatic gradient computation, fast GPU support, bat
 
 ## News
 - Torchquantum is used in the winning team for ACM Quantum Computing for Drug Discovery Challenge.
-- Torchquantum is highlighted in [UnitaryHack](https://unitaryhack.dev/projects/torchquantum/).
-- TorchQuantum received [UnitaryFund](https://unitary.fund/).
+- Torchquantum is highlighted in [unitaryHACK](https://2024.unitaryhack.dev/projects/torchquantum/).
+- TorchQuantum received a [Unitary Foundation microgrant](https://unitary.foundation/grants/).
 - TorchQuantum is integrated to [IBM Qiskit Ecosystem](https://qiskit.github.io/ecosystem/).
 - TorchQuantum is integrated to [PyTorch Ecosystem](https://pytorch.org/ecosystem/).
 - v0.1.8 Available!
