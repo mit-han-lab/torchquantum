@@ -336,3 +336,5 @@ es_runs/
 .vscode-upload.json
 
 mnist_data/
+.cursor/
+.github/
