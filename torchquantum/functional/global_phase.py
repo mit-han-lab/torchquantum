@@ -45,8 +45,7 @@ def globalphase(
     inverse=False,
     comp_method="bmm",
 ):
-    """Perform the echoed cross-resonance gate.
-    https://qiskit.org/documentation/stubs/qiskit.circuit.library.ECRGate.html
+    """
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
         wires (Union[List[int], int]): Which qubit(s) to apply the gate.

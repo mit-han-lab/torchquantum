@@ -155,7 +155,20 @@ class QLayer(tq.QuantumModule):
         cnt = 0
         while cnt < self.n_funcs:
             func = np.random.choice(self.funcs)
-            n_func_wires = op_name_dict[func]().num_wires
+            # print(f"Selected function: {func}")
+
+            """
+            ORIGINAL: n_func_wires = op_name_dict[func]().num_wires
+            Changed to avoid initialization error with QubitUnitaryFast which requires 
+            parameters during instantiation. Instead, we access num_wires directly 
+            from the class since it's a class attribute.
+            """
+
+            op_class = op_name_dict[func]
+            # print(f"Operator class: {op_class}")
+            # print(f"Number of wires: {op_class.num_wires}")
+            n_func_wires = op_class.num_wires
+            
             if n_func_wires > self.n_wires:
                 continue
             cnt += 1
@@ -191,8 +204,9 @@ class QLayer(tq.QuantumModule):
             self.func_list, self.func_wires_list, self.func_inverse
         ):
             n_func_wires = len(func_wires)
-            n_func_params = op_name_dict[func]().num_params
-
+            op_class = op_name_dict[func]
+            # n_func_params = op_name_dict[func]().num_params
+            n_func_params = op_class.num_params
             if n_func_params == 0:
                 if func in ["multicnot", "multixcnot"]:
                     func_name_dict[func](
@@ -218,6 +232,25 @@ class QLayer(tq.QuantumModule):
                         self.rand_mat[: 2**n_func_wires, : 2**n_func_wires]
                     )
                     params = u @ v
+                    
+                    # Debug prints
+                    #print(f"SVD components for {func}:")
+                    #print(f"U singular values: {np.max(np.abs(u)):.6f}, {np.min(np.abs(u)):.6f}")
+                    #print(f"Singular values: {s}")
+                    #print(f"V singular values: {np.max(np.abs(v)):.6f}, {np.min(np.abs(v)):.6f}")
+                    
+                    # Check unitarity
+                    #conj_transpose = np.conjugate(params.T)
+                    #product = np.matmul(conj_transpose, params)
+                    #identity = np.eye(params.shape[0], dtype=complex)
+                    #max_diff = np.max(np.abs(product - identity))
+                    # print(f"Unitarity check: max_diff={max_diff:.8f}")
+                    
+                    # If inverse, check inverse matrix too
+                    if is_inverse:
+                        inv_params = np.conjugate(params.T)  # Unitary inverse = conjugate transpose
+                        #print(f"Inverse unitarity check: max_diff={np.max(np.abs(np.matmul(inv_params, params) - identity)):.8f}")
+                    
                     func_name_dict[func](
                         self.q_device,
                         wires=func_wires,
@@ -230,6 +263,9 @@ class QLayer(tq.QuantumModule):
                 else:
                     raise NotImplementedError
             else:
+                """
+                Currently parameterized gates have bugs
+                """
                 params = x[:, self.x_idx : self.x_idx + n_func_params]
                 self.x_idx += n_func_params
                 if func in ["multirz"]:
@@ -243,6 +279,9 @@ class QLayer(tq.QuantumModule):
                         inverse=is_inverse,
                     )
                 else:
+                    #print(f"func: {func}")
+                    #print(f"params: {params}")
+                    #print(f"static: {self.static_mode}")
                     func_name_dict[func](
                         self.q_device,
                         wires=func_wires,
@@ -251,6 +290,8 @@ class QLayer(tq.QuantumModule):
                         parent_graph=self.graph,
                         inverse=is_inverse,
                     )
+                    #print(f"func_name_dict[func]: {func_name_dict[func]}")
+                    #print("\n")
 
         self.x_idx = 0
 

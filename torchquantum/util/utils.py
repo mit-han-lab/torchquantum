@@ -32,7 +32,7 @@ import torch.nn.functional as F
 from opt_einsum import contract
 from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit.exceptions import QiskitError
-from qiskit.providers.aer.noise.device.parameters import gate_error_values
+from qiskit_aer.noise.device.parameters import gate_error_values
 from torchpack.utils.config import Config
 from torchpack.utils.logging import logger
 
@@ -560,17 +560,38 @@ def get_p_v_reg_mapping(circ):
     """
     try:
         p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
-    except:
-        p2v_orig = circ._layout.get_physical_bits().copy()
+    except AttributeError:
+        try:
+            p2v_orig = circ._layout.get_physical_bits().copy()
+        except AttributeError:
+             logger.error(
+                 "(get_p_v_reg_mapping) Circuit layout object does not have get_physical_bits() or final_layout. "
+                 "Cannot determine physical-to-virtual mapping."
+             )
+             return {"p2v": {}, "v2p": {}}
+
     mapping = {
         "p2v": {},
         "v2p": {},
     }
 
-    for p, v in p2v_orig.items():
-        if v.register.name == "q":
-            mapping["p2v"][p] = v.index
-            mapping["v2p"][v.index] = p
+    for p, v_qubit in p2v_orig.items():
+        try:
+            # Use find_bit(bit).index for reliable index lookup
+            v_idx = circ.find_bit(v_qubit).index
+            mapping["p2v"][p] = v_idx
+            mapping["v2p"][v_idx] = p
+        except (AttributeError, ValueError):
+            logger.warning(
+                f"(get_p_v_reg_mapping) Could not get valid circuit index for qubit {v_qubit} from layout (physical: {p}). "
+                f"Skipping physical qubit {p} in p2v mapping."
+            )
+            continue
+        except Exception as e:
+             logger.error(
+                f"(get_p_v_reg_mapping) Unexpected error processing qubit mapping (p={p}, v={v_qubit}): {e}"
+             )
+             continue
 
     return mapping
 
@@ -584,10 +605,37 @@ def get_p_c_reg_mapping(circ):
         "p2c": {},
         "c2p": {},
     }
-    for gate in circ.data:
-        if gate[0].name == "measure":
-            mapping["p2c"][gate[1][0].index] = gate[2][0].index
-            mapping["c2p"][gate[2][0].index] = gate[1][0].index
+    for instruction in circ.data: # Use instruction object
+        op = instruction.operation
+        qubits = instruction.qubits
+        clbits = instruction.clbits
+
+        if op.name == "measure":
+            if not qubits or not clbits:
+                continue
+
+            measured_qubit = qubits[0]
+            target_clbit = clbits[0]
+
+            try:
+                # Use find_bit(bit).index for reliable index lookup
+                qubit_idx = circ.find_bit(measured_qubit).index
+                clbit_idx = circ.find_bit(target_clbit).index
+
+                mapping["p2c"][qubit_idx] = clbit_idx # Map physical qubit index to clbit index
+                mapping["c2p"][clbit_idx] = qubit_idx # Map clbit index to physical qubit index
+
+            except (AttributeError, ValueError): # Catch if find_bit fails or index is missing/invalid
+                logger.warning(
+                    f"(get_p_c_reg_mapping) Could not get valid indices for measured qubit {measured_qubit} or target clbit {target_clbit}. "
+                    f"Skipping measurement instruction in mapping."
+                )
+                continue
+            except Exception as e:
+                 logger.error(
+                    f"(get_p_c_reg_mapping) Unexpected error processing measurement ({measured_qubit} -> {target_clbit}): {e}"
+                 )
+                 continue # Skip this measurement if unexpected error
 
     return mapping
 
@@ -601,27 +649,81 @@ def get_v_c_reg_mapping(circ):
     """
     try:
         p2v_orig = circ._layout.final_layout.get_physical_bits().copy()
-    except:
-        p2v_orig = circ._layout.get_physical_bits().copy()
+    except AttributeError:  # Use specific exception
+        try:
+            p2v_orig = circ._layout.get_physical_bits().copy()
+        except AttributeError:
+             logger.error(
+                 "Circuit layout object does not have get_physical_bits() or final_layout. "
+                 "Cannot determine physical-to-virtual mapping."
+             )
+             # Return empty map if layout is missing, maybe can proceed with measurement map?
+             # Let's return an empty map for now, downstream logic might handle it.
+             return {"v2c": {}, "c2v": {}}
+
     p2v = {}
-    for p, v in p2v_orig.items():
-        if v.register.name == "q":
-            p2v[p] = v.index
+    for p, v_qubit in p2v_orig.items():
+        try:
+            # Use find_bit(bit).index which is the modern way to get circuit index
+            v_idx = circ.find_bit(v_qubit).index
+            p2v[p] = v_idx
+        except (AttributeError, ValueError): # Catch if find_bit fails or index is missing/invalid
+            logger.warning(
+                f"Could not get valid circuit index for qubit {v_qubit} from layout (physical: {p}). "
+                f"Skipping physical qubit {p} in p2v mapping."
+            )
+            continue
 
     mapping = {
         "p2c": {},
         "c2p": {},
     }
-    for gate in circ.data:
-        if gate[0].name == "measure":
-            mapping["p2c"][gate[1][0].index] = gate[2][0].index
-            mapping["c2p"][gate[2][0].index] = gate[1][0].index
+
+    for instruction in circ.data:
+        op = instruction.operation
+        qubits = instruction.qubits
+        clbits = instruction.clbits
+
+        if op.name == "measure":
+            if not qubits or not clbits: 
+                continue
+            
+            measured_qubit = qubits[0]
+            target_clbit = clbits[0]
+
+            try:
+                # Use find_bit(bit).index for reliable index lookup
+                qubit_idx = circ.find_bit(measured_qubit).index
+                clbit_idx = circ.find_bit(target_clbit).index
+
+                mapping["p2c"][qubit_idx] = clbit_idx # Map virtual qubit index to clbit index
+                mapping["c2p"][clbit_idx] = qubit_idx # Map clbit index to virtual qubit index
+
+            except (AttributeError, ValueError): # Catch if find_bit fails or index is missing/invalid
+                logger.warning(
+                    f"Could not get valid indices for measured qubit {measured_qubit} or target clbit {target_clbit}. "
+                    f"Skipping measurement instruction in mapping."
+                )
+                continue
+            except Exception as e:
+                 logger.error(
+                    f"Unexpected error processing measurement ({measured_qubit} -> {target_clbit}): {e}"
+                 )
+                 continue # Skip this measurement if unexpected error
 
     mapping2 = {"v2c": {}, "c2v": {}}
 
-    for c, p in mapping["c2p"].items():
-        mapping2["c2v"][c] = p2v[p]
+    if not p2v: # Check if p2v is empty before proceeding
+        logger.warning("Physical-to-virtual map (p2v) is empty. Cannot create final v<->c map.")
+        # Return the partially filled measurement map if needed downstream, or empty.
+        # For consistency, let's return empty if the full map can't be built.
+        return {"v2c": {}, "c2v": {}}
 
+    for c_idx, v_idx in mapping["c2p"].items(): # Use directly obtained virtual index
+        # Map classical index c_idx to virtual index v_idx
+        mapping2["c2v"][c_idx] = v_idx
+
+    # Create the inverse mapping v2c
     for c, v in mapping2["c2v"].items():
         mapping2["v2c"][v] = c
 
@@ -738,51 +840,45 @@ def get_success_rate(properties, transpiled_circ):
 
     return success_rate
 
-def get_provider(backend_name, hub=None):
+def get_provider(backend_name, hub=None, api_token=None, instance=None):
     """
         Get the provider object for a specific backend from IBM Quantum.
 
         Args:
-            backend_name (str): Name of the backend.
-            hub (str): Optional hub name.
+            backend_name (str): Name of the backend. (Currently unused in this simplified version)
+            hub (str): Optional hub name. (Currently unused in this simplified version)
+            api_token (str, optional): IBM Quantum API token. Defaults to None (uses saved credentials).
+            instance (str, optional): The service instance to use (e.g., 'ibm-q/open/main'). Defaults to None.
 
         Returns:
-            IBMQProvider: The provider object.
-        """
-    # mass-inst-tech-1 or MIT-1
-    if backend_name in ["ibmq_casablanca", "ibmq_rome", "ibmq_bogota", "ibmq_jakarta"]:
-        if hub == "mass" or hub is None:
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/mass-inst-tech-1/main")
-        elif hub == "mit":
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/MIT-1/main")
-        else:
-            raise ValueError(f"not supported backend {backend_name} in hub " f"{hub}")
-    elif backend_name in [
-        "ibmq_paris",
-        "ibmq_toronto",
-        "ibmq_manhattan",
-        "ibmq_guadalupe",
-        "ibmq_montreal",
-    ]:
-        provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-ornl/anl/csc428")
-    else:
-        if hub == "mass" or hub is None:
-            try:
-                provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/mass-inst-tech-1/main")
-            except QiskitError:
-                # logger.warning(f"Cannot use MIT backend, roll back to open")
-                logger.warning(f"Use the open backend")
-                provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q/open/main")
-        elif hub == "mit":
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/MIT-1/main")
-        else:
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q/open/main")
+            QiskitRuntimeService: The service object.
+
+        Raises:
+            QiskitError: If the service cannot be initialized.
+    """
+    kwargs = {"channel": "ibm_quantum"}
+    if api_token:
+        kwargs["token"] = api_token
+    if instance:
+        kwargs["instance"] = instance
+
+    # Removed the complex if/elif/else logic based on backend_name/hub
+    # The user now needs to supply the correct instance directly.
+    try:
+        provider = QiskitRuntimeService(**kwargs)
+    except Exception as e:
+        logger.error(f"Failed to initialize QiskitRuntimeService with provided arguments: {kwargs}")
+        raise e  # Re-raise the exception after logging
 
     return provider
 
 
 def get_provider_hub_group_project(hub="ibm-q", group="open", project="main"):
-    provider = QiskitRuntimeService(channel = "ibm_quantum", instance = f"{hub}/{group}/{project}")
+    # This function might still be useful if users prefer the hub/group/project format
+    # But it uses the instance format directly now.
+    instance_str = f"{hub}/{group}/{project}"
+    # Note: This doesn't handle api_token, might need adjustment if used.
+    provider = QiskitRuntimeService(channel = "ibm_quantum", instance=instance_str)
     return provider
 
 
