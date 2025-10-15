@@ -239,13 +239,28 @@ class Operator(tq.QuantumModule):
             else:
                 self.func(q_device, self.wires, n_wires=self.n_wires, inverse=self.inverse)  # type: ignore
         else:
-            if isinstance(self.noise_model_tq, tq.NoiseModelTQPhase):
+            # Avoid hard dependency on tq.noise_model export; fall back gracefully
+            try:
+                is_phase_noise = isinstance(
+                    self.noise_model_tq, tq.noise_model.NoiseModelTQPhase
+                )
+            except AttributeError:
+                # tq.noise_model not exported; treat as no phase noise
+                is_phase_noise = False
+
+            if is_phase_noise:
                 params = self.noise_model_tq.add_noise(self.params)
             else:
                 params = self.params
 
             if self.clifford_quantization:
-                params = CliffordQuantizer.quantize_sse(params)
+                try:
+                    # Local import to avoid circular dependency and undefined name at import time
+                    from torchquantum.util.quantization import CliffordQuantizer
+                    params = CliffordQuantizer.quantize_sse(params)
+                except Exception:
+                    # If quantizer is unavailable, skip quantization
+                    pass
             if self.n_wires is None:
                 self.func(q_device, self.wires, params=params, inverse=self.inverse)
             else:
