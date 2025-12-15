@@ -43,7 +43,7 @@ if __name__ == "__main__":
         license="MIT",
         install_requires=requirements,
         extras_require={"doc": ["nbsphinx", "recommonmark"]},
-        python_requires=">=3.5",
+        python_requires=">=3.7",# Align with README
         include_package_data=True,
         packages=find_packages(),
     )

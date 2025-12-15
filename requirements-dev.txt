@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# Development Requirements for TorchQuantum
+# ---------------------------------------------------------------------------
+# This file lists dependencies needed for developing TorchQuantum,
+# including testing, linting, formatting, and building documentation.
+# Use 'pip install -r requirements-dev.txt' to install these.
+# ---------------------------------------------------------------------------
+
+# Include the core library requirements
+-r requirements.txt
+
+# === Code Style & Linting ===
+# Used via pre-commit hooks (as mentioned in README)
+pre-commit>=2.15.0   # Manages git hooks for checks
+black>=22.3.0        # Uncompromising Python code formatter
+# You might add other linters like flake8 or isort here if the project uses them
+
+# === Testing ===
+pytest>=6.0.0        # Standard testing framework for Python
+# Add other testing plugins if needed (e.g., pytest-cov for coverage)
+
+# === Documentation Building ===
+# Dependencies needed to build the documentation locally (from setup.py extras)
+Sphinx>=4.0.0        # Documentation generator tool
+nbsphinx             # Sphinx extension for rendering Jupyter Notebooks
+recommonmark         # Sphinx extension for Markdown support
+# Add any other specific themes or extensions used (e.g., sphinx_rtd_theme)
