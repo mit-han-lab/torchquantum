@@ -33,7 +33,7 @@ import qiskit
 from qiskit import QuantumCircuit, ClassicalRegister
 from qiskit_aer import AerSimulator, UnitarySimulator
 from qiskit import transpile
-from qiskit.circuit import Parameter
+from qiskit.circuit import Parameter, ParameterExpression
 from qiskit.circuit.library import UnitaryGate
 from torchpack.utils.logging import logger
 from torchquantum.util import (
@@ -64,6 +64,37 @@ __all__ = [
 ]
 
 
+def _has_unbound_params(params):
+    """Check if any parameter in the list is an unbound ParameterExpression."""
+    for p in params:
+        if isinstance(p, ParameterExpression):
+            # Check if there are unbound parameters
+            if len(p.parameters) > 0:
+                return True
+    return False
+
+
+def _convert_params(params):
+    """Convert Qiskit gate parameters to float values.
+
+    Args:
+        params: List of gate parameters (may include ParameterExpression)
+
+    Returns:
+        tuple: (converted_params, has_unbound) where converted_params is a list
+               of float values (or None if unbound), and has_unbound is a bool
+               indicating if any parameters were unbound.
+    """
+    if len(params) == 0:
+        return None, False
+
+    if _has_unbound_params(params):
+        return None, True
+
+    # All parameters are bound, convert to float
+    return list(map(float, params)), False
+
+
 def qiskit2tq_op_history(circ):
     if getattr(circ, "_layout", None) is not None:
         try:
@@ -86,11 +117,8 @@ def qiskit2tq_op_history(circ):
         op_name = gate.operation.name
         wires = [qubit._index for qubit in gate.qubits]
         wires = [p2v[wire] for wire in wires]
-        # sometimes the gate.params is ParameterExpression class
-        init_params = (
-            list(map(float, gate.operation.params)) if len(gate.operation.params) > 0 else None
-        )
-        print(op_name,)
+        # Handle ParameterExpression - may contain unbound parameters
+        init_params, has_unbound = _convert_params(gate.operation.params)
 
         if op_name in [
             "h",
@@ -848,10 +876,8 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
         op_name = gate.operation.name
         wires = [qubit._index for qubit in gate.qubits]
         wires = [p2v[wire] for wire in wires]
-        # sometimes the gate.params is ParameterExpression class
-        init_params = (
-            list(map(float, gate.operation.params)) if len(gate.operation.params) > 0 else None
-        )
+        # Handle ParameterExpression - may contain unbound parameters
+        init_params, has_unbound = _convert_params(gate.operation.params)
 
         if op_name in [
             "h",
