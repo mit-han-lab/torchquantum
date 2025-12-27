@@ -371,9 +371,13 @@ def gate_wrapper(
             params = params.unsqueeze(0) if params.dim() == 2 else params
         else:
             if params.dim() == 1:
-                params = params.unsqueeze(-1)
+                # Add batch dimension at front for multi-parameter gates
+                # This allows [0.1, 0.2] to become [[0.1, 0.2]] with shape [1, 2]
+                # Fixes issue #232: U2 and other multi-param gates now work with 1D input
+                params = params.unsqueeze(0)
             elif params.dim() == 0:
-                params = params.unsqueeze(-1).unsqueeze(-1)
+                # Scalar case: add both batch and param dimensions
+                params = params.unsqueeze(0).unsqueeze(0)
             # params = params.unsqueeze(-1) if params.dim() == 1 else params
     wires = [wires] if isinstance(wires, int) else wires
 
