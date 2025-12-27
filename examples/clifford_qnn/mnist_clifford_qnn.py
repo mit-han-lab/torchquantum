@@ -55,6 +55,9 @@ class QFCModel(tq.QuantumModule):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
 
+        # Reset quantum device states for current batch size
+        self.q_device.reset_states(bsz)
+
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
                 self.q_device, self.encoder, self.q_layer, self.measure, x
