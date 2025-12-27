@@ -34,7 +34,7 @@ _hadamard_mat_dict = {
 
 def hadamard(
     q_device: QuantumDevice,
-    wires: Union[List[int], int],
+    wires: int,
     params: torch.Tensor = None,
     n_wires: int = None,
     static: bool = False,
@@ -46,7 +46,7 @@ def hadamard(
 
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
-        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        wires (int): Which qubit to apply the gate.
         params (torch.Tensor, optional): Parameters (if any) of the gate.
             Default to None.
         n_wires (int, optional): Number of qubits the gate is applied to.
@@ -81,7 +81,7 @@ def hadamard(
 
 def shadamard(
     q_device,
-    wires,
+    wires: int,
     params=None,
     n_wires=None,
     static=False,
@@ -93,7 +93,7 @@ def shadamard(
 
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
-        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        wires (int): Which qubit to apply the gate.
         params (torch.Tensor, optional): Parameters (if any) of the gate.
             Default to None.
         n_wires (int, optional): Number of qubits the gate is applied to.
@@ -128,7 +128,7 @@ def shadamard(
 
 def chadamard(
     q_device,
-    wires,
+    wires: List[int],
     params=None,
     n_wires=None,
     static=False,
@@ -136,11 +136,11 @@ def chadamard(
     inverse=False,
     comp_method="bmm",
 ):
-    """Perform the chadamard gate.
+    """Perform the controlled hadamard gate.
 
     Args:
         q_device (tq.QuantumDevice): The QuantumDevice.
-        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        wires (List[int]): Which qubits to apply the gate (control and target).
         params (torch.Tensor, optional): Parameters (if any) of the gate.
             Default to None.
         n_wires (int, optional): Number of qubits the gate is applied to.
@@ -160,7 +160,7 @@ def chadamard(
 
     name = "chadamard"
 
-    mat = mat_dict[name]
+    mat = _hadamard_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
