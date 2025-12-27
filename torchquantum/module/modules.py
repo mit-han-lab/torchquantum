@@ -24,6 +24,7 @@ SOFTWARE.
 
 import torch.nn as nn
 import torchquantum as tq
+import warnings
 
 from abc import ABCMeta
 from typing import Iterable
@@ -256,6 +257,15 @@ class QuantumModule(nn.Module):
                 # be the same as the parent graph because ModuleList and
                 # ModuleDict do not call the forward function
                 module.graph = self.graph
+                # Warn if using nn.ModuleList instead of tq.QuantumModuleList
+                if not isinstance(module, (tq.QuantumModuleList, tq.QuantumModuleDict)):
+                    warnings.warn(
+                        f"Using nn.ModuleList or nn.ModuleDict with quantum gates may cause "
+                        f"issues with static mode and tq2qiskit conversion. Consider using "
+                        f"tq.QuantumModuleList or tq.QuantumModuleDict instead.",
+                        UserWarning,
+                        stacklevel=2
+                    )
             module.parent_graph = self.graph
             if not isinstance(module, tq.QuantumDevice):
                 module.static_on(is_graph_top=False)
