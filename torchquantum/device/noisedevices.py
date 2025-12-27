@@ -62,7 +62,7 @@ class NoiseDevice(nn.Module):
 
         _density = torch.zeros(2 ** (2 * self.n_wires), dtype=C_DTYPE)
         _density[0] = 1 + 0j
-        _density = torch.reshape(_density, [2] * (2 * self.n_wires))
+        _density = torch.reshape(_density, [2] * (2 * self.n_wires)).to(self.device)
         self._dims = 2 * self.n_wires
         self.register_buffer("density", _density)
 
