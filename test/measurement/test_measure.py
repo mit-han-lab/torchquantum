@@ -25,7 +25,7 @@ SOFTWARE.
 import torchquantum as tq
 
 from torchquantum.plugin import op_history2qiskit
-from qiskit_aer import Aer
+from qiskit_aer import AerSimulator
 from qiskit import transpile
 import numpy as np
 
@@ -43,7 +43,7 @@ def test_measure():
 
     circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
     circ.measure_all()
-    simulator = Aer.get_backend("aer_simulator")
+    simulator = AerSimulator()
     circ = transpile(circ, simulator)
     qiskit_res = simulator.run(circ, shots=n_shots).result()
     qiskit_counts = qiskit_res.get_counts()

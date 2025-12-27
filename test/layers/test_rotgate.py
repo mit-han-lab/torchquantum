@@ -1,6 +1,6 @@
 import torchquantum as tq
 import qiskit
-from qiskit_aer import Aer
+from qiskit_aer import AerSimulator
 from qiskit import transpile
 
 from torchquantum.util import (
@@ -36,7 +36,7 @@ def test_rotgates():
                 qiskit_circuit = pair["qiskit"](num_wires, *params)
 
                 # get the unitary from qiskit
-                backend = Aer.get_backend("unitary_simulator")
+                backend = AerSimulator(method='unitary')
                 qiskit_circuit = transpile(qiskit_circuit, backend)
                 result = backend.run(qiskit_circuit).result()
                 unitary_qiskit = result.get_unitary(qiskit_circuit)
