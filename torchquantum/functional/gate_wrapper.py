@@ -296,9 +296,16 @@ def apply_unitary_density_bmm(density, mat, wires):
         new_density = mat.expand(expand_shape).bmm(permuted)
     new_density = new_density.view(original_shape).permute(permute_back)
     """
-    Compute \rho U^\dagger 
+    Compute \rho U^\dagger
     """
-    matdag = torch.conj(mat)
+    # Fix for issue #254: Need conjugate transpose, not just conjugate
+    # U† = (U*)^T where U* is element-wise conjugate and ^T is transpose
+    if len(mat.shape) > 2:
+        # Batched matrices: swap last two dimensions
+        matdag = torch.conj(mat.permute(0, 2, 1))
+    else:
+        # Single matrix: transpose
+        matdag = torch.conj(mat.permute(1, 0))
     matdag = matdag.type(C_DTYPE).to(density.device)
 
     devices_dims_dag = [n_qubit + w + 1 for w in device_wires]
