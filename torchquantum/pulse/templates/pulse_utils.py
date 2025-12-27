@@ -5,8 +5,9 @@ import itertools
 import numpy as np
 
 from itertools import repeat
-from qiskit.providers import aer
-from qiskit.providers.fake_provider import *
+from qiskit_aer import AerSimulator
+# fake_provider has moved to qiskit_ibm_runtime
+from qiskit_ibm_runtime.fake_provider import *
 from qiskit.circuit import Gate
 from qiskit.compiler import assemble
 from qiskit import pulse, QuantumCircuit, IBMQ

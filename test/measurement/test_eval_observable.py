@@ -25,7 +25,7 @@ SOFTWARE.
 from qiskit import QuantumCircuit
 import numpy as np
 import random
-from qiskit.opflow import StateFn, X, Y, Z, I
+from qiskit.quantum_info import Statevector, SparsePauliOp
 
 import torchquantum as tq
 
@@ -34,14 +34,6 @@ from torchquantum.plugin import op_history2qiskit
 from torchquantum.util import switch_little_big_endian_state
 
 import torch
-
-pauli_str_op_dict = {
-    "X": X,
-    "Y": Y,
-    "Z": Z,
-    "I": I,
-}
-
 
 def test_expval_observable():
     # seed = 0
@@ -63,18 +55,21 @@ def test_expval_observable():
         )[0].item()
 
         qiskit_circ = op_history2qiskit(qdev.n_wires, qdev.op_history)
-        operator = pauli_str_op_dict[obs[0]]
-        for ob in obs[1:]:
-            # note here the order is reversed because qiskit is in little endian
-            operator = pauli_str_op_dict[ob] ^ operator
-        psi = StateFn(qiskit_circ)
-        psi_evaled = psi.eval()._primitive._data
+
+        # opflow was little-endian, SparsePauliOp is also little-endian.
+        # TorchQuantum is big-endian.
+        # So we need to reverse the observable string for qiskit.
+        qiskit_observable_str = "".join(reversed(obs))
+        operator = SparsePauliOp(qiskit_observable_str)
+
+        psi = Statevector.from_instruction(qiskit_circ)
+        psi_evaled = psi.data
         state_tq = switch_little_big_endian_state(
             qdev.get_states_1d().detach().numpy()
         )[0]
         assert np.allclose(psi_evaled, state_tq, atol=1e-5)
 
-        expval_qiskit = (~psi @ operator @ psi).eval().real
+        expval_qiskit = psi.expectation_value(operator).real
         # print(expval_tq, expval_qiskit)
         assert np.isclose(expval_tq, expval_qiskit, atol=1e-5)
         if (
@@ -91,35 +86,35 @@ def util0():
 
     qc.x(0)
 
-    operator = Z ^ I
-    psi = StateFn(qc)
-    expectation_value = (~psi @ operator @ psi).eval()
+    operator = SparsePauliOp("ZI")
+    psi = Statevector(qc)
+    expectation_value = psi.expectation_value(operator)
     print(expectation_value.real)
     # result: 1.0, means measurement result is 0, so Z is on qubit 1
 
-    operator = I ^ Z
-    psi = StateFn(qc)
-    expectation_value = (~psi @ operator @ psi).eval()
+    operator = SparsePauliOp("IZ")
+    psi = Statevector(qc)
+    expectation_value = psi.expectation_value(operator)
     print(expectation_value.real)
     # result: -1.0 means measurement result is 1, so Z is on qubit 0
 
-    operator = I ^ I
-    psi = StateFn(qc)
-    expectation_value = (~psi @ operator @ psi).eval()
+    operator = SparsePauliOp("II")
+    psi = Statevector(qc)
+    expectation_value = psi.expectation_value(operator)
     print(expectation_value.real)
 
-    operator = Z ^ Z
-    psi = StateFn(qc)
-    expectation_value = (~psi @ operator @ psi).eval()
+    operator = SparsePauliOp("ZZ")
+    psi = Statevector(qc)
+    expectation_value = psi.expectation_value(operator)
     print(expectation_value.real)
 
     qc = QuantumCircuit(3)
 
     qc.x(0)
 
-    operator = I ^ I ^ Z
-    psi = StateFn(qc)
-    expectation_value = (~psi @ operator @ psi).eval()
+    operator = SparsePauliOp("ZII")
+    psi = Statevector(qc)
+    expectation_value = psi.expectation_value(operator)
     print(expectation_value.real)
 
 

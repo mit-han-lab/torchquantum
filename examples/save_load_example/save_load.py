@@ -119,7 +119,7 @@ def save_load2():
 
     torch.save(model, "model_whole.pt")
 
-    model2 = torch.load("model_whole.pt")
+    model2 = torch.load("model_whole.pt", weights_only=False)
     y2 = model2(x)
     print(y2)
     assert torch.equal(y, y2)

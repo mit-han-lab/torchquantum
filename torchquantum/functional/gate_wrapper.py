@@ -393,6 +393,8 @@ def gate_wrapper(
     if static:
         # in static mode, the function is not computed immediately, instead,
         # the unitary of a module will be computed and then applied
+        # print("Is static mode")
+        #print(f"name: {name}")
         parent_graph.add_func(
             name=name,
             wires=wires,
@@ -433,7 +435,7 @@ def gate_wrapper(
         assert np.log2(matrix.shape[-1]) == len(wires)
         if q_device.device_name=="noisedevice":
             density = q_device.densities
-            print(density.shape)
+            # print(density.shape)
             if method == "einsum":
                 return
             elif method == "bmm":

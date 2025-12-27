@@ -17,7 +17,7 @@ def compare_tq_to_qiskit(tq_circuit, qiskit_circuit, instance_info=""):
     for bit in qiskit_circuit.decompose():
         wires = []
         for qu in bit.qubits:
-            wires.append(qu.index)
+            wires.append(qu._index)
         qiskit_ops.append(
             {
                 "name": bit.operation.name,

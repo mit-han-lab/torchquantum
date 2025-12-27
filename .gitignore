@@ -336,3 +336,15 @@ es_runs/
 .vscode-upload.json
 
 mnist_data/
+
+configs.yml
+debug_qiskit.txt
+fix_note.txt
+h2_new.txt
+max-acc-valid.pt
+model.pt
+.cursor/rules/*.mdc
+
+.cursorignore
+.cursor/
+.github/copilot-instructions.md

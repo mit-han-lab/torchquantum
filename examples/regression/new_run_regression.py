@@ -46,13 +46,13 @@ from torchquantum.plugin import (
 
 
 def gen_data(L, N):
-    omega_0 = np.zeros([2**L], dtype="complex_")
+    omega_0 = np.zeros([2**L], dtype=complex)
     omega_0[0] = 1 + 0j
 
-    omega_1 = np.zeros([2**L], dtype="complex_")
+    omega_1 = np.zeros([2**L], dtype=complex)
     omega_1[-1] = 1 + 0j
 
-    states = np.zeros([N, 2**L], dtype="complex_")
+    states = np.zeros([N, 2**L], dtype=complex)
 
     thetas = 2 * np.pi * np.random.rand(N)
     phis = 2 * np.pi * np.random.rand(N)

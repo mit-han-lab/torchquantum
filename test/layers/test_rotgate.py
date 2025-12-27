@@ -1,6 +1,7 @@
 import torchquantum as tq
 import qiskit
-from qiskit import Aer, execute
+from qiskit_aer import Aer
+from qiskit import transpile
 
 from torchquantum.util import (
     switch_little_big_endian_matrix,
@@ -36,7 +37,8 @@ def test_rotgates():
 
                 # get the unitary from qiskit
                 backend = Aer.get_backend("unitary_simulator")
-                result = execute(qiskit_circuit, backend).result()
+                qiskit_circuit = transpile(qiskit_circuit, backend)
+                result = backend.run(qiskit_circuit).result()
                 unitary_qiskit = result.get_unitary(qiskit_circuit)
 
                 # create tq circuit

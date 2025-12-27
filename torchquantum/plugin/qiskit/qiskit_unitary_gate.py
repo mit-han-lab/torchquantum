@@ -17,33 +17,38 @@ Arbitrary unitary circuit instruction.
 from collections import OrderedDict
 import numpy
 
-from qiskit.circuit import Gate, ControlledGate
+from qiskit.circuit import Gate, ControlledGate, AnnotatedOperation
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit import QuantumRegister, Qubit
 from qiskit.circuit.exceptions import CircuitError
 from qiskit.circuit._utils import _compute_control_matrix
-from qiskit.circuit.library.standard_gates import U3Gate
+from qiskit.circuit.library.standard_gates import UGate
 from qiskit.quantum_info.operators.predicates import matrix_equal
 from qiskit.quantum_info.operators.predicates import is_unitary_matrix
-from qiskit.quantum_info import OneQubitEulerDecomposer
-from qiskit.quantum_info.synthesis.two_qubit_decompose import two_qubit_cnot_decompose
-from qiskit.extensions.exceptions import ExtensionError
+# The synthesis module has been reorganized in Qiskit 1.0+
+from qiskit.synthesis import OneQubitEulerDecomposer
+from qiskit.synthesis import two_qubit_cnot_decompose
+from qiskit.exceptions import QiskitError
 
-_DECOMPOSER1Q = OneQubitEulerDecomposer("U3")
+_DECOMPOSER1Q = OneQubitEulerDecomposer("U")
 
 
 class UnitaryGate(Gate):
     """Class for representing unitary gates"""
 
-    def __init__(self, data, label=None):
+    def __init__(self, data, label=None, check_input=True, *, num_qubits=None):
         """Create a gate from a numeric unitary matrix.
 
         Args:
             data (matrix or Operator): unitary operator.
             label (str): unitary name for backend [Default: None].
+            check_input (bool): If set to False this asserts the input is known to be unitary
+                   and the checking to validate this will be skipped.
+            num_qubits (int or None): If given, the number of qubits in the matrix.
+                                      If not given, it is inferred.
 
         Raises:
-            ExtensionError: if input data is not an N-qubit unitary operator.
+            QiskitError: if input data is not an N-qubit unitary operator.
         """
         if hasattr(data, "to_matrix"):
             # If input is Gate subclass or some other class object that has
@@ -56,14 +61,29 @@ class UnitaryGate(Gate):
             data = data.to_operator().data
         # Convert to numpy array in case not already an array
         data = numpy.array(data, dtype=complex)
-        # Check input is unitary
-        if not is_unitary_matrix(data, atol=1e-5):
-            raise ExtensionError("Input matrix is not unitary.")
-        # Check input is N-qubit matrix
-        input_dim, output_dim = data.shape
-        num_qubits = int(numpy.log2(input_dim))
-        if input_dim != output_dim or 2**num_qubits != input_dim:
-            raise ExtensionError("Input matrix is not an N-qubit operator.")
+        
+        # Determine number of qubits if not given
+        if num_qubits is None:
+            # Check input is unitary first
+            if check_input and not is_unitary_matrix(data, atol=1e-5):
+                raise QiskitError("Input matrix is not unitary.")
+            
+            # Check input is N-qubit matrix
+            input_dim, output_dim = data.shape
+            n_qubits = int(numpy.log2(input_dim))
+            if input_dim != output_dim or 2**n_qubits != input_dim:
+                raise QiskitError("Input matrix is not an N-qubit operator.")
+            num_qubits = n_qubits
+        else:
+            # Verify dimensions are correct
+            if data.shape != (2**num_qubits, 2**num_qubits):
+                raise QiskitError(
+                    f"Input matrix is wrong size for {num_qubits} qubits. "
+                    f"Expected {(2**num_qubits, 2**num_qubits)}, got {data.shape}."
+                )
+            # Check input is unitary
+            if check_input and not is_unitary_matrix(data, atol=1e-5):
+                raise QiskitError("Input matrix is not unitary.")
 
         self._qasm_name = None
         self._qasm_definition = None
@@ -84,13 +104,16 @@ class UnitaryGate(Gate):
         """Return matrix for the unitary."""
         return self.params[0]
 
-    def inverse(self):
+    def inverse(self, annotated=False):
         """Return the adjoint of the unitary."""
-        return self.adjoint()
+        inverse_gate = self.adjoint()
+        if annotated:
+            inverse_gate = AnnotatedOperation(inverse_gate, modifier="inverse")
+        return inverse_gate
 
     def conjugate(self):
         """Return the conjugate of the unitary."""
-        return UnitaryGate(numpy.conj(self.to_matrix()))
+        return UnitaryGate(numpy.conj(self.to_matrix()), label=self.label)
 
     def adjoint(self):
         """Return the adjoint of the unitary."""
@@ -98,7 +121,7 @@ class UnitaryGate(Gate):
 
     def transpose(self):
         """Return the transpose of the unitary."""
-        return UnitaryGate(numpy.transpose(self.to_matrix()))
+        return UnitaryGate(numpy.transpose(self.to_matrix()), label=self.label)
 
     def _define(self):
         """Calculate a subcircuit that implements this unitary."""
@@ -108,59 +131,51 @@ class UnitaryGate(Gate):
             theta, phi, lam, global_phase = _DECOMPOSER1Q.angles_and_phase(
                 self.to_matrix()
             )
-            qc._append(U3Gate(theta, phi, lam), [q[0]], [])
+            qc._append(UGate(theta, phi, lam), [q[0]], [])
             qc.global_phase = global_phase
             self.definition = qc
         elif self.num_qubits == 2:
             self.definition = two_qubit_cnot_decompose(self.to_matrix())
         else:
+            # For larger unitaries, we don't use Isometry anymore in Qiskit 1.0+
+            # but we can still create a subcircuit with the unitary
             q = QuantumRegister(self.num_qubits, "q")
             qc = QuantumCircuit(q, name=self.name)
-            qc.append(qiskit.circuit.library.Isometry(self.to_matrix(), 0, 0), qargs=q[:])
+            qc.unitary(self.to_matrix(), q[:])
             self.definition = qc
 
-    def control(self, num_ctrl_qubits=1, label=None, ctrl_state=None):
-        r"""Return controlled version of gate
+    def control(self, num_ctrl_qubits=1, label=None, ctrl_state=None, annotated=None):
+        """Return controlled version of gate
 
         Args:
             num_ctrl_qubits (int): number of controls to add to gate (default=1)
             label (str): optional gate label
             ctrl_state (int or str or None): The control state in decimal or as a
                 bit string (e.g. '1011'). If None, use 2**num_ctrl_qubits-1.
+            annotated (bool): indicates whether the controlled gate should be
+                implemented as an annotated gate.
 
         Returns:
-            UnitaryGate: controlled version of gate.
-
-        Raises:
-            QiskitError: Invalid ctrl_state.
-            ExtensionError: Non-unitary controlled unitary.
+            ControlledGate or AnnotatedOperation: controlled version of gate.
         """
-        cmat = _compute_control_matrix(
-            self.to_matrix(), num_ctrl_qubits, ctrl_state=None
-        )
-        iso = qiskit.circuit.library.Isometry(cmat, 0, 0)
-        cunitary = ControlledGate(
+        # In Qiskit 1.4, Operator is still in quantum_info
+        from qiskit.quantum_info import Operator
+        
+        ctrl_gate = ControlledGate(
             "c-unitary",
             num_qubits=self.num_qubits + num_ctrl_qubits,
-            params=[cmat],
+            params=self.params,
             label=label,
             num_ctrl_qubits=num_ctrl_qubits,
-            definition=iso.definition,
             ctrl_state=ctrl_state,
             base_gate=self.copy(),
         )
-        from qiskit.quantum_info import Operator
-
-        # hack to correct global phase; should fix to prevent need for correction here
-        pmat = Operator(iso.inverse()).data @ cmat
-        diag = numpy.diag(pmat)
-        if not numpy.allclose(diag, diag[0]):
-            raise ExtensionError("controlled unitary generation failed")
-        phase = numpy.angle(diag[0])
-        if phase:
-            # need to apply to _definition since open controls creates temporary definition
-            cunitary._definition.global_phase = phase
-        return cunitary
+        
+        # The definition will be automatically generated when needed
+        
+        if annotated:
+            return AnnotatedOperation(self, modifier={"control": num_ctrl_qubits, "ctrl_state": ctrl_state})
+        return ctrl_gate
 
     def qasm(self):
         """The qasm for a custom unitary gate

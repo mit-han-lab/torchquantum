@@ -27,8 +27,8 @@ import torch
 import torchquantum as tq
 
 from torchpack.utils.logging import logger
-from qiskit.providers.aer.noise import NoiseModel
-from torchquantum.util import get_provider
+from qiskit_aer.noise import NoiseModel
+from torchquantum.util import get_provider, get_circ_stats
 
 
 __all__ = [
@@ -276,10 +276,18 @@ class NoiseModelTQ(object):
         prob_schedule_separator=None,
         factor=None,
         add_thermal=True,
+        api_token=None,
+        instance=None,
     ):
         self.noise_model_name = noise_model_name
-        provider = get_provider(backend_name=noise_model_name)
-        backend = provider.get_backend(noise_model_name)
+        self.api_token = api_token
+        self.instance = instance
+        provider = get_provider(
+            backend_name=noise_model_name,
+            api_token=self.api_token,
+            instance=self.instance
+        )
+        backend = provider.backend(name=noise_model_name)
 
         self.noise_model = NoiseModel.from_backend(
             backend, thermal_relaxation=add_thermal
@@ -337,7 +345,7 @@ class NoiseModelTQ(object):
                             if any([inst_one["name"] in single_depolarization for inst_one in inst]):
                                 inst_all.append(filter_inst(inst))
                                 prob_all.append(prob)
-                        elif operation in ['cx']:                                # double qubit gate
+                        elif operation in ['cx', 'ecr']: # Include 'ecr' here
                             try:
                                 if inst[0]['params'][0] in double_depolarization and (inst[1]['name'] == 'id' or inst[2]['name'] == 'id'):
                                     inst_all.append(filter_inst(inst))
