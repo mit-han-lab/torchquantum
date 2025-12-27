@@ -35,8 +35,7 @@ from qiskit_aer.noise import NoiseModel
 # Removed: from .my_job_monitor import my_job_monitor as job_monitor
 # Removed: from qiskit.providers.ibmq import IBMQ
 from qiskit_ibm_runtime import QiskitRuntimeService # Changed provider to runtime
-# from qiskit_aer.primitives import SamplerV2 as AerSamplerV2 # Added
-from qiskit_aer.primitives import Sampler as AerSampler
+from qiskit_aer.primitives import SamplerV2 as AerSampler
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler # Changed provider to runtime
 from qiskit.primitives.containers import PubResult # Added
 from qiskit.exceptions import QiskitError
@@ -225,7 +224,7 @@ class QiskitProcessor(object):
             backend_opts = {"noise_model": self.noise_model} if self.noise_model else {}
             # Initialize Sampler with options
             self.sampler = AerSampler(options={"backend_options": backend_opts}, seed=self.seed_simulator)
-            logger.info(f"Initialized AerSampler.{' With noise model.' if self.noise_model else ''}")
+            logger.info(f"Initialized AerSamplerV2.{' With noise model.' if self.noise_model else ''}")
 
     def set_layout(self, layout):
         self.initial_layout = layout
