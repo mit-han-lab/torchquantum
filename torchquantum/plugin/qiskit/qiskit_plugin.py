@@ -64,6 +64,30 @@ __all__ = [
 ]
 
 
+def _get_param_value(param):
+    """Convert a parameter value to float, handling ParameterExpression properly.
+
+    Args:
+        param: A parameter value, possibly a qiskit.circuit.ParameterExpression.
+
+    Returns:
+        float: The numeric value of the parameter.
+
+    Raises:
+        TypeError: If the ParameterExpression has unbound parameters.
+    """
+    from qiskit.circuit import ParameterExpression
+
+    if isinstance(param, ParameterExpression):
+        if param.is_parameterized():
+            raise TypeError(
+                f"ParameterExpression with unbound parameters "
+                f"({param.parameters}) cannot be cast to a float."
+            )
+        return float(param)
+    return float(param)
+
+
 def qiskit2tq_op_history(circ):
     if getattr(circ, "_layout", None) is not None:
         try:
@@ -88,7 +112,9 @@ def qiskit2tq_op_history(circ):
         wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
         init_params = (
-            list(map(float, gate.operation.params)) if len(gate.operation.params) > 0 else None
+            [_get_param_value(p) for p in gate.operation.params]
+            if len(gate.operation.params) > 0
+            else None
         )
         print(op_name,)
 
@@ -850,7 +876,9 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
         wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
         init_params = (
-            list(map(float, gate.operation.params)) if len(gate.operation.params) > 0 else None
+            [_get_param_value(p) for p in gate.operation.params]
+            if len(gate.operation.params) > 0
+            else None
         )
 
         if op_name in [
