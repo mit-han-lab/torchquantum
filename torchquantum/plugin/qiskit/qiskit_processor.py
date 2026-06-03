@@ -36,7 +36,7 @@ from qiskit_aer.noise import NoiseModel
 # Removed: from qiskit.providers.ibmq import IBMQ
 from qiskit_ibm_runtime import QiskitRuntimeService # Changed provider to runtime
 # from qiskit_aer.primitives import SamplerV2 as AerSamplerV2 # Added
-from qiskit_aer.primitives import Sampler as AerSampler
+from qiskit_aer.primitives import SamplerV2 as AerSampler
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSampler # Changed provider to runtime
 from qiskit.primitives.containers import PubResult # Added
 from qiskit.exceptions import QiskitError
