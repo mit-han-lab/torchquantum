@@ -142,6 +142,8 @@ class QiskitProcessor(object):
         remove_ops_thres=1e-4,
         transpile_with_ancilla=True,
         ibm_quantum_token=None,
+        instance=None,
+        account_name=None,
         layout_method=None,
         routing_method=None,
     ):
@@ -160,6 +162,10 @@ class QiskitProcessor(object):
         self.routing_method = routing_method
 
         self.ibm_quantum_token = ibm_quantum_token
+        # IBM Quantum Platform service instance (CRN or name) and saved
+        # account name; both optional, default to the saved account's values
+        self.instance = instance
+        self.account_name = account_name
         self.backend = backend
         self.service = None
         self.sampler = None
@@ -185,7 +191,14 @@ class QiskitProcessor(object):
             if self.backend_name is None:
                 raise ValueError("backend_name must be provided if use_real_qc is True")
             try:
-                self.service = QiskitRuntimeService(token=self.ibm_quantum_token, channel='ibm_quantum_platform')
+                service_kwargs = {"channel": "ibm_quantum_platform"}
+                if self.ibm_quantum_token:
+                    service_kwargs["token"] = self.ibm_quantum_token
+                if self.instance:
+                    service_kwargs["instance"] = self.instance
+                if self.account_name:
+                    service_kwargs["name"] = self.account_name
+                self.service = QiskitRuntimeService(**service_kwargs)
                 self.backend = self.service.backend(self.backend_name)
                 self.sampler = RuntimeSampler(mode=self.backend)
                 logger.info(f"Initialized QiskitRuntimeService and RuntimeSampler for backend: {self.backend_name}")
@@ -203,8 +216,15 @@ class QiskitProcessor(object):
             if self.noise_model is None and self.noise_model_name is not None:
                 logger.info(f"Fetching noise model for backend: {self.noise_model_name}")
                 try:
-                    if self.ibm_quantum_token:
-                        temp_service = QiskitRuntimeService(token=self.ibm_quantum_token, channel='ibm_quantum_platform')
+                    if self.ibm_quantum_token or self.instance or self.account_name:
+                        service_kwargs = {"channel": "ibm_quantum_platform"}
+                        if self.ibm_quantum_token:
+                            service_kwargs["token"] = self.ibm_quantum_token
+                        if self.instance:
+                            service_kwargs["instance"] = self.instance
+                        if self.account_name:
+                            service_kwargs["name"] = self.account_name
+                        temp_service = QiskitRuntimeService(**service_kwargs)
                         temp_backend = temp_service.backend(self.noise_model_name)
                         self.noise_model = NoiseModel.from_backend(temp_backend)
                         logger.info(f"Successfully fetched noise model for {self.noise_model_name}")

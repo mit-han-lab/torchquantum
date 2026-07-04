@@ -35,7 +35,6 @@ from torchquantum.util import switch_little_big_endian_state
 import torch
 import pytest
 
-@pytest.mark.skip
 def test_expval_observable():
     # seed = 0
     # random.seed(seed)

@@ -87,13 +87,9 @@ class VQE(object):
             float : expectation value of the Hamiltonian
         """
         
-        hamil_list = self.hamil.hamil_info["hamil_list"]
         expval = 0
-        for hamil in hamil_list:
-            expval += (
-                expval_joint_analytical(qdev, observable=hamil["pauli_string"])
-                * hamil["coeff"]
-            )
+        for coeff, pauli in zip(self.hamil.coeffs, self.hamil.paulis):
+            expval += expval_joint_analytical(qdev, observable=pauli) * coeff
         return expval
 
     def get_loss(self):
