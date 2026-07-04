@@ -266,7 +266,7 @@ def param_shift_optimize(model, n_steps=10, step_size=0.1, use_qiskit=False):
         #         *model.parameters()
         #     )
         # )
-    return model(measure_all=True)
+    return model(use_qiskit=False)
 
 
 """
