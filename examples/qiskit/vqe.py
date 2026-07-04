@@ -22,119 +22,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-# pylint: disable=line-too-long
-from qiskit.algorithms import VQE
-from qiskit_nature.algorithms import (
-    GroundStateEigensolver,
-    NumPyMinimumEigensolverFactory,
-)
-from qiskit_nature.drivers import Molecule
-from qiskit_nature.drivers.second_quantization import (
-    ElectronicStructureMoleculeDriver,
-    ElectronicStructureDriverType,
-)
-from qiskit_nature.transformers.second_quantization.electronic import (
-    FreezeCoreTransformer,
-)
-from qiskit_nature.problems.second_quantization import ElectronicStructureProblem
-from qiskit_nature.converters.second_quantization import QubitConverter
-from qiskit_nature.mappers.second_quantization import ParityMapper
+"""VQE for the H2 molecule with qiskit (>=2.x) V2 primitives.
 
-# pylint: enable=line-too-long
+A pure-qiskit reference example, rewritten from the legacy
+qiskit.algorithms.VQE / opflow / QuantumInstance stack that was removed
+from qiskit. The variational loop is StatevectorEstimator + scipy.
+"""
 
-import matplotlib.pyplot as plt
 import numpy as np
-from qiskit_nature.circuit.library import UCCSD, HartreeFock
-from qiskit.circuit.library import EfficientSU2
-from qiskit.algorithms.optimizers import COBYLA, SPSA, SLSQP
-from qiskit.opflow import TwoQubitReduction
-from qiskit import BasicAer, Aer
-from qiskit.utils import QuantumInstance
-from qiskit.utils.mitigation import CompleteMeasFitter
-from qiskit.providers.aer.noise import NoiseModel
+from scipy.optimize import minimize
 
-import qiskit_nature
+from qiskit.circuit.library import efficient_su2
+from qiskit.primitives import StatevectorEstimator
+from qiskit.quantum_info import SparsePauliOp
 
-qiskit_nature.settings.dict_aux_operators = False
+# H2 at 0.735 Angstrom, STO-3G, parity-mapped to 2 qubits
+# (includes the nuclear repulsion offset on the identity term)
+hamiltonian = SparsePauliOp.from_list(
+    [
+        ("II", -1.052373245772859),
+        ("IZ", 0.39793742484318045),
+        ("ZI", -0.39793742484318045),
+        ("ZZ", -0.01128010425623538),
+        ("XX", 0.18093119978423156),
+    ]
+)
 
-
-import pdb
-
-pdb.set_trace()
-
-
-def get_qubit_op(dist):
-    # Define Molecule
-    molecule = Molecule(
-        # Coordinates in Angstrom
-        geometry=[["Li", [0.0, 0.0, 0.0]], ["H", [dist, 0.0, 0.0]]],
-        multiplicity=1,  # = 2*spin + 1
-        charge=0,
-    )
-
-    driver = ElectronicStructureMoleculeDriver(
-        molecule=molecule,
-        basis="sto3g",
-        driver_type=ElectronicStructureDriverType.PYSCF,
-    )
-
-    # Get properties
-    properties = driver.run()
-    num_particles = properties.get_property("ParticleNumber").num_particles
-    num_spin_orbitals = int(properties.get_property("ParticleNumber").num_spin_orbitals)
-
-    # Define Problem, Use freeze core approximation, remove orbitals.
-    problem = ElectronicStructureProblem(
-        driver, [FreezeCoreTransformer(freeze_core=True, remove_orbitals=[-3, -2])]
-    )
-
-    second_q_ops = problem.second_q_ops()  # Get 2nd Quant OP
-    num_spin_orbitals = problem.num_spin_orbitals
-    num_particles = problem.num_particles
-
-    mapper = ParityMapper()  # Set Mapper
-    hamiltonian = second_q_ops[0]  # Set Hamiltonian
-    # Do two qubit reduction
-    converter = QubitConverter(mapper, two_qubit_reduction=True)
-    reducer = TwoQubitReduction(num_particles)
-    qubit_op = converter.convert(hamiltonian)
-    qubit_op = reducer.convert(qubit_op)
-
-    return qubit_op, num_particles, num_spin_orbitals, problem, converter
+ansatz = efficient_su2(hamiltonian.num_qubits, reps=2)
+estimator = StatevectorEstimator()
 
 
-def exact_solver(problem, converter):
-    solver = NumPyMinimumEigensolverFactory()
-    calc = GroundStateEigensolver(converter, solver)
-    result = calc.solve(problem)
-    return result
+def cost(params):
+    pub = (ansatz, hamiltonian, params)
+    result = estimator.run([pub]).result()[0]
+    return float(result.data.evs)
 
 
-backend = BasicAer.get_backend("statevector_simulator")
-distances = np.arange(0.5, 4.0, 0.2)
-exact_energies = []
-vqe_energies = []
-optimizer = SLSQP(maxiter=5)
+rng = np.random.default_rng(seed=42)
+x0 = 2 * np.pi * rng.random(ansatz.num_parameters)
 
-# pylint: disable=undefined-loop-variable
-for dist in distances:
-    (qubit_op, num_particles, num_spin_orbitals, problem, converter) = get_qubit_op(
-        dist
-    )
-    result = exact_solver(problem, converter)
-    exact_energies.append(result.total_energies[0].real)
-    init_state = HartreeFock(num_spin_orbitals, num_particles, converter)
-    var_form = UCCSD(
-        converter, num_particles, num_spin_orbitals, initial_state=init_state
-    )
-    vqe = VQE(var_form, optimizer, quantum_instance=backend)
-    vqe_calc = vqe.compute_minimum_eigenvalue(qubit_op)
-    vqe_result = problem.interpret(vqe_calc).total_energies[0].real
-    vqe_energies.append(vqe_result)
-    print(
-        f"Interatomic Distance: {np.round(dist, 2)}",
-        f"VQE Result: {vqe_result:.5f}",
-        f"Exact Energy: {exact_energies[-1]:.5f}",
-    )
+res = minimize(cost, x0, method="COBYLA", options={"maxiter": 500})
 
-print("All energies have been calculated")
+exact = float(np.min(np.linalg.eigvalsh(hamiltonian.to_matrix())))
+print(f"VQE ground state energy:   {res.fun:.6f} Ha")
+print(f"Exact ground state energy: {exact:.6f} Ha")
+assert abs(res.fun - exact) < 1e-2, "VQE did not converge to the ground state"

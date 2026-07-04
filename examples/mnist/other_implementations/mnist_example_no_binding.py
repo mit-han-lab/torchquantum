@@ -255,7 +255,6 @@ def main():
 
     # run on Qiskit simulator and real Quantum Computers
     try:
-        from qiskit import IBMQ
         from torchquantum.plugin import QiskitProcessor
 
         # firstly perform simulate
@@ -265,16 +264,12 @@ def main():
         valid_test(dataflow, "test", model, device, qiskit=True)
 
         # then try to run on REAL QC
-        backend_name = "ibmq_lima"
+        # replace with a backend available to your IBM Quantum account
+        backend_name = "ibm_torino"
         print(f"\nTest on Real Quantum Computer {backend_name}")
-        # Please specify your own hub group and project if you have the
-        # IBMQ premium plan to access more machines.
         processor_real_qc = QiskitProcessor(
             use_real_qc=True,
             backend_name=backend_name,
-            hub="ibm-q",
-            group="open",
-            project="main",
         )
         model.set_qiskit_processor(processor_real_qc)
         valid_test(dataflow, "test", model, device, qiskit=True)

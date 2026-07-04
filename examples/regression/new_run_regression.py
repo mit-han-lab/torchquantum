@@ -297,7 +297,6 @@ def main():
         scheduler.step()
 
     try:
-        from qiskit import IBMQ
         from torchquantum.plugin import QiskitProcessor
 
         print(f"\nTest with Qiskit Simulator")
