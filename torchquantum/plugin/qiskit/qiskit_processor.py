@@ -24,7 +24,7 @@ SOFTWARE.
 
 import torch
 import torchquantum as tq
-import pathos.multiprocessing as multiprocessing
+from concurrent.futures import ThreadPoolExecutor
 import itertools
 import warnings # Added for handling deprecation warnings
 
@@ -64,10 +64,10 @@ class EmptyPassManager(PassManager):
         return circuits
 
 # Reworked worker function for SamplerV2
-def run_job_worker_v2(job_data):
+def run_job_worker_v2(job_data, max_retries=5):
     sampler_instance, pubs, run_options = job_data
     result = None # Initialize result
-    while True:
+    for attempt in range(max_retries):
         try:
             # Use SamplerV2 run method
             job = sampler_instance.run(pubs, **run_options)
@@ -80,7 +80,10 @@ def run_job_worker_v2(job_data):
                 logger.warning(f"Job was cancelled manually or by the system.")
                 return None # Indicate cancellation
             else:
-                logger.warning(f"Sampler job failed because {e}, retrying.")
+                logger.warning(
+                    f"Sampler job failed because {e}, "
+                    f"retry {attempt + 1}/{max_retries}."
+                )
                 import time
                 time.sleep(1)
 
@@ -182,7 +185,7 @@ class QiskitProcessor(object):
             if self.backend_name is None:
                 raise ValueError("backend_name must be provided if use_real_qc is True")
             try:
-                self.service = QiskitRuntimeService(token=self.ibm_quantum_token, channel='ibm_quantum')
+                self.service = QiskitRuntimeService(token=self.ibm_quantum_token, channel='ibm_quantum_platform')
                 self.backend = self.service.backend(self.backend_name)
                 self.sampler = RuntimeSampler(mode=self.backend)
                 logger.info(f"Initialized QiskitRuntimeService and RuntimeSampler for backend: {self.backend_name}")
@@ -192,21 +195,25 @@ class QiskitProcessor(object):
             if self.coupling_map is None:
                  self.coupling_map = self.backend.coupling_map
             if self.basis_gates is None:
-                 self.basis_gates = self.backend.basis_gates
+                 self.basis_gates = getattr(
+                     self.backend, "basis_gates", list(self.backend.target.operation_names)
+                 )
 
         else:
             if self.noise_model is None and self.noise_model_name is not None:
                 logger.info(f"Fetching noise model for backend: {self.noise_model_name}")
                 try:
                     if self.ibm_quantum_token:
-                        temp_service = QiskitRuntimeService(token=self.ibm_quantum_token, channel='ibm_quantum')
+                        temp_service = QiskitRuntimeService(token=self.ibm_quantum_token, channel='ibm_quantum_platform')
                         temp_backend = temp_service.backend(self.noise_model_name)
                         self.noise_model = NoiseModel.from_backend(temp_backend)
                         logger.info(f"Successfully fetched noise model for {self.noise_model_name}")
                         if self.coupling_map is None:
                             self.coupling_map = temp_backend.coupling_map
                         if self.basis_gates is None:
-                            self.basis_gates = temp_backend.basis_gates
+                            self.basis_gates = getattr(
+                                temp_backend, "basis_gates", list(temp_backend.target.operation_names)
+                            )
                     else:
                         logger.warning("IBM Quantum token needed to fetch noise model by name, but not provided. Proceeding without noise model.")
                         self.noise_model = None
@@ -260,21 +267,12 @@ class QiskitProcessor(object):
             raise
         return transpiled_circs
 
-    def process_ready_circs_get_counts(self, circs_all, parallel=True):
+    def _run_pubs_get_counts(self, pubs, parallel=True):
+        """Run SamplerV2 pubs (optionally carrying parameter bindings) and
+        return one counts dict (or None on failure) per pub."""
         if self.sampler is None:
             raise RuntimeError("QiskitProcessor not initialized. Call qiskit_init() first.")
 
-        # Transpile circuits
-        logger.info(f"Transpiling {len(circs_all)} circuits...")
-        # Ensure circs_all is a list
-        if not isinstance(circs_all, list):
-             circs_all = [circs_all]
-        transpiled_circs = self.transpile(circs_all)
-        logger.info("Transpilation complete.")
-
-        # Package circuits into PUBS (Primitive Unified Blocs) for SamplerV2
-        # Each pub is just the circuit for basic sampling
-        pubs = [(circ,) for circ in transpiled_circs]
         expected_pubs = len(pubs)
 
         # Prepare run options
@@ -300,11 +298,13 @@ class QiskitProcessor(object):
 
             job_data_list = [(self.sampler, pub_batch, run_options) for pub_batch in split_pubs]
 
-            p = multiprocessing.Pool(self.max_jobs)
-            # results is now a list of lists (or Nones)
-            batch_results = p.map(run_job_worker_v2, job_data_list)
-            p.close()
-            p.join() # Ensure pool finishes
+            # Threads instead of forked processes: Aer's OpenMP thread pool is
+            # not fork-safe (a fork after any prior job deadlocks the child),
+            # Aer releases the GIL during simulation, and runtime jobs wait
+            # server-side, so threads give the same concurrency safely.
+            with ThreadPoolExecutor(max_workers=self.max_jobs) as pool:
+                # results is now a list of lists (or Nones)
+                batch_results = list(pool.map(run_job_worker_v2, job_data_list))
 
             # Process results: flatten the list of lists
             processed_pubs_count = 0
@@ -341,6 +341,23 @@ class QiskitProcessor(object):
 
         return all_counts # Return list of counts dictionaries or Nones
 
+    def process_ready_circs_get_counts(self, circs_all, parallel=True):
+        if self.sampler is None:
+            raise RuntimeError("QiskitProcessor not initialized. Call qiskit_init() first.")
+
+        # Transpile circuits
+        logger.info(f"Transpiling {len(circs_all)} circuits...")
+        # Ensure circs_all is a list
+        if not isinstance(circs_all, list):
+             circs_all = [circs_all]
+        transpiled_circs = self.transpile(circs_all)
+        logger.info("Transpilation complete.")
+
+        # Package circuits into PUBS (Primitive Unified Blocs) for SamplerV2
+        # Each pub is just the circuit for basic sampling
+        pubs = [(circ,) for circ in transpiled_circs]
+        return self._run_pubs_get_counts(pubs, parallel=parallel)
+
     def process_ready_circs(self, q_device, circs_all, parallel=True):
         counts_list = self.process_ready_circs_get_counts(circs_all, parallel=parallel)
         valid_counts = [counts for counts in counts_list if counts is not None]
@@ -356,10 +373,253 @@ class QiskitProcessor(object):
 
         return measured_torch
 
+    def preprocess_parameterized(
+        self,
+        q_device,
+        q_layer_parameterized,
+        q_layer_fixed,
+        q_layer_measure,
+        x,
+    ):
+        circ_parameterized, params = tq2qiskit_parameterized(
+            q_device, q_layer_parameterized.func_list
+        )
+        circ_fixed = tq2qiskit(
+            q_device,
+            q_layer_fixed,
+            remove_ops=self.remove_ops,
+            remove_ops_thres=self.remove_ops_thres,
+        )
+        circ_measurement = tq2qiskit_measurement(q_device, q_layer_measure)
+
+        circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+        circ.compose(circ_parameterized, inplace=True)
+        circ.compose(circ_fixed, inplace=True)
+        circ.compose(circ_measurement, inplace=True)
+
+        logger.info(f"Before transpile: {get_circ_stats(circ)}")
+        transpiled_circ = self.transpile(circ)[0]
+        logger.info(f"After transpile: {get_circ_stats(transpiled_circ)}")
+        self.transpiled_circs = [transpiled_circ]
+        # construct the parameter binds, one dict per input sample
+        binds_all = []
+        for inputs_single in x:
+            binds = {}
+            for k, input_single in enumerate(inputs_single):
+                binds[params[k]] = input_single.item()
+            binds_all.append(binds)
+
+        return transpiled_circ, binds_all
+
+    def process_parameterized(
+        self,
+        q_device: tq.QuantumDevice,
+        q_layer_parameterized: tq.QuantumModule,
+        q_layer_fixed: tq.QuantumModule,
+        q_layer_measure: tq.QuantumModule,
+        x,
+        parallel=True,
+    ):
+        """
+        separate the conversion, encoder part will be converted to a
+        parameterized Qiskit QuantumCircuit. The remaining part will be a
+        non-parameterized QuantumCircuit. In this case, only one time of
+        compilation is required. Each parameter binding becomes one
+        SamplerV2 pub sharing the same transpiled circuit.
+        """
+        transpiled_circ, binds_all = self.preprocess_parameterized(
+            q_device, q_layer_parameterized, q_layer_fixed, q_layer_measure, x
+        )
+
+        pubs = [(transpiled_circ, binds) for binds in binds_all]
+        counts = self._run_pubs_get_counts(pubs, parallel=parallel)
+
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
+        measured_qiskit = torch.tensor(measured_qiskit, dtype=torch.float, device=x.device)
+
+        return measured_qiskit
+
+    def preprocess_parameterized_and_shift(
+        self,
+        q_device,
+        q_layer_parameterized,
+        q_layer_fixed,
+        q_layer_measure,
+        x,
+        shift_encoder,
+        shift_this_step,
+    ):
+        circ_parameterized, params = tq2qiskit_parameterized(
+            q_device, q_layer_parameterized.func_list
+        )
+        circ_fixed_list = []
+        circ_fixed = tq2qiskit(
+            q_device,
+            q_layer_fixed,
+            remove_ops=self.remove_ops,
+            remove_ops_thres=self.remove_ops_thres,
+        )
+        circ_fixed_list.append(circ_fixed)
+
+        # not shift encoder ==> shift fixed layer
+        if not shift_encoder:
+            for i, named_param in enumerate(q_layer_fixed.named_parameters()):
+                if shift_this_step[i]:
+                    param = named_param[-1]
+                    param.copy_(param + np.pi * 0.5)
+                    circ_fixed = tq2qiskit(
+                        q_device,
+                        q_layer_fixed,
+                        remove_ops=self.remove_ops,
+                        remove_ops_thres=self.remove_ops_thres,
+                    )
+                    circ_fixed_list.append(circ_fixed)
+                    param.copy_(param - np.pi)
+                    circ_fixed = tq2qiskit(
+                        q_device,
+                        q_layer_fixed,
+                        remove_ops=self.remove_ops,
+                        remove_ops_thres=self.remove_ops_thres,
+                    )
+                    circ_fixed_list.append(circ_fixed)
+                    param.copy_(param + np.pi * 0.5)
+
+        self.transpiled_circs = []
+        for circ_fixed in circ_fixed_list:
+            circ = QuantumCircuit(q_device.n_wires, q_device.n_wires)
+            circ.compose(circ_parameterized, inplace=True)
+            circ.compose(circ_fixed, inplace=True)
+            v_c_reg_mapping = q_layer_measure.v_c_reg_mapping
+            if v_c_reg_mapping is not None:
+                for q_reg, c_reg in v_c_reg_mapping["v2c"].items():
+                    circ.measure(q_reg, c_reg)
+            else:
+                circ.measure(
+                    list(range(q_device.n_wires)), list(range(q_device.n_wires))
+                )
+
+            transpiled_circ = self.transpile(circ)[0]
+            self.transpiled_circs.append(transpiled_circ)
+        # construct the parameter_binds
+        binds_all = []
+        if shift_encoder:
+            for idx in range(x.size()[1]):
+                x[:, idx] += np.pi * 0.5
+                for inputs_single in x:
+                    binds = {}
+                    for k, input_single in enumerate(inputs_single):
+                        binds[params[k]] = input_single.item()
+                    binds_all.append(binds)
+
+                x[:, idx] -= np.pi
+                for inputs_single in x:
+                    binds = {}
+                    for k, input_single in enumerate(inputs_single):
+                        binds[params[k]] = input_single.item()
+                    binds_all.append(binds)
+
+                x[:, idx] += np.pi * 0.5
+        else:
+            for inputs_single in x:
+                binds = {}
+                for k, input_single in enumerate(inputs_single):
+                    binds[params[k]] = input_single.item()
+                binds_all.append(binds)
+
+        return self.transpiled_circs, binds_all
+
+    def process_parameterized_and_shift(
+        self,
+        q_device: tq.QuantumDevice,
+        q_layer_parameterized: tq.QuantumModule,
+        q_layer_fixed: tq.QuantumModule,
+        q_layer_measure: tq.QuantumModule,
+        x,
+        shift_encoder=False,
+        parallel=True,
+        shift_this_step=None,
+    ):
+        """
+        separate the conversion, encoder part will be converted to a
+        parameterized Qiskit QuantumCircuit. The remaining part will be a
+        non-parameterized QuantumCircuit. In this case, only one time of
+        compilation is required.
+
+        The returned counts are circuit-major (for each circuit, all
+        parameter bindings in order), matching the layout expected by the
+        parameter-shift training in tq.node.
+        """
+        transpiled_circs, binds_all = self.preprocess_parameterized_and_shift(
+            q_device,
+            q_layer_parameterized,
+            q_layer_fixed,
+            q_layer_measure,
+            x,
+            shift_encoder,
+            shift_this_step,
+        )
+
+        pubs = [(circ, binds) for circ in transpiled_circs for binds in binds_all]
+        counts = self._run_pubs_get_counts(pubs, parallel=parallel)
+
+        # kept for API compatibility; V2 primitive jobs are not timed here
+        time_spent_list = []
+
+        measured_qiskit = get_expectations_from_counts(counts, n_wires=q_device.n_wires)
+        measured_qiskit = torch.tensor(measured_qiskit, dtype=torch.float, device=x.device)
+
+        return measured_qiskit, time_spent_list
+
+    def process_circs_get_joint_expval(self, circs_all, observable, parallel=True):
+        """
+        This function is used to compute the joint expectation value of a list of observables
+        we add diagonalizing gates before sending them to the backend
+        """
+        observable = observable.upper()
+        circs_all_diagonalized = []
+        for circ_ in circs_all:
+            circ = circ_.copy()
+            for k, obs in enumerate(observable):
+                if obs == 'X':
+                    circ.h(k)
+                elif obs == 'Y':
+                    circ.z(k)
+                    circ.s(k)
+                    circ.h(k)
+            circ.measure_all()
+            circs_all_diagonalized.append(circ)
+
+        expval_all = []
+
+        mask = np.ones(len(observable), dtype=bool)
+        mask[np.array([*observable]) == "I"] = False
+
+        counts = self.process_ready_circs_get_counts(circs_all_diagonalized, parallel=parallel)
+
+        # here we need to switch the little and big endian of distribution bitstrings
+        distributions = []
+        for count in counts:
+            distribution = {}
+            for k, v in count.items():
+                distribution[k[::-1]] = v
+            distributions.append(distribution)
+
+        for distri in distributions:
+            n_eigen_one = 0
+            n_eigen_minus_one = 0
+            for bitstring, n_count in distri.items():
+                if np.dot(list(map(lambda x: eval(x), [*bitstring])), mask).sum() % 2 == 0:
+                    n_eigen_one += n_count
+                else:
+                    n_eigen_minus_one += n_count
+
+            expval = n_eigen_one / self.n_shots + (-1) * n_eigen_minus_one / self.n_shots
+            expval_all.append(expval)
+
+        return expval_all
+
 
 if __name__ == '__main__':
-    import pdb
-    pdb.set_trace()
     circ = QuantumCircuit(3)
     circ.h(0)
     circ.cx(0, 1)
