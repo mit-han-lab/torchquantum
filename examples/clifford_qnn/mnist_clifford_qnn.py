@@ -45,7 +45,6 @@ class QFCModel(tq.QuantumModule):
     def __init__(self):
         super().__init__()
         self.n_wires = 4
-        self.q_device = tq.QuantumDevice(n_wires=self.n_wires)
         self.encoder = tq.GeneralEncoder(tq.encoder_op_list_name_dict["4x4_ryzxy"])
 
         self.q_layer = RXYZCXLayer0({"n_wires": 4, "n_blocks": 4})
@@ -54,15 +53,16 @@ class QFCModel(tq.QuantumModule):
     def forward(self, x, use_qiskit=False):
         bsz = x.shape[0]
         x = F.avg_pool2d(x, 6).view(bsz, 16)
+        qdev = tq.QuantumDevice(n_wires=self.n_wires, bsz=bsz, device=x.device)
 
         if use_qiskit:
             x = self.qiskit_processor.process_parameterized(
-                self.q_device, self.encoder, self.q_layer, self.measure, x
+                qdev, self.encoder, self.q_layer, self.measure, x
             )
         else:
-            self.encoder(self.q_device, x)
-            self.q_layer(self.q_device)
-            x = self.measure(self.q_device)
+            self.encoder(qdev, x)
+            self.q_layer(qdev)
+            x = self.measure(qdev)
 
         x = x.reshape(bsz, 2, 2).sum(-1).squeeze()
         x = F.log_softmax(x, dim=1)

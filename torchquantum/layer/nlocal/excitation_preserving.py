@@ -47,11 +47,13 @@ class ExcitationPreserving(TwoLocal):
         reps: int = 3,
         skip_final_rotation_layer: bool = False,
     ):
-        # construct circuit with rotation layers of RZ and entanglement with RXX and RYY
+        # construct circuit with rotation layers of RZ and entanglement with
+        # XXPlusYY, mirroring qiskit's ExcitationPreserving (qiskit >=2.5
+        # decomposes the two-qubit block to a single xx_plus_yy gate)
         super().__init__(
             n_wires=n_wires,
             rotation_ops=[tq.RZ],
-            entanglement_ops=[tq.RXX, tq.RYY],
+            entanglement_ops=[tq.XXPLUSYY],
             entanglement_layer=entanglement_layer,
             entanglement_layer_params={"has_params": True, "trainable": True},
             reps=reps,

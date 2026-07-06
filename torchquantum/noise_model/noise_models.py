@@ -701,7 +701,7 @@ class NoiseModelTQActivationReadout(NoiseModelTQActivation):
             factor=factor,
         )
         provider = get_provider(backend_name=noise_model_name)
-        backend = provider.get_backend(noise_model_name)
+        backend = provider.backend(noise_model_name)
 
         self.noise_model = NoiseModel.from_backend(backend)
         self.noise_model_dict = self.noise_model.to_dict()
@@ -747,7 +747,7 @@ class NoiseModelTQPhaseReadout(NoiseModelTQPhase):
             factor=factor,
         )
         provider = get_provider(backend_name=noise_model_name)
-        backend = provider.get_backend(noise_model_name)
+        backend = provider.backend(noise_model_name)
 
         self.noise_model = NoiseModel.from_backend(backend)
         self.noise_model_dict = self.noise_model.to_dict()

@@ -20,7 +20,8 @@ def compare_tq_to_qiskit(tq_circuit, qiskit_circuit, instance_info=""):
             wires.append(qu._index)
         qiskit_ops.append(
             {
-                "name": bit.operation.name,
+                # normalize gate names: qiskit "xx_plus_yy" == tq "xxplusyy"
+                "name": bit.operation.name.replace("_", ""),
                 "wires": tuple(wires),
             }
         )

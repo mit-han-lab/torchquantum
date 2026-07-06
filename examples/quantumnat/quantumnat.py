@@ -232,9 +232,8 @@ def main():
 
     n_epochs = args.epochs
 
-    from qiskit import IBMQ
-    IBMQ.load_account()
-
+    # requires saved IBM Quantum Platform credentials
+    # (qiskit_ibm_runtime.QiskitRuntimeService.save_account)
     qdev = tq.QuantumDevice(n_wires=model.n_wires)
     circ = tq2qiskit(qdev, model.q_layer)
     """
@@ -243,7 +242,7 @@ def main():
     """
     circ.measure_all()
     # circ.draw(output='mpl', filename='before-transpile.png')
-    processor = QiskitProcessor(use_real_qc=True, backend_name="ibmq_quito")
+    processor = QiskitProcessor(use_real_qc=True, backend_name="ibm_torino")
 
     circ_transpiled = processor.transpile(circs=circ)
     # circ_transpiled.draw(output='mpl', filename='after-transpile.png')
@@ -255,7 +254,7 @@ def main():
 
     # noise inject, initilized this noise model which will inject noise to gates
     noise_model_tq = tq.NoiseModelTQ(
-        noise_model_name="ibmq_quito",
+        noise_model_name="ibm_torino",
         n_epochs=n_epochs,
         # noise_total_prob=0.5,
         # ignored_ops=configs.trainer.ignored_noise_ops,

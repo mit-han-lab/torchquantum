@@ -24,6 +24,8 @@ SOFTWARE.
 
 from .qiskit_macros import *
 from .qiskit_plugin import *
-from .qiskit_pulse import *
 from .qiskit_processor import *
-from .qiskit_unitary_gate import *
+
+# Backward-compatible re-export: torchquantum previously vendored a patched
+# copy of UnitaryGate; qiskit >=1.0 provides everything it added natively.
+from qiskit.circuit.library import UnitaryGate

@@ -30,8 +30,8 @@ from qiskit import QuantumCircuit, transpile
 from torchquantum.plugin import qiskit2tq_op_history, op_history2qiskit
 from torchquantum.plugin import QiskitProcessor
 
-from qiskit import IBMQ
-IBMQ.load_account()
+# requires saved IBM Quantum Platform credentials to fetch the noise model
+# (qiskit_ibm_runtime.QiskitRuntimeService.save_account)
 
 if __name__ == "__main__":
     hamil = Hamiltonian.from_file("./h2.txt")
@@ -50,8 +50,9 @@ if __name__ == "__main__":
 
     ansatz = tq.QuantumModule.from_op_history(ops)
 
+    # replace with a backend available to your IBM Quantum account
     noise_model_tq = tq.NoiseModelTQ(
-        noise_model_name="ibmq_quito",
+        noise_model_name="ibm_torino",
     )
 
     noise_model_tq.v_c_reg_mapping = {'v2c': {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6},

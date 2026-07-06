@@ -177,9 +177,8 @@ Guide to the examples
 We also prepare many example and tutorials using TorchQuantum.
 
 For **beginning level**, you may check `QNN for
-MNIST <examples/simple_mnist>`__, `Quantum Convolution
-(Quanvolution) <examples/quanvolution>`__ and `Quantum Kernel
-Method <examples/quantum_kernel_method>`__, and `Quantum
+MNIST <examples/mnist>`__, `Quantum Convolution
+(Quanvolution) <examples/quanvolution>`__ and `Quantum
 Regression <examples/regression>`__.
 
 For **intermediate level**, you may check `Amplitude Encoding for
@@ -190,8 +189,7 @@ Operation <examples/PauliSumOp>`__, `How to convert tq to
 Qiskit <examples/converter_tq_qiskit>`__.
 
 For **expert**, you may check `Parameter Shift on-chip
-Training <examples/param_shift_onchip_training>`__, `VQA Gradient
-Pruning <examples/gradient_pruning>`__, `VQE <examples/simple_vqe>`__,
+Training <examples/param_shift_onchip_training>`__, `VQE <examples/vqe>`__,
 `VQA for State Prepration <examples/train_state_prep>`__, `QAOA (Quantum
 Approximate Optimization Algorithm) <examples/qaoa>`__.
 

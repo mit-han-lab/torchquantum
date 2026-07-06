@@ -90,7 +90,6 @@ def qiskit2tq_op_history(circ):
         init_params = (
             list(map(float, gate.operation.params)) if len(gate.operation.params) > 0 else None
         )
-        print(op_name,)
 
         if op_name in [
             "h",
@@ -271,7 +270,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
         circ.ryy(params, *wires)
     elif func in ["rzz", "zz"]:
         circ.rzz(params, *wires)
-    elif func == ["rzx", "zx"]:
+    elif func in ["rzx", "zx"]:
         circ.rzx(params, *wires)
     elif func == "swap":
         circ.swap(*wires)
@@ -312,22 +311,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
         
         # Special handling for two-qubit unitaries to prevent diagonalization errors
         if len(wires) == 2 and mat.shape == (4, 4):
-            print(f"\n==== HANDLING 2-QUBIT UNITARY IN APPEND_FIXED_GATE ====")
-            print(f"Gate type: {func}")
-            print(f"Wires: {wires}")
-            print(f"Matrix shape: {mat.shape}")
-            
-            # Check initial unitarity
-            initial_deviation = np.max(np.abs(np.conjugate(mat.T) @ mat - np.eye(mat.shape[0])))
-            print(f"Initial deviation from unitarity: {initial_deviation}")
-            
-            # Apply ultra_precise_unitary
             mat = ultra_precise_unitary(mat)
-            
-            # Check final unitarity
-            final_deviation = np.max(np.abs(np.conjugate(mat.T) @ mat - np.eye(mat.shape[0])))
-            print(f"Final deviation from unitarity: {final_deviation}")
-            print(f"==== END HANDLING 2-QUBIT UNITARY ====\n")
         else:
             # Standard unitarity enforcement for other cases
             mat = ensure_unitary(mat)
@@ -340,7 +324,7 @@ def append_fixed_gate(circ, func, params, wires, inverse):
         target = wires[-1]  # type: ignore
         num_ctrl_qubits = len(controls)
 
-        gate = qiskit_gate.MCXGrayCode(
+        gate = qiskit_gate.MCXGate(
             num_ctrl_qubits, ctrl_state="0" * num_ctrl_qubits
         )
         circ.append(gate, controls + [target], [])
@@ -349,15 +333,11 @@ def append_fixed_gate(circ, func, params, wires, inverse):
         raise NotImplementedError(func)
 
     if inverse:
-        # Get the last instruction
-        last_instruction = circ.data[-1]
-        # Remove it
-        circ.data.pop()
-        # Add the inverse version
-        # Instead of manually creating a tuple, use proper Qiskit methods
-        last_gate = last_instruction[0]
-        qubits = last_instruction[1]
-        clbits = last_instruction[2] if len(last_instruction) > 2 else []
+        # Remove the last instruction and re-append its inverse
+        last_instruction = circ.data.pop()
+        last_gate = last_instruction.operation
+        qubits = last_instruction.qubits
+        clbits = last_instruction.clbits
         
         # Special handling for UnitaryGate to avoid unitarity checking errors
         if isinstance(last_gate, UnitaryGate):
@@ -608,23 +588,8 @@ def tq2qiskit(
             
             # Special handling for two-qubit unitaries to prevent diagonalization errors
             if len(wires) == 2 and mat.shape == (4, 4):
-                print(f"\n==== HANDLING 2-QUBIT UNITARY IN TQ2QISKIT ====")
-                print(f"Module name: {module.name}")
-                print(f"Wires: {wires}")
-                print(f"Matrix shape: {mat.shape}")
-                
-                # Check initial unitarity
-                initial_deviation = np.max(np.abs(np.conjugate(mat.T) @ mat - np.eye(mat.shape[0])))
-                print(f"Initial deviation from unitarity: {initial_deviation}")
-                
-                # Apply ultra_precise_unitary
                 mat = ultra_precise_unitary(mat)
-                
-                # Check final unitarity
-                final_deviation = np.max(np.abs(np.conjugate(mat.T) @ mat - np.eye(mat.shape[0])))
-                print(f"Final deviation from unitarity: {final_deviation}")
-                print(f"==== END HANDLING 2-QUBIT UNITARY ====\n")
-                
+
                 if debug:
                     print(f"Applied ultra_precise_unitary for two-qubit gate")
                     # Verify unitarity after correction
@@ -664,7 +629,7 @@ def tq2qiskit(
             target = wires[-1]
             num_ctrl_qubits = len(controls)
 
-            gate = qiskit_gate.MCXGrayCode(
+            gate = qiskit_gate.MCXGate(
                 num_ctrl_qubits, ctrl_state="0" * num_ctrl_qubits
             )
             circ.append(gate, controls + [target], [])
@@ -673,15 +638,11 @@ def tq2qiskit(
             raise NotImplementedError(module.name)
 
         if module.inverse:
-            # Get the last instruction
-            last_instruction = circ.data[-1]
-            # Remove it
-            circ.data.pop()
-            # Add the inverse version
-            # Instead of manually creating a tuple, use proper Qiskit methods
-            last_gate = last_instruction[0]
-            qubits = last_instruction[1]
-            clbits = last_instruction[2] if len(last_instruction) > 2 else []
+            # Remove the last instruction and re-append its inverse
+            last_instruction = circ.data.pop()
+            last_gate = last_instruction.operation
+            qubits = last_instruction.qubits
+            clbits = last_instruction.clbits
             
             # Special handling for UnitaryGate to avoid unitarity checking errors
             if isinstance(last_gate, UnitaryGate):
@@ -972,16 +933,16 @@ def test_qiskit2tq():
     all_gates_match = True
     for i, (orig_gate, conv_gate) in enumerate(zip(circ.data, circ_from_m.data)):
         print(f"Gate {i}:")
-        print(f"  Original: {orig_gate[0].name}, qubits: {[q._index for q in orig_gate[1]]}, params: {orig_gate[0].params}")
-        print(f"  Converted: {conv_gate[0].name}, qubits: {[q._index for q in conv_gate[1]]}, params: {conv_gate[0].params}")
-        
+        print(f"  Original: {orig_gate.operation.name}, qubits: {[q._index for q in orig_gate.qubits]}, params: {orig_gate.operation.params}")
+        print(f"  Converted: {conv_gate.operation.name}, qubits: {[q._index for q in conv_gate.qubits]}, params: {conv_gate.operation.params}")
+
         # Check gate type and target qubits
-        gates_match = orig_gate[0].name == conv_gate[0].name and [q._index for q in orig_gate[1]] == [q._index for q in conv_gate[1]]
-        
+        gates_match = orig_gate.operation.name == conv_gate.operation.name and [q._index for q in orig_gate.qubits] == [q._index for q in conv_gate.qubits]
+
         # Check parameters with tolerance
         params_match = True
-        if len(orig_gate[0].params) == len(conv_gate[0].params) and len(orig_gate[0].params) > 0:
-            params_match = np.allclose(orig_gate[0].params, conv_gate[0].params, atol=1e-5)
+        if len(orig_gate.operation.params) == len(conv_gate.operation.params) and len(orig_gate.operation.params) > 0:
+            params_match = np.allclose(orig_gate.operation.params, conv_gate.operation.params, atol=1e-5)
         
         if not (gates_match and params_match):
             print("  *** MISMATCH ***")
@@ -996,7 +957,7 @@ def test_qiskit2tq():
             print("Extra gates in converted circuit:")
             for i in range(len(circ.data), len(circ_from_m.data)):
                 gate = circ_from_m.data[i]
-                print(f"  Gate {i}: {gate[0].name}, qubits: {[q._index for q in gate[1]]}, params: {gate[0].params}")
+                print(f"  Gate {i}: {gate.operation.name}, qubits: {[q._index for q in gate.qubits]}, params: {gate.operation.params}")
     
     # We won't use direct circuit equality since parameters have floating-point precision differences
     # Instead, check if gates match and if unitaries are equivalent

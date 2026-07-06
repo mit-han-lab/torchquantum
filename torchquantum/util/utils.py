@@ -831,9 +831,8 @@ def get_success_rate(properties, transpiled_circ):
 
     success_rate = 1
     for gate in transpiled_circ.data:
-        gate_success_rate = (
-            1 - gate_error_dict[gate[0].name][tuple(map(lambda x: x.index, gate[1]))]
-        )
+        wires = tuple(transpiled_circ.find_bit(qubit).index for qubit in gate.qubits)
+        gate_success_rate = 1 - gate_error_dict[gate.operation.name][wires]
         if gate_success_rate == 0:
             gate_success_rate = 1e-5
         success_rate *= gate_success_rate
@@ -848,7 +847,7 @@ def get_provider(backend_name, hub=None, api_token=None, instance=None):
             backend_name (str): Name of the backend. (Currently unused in this simplified version)
             hub (str): Optional hub name. (Currently unused in this simplified version)
             api_token (str, optional): IBM Quantum API token. Defaults to None (uses saved credentials).
-            instance (str, optional): The service instance to use (e.g., 'ibm-q/open/main'). Defaults to None.
+            instance (str, optional): The service instance to use (CRN or instance name on the IBM Quantum Platform). Defaults to None.
 
         Returns:
             QiskitRuntimeService: The service object.
@@ -856,7 +855,7 @@ def get_provider(backend_name, hub=None, api_token=None, instance=None):
         Raises:
             QiskitError: If the service cannot be initialized.
     """
-    kwargs = {"channel": "ibm_quantum"}
+    kwargs = {"channel": "ibm_quantum_platform"}
     if api_token:
         kwargs["token"] = api_token
     if instance:
@@ -873,12 +872,17 @@ def get_provider(backend_name, hub=None, api_token=None, instance=None):
     return provider
 
 
-def get_provider_hub_group_project(hub="ibm-q", group="open", project="main"):
-    # This function might still be useful if users prefer the hub/group/project format
-    # But it uses the instance format directly now.
-    instance_str = f"{hub}/{group}/{project}"
-    # Note: This doesn't handle api_token, might need adjustment if used.
-    provider = QiskitRuntimeService(channel = "ibm_quantum", instance=instance_str)
+def get_provider_hub_group_project(hub="ibm-q", group="open", project="main", instance=None):
+    # The legacy hub/group/project hierarchy was retired together with the
+    # ibm_quantum channel. On the new IBM Quantum Platform an instance is
+    # identified by its CRN or name and cannot be derived from hub/group/project.
+    if instance is None and (hub, group, project) != ("ibm-q", "open", "main"):
+        logger.warning(
+            "hub/group/project instances no longer exist on the IBM Quantum "
+            "Platform; pass instance=<CRN or instance name> instead. "
+            "Falling back to the account's default instance."
+        )
+    provider = QiskitRuntimeService(channel="ibm_quantum_platform", instance=instance)
     return provider
 
 
@@ -921,8 +925,8 @@ def get_circ_stats(circ):
     n_measure = 0
 
     for gate in circ.data:
-        op_name = gate[0].name
-        wires = list(map(lambda x: x.index, gate[1]))
+        op_name = gate.operation.name
+        wires = [circ.find_bit(qubit).index for qubit in gate.qubits]
         if op_name in n_gates_dict.keys():
             n_gates_dict[op_name] += 1
         else:

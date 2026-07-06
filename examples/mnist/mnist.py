@@ -247,7 +247,6 @@ def main():
     if args.qiskit_simulation:
         # run on Qiskit simulator and real Quantum Computers
         try:
-            from qiskit import IBMQ
             from torchquantum.plugin import QiskitProcessor
 
             # firstly perform simulate
@@ -257,24 +256,21 @@ def main():
             valid_test(dataflow, "test", model, device, qiskit=True)
 
             # then try to run on REAL QC
-            backend_name = "ibmq_lima"
+            # replace with a backend available to your IBM Quantum account
+            backend_name = "ibm_torino"
             print(f"\nTest on Real Quantum Computer {backend_name}")
-            # Please specify your own hub group and project if you have the
-            # IBMQ premium plan to access more machines.
             processor_real_qc = QiskitProcessor(
                 use_real_qc=True,
                 backend_name=backend_name,
-                hub="ibm-q",
-                group="open",
-                project="main",
             )
             model.set_qiskit_processor(processor_real_qc)
             valid_test(dataflow, "test", model, device, qiskit=True)
-        except ImportError:
+        except Exception:
             print(
-                "Please install qiskit, create an IBM Q Experience Account and "
-                "save the account token according to the instruction at "
-                "'https://github.com/Qiskit/qiskit-ibmq-provider', "
+                "Failed to run on IBM Quantum hardware. Save your IBM Quantum "
+                "Platform credentials first with qiskit_ibm_runtime."
+                "QiskitRuntimeService.save_account(), see "
+                "'https://quantum.cloud.ibm.com/docs/en/guides/cloud-setup', "
                 "then try again."
             )
 

@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "TorchQuantum Authors"
 
 from .macro import *
@@ -39,26 +39,3 @@ from .noise_model import *
 from .algorithm import *
 from .dataset import *
 from .pulse import *
-
-# here we check whether the Qiskit parameterization bug is fixed, if not, a
-# warning message will be printed
-import qiskit
-import os
-
-path = os.path.abspath(qiskit.__file__)
-# print(path)
-# path for aer provider
-path_provider = path.replace("__init__.py", "providers/aer/backends/aerbackend.py")
-# print(path_provider)
-
-# with open(path_provider, 'r') as fid:
-#     for line in fid.readlines():
-#         if 'FIXED' in line:
-#             # print('The qiskit parameterization bug is already fixed!')
-#             break
-#         else:
-#             print(f'\n\n WARNING: The qiskit parameterization bug is not '
-#                   f'fixed!\n\n'
-#                   f'run python fix_qiskit_parameterization.py to fix it!'
-#                   )
-#             break
