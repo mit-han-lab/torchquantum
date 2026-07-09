@@ -25,6 +25,7 @@ SOFTWARE.
 import torch
 import torch.nn as nn
 import numpy as np
+import warnings
 
 from torchquantum.macro import C_DTYPE
 from torchquantum.functional import func_name_dict, func_name_dict_collect
@@ -81,9 +82,43 @@ class QuantumDevice(nn.Module):
         """Clone the states of the quantum device."""
         self.states = existing_states.clone()
 
-    def set_states(self, states: torch.Tensor):
-        """Set the states of the quantum device. The states are represented"""
+    def set_states(self, states: torch.Tensor, check_legality: bool = False):
+        """Set the states of the quantum device.
+
+        Args:
+            states (torch.Tensor): The quantum states tensor with shape
+                (batch_size, 2**n_wires) or (batch_size, 2, 2, ..., 2).
+            check_legality (bool): If True, warns when batch size doesn't match
+                the device's bsz or when states are not normalized. Default False.
+
+        Note:
+            Setting states will update the device's internal batch size to match
+            the input states' batch size.
+        """
         bsz = states.shape[0]
+
+        if check_legality:
+            # Warn if batch size doesn't match
+            if bsz != self.bsz:
+                warnings.warn(
+                    f"Input states batch size ({bsz}) differs from device bsz ({self.bsz}). "
+                    f"Device bsz will be updated to {bsz}.",
+                    UserWarning,
+                    stacklevel=2
+                )
+
+            # Check normalization (sum of |amplitude|^2 should be ~1 for each state)
+            states_flat = states.reshape(bsz, -1)
+            norms = torch.sum(torch.abs(states_flat) ** 2, dim=1)
+            if not torch.allclose(norms, torch.ones_like(norms), atol=1e-5):
+                warnings.warn(
+                    f"Input states are not normalized. Norms: {norms.tolist()}. "
+                    f"Consider normalizing your states for valid quantum computations.",
+                    UserWarning,
+                    stacklevel=2
+                )
+
+        self.bsz = bsz
         self.states = torch.reshape(states, [bsz] + [2] * self.n_wires)
 
     def reset_states(self, bsz: int):
