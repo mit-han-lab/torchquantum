@@ -474,10 +474,10 @@ class NoiseModelTQ(object):
         return ops
 
     def apply_readout_error(self, x):
-        c2p_mapping = self.p_c_reg_mapping["c2p"]
+        c2v_mapping = self.v_c_reg_mapping["c2v"]
         measure_info = self.parsed_dict["measure"]
 
-        return apply_readout_error_func(x, c2p_mapping, measure_info)
+        return apply_readout_error_func(x, c2v_mapping, measure_info)
 
 
 class NoiseModelTQActivation(object):
@@ -713,10 +713,10 @@ class NoiseModelTQActivationReadout(NoiseModelTQActivation):
         self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(self.noise_model_dict)
 
     def apply_readout_error(self, x):
-        c2p_mapping = self.p_c_reg_mapping["c2p"]
+        c2v_mapping = self.v_c_reg_mapping["c2v"]
         measure_info = self.parsed_dict["measure"]
 
-        return apply_readout_error_func(x, c2p_mapping, measure_info)
+        return apply_readout_error_func(x, c2v_mapping, measure_info)
 
 
 class NoiseModelTQPhaseReadout(NoiseModelTQPhase):
@@ -759,7 +759,7 @@ class NoiseModelTQPhaseReadout(NoiseModelTQPhase):
         self.parsed_dict = NoiseModelTQ.parse_noise_model_dict(self.noise_model_dict)
 
     def apply_readout_error(self, x):
-        c2p_mapping = self.p_c_reg_mapping["c2p"]
+        c2v_mapping = self.v_c_reg_mapping["c2v"]
         measure_info = self.parsed_dict["measure"]
 
-        return apply_readout_error_func(x, c2p_mapping, measure_info)
+        return apply_readout_error_func(x, c2v_mapping, measure_info)
