@@ -56,7 +56,7 @@ def cu2_matrix(params):
 
     matrix = (
         torch.tensor(
-            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]],
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
             dtype=C_DTYPE,
             device=params.device,
         )
@@ -64,9 +64,10 @@ def cu2_matrix(params):
         .repeat(phi.shape[0], 1, 1)
     )
 
-    matrix[:, 2, 3] = -torch.exp(1j * lam)
-    matrix[:, 3, 2] = torch.exp(1j * phi)
-    matrix[:, 3, 3] = torch.exp(1j * (phi + lam))
+    matrix[:, 2, 2] = INV_SQRT2
+    matrix[:, 2, 3] = -INV_SQRT2 * torch.exp(1j * lam)
+    matrix[:, 3, 2] = INV_SQRT2 * torch.exp(1j * phi)
+    matrix[:, 3, 3] = INV_SQRT2 * torch.exp(1j * (phi + lam))
 
     return matrix.squeeze(0)
 
