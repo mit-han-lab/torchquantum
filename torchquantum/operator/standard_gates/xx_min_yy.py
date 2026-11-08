@@ -13,7 +13,7 @@ class XXMINYY(Operation, metaclass=ABCMeta):
     num_params = 2
     num_wires = 2
     op_name = "xxminyy"
-    func = staticmethod(tqf.xxminyy_matrix)
+    func = staticmethod(tqf.xxminyy)
 
     @classmethod
     def _matrix(cls, params):
