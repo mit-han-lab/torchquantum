@@ -7,10 +7,10 @@ numpy>=2.0
 opt_einsum
 pathos>=0.2.7
 pylatexenc>=2.10
-qiskit>=2.5,<3
+qiskit>=2.0.0,<3.0.0
 recommonmark
-qiskit-ibm-runtime>=0.40
-qiskit-aer>=0.17
+qiskit-ibm-runtime>=0.30.0
+qiskit-aer>=0.14.0
 
 scipy>=1.5.2
 setuptools>=52.0.0
