@@ -31,7 +31,27 @@ import re
 
 import qiskit
 from qiskit import QuantumCircuit, ClassicalRegister
-from qiskit_aer import AerSimulator, UnitarySimulator
+from qiskit_aer import AerSimulator
+try:
+    from qiskit_aer import UnitarySimulator
+except ImportError:
+    class UnitarySimulator:
+        def __new__(cls, *args, **kwargs):
+            return AerSimulator(method="unitary", *args, **kwargs)
+
+
+def _get_qubit_index(circ, qubit):
+    """Safely retrieve the integer qubit index across Qiskit 0.x, 1.x, and 2.x."""
+    if hasattr(circ, "find_bit"):
+        try:
+            return circ.find_bit(qubit).index
+        except Exception:
+            pass
+    if hasattr(qubit, "_index") and qubit._index is not None:
+        return qubit._index
+    if hasattr(qubit, "index") and qubit.index is not None:
+        return qubit.index
+    return 0
 from qiskit import transpile
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import UnitaryGate
@@ -84,7 +104,7 @@ def qiskit2tq_op_history(circ):
     ops = []
     for gate in circ.data:
         op_name = gate.operation.name
-        wires = [qubit._index for qubit in gate.qubits]
+        wires = [_get_qubit_index(circ, qubit) for qubit in gate.qubits]
         wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
         init_params = (
@@ -807,7 +827,7 @@ def qiskit2tq_Operator(circ: QuantumCircuit):
     ops = []
     for gate in circ.data:
         op_name = gate.operation.name
-        wires = [qubit._index for qubit in gate.qubits]
+        wires = [_get_qubit_index(circ, qubit) for qubit in gate.qubits]
         wires = [p2v[wire] for wire in wires]
         # sometimes the gate.params is ParameterExpression class
         init_params = (
@@ -933,11 +953,11 @@ def test_qiskit2tq():
     all_gates_match = True
     for i, (orig_gate, conv_gate) in enumerate(zip(circ.data, circ_from_m.data)):
         print(f"Gate {i}:")
-        print(f"  Original: {orig_gate.operation.name}, qubits: {[q._index for q in orig_gate.qubits]}, params: {orig_gate.operation.params}")
-        print(f"  Converted: {conv_gate.operation.name}, qubits: {[q._index for q in conv_gate.qubits]}, params: {conv_gate.operation.params}")
+        print(f"  Original: {orig_gate.operation.name}, qubits: {[_get_qubit_index(circ, q) for q in orig_gate.qubits]}, params: {orig_gate.operation.params}")
+        print(f"  Converted: {conv_gate.operation.name}, qubits: {[_get_qubit_index(circ_from_m, q) for q in conv_gate.qubits]}, params: {conv_gate.operation.params}")
 
         # Check gate type and target qubits
-        gates_match = orig_gate.operation.name == conv_gate.operation.name and [q._index for q in orig_gate.qubits] == [q._index for q in conv_gate.qubits]
+        gates_match = orig_gate.operation.name == conv_gate.operation.name and [_get_qubit_index(circ, q) for q in orig_gate.qubits] == [_get_qubit_index(circ_from_m, q) for q in conv_gate.qubits]
 
         # Check parameters with tolerance
         params_match = True
@@ -957,7 +977,7 @@ def test_qiskit2tq():
             print("Extra gates in converted circuit:")
             for i in range(len(circ.data), len(circ_from_m.data)):
                 gate = circ_from_m.data[i]
-                print(f"  Gate {i}: {gate.operation.name}, qubits: {[q._index for q in gate.qubits]}, params: {gate.operation.params}")
+                print(f"  Gate {i}: {gate.operation.name}, qubits: {[_get_qubit_index(circ_from_m, q) for q in gate.qubits]}, params: {gate.operation.params}")
     
     # We won't use direct circuit equality since parameters have floating-point precision differences
     # Instead, check if gates match and if unitaries are equivalent
