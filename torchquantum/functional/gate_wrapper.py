@@ -216,7 +216,7 @@ def apply_unitary_density_einsum(density, mat, wires):
 
     new_density = torch.einsum(einsum_indices, mat, density)
 
-    """
+    r"""
     Compute U \rho U^\dagger
     """
     print("dagger")
@@ -295,7 +295,7 @@ def apply_unitary_density_bmm(density, mat, wires):
         expand_shape = [bsz] + list(mat.shape)
         new_density = mat.expand(expand_shape).bmm(permuted)
     new_density = new_density.view(original_shape).permute(permute_back)
-    """
+    r"""
     Compute \rho U^\dagger 
     """
     matdag = torch.conj(mat)
@@ -375,7 +375,34 @@ def gate_wrapper(
             elif params.dim() == 0:
                 params = params.unsqueeze(-1).unsqueeze(-1)
             # params = params.unsqueeze(-1) if params.dim() == 1 else params
-    wires = [wires] if isinstance(wires, int) else wires
+
+    if isinstance(wires, (list, tuple, np.ndarray)) and len(wires) > 1:
+        n_gate_wires = 1
+        if isinstance(mat, torch.Tensor):
+            n_gate_wires = int(round(np.log2(mat.shape[-1])))
+        elif isinstance(mat, Callable):
+            if n_wires is not None:
+                n_gate_wires = n_wires
+            elif name in ["multicnot", "multixcnot", "qft"]:
+                n_gate_wires = len(wires)
+
+        if n_gate_wires == 1:
+            for w in wires:
+                gate_wrapper(
+                    name=name,
+                    mat=mat,
+                    method=method,
+                    q_device=q_device,
+                    wires=w,
+                    params=params,
+                    n_wires=n_wires,
+                    static=static,
+                    parent_graph=parent_graph,
+                    inverse=inverse,
+                )
+            return
+
+    wires = [wires] if isinstance(wires, int) else list(wires)
 
     if q_device.record_op:
         q_device.op_history.append(
